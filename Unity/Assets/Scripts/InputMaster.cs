@@ -28,7 +28,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""242ca290-21f9-4781-8792-e7fdc4ef943c"",
             ""actions"": [
                 {
-                    ""name"": ""OrbitVel"",
+                    ""name"": ""Mouse"",
                     ""type"": ""Value"",
                     ""id"": ""3598dc3d-4099-49f0-a865-c27aaa69a24b"",
                     ""expectedControlType"": ""Vector2"",
@@ -40,6 +40,24 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""PerfOrbit"",
                     ""type"": ""Button"",
                     ""id"": ""b686a359-b3b3-4316-9df6-ac7632c4dc22"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Zoom"",
+                    ""type"": ""Value"",
+                    ""id"": ""4ed1e0be-d9a6-4a17-a514-11c226f33383"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Button"",
+                    ""id"": ""bdb817d0-025f-4a5c-bf63-baf8d69a8e70"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -65,7 +83,29 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""OrbitVel"",
+                    ""action"": ""Mouse"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a7b62596-57a7-4f65-bd89-bc8f6c170630"",
+                    ""path"": ""<Mouse>/scroll/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2837e928-43e4-4133-b458-87074e91fc91"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -908,8 +948,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 }");
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
-        m_Camera_OrbitVel = m_Camera.FindAction("OrbitVel", throwIfNotFound: true);
+        m_Camera_Mouse = m_Camera.FindAction("Mouse", throwIfNotFound: true);
         m_Camera_PerfOrbit = m_Camera.FindAction("PerfOrbit", throwIfNotFound: true);
+        m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
+        m_Camera_Move = m_Camera.FindAction("Move", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
@@ -988,14 +1030,18 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Camera
     private readonly InputActionMap m_Camera;
     private List<ICameraActions> m_CameraActionsCallbackInterfaces = new List<ICameraActions>();
-    private readonly InputAction m_Camera_OrbitVel;
+    private readonly InputAction m_Camera_Mouse;
     private readonly InputAction m_Camera_PerfOrbit;
+    private readonly InputAction m_Camera_Zoom;
+    private readonly InputAction m_Camera_Move;
     public struct CameraActions
     {
         private @InputMaster m_Wrapper;
         public CameraActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @OrbitVel => m_Wrapper.m_Camera_OrbitVel;
+        public InputAction @Mouse => m_Wrapper.m_Camera_Mouse;
         public InputAction @PerfOrbit => m_Wrapper.m_Camera_PerfOrbit;
+        public InputAction @Zoom => m_Wrapper.m_Camera_Zoom;
+        public InputAction @Move => m_Wrapper.m_Camera_Move;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1005,22 +1051,34 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_CameraActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_CameraActionsCallbackInterfaces.Add(instance);
-            @OrbitVel.started += instance.OnOrbitVel;
-            @OrbitVel.performed += instance.OnOrbitVel;
-            @OrbitVel.canceled += instance.OnOrbitVel;
+            @Mouse.started += instance.OnMouse;
+            @Mouse.performed += instance.OnMouse;
+            @Mouse.canceled += instance.OnMouse;
             @PerfOrbit.started += instance.OnPerfOrbit;
             @PerfOrbit.performed += instance.OnPerfOrbit;
             @PerfOrbit.canceled += instance.OnPerfOrbit;
+            @Zoom.started += instance.OnZoom;
+            @Zoom.performed += instance.OnZoom;
+            @Zoom.canceled += instance.OnZoom;
+            @Move.started += instance.OnMove;
+            @Move.performed += instance.OnMove;
+            @Move.canceled += instance.OnMove;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
         {
-            @OrbitVel.started -= instance.OnOrbitVel;
-            @OrbitVel.performed -= instance.OnOrbitVel;
-            @OrbitVel.canceled -= instance.OnOrbitVel;
+            @Mouse.started -= instance.OnMouse;
+            @Mouse.performed -= instance.OnMouse;
+            @Mouse.canceled -= instance.OnMouse;
             @PerfOrbit.started -= instance.OnPerfOrbit;
             @PerfOrbit.performed -= instance.OnPerfOrbit;
             @PerfOrbit.canceled -= instance.OnPerfOrbit;
+            @Zoom.started -= instance.OnZoom;
+            @Zoom.performed -= instance.OnZoom;
+            @Zoom.canceled -= instance.OnZoom;
+            @Move.started -= instance.OnMove;
+            @Move.performed -= instance.OnMove;
+            @Move.canceled -= instance.OnMove;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -1265,8 +1323,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public interface ICameraActions
     {
-        void OnOrbitVel(InputAction.CallbackContext context);
+        void OnMouse(InputAction.CallbackContext context);
         void OnPerfOrbit(InputAction.CallbackContext context);
+        void OnZoom(InputAction.CallbackContext context);
+        void OnMove(InputAction.CallbackContext context);
     }
     public interface IPlayerActions
     {

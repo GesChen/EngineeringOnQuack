@@ -383,8 +383,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff8c12e059c1d7b4ca6852ce5f507172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  orbitSensitivity: 0
-  drift: 0
+  orbitSensitivity: 0.2
+  zoomSensitivity: 0.01
+  moveSensitivity: 0.01
+  orbitDrift: 0.8
+  zoomDrift: 0.1
+  moveDrift: 0.2
+  initDist: -5
   target: {x: 0, y: 0, z: 0}
 --- !u!114 &1681030644
 MonoBehaviour:
@@ -405,7 +410,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   volumeAnchorOverride: {fileID: 0}
-  antialiasing: 0
+  antialiasing: 3
   SMAAQuality: 2
   dithering: 0
   stopNaNs: 0

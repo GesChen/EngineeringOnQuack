@@ -6,7 +6,7 @@
             "id": "242ca290-21f9-4781-8792-e7fdc4ef943c",
             "actions": [
                 {
-                    "name": "OrbitVel",
+                    "name": "Mouse",
                     "type": "Value",
                     "id": "3598dc3d-4099-49f0-a865-c27aaa69a24b",
                     "expectedControlType": "Vector2",
@@ -18,6 +18,24 @@
                     "name": "PerfOrbit",
                     "type": "Button",
                     "id": "b686a359-b3b3-4316-9df6-ac7632c4dc22",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Zoom",
+                    "type": "Value",
+                    "id": "4ed1e0be-d9a6-4a17-a514-11c226f33383",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Move",
+                    "type": "Button",
+                    "id": "bdb817d0-025f-4a5c-bf63-baf8d69a8e70",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -43,7 +61,29 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "OrbitVel",
+                    "action": "Mouse",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a7b62596-57a7-4f65-bd89-bc8f6c170630",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2837e928-43e4-4133-b458-87074e91fc91",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
