@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEditor.Rendering;
 using UnityEngine;
 public class EditingCamera : MonoBehaviour
 {
@@ -52,19 +53,19 @@ public class EditingCamera : MonoBehaviour
 		vel *= orbitDrift;
 		if (controls.Camera.PerfOrbit.IsPressed())
 		{
-			if((v2Abs(lastvel) - v2Abs(vel)).sqrMagnitude > 0)
-				vel = Vector2.Lerp(vel,controls.Camera.Mouse.ReadValue<Vector2>() * orbitSensitivity, 1 - orbitDrift);
+			if (sumAxes(v2Abs(lastvel) - v2Abs(vel)) > 0)
+				vel = Vector2.Lerp(vel, controls.Camera.Mouse.ReadValue<Vector2>() * orbitSensitivity, 1 - orbitDrift);
 			else
 				vel = controls.Camera.Mouse.ReadValue<Vector2>() * orbitSensitivity;
 			lastvel = vel;
 		}
-		
+
 		// move 
 		// todo: sensitivity changes with screen resolution. no good fix. bad fix for now. please fix future me. sorry.
 		else if (controls.Camera.Move.IsPressed())
-			target += transform.rotation * -controls.Camera.Mouse.ReadValue<Vector2>() * moveSensitivity * Mathf.Abs(dist) / Screen.width * 1920;
+			target += transform.rotation * -controls.Camera.Mouse.ReadValue<Vector2>() * moveSensitivity * Mathf.Abs(dist); // / Screen.width * 1920;
 		//Debug.Log(vel.ToString() + ' ' + controls.Camera.PerfOrbit.IsPressed().ToString());
-
+		//Debug.Log(Screen.width);
 		pitch = (pitch - vel.y) % 360;
 		yaw = (yaw + vel.x) % 360;
 
@@ -79,5 +80,9 @@ public class EditingCamera : MonoBehaviour
 	Vector2 v2Abs(Vector2 v)
 	{
 		return new(Mathf.Abs(v.x), Mathf.Abs(v.y));
+	}
+	float sumAxes(Vector3 v)
+	{
+		return v.x + v.y + v.z;
 	}
 }
