@@ -66,7 +66,7 @@ Shader "Hidden/Shader/OutlinePP"
     
         float d = length(float2(d1 - d0, d3 - d2));
         d = smoothstep(_MinDepth, _MaxDepth, d);
-    d = 1 - pow(1 - d, _Power);
+        d = 1 - pow(1 - d, _Power);
 
         float4 original = SAMPLE_TEXTURE2D_X(_MainTex, s_linear_clamp_sampler, ClampAndScaleUVForBilinearPostProcessTexture(input.texcoord.xy));
         //return float4(d, d, d, 1);

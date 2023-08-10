@@ -24,7 +24,7 @@ RenderSettings:
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 4
+  m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
@@ -184,6 +184,7 @@ GameObject:
   - component: {fileID: 1150528311}
   - component: {fileID: 1150528310}
   - component: {fileID: 1150528309}
+  - component: {fileID: 1150528313}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -277,6 +278,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1150528313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1150528308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72876854a0c8f814093ea10903205250, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1681030639
 GameObject:
   m_ObjectHideFlags: 0
@@ -291,7 +304,6 @@ GameObject:
   - component: {fileID: 1681030644}
   - component: {fileID: 1681030643}
   - component: {fileID: 1681030645}
-  - component: {fileID: 1681030646}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -386,13 +398,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   orbitSensitivity: 0.4
-  zoomSensitivity: 0.01
-  moveSensitivity: 0.001
+  zoomSensitivity: 0.007
+  moveSensitivity: 0.0015
+  precisionCoef: 0.2
   orbitDrift: 0.8
   zoomDrift: 0.1
-  moveDrift: 0.2
+  moveDrift: 0.9
   initDist: -5
-  target: {x: 0, y: 0, z: 0}
+  focus: {x: 0, y: 0, z: 0}
+  focusingDrift: 0.1
 --- !u!114 &1681030644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -535,20 +549,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fpsLimit: 60
---- !u!114 &1681030646
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1681030639}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b9a305e18de0c04dbd257a21cd47087, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sharedProfile: {fileID: 0}
-  isGlobal: 1
-  blendDistance: 0
-  weight: 1
-  priority: 0

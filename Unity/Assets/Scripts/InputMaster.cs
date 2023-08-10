@@ -62,6 +62,33 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Precision"",
+                    ""type"": ""Button"",
+                    ""id"": ""527b2e3a-8525-46a3-b619-d0e180978eb6"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Focus"",
+                    ""type"": ""Button"",
+                    ""id"": ""781b16df-b033-4077-94c2-99b98f6636a9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": ""MultiTap(tapDelay=0.2)"",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""MousePos"",
+                    ""type"": ""Value"",
+                    ""id"": ""d0dc1153-1b31-4421-a26b-62ae4135f726"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -106,6 +133,39 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""505e3339-ef20-41a7-8a8a-b7fbcd47875d"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Precision"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f1a6b380-df6a-4ca8-9271-05f3e946aee7"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Focus"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""92bc5792-09fb-419e-bfd1-a1052a9360ea"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MousePos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -952,6 +1012,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Camera_PerfOrbit = m_Camera.FindAction("PerfOrbit", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_Move = m_Camera.FindAction("Move", throwIfNotFound: true);
+        m_Camera_Precision = m_Camera.FindAction("Precision", throwIfNotFound: true);
+        m_Camera_Focus = m_Camera.FindAction("Focus", throwIfNotFound: true);
+        m_Camera_MousePos = m_Camera.FindAction("MousePos", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
@@ -1034,6 +1097,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_PerfOrbit;
     private readonly InputAction m_Camera_Zoom;
     private readonly InputAction m_Camera_Move;
+    private readonly InputAction m_Camera_Precision;
+    private readonly InputAction m_Camera_Focus;
+    private readonly InputAction m_Camera_MousePos;
     public struct CameraActions
     {
         private @InputMaster m_Wrapper;
@@ -1042,6 +1108,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         public InputAction @PerfOrbit => m_Wrapper.m_Camera_PerfOrbit;
         public InputAction @Zoom => m_Wrapper.m_Camera_Zoom;
         public InputAction @Move => m_Wrapper.m_Camera_Move;
+        public InputAction @Precision => m_Wrapper.m_Camera_Precision;
+        public InputAction @Focus => m_Wrapper.m_Camera_Focus;
+        public InputAction @MousePos => m_Wrapper.m_Camera_MousePos;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1063,6 +1132,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @Precision.started += instance.OnPrecision;
+            @Precision.performed += instance.OnPrecision;
+            @Precision.canceled += instance.OnPrecision;
+            @Focus.started += instance.OnFocus;
+            @Focus.performed += instance.OnFocus;
+            @Focus.canceled += instance.OnFocus;
+            @MousePos.started += instance.OnMousePos;
+            @MousePos.performed += instance.OnMousePos;
+            @MousePos.canceled += instance.OnMousePos;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -1079,6 +1157,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @Precision.started -= instance.OnPrecision;
+            @Precision.performed -= instance.OnPrecision;
+            @Precision.canceled -= instance.OnPrecision;
+            @Focus.started -= instance.OnFocus;
+            @Focus.performed -= instance.OnFocus;
+            @Focus.canceled -= instance.OnFocus;
+            @MousePos.started -= instance.OnMousePos;
+            @MousePos.performed -= instance.OnMousePos;
+            @MousePos.canceled -= instance.OnMousePos;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -1327,6 +1414,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnPerfOrbit(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMove(InputAction.CallbackContext context);
+        void OnPrecision(InputAction.CallbackContext context);
+        void OnFocus(InputAction.CallbackContext context);
+        void OnMousePos(InputAction.CallbackContext context);
     }
     public interface IPlayerActions
     {
