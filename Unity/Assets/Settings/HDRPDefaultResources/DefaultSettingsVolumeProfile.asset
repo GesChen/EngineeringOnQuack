@@ -77,25 +77,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 638a8912b3feb5244ae616c756831a64, type: 3}
   m_Name: OutlinePP
   m_EditorClassIdentifier: 
+  active: 0
+  <displayName>k__BackingField: 
+  m_IsInitialized: 0
+  typeName: 
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  thickness:
+    m_OverrideState: 1
+    m_Value: 0.31
+  color:
+    m_OverrideState: 1
+    m_Value:
+      r: 1
+      g: 0
+      b: 1
+      a: 1
+  power:
+    m_OverrideState: 1
+    m_Value: 117.2
+  minDepth:
+    m_OverrideState: 1
+    m_Value: -0
+  maxDepth:
+    m_OverrideState: 1
+    m_Value: 1
+  m_Material: {fileID: 0}
+--- !u!114 &-2283267511157543123
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 506155a9719c9594ea6c11f5f9a6bb44, type: 3}
+  m_Name: OutlinePP
+  m_EditorClassIdentifier: 
   active: 1
   intensity:
     m_OverrideState: 0
     m_Value: 0
-  thickness:
-    m_OverrideState: 0
-    m_Value: 1
-  color:
-    m_OverrideState: 0
-    m_Value: {r: 0, g: 0, b: 0, a: 1}
-  power:
-    m_OverrideState: 0
-    m_Value: 1
-  minDepth:
-    m_OverrideState: 0
-    m_Value: 0
-  maxDepth:
-    m_OverrideState: 0
-    m_Value: 1
 --- !u!114 &-1016694868962581565
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -168,7 +192,7 @@ MonoBehaviour:
   - {fileID: 448115243408767295}
   - {fileID: -7089757308646879465}
   - {fileID: -8500501345142028434}
-  - {fileID: -5245666159142049531}
+  - {fileID: -2283267511157543123}
 --- !u!114 &448115243408767295
 MonoBehaviour:
   m_ObjectHideFlags: 3

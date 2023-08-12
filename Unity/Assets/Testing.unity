@@ -155,7 +155,7 @@ MonoBehaviour:
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
-  weight: 1
+  weight: 0
   sharedProfile: {fileID: 11400000, guid: 14b392ee213d25a48b1feddbd9f5a9be, type: 2}
 --- !u!4 &960620927
 Transform:
@@ -185,7 +185,7 @@ GameObject:
   - component: {fileID: 1150528310}
   - component: {fileID: 1150528309}
   - component: {fileID: 1150528313}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -304,6 +304,7 @@ GameObject:
   - component: {fileID: 1681030644}
   - component: {fileID: 1681030643}
   - component: {fileID: 1681030645}
+  - component: {fileID: 1681030646}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -426,7 +427,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   volumeAnchorOverride: {fileID: 0}
-  antialiasing: 3
+  antialiasing: 2
   SMAAQuality: 2
   dithering: 0
   stopNaNs: 0
@@ -549,3 +550,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fpsLimit: 60
+--- !u!114 &1681030646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1681030639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccc1f6b4ccafaf34193dee5fbce940ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Post_Outline: {fileID: 0}
+  DrawSimple: {fileID: 4800000, guid: fab0da234ac21184a899fe7b4407b761, type: 3}

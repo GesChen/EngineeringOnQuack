@@ -13,24 +13,32 @@ MonoBehaviour:
   m_Name: OutlinePP
   m_EditorClassIdentifier: 
   active: 1
+  <displayName>k__BackingField: 
+  m_IsInitialized: 0
+  typeName: 
   intensity:
     m_OverrideState: 1
     m_Value: 1
   thickness:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 2.34
   color:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0, b: 0, a: 1}
+    m_Value:
+      r: 1
+      g: 0
+      b: 0
+      a: 1
   power:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 571.35
   minDepth:
     m_OverrideState: 1
     m_Value: 0
   maxDepth:
     m_OverrideState: 1
     m_Value: 1
+  m_Material: {fileID: 0}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43,5 +51,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
   m_Name: Outline PP Profile
   m_EditorClassIdentifier: 
-  components:
-  - {fileID: -6521559620971647726}
+  components: []

@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: ccc1f6b4ccafaf34193dee5fbce940ef
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - Post_Outline: {instanceID: 0}
+  - DrawSimple: {fileID: 4800000, guid: fab0da234ac21184a899fe7b4407b761, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

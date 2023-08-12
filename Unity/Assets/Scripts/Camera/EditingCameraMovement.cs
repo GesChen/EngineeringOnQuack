@@ -5,7 +5,7 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class EditingCamera : MonoBehaviour
+public class EditingCameraMovement : MonoBehaviour
 {
 	[Header("Customization")]
 	public float orbitSensitivity = .4f;
