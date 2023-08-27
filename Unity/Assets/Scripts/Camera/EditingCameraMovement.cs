@@ -23,6 +23,7 @@ public class EditingCameraMovement : MonoBehaviour
 	[Header("Focusing")]
 	public Vector3 focus;
 	Vector3 target;
+	Transform targetTransform;
 	bool focusing;
 	float focusThreshold = .001f;
 	public float focusingDrift = .2f;
@@ -104,13 +105,19 @@ public class EditingCameraMovement : MonoBehaviour
 	void Focus(InputAction.CallbackContext context)
 	{
 		RaycastHit hit;
-		if (Physics.Raycast(Camera.main.ScreenPointToRay(controls.Camera.MousePos.ReadValue<Vector2>()), out hit))
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(controls.Camera.MousePos.ReadValue<Vector2>()), out hit)) { 
 			if (hit.transform.GetComponent<Part>())
 			{
-				target = hit.transform.position;
+				targetTransform = hit.transform;
+                target = targetTransform.position;
 				focusing = true;
 				moveSmoothness = focusingDrift;
 			}
+		}
+		else
+		{
+			targetTransform = null;
+		}
 		
 	}
 	Vector2 v2Abs(Vector2 v)

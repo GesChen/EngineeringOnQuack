@@ -941,6 +941,54 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Transform"",
+            ""id"": ""cac43080-c997-4558-825f-b6c7d559e3a2"",
+            ""actions"": [
+                {
+                    ""name"": ""MousePos"",
+                    ""type"": ""Value"",
+                    ""id"": ""17fb18cd-05d1-4693-9e93-5479aba3c24f"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Drag"",
+                    ""type"": ""Button"",
+                    ""id"": ""1c6241ac-eff0-4881-8a12-d6c70a3f8b24"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c2e78431-8889-4a08-a9eb-14760fa6738e"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MousePos"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5ac106d3-89fd-44d3-9b28-14a4dfe94a7e"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -1032,6 +1080,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
         m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
+        // Transform
+        m_Transform = asset.FindActionMap("Transform", throwIfNotFound: true);
+        m_Transform_MousePos = m_Transform.FindAction("MousePos", throwIfNotFound: true);
+        m_Transform_Drag = m_Transform.FindAction("Drag", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1363,6 +1415,60 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         }
     }
     public UIActions @UI => new UIActions(this);
+
+    // Transform
+    private readonly InputActionMap m_Transform;
+    private List<ITransformActions> m_TransformActionsCallbackInterfaces = new List<ITransformActions>();
+    private readonly InputAction m_Transform_MousePos;
+    private readonly InputAction m_Transform_Drag;
+    public struct TransformActions
+    {
+        private @InputMaster m_Wrapper;
+        public TransformActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @MousePos => m_Wrapper.m_Transform_MousePos;
+        public InputAction @Drag => m_Wrapper.m_Transform_Drag;
+        public InputActionMap Get() { return m_Wrapper.m_Transform; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(TransformActions set) { return set.Get(); }
+        public void AddCallbacks(ITransformActions instance)
+        {
+            if (instance == null || m_Wrapper.m_TransformActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_TransformActionsCallbackInterfaces.Add(instance);
+            @MousePos.started += instance.OnMousePos;
+            @MousePos.performed += instance.OnMousePos;
+            @MousePos.canceled += instance.OnMousePos;
+            @Drag.started += instance.OnDrag;
+            @Drag.performed += instance.OnDrag;
+            @Drag.canceled += instance.OnDrag;
+        }
+
+        private void UnregisterCallbacks(ITransformActions instance)
+        {
+            @MousePos.started -= instance.OnMousePos;
+            @MousePos.performed -= instance.OnMousePos;
+            @MousePos.canceled -= instance.OnMousePos;
+            @Drag.started -= instance.OnDrag;
+            @Drag.performed -= instance.OnDrag;
+            @Drag.canceled -= instance.OnDrag;
+        }
+
+        public void RemoveCallbacks(ITransformActions instance)
+        {
+            if (m_Wrapper.m_TransformActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(ITransformActions instance)
+        {
+            foreach (var item in m_Wrapper.m_TransformActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_TransformActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public TransformActions @Transform => new TransformActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -1436,5 +1542,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnRightClick(InputAction.CallbackContext context);
         void OnTrackedDevicePosition(InputAction.CallbackContext context);
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
+    }
+    public interface ITransformActions
+    {
+        void OnMousePos(InputAction.CallbackContext context);
+        void OnDrag(InputAction.CallbackContext context);
     }
 }
