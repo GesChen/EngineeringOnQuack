@@ -963,6 +963,24 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Distance"",
+                    ""type"": ""Value"",
+                    ""id"": ""e9370fb7-be84-44ac-8fb9-2f1a6862c92a"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""MouseDelta"",
+                    ""type"": ""Value"",
+                    ""id"": ""0c161e5b-ff1a-41cd-979c-9f0f565fbb79"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -985,6 +1003,28 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Drag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1ba61eba-a226-4469-9d94-77082eb0383e"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Distance"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a20bf459-dda9-41b0-bc2e-e88adc69eab6"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MouseDelta"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1084,6 +1124,8 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Transform = asset.FindActionMap("Transform", throwIfNotFound: true);
         m_Transform_MousePos = m_Transform.FindAction("MousePos", throwIfNotFound: true);
         m_Transform_Drag = m_Transform.FindAction("Drag", throwIfNotFound: true);
+        m_Transform_Distance = m_Transform.FindAction("Distance", throwIfNotFound: true);
+        m_Transform_MouseDelta = m_Transform.FindAction("MouseDelta", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1421,12 +1463,16 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private List<ITransformActions> m_TransformActionsCallbackInterfaces = new List<ITransformActions>();
     private readonly InputAction m_Transform_MousePos;
     private readonly InputAction m_Transform_Drag;
+    private readonly InputAction m_Transform_Distance;
+    private readonly InputAction m_Transform_MouseDelta;
     public struct TransformActions
     {
         private @InputMaster m_Wrapper;
         public TransformActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
         public InputAction @MousePos => m_Wrapper.m_Transform_MousePos;
         public InputAction @Drag => m_Wrapper.m_Transform_Drag;
+        public InputAction @Distance => m_Wrapper.m_Transform_Distance;
+        public InputAction @MouseDelta => m_Wrapper.m_Transform_MouseDelta;
         public InputActionMap Get() { return m_Wrapper.m_Transform; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1442,6 +1488,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Drag.started += instance.OnDrag;
             @Drag.performed += instance.OnDrag;
             @Drag.canceled += instance.OnDrag;
+            @Distance.started += instance.OnDistance;
+            @Distance.performed += instance.OnDistance;
+            @Distance.canceled += instance.OnDistance;
+            @MouseDelta.started += instance.OnMouseDelta;
+            @MouseDelta.performed += instance.OnMouseDelta;
+            @MouseDelta.canceled += instance.OnMouseDelta;
         }
 
         private void UnregisterCallbacks(ITransformActions instance)
@@ -1452,6 +1504,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Drag.started -= instance.OnDrag;
             @Drag.performed -= instance.OnDrag;
             @Drag.canceled -= instance.OnDrag;
+            @Distance.started -= instance.OnDistance;
+            @Distance.performed -= instance.OnDistance;
+            @Distance.canceled -= instance.OnDistance;
+            @MouseDelta.started -= instance.OnMouseDelta;
+            @MouseDelta.performed -= instance.OnMouseDelta;
+            @MouseDelta.canceled -= instance.OnMouseDelta;
         }
 
         public void RemoveCallbacks(ITransformActions instance)
@@ -1547,5 +1605,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     {
         void OnMousePos(InputAction.CallbackContext context);
         void OnDrag(InputAction.CallbackContext context);
+        void OnDistance(InputAction.CallbackContext context);
+        void OnMouseDelta(InputAction.CallbackContext context);
     }
 }
