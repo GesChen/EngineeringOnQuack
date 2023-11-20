@@ -54,7 +54,7 @@ public class Translate : MonoBehaviour
 			return;
 		}
 		
-		isBeingHovered = mouseOver();
+		isBeingHovered = MouseOver();
 		main.hovering = isBeingHovered;
 
 		if (isBeingHovered && main.controls.Transform.Drag.IsPressed())
@@ -100,7 +100,7 @@ public class Translate : MonoBehaviour
 
 		if (isBeingDragged)
 		{
-			performDragging();
+			PerformDragging();
 			targetIntensity = main.draggingIntensity;
 			targetScale = main.draggingScale;
 		}
@@ -113,7 +113,7 @@ public class Translate : MonoBehaviour
 		lastBeingDragged = isBeingDragged;
 	}
 
-	bool mouseOver()
+	bool MouseOver()
 	{
 		// get world bounds and camera
 		Bounds bounds = objectRenderer.bounds;
@@ -161,7 +161,7 @@ public class Translate : MonoBehaviour
 		return inBounds;
 	}
 
-	void performDragging()
+	void PerformDragging()
 	{
 		Camera mainCamera = Camera.main;
 
