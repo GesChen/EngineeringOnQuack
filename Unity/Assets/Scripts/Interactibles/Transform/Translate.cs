@@ -14,8 +14,8 @@ public class Translate : MonoBehaviour
 
 	Color color;
 
-	float targetIntensity;
-	float smoothedIntensity;
+	Vector3 targetIntensity;
+	Vector3 smoothedIntensity;
 
 	float targetScale;
 
@@ -45,7 +45,7 @@ public class Translate : MonoBehaviour
 		if (axes != Vector3.one)
 			localAxes = main.transform.rotation * axes;
 		
-		if ((main.dragging || main.hovering) && !(isBeingHovered || isBeingDragged)) //skip processing if not needed
+		if (main.dragging && !(isBeingHovered || isBeingDragged)) //skip processing if not needed
 		{
 			transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
 			// scale out if mouse is moving slow enough 
@@ -106,9 +106,9 @@ public class Translate : MonoBehaviour
 		}
 
 		// handle actual lerping outside of if statement
-		smoothedIntensity = Mathf.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
+		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
 
-		mat.SetColor("_EmissiveColor", color * smoothedIntensity);
+		mat.SetColor("_EmissiveColor", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
 		transform.localScale = Vector3.Lerp(transform.localScale, targetScale * Vector3.one, main.scaleSmoothness); ;
 		lastBeingDragged = isBeingDragged;
 	}

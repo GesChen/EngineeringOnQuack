@@ -12,4 +12,8 @@ public class Tester : MonoBehaviour
 		Evaluator evaluator = GetComponent<Evaluator>();
 		Debug.Log(evaluator.Evaluate(interpreter.script.Lines[0], interpreter));
 	}
+	void Update()
+	{
+
+	}
 }
