@@ -4,9 +4,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
-public class RotateAxis : MonoBehaviour
+public class RotateView : MonoBehaviour
 { 
-	public Vector3 axis;
 	public float distance;
 
 	private TransformTools main;
@@ -31,7 +30,7 @@ public class RotateAxis : MonoBehaviour
 	float smoothedAlpha;
 
 	bool firstFrameAfterStartDrag;
-	Vector3 arbitrarySecondaryVectorOnPlane;
+	float angleOffset;
 	Quaternion targetStartRotation;
 
 	void Awake()
@@ -75,8 +74,8 @@ public class RotateAxis : MonoBehaviour
 	bool MouseOver()
 	{
 		// get screen point positions of all sample points
-		Vector2[] screenPointPositions = new Vector2[36];
-		for (int i = 0; i < 36; i++)
+		Vector2[] screenPointPositions = new Vector2[18];
+		for (int i = 0; i < 18; i++)
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
@@ -154,6 +153,7 @@ public class RotateAxis : MonoBehaviour
 		smoothedOutset = Mathf.Lerp(smoothedOutset, targetOutset, main.scaleSmoothness);
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
 
+		transform.rotation = Camera.main.transform.rotation;
 		// rotation uses a different emission system
 		mat.SetColor("_Color", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
 		mat.SetFloat("_Alpha", smoothedAlpha);
@@ -163,38 +163,19 @@ public class RotateAxis : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		Vector3 planePos = transform.position;
-		Vector3 planeNormal = (main.transform.rotation * axis).normalized;
+		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
 
-		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		mouseScreenSpace.z = Camera.main.nearClipPlane;
+		Vector3 normal = Camera.main.transform.rotation * Vector3.forward;
 
-		Vector3 cameraPos = Camera.main.transform.position;
-		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
-
-		Quaternion planeRotation = Quaternion.LookRotation(planeNormal);
-		Debug.DrawRay(planePos, planeNormal, Color.blue);
-		Debug.DrawRay(planePos, planeRotation * Vector3.right * 5, Color.red);
-		Debug.DrawRay(planePos, planeRotation * Vector3.left  * 5, Color.red);
-		Debug.DrawRay(planePos, planeRotation * Vector3.up    * 5, Color.green);
-		Debug.DrawRay(planePos, planeRotation * Vector3.down  * 5, Color.green);
-
-		Debug.DrawRay(cameraPos, cameraVec * 50, Color.white, 0, true);
-
-		Vector3 planeHitPos = TransformTools.RayPlaneIntersect(
-			planePos, planeNormal, cameraPos, cameraVec);
-
-		DebugExtra.DrawEmpty(planeHitPos, .1f);
+		float angle = -Vector2.SignedAngle(mousePos - (Vector2) Camera.main.WorldToScreenPoint(transform.position), Vector2.right);
 
 		if (firstFrameAfterStartDrag)
 		{
 			targetStartRotation = main.target.rotation;
-			arbitrarySecondaryVectorOnPlane = (planePos - planeHitPos).normalized;
+			angleOffset = angle;
 		}
-		float angle = 180 + Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal);
 
-		transform.localRotation = Quaternion.AngleAxis(angle, axis);
-		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle, Quaternion.Inverse(targetStartRotation) * planeNormal);
+		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
 
 		firstFrameAfterStartDrag = false;
 	}
