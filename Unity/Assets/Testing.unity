@@ -991,6 +991,8 @@ MonoBehaviour:
   draggingScale: 1.2
   draggingOutset: 0.03
   draggingAlpha: 0.05
+  axisIndicator: {fileID: 0}
+  axisIndicatorAlpha: 0
   hovering: 0
   dragging: 0
 --- !u!1 &619581808
@@ -3179,6 +3181,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3433590856885598324}
+  - {fileID: 8781215593876971617}
   - {fileID: 8981095343528911395}
   - {fileID: 5285117451814049010}
   - {fileID: 5100609679988229782}
@@ -3721,6 +3724,24 @@ GameObject:
   - component: {fileID: 6496505406766981413}
   m_Layer: 0
   m_Name: freeviewpoint_.004
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &1683989046866768976
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8781215593876971617}
+  - component: {fileID: 8043425737519464981}
+  - component: {fileID: 5049673444448193679}
+  m_Layer: 0
+  m_Name: AxisIndicator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4870,6 +4891,48 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!23 &5049673444448193679
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683989046866768976}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 257
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 36179b61ca864c94a8b08c8ada1ec76f, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!4 &5100609679988229782
 Transform:
   m_ObjectHideFlags: 0
@@ -5785,6 +5848,14 @@ MonoBehaviour:
   axes: {x: 0, y: 0, z: 1}
   localAxes: {x: 0, y: 0, z: 0}
   doDynamicBoundsOffset: 0
+--- !u!33 &8043425737519464981
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683989046866768976}
+  m_Mesh: {fileID: 2534964839176971238, guid: 4aca8b63fada9094c8d72e4518556751, type: 3}
 --- !u!1 &8091933286562609778
 GameObject:
   m_ObjectHideFlags: 0
@@ -5934,6 +6005,21 @@ MonoBehaviour:
   axes: {x: 1, y: 1, z: 0}
   localAxes: {x: 0, y: 0, z: 0}
   doDynamicBoundsOffset: 1
+--- !u!4 &8781215593876971617
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683989046866768976}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2121171698}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8820512431795184594
 GameObject:
   m_ObjectHideFlags: 0

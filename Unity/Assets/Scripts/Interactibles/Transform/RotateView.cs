@@ -64,6 +64,7 @@ public class RotateView : MonoBehaviour
 			StopClicking();
 
 		UpdateVisuals();
+		AxisIndicator();
 
 		PerformRotating();
 
@@ -158,6 +159,13 @@ public class RotateView : MonoBehaviour
 		mat.SetColor("_Color", color * smoothedIntensity);
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
+	}
+	void AxisIndicator()
+	{
+		if (dragging)
+		{
+			main.axisIndicator.rotation = transform.rotation;
+		}
 	}
 	void PerformRotating()
 	{

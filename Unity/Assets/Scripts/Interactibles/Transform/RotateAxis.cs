@@ -65,6 +65,7 @@ public class RotateAxis : MonoBehaviour
 			StopClicking();
 
 		UpdateVisuals();
+		AxisIndicator();
 
 		PerformRotating();
 
@@ -158,6 +159,13 @@ public class RotateAxis : MonoBehaviour
 		mat.SetColor("_Color", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
+	}
+	void AxisIndicator()
+	{
+		if (dragging)
+		{
+			main.axisIndicator.rotation = Quaternion.LookRotation(axis, transform.forward);
+		}
 	}
 	void PerformRotating()
 	{

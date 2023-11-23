@@ -36,7 +36,10 @@ public class TransformTools : MonoBehaviour
 	public float draggingScale = 1.2f;
 	public float draggingOutset = .07f;
 	public float draggingAlpha = .01f;
-
+	[Space]
+	public Transform axisIndicator;
+	public float axisIndicatorAlpha;
+	[Space]
 	public bool hovering;
 	public bool dragging;
 
