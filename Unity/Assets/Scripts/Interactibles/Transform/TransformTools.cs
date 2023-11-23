@@ -5,6 +5,7 @@ using UnityEngine;
 public class TransformTools : MonoBehaviour
 {
 	public Transform target;
+	public bool local;
 	public float size;
 	public float boundsOffset;
 	public float maxMouseSpeedToScaleOut;
@@ -16,21 +17,25 @@ public class TransformTools : MonoBehaviour
 
 	[Header("Default")]
 	public Vector3 defaultIntensity = Vector3.one;
+	public float defaultWhiteIntensity = 1f;
 	public float defaultOutset = .04f;
 	public float defaultDistance = 10f;
 	public float defaultAlpha = .85f;
 
 	[Header("On Hover")]
-	public Vector3 hoverIntensity = new Vector3(2, 3, 5);
+	public Vector3 hoverIntensity = new(2, 3, 5);
+	public float hoverWhiteIntensity = 2f;
 	public float hoverScale = 1.3f;
 	public float hoverOutset = .08f;
 	public float hoverDistance = 15f;
 	public float notHoveredAlpha = .5f;
 
 	[Header("On Drag")]
-	public Vector3 draggingIntensity = new Vector3(3, 4, 6);
+	public Vector3 draggingIntensity = new(3, 4, 6);
+	public float draggingWhiteIntensity = 3f;
 	public float draggingScale = 1.2f;
 	public float draggingOutset = .07f;
+	public float draggingAlpha = .01f;
 
 	public bool hovering;
 	public bool dragging;
@@ -43,8 +48,7 @@ public class TransformTools : MonoBehaviour
 	}
 	void OnEnable()
 	{
-		if (controls == null)
-			controls = new InputMaster();
+		controls ??= new InputMaster();
 		controls.Enable();
 	}
 	void OnDisable()
@@ -56,6 +60,10 @@ public class TransformTools : MonoBehaviour
 	{
 		if (!dragging)
 			transform.localScale = Vector3.Distance(Camera.main.transform.position, target.position) * size * Vector3.one;
+		if (local && !dragging)
+			transform.rotation = target.rotation;
+		else if (!local)
+			transform.rotation = Quaternion.identity;
 	}
 	
 	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
@@ -75,7 +83,7 @@ public class TransformTools : MonoBehaviour
 			return Vector3.zero;
 		}
 		float t1 = (b * e - c * d) / denom;
-		float t2 = (a * e - b * d) / denom;
+		//float t2 = (a * e - b * d) / denom;
 
 		return linePoint1 + t1 * -lineVec1;
 		//closestPoint2 = p2 + t2 * v2;

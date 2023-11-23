@@ -22,8 +22,8 @@ public class RotateView : MonoBehaviour
 	bool hovering;
 	bool dragging;
 
-	Vector3 targetIntensity;
-	Vector3 smoothedIntensity;
+	float targetIntensity;
+	float smoothedIntensity;
 	float targetOutset;
 	float smoothedOutset;
 	float targetAlpha;
@@ -39,7 +39,7 @@ public class RotateView : MonoBehaviour
 		mat = GetComponent<MeshRenderer>().material;
 		color = mat.color;
 
-		targetIntensity = main.defaultIntensity;
+		targetIntensity = main.defaultWhiteIntensity;
 		targetOutset = main.defaultOutset;
 		targetAlpha = main.defaultAlpha;
 
@@ -79,7 +79,7 @@ public class RotateView : MonoBehaviour
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		float mouseToCircleDistance = PointToPolygonEdgeDistance(mousePos, screenPointPositions);
+		float mouseToCircleDistance = HelperFunctions.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
 	void StartOver()
@@ -89,7 +89,7 @@ public class RotateView : MonoBehaviour
 			hovering = true;
 			main.hovering = true;
 
-			targetIntensity = main.hoverIntensity;
+			targetIntensity = main.hoverWhiteIntensity;
 			targetOutset = main.hoverOutset;
 			mat.SetFloat("_TransparentSortPriority", 1);
 			HDMaterial.ValidateMaterial(mat);
@@ -102,7 +102,7 @@ public class RotateView : MonoBehaviour
 			hovering = false;
 			main.hovering = false;
 
-			targetIntensity = main.defaultIntensity;
+			targetIntensity = main.defaultWhiteIntensity;
 			targetOutset = main.defaultOutset;
 			mat.SetFloat("_TransparentSortPriority", 0);
 			HDMaterial.ValidateMaterial(mat);
@@ -115,7 +115,7 @@ public class RotateView : MonoBehaviour
 			dragging = true;
 			main.dragging = true;
 
-			targetIntensity = main.draggingIntensity;
+			targetIntensity = main.draggingWhiteIntensity;
 			targetOutset = main.draggingOutset;
 
 			firstFrameAfterStartDrag = true;
@@ -131,31 +131,31 @@ public class RotateView : MonoBehaviour
 		{
 			hovering = true;
 			main.hovering = true;
-			targetIntensity = main.hoverIntensity;
+			targetIntensity = main.hoverWhiteIntensity;
 			targetOutset = main.hoverOutset;
 		}
 		else
 		{
 			hovering = false;
 			main.hovering = false;
-			targetIntensity = main.defaultIntensity;
+			targetIntensity = main.defaultWhiteIntensity;
 			targetOutset = main.defaultOutset;
 		}
 	}
 	void UpdateVisuals()
 	{
-		if (main.dragging && !dragging) targetAlpha = 0;
+		if (main.dragging && !dragging) targetAlpha = main.draggingAlpha;
 		else if (main.hovering && !hovering) targetAlpha = main.notHoveredAlpha;
 		else targetAlpha = main.defaultAlpha;
 		
 		// smoothing, can use different fucntions
-		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
+		smoothedIntensity = Mathf.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
 		smoothedOutset = Mathf.Lerp(smoothedOutset, targetOutset, main.scaleSmoothness);
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
 
 		transform.rotation = Camera.main.transform.rotation;
 		// rotation uses a different emission system
-		mat.SetColor("_Color", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
+		mat.SetColor("_Color", color * smoothedIntensity);
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
 	}
@@ -179,42 +179,5 @@ public class RotateView : MonoBehaviour
 
 		firstFrameAfterStartDrag = false;
 	}
-	float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
-	{
-		float minDistance = float.MaxValue;
-
-		for (int i = 0; i < polygonVertices.Length; i++)
-		{
-			Vector2 p1 = polygonVertices[i];
-			Vector2 p2 = polygonVertices[(i + 1) % polygonVertices.Length];
 	
-			float distance = PointToLineSegmentDistance(point, p1, p2);
-
-			if (distance < minDistance)
-			{
-				minDistance = distance;
-			}
-		}
-
-		return minDistance;
-	}
-
-	float PointToLineSegmentDistance(Vector2 point, Vector2 p1, Vector2 p2)
-	{
-		Vector2 v = p2 - p1;
-		Vector2 w = point - p1;
-
-		float c1 = Vector2.Dot(w, v);
-		if (c1 <= 0)
-			return Vector2.Distance(point, p1);
-
-		float c2 = Vector2.Dot(v, v);
-		if (c2 <= c1)
-			return Vector2.Distance(point, p2);
-
-		float b = c1 / c2;
-		Vector2 pb = p1 + b * v;
-
-		return Vector2.Distance(point, pb);
-	}
 }

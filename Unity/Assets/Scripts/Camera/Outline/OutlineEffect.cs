@@ -27,7 +27,7 @@ public class OutlineEffect : MonoBehaviour
         OutlineCamera.cullingMask = 1 << LayerMask.NameToLayer("Outline");
 
         //make the temporary rendertexture
-        RenderTexture TempRT = new RenderTexture(source.width, source.height, 0, RenderTextureFormat.R8);
+        RenderTexture TempRT = new(source.width, source.height, 0, RenderTextureFormat.R8);
 
         //put it to video memory
         TempRT.Create();
