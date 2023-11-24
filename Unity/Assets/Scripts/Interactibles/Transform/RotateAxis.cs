@@ -65,7 +65,6 @@ public class RotateAxis : MonoBehaviour
 			StopClicking();
 
 		UpdateVisuals();
-		AxisIndicator();
 
 		PerformRotating();
 
@@ -120,13 +119,18 @@ public class RotateAxis : MonoBehaviour
 			targetIntensity = main.draggingIntensity;
 			targetOutset = main.draggingOutset;
 
+			main.axisIndicator.inUse = true;
+			main.axisIndicator.rotation = main.transform.rotation * Quaternion.LookRotation(axis, Vector3.up);
+			main.axisIndicator.color = mat.color;
+
 			firstFrameAfterStartDrag = true;
 		}
 	}
 	void StopClicking()
 	{
 		if (!dragging) return;
-		
+
+		main.axisIndicator.inUse = false;
 		dragging = false;
 		main.dragging = false;
 		if (over)
@@ -160,13 +164,6 @@ public class RotateAxis : MonoBehaviour
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
 	}
-	void AxisIndicator()
-	{
-		if (dragging)
-		{
-			main.axisIndicator.rotation = Quaternion.LookRotation(axis, transform.forward);
-		}
-	}
 	void PerformRotating()
 	{
 		if (!dragging) return;
@@ -199,7 +196,8 @@ public class RotateAxis : MonoBehaviour
 			targetStartRotation = main.target.rotation;
 			arbitrarySecondaryVectorOnPlane = (planePos - planeHitPos).normalized;
 		}
-		float angle = 180 + Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal);
+		float angle = Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal) - 180;
+		Debug.Log(angle);
 
 		transform.localRotation = Quaternion.AngleAxis(angle, axis);
 		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle, Quaternion.Inverse(targetStartRotation) * planeNormal);

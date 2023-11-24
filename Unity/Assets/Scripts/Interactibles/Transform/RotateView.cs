@@ -64,7 +64,6 @@ public class RotateView : MonoBehaviour
 			StopClicking();
 
 		UpdateVisuals();
-		AxisIndicator();
 
 		PerformRotating();
 
@@ -119,13 +118,18 @@ public class RotateView : MonoBehaviour
 			targetIntensity = main.draggingWhiteIntensity;
 			targetOutset = main.draggingOutset;
 
+			main.axisIndicator.inUse = true;
+			main.axisIndicator.rotation = transform.rotation;
+			main.axisIndicator.color = Color.white;
+
 			firstFrameAfterStartDrag = true;
 		}
 	}
 	void StopClicking()
 	{
 		if (!dragging) return;
-		
+
+		main.axisIndicator.inUse = false;
 		dragging = false;
 		main.dragging = false;
 		if (over)
@@ -160,13 +164,6 @@ public class RotateView : MonoBehaviour
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
 	}
-	void AxisIndicator()
-	{
-		if (dragging)
-		{
-			main.axisIndicator.rotation = transform.rotation;
-		}
-	}
 	void PerformRotating()
 	{
 		if (!dragging) return;
@@ -184,7 +181,7 @@ public class RotateView : MonoBehaviour
 		}
 
 		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
-
+		main.axisIndicator.rotation = transform.rotation;
 		firstFrameAfterStartDrag = false;
 	}
 	

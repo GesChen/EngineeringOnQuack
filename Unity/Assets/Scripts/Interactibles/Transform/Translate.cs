@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 
 public class Translate : MonoBehaviour
 {
@@ -12,18 +13,24 @@ public class Translate : MonoBehaviour
 	private Material mat;
 	private Renderer objectRenderer;
 
+	bool over;
+	bool lastOver;
+	bool mouseDown;
+	bool lastMouseDown;
+	bool lastMainHovering;
+	bool hovering;
+	bool dragging;
+
 	Color color;
 
 	Vector3 targetIntensity;
 	Vector3 smoothedIntensity;
-
 	float targetScale;
+	float smoothedScale;
+	float targetAlpha;
+	float smoothedAlpha;
 
-	bool isBeingHovered;
-	bool isBeingDragged;
-	bool lastBeingDragged;
 	Vector3 dragStartPos;
-
 	float distance;
 	Vector2 mouseOffset;
 
@@ -36,7 +43,7 @@ public class Translate : MonoBehaviour
 
 		targetIntensity = main.defaultIntensity;
 		smoothedIntensity = main.defaultIntensity;
-
+		targetAlpha = main.defaultAlpha;
 		targetScale = 1f;
 	}
 
@@ -44,75 +51,29 @@ public class Translate : MonoBehaviour
 	{
 		if (axes != Vector3.one)
 			localAxes = main.transform.rotation * axes;
-		
-		if (main.dragging && !(isBeingHovered || isBeingDragged)) //skip processing if not needed
-		{
-			transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
-			// scale out if mouse is moving slow enough 
-			if (main.controls.Transform.MouseDelta.ReadValue<Vector2>().sqrMagnitude < Mathf.Pow(main.maxMouseSpeedToScaleOut, 2))
-				transform.localScale = Vector3.Lerp(transform.localScale, Vector3.zero, main.scaleSmoothness);
-			return;
-		}
-		
-		isBeingHovered = MouseOver();
-		main.hovering = isBeingHovered;
 
-		if (isBeingHovered && main.controls.Transform.Drag.IsPressed())
-		{
-			isBeingDragged = true;
-			main.dragging = true;
-		}
-		// handle transition if in bounds
-		if (isBeingHovered)
-		{
-			targetIntensity = main.hoverIntensity;
-			targetScale = main.hoverScale;
-		}
-		else
-		{
-			targetIntensity = main.defaultIntensity;
-			targetScale = 1;
-		}
-			
-		if (!main.controls.Transform.Drag.IsPressed())
-		{
-			isBeingDragged = false;
-			main.dragging = false;
-		}
+		over = MouseOver();
+		mouseDown = main.controls.Transform.Drag.IsPressed();
 
-		// hand drag state changes
-		if (isBeingDragged != lastBeingDragged)
-		{
-			// start drag
-			if (isBeingDragged)
-			{
-				mouseOffset = main.controls.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
-				distance = Vector3.Distance(transform.position, Camera.main.transform.position);
-				dragStartPos = main.transform.position;
-			}
-			// end drag
-			else if (!isBeingDragged)
-			{
-				main.transform.position = main.target.position;
-				transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
-			}
-		}
+		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
+		if ((over != lastOver || specialAfterReleaseCase) && over)
+			StartOver();
+		else if (over != lastOver && !over)
+			StopOver();
 
-		if (isBeingDragged)
-		{
-			PerformDragging();
-			targetIntensity = main.draggingIntensity;
-			targetScale = main.draggingScale;
-		}
+		if (mouseDown != lastMouseDown && mouseDown)
+			StartClicking();
+		else if (mouseDown != lastMouseDown && !mouseDown)
+			StopClicking();
 
-		// handle actual lerping outside of if statement
-		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
+		UpdateVisuals();
 
-		mat.SetColor("_EmissiveColor", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
-		transform.localScale = Vector3.Lerp(transform.localScale, targetScale * Vector3.one, main.scaleSmoothness); ;
-		lastBeingDragged = isBeingDragged;
+		PerformDragging();
+
+		lastOver = over;
+		lastMouseDown = mouseDown;
+		lastMainHovering = main.hovering;
 	}
-
 	bool MouseOver()
 	{
 		// get world bounds and camera
@@ -160,9 +121,93 @@ public class Translate : MonoBehaviour
 		}
 		return inBounds;
 	}
+	void StartOver()
+	{
+		if (!main.hovering && !dragging)
+		{
+			hovering = true;
+			main.hovering = true;
 
+			targetIntensity = main.hoverIntensity;
+			targetScale = main.hoverScale;
+			mat.SetFloat("_TransparentSortPriority", 1);
+			HDMaterial.ValidateMaterial(mat);
+		}
+	}
+	void StopOver()
+	{
+		if (hovering && !dragging)
+		{
+			hovering = false;
+			main.hovering = false;
+
+			targetIntensity = main.defaultIntensity;
+			targetScale = 1f;
+			mat.SetFloat("_TransparentSortPriority", 0);
+			HDMaterial.ValidateMaterial(mat);
+		}
+	}
+	void StartClicking()
+	{
+		if (hovering)
+		{
+			dragging = true;
+			main.dragging = true;
+
+			targetIntensity = main.draggingIntensity;
+			targetScale = main.draggingScale;
+
+			// axis indicator code here if going to use 
+
+			mouseOffset = main.controls.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
+			distance = Vector3.Distance(transform.position, Camera.main.transform.position);
+			dragStartPos = main.transform.position;
+		}
+	}
+	void StopClicking()
+	{
+		if (!dragging) return;
+
+		main.transform.position = main.target.position;
+		transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
+
+		dragging = false;
+		main.dragging = false;
+		if (over)
+		{
+			hovering = true;
+			main.hovering = true;
+			targetIntensity = main.hoverIntensity;
+			targetScale = main.hoverScale;
+		}
+		else
+		{
+			hovering = false;
+			main.hovering = false;
+			targetIntensity = main.defaultIntensity;
+			targetScale = 1f;
+		}
+	}
+	void UpdateVisuals()
+	{
+		if (main.dragging && !dragging) targetAlpha = main.draggingAlpha;
+		else if (main.hovering && !hovering) targetAlpha = main.notHoveredAlpha;
+		else targetAlpha = main.defaultAlpha;
+
+		// smoothing, can use different fucntions
+		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
+		smoothedScale = Mathf.Lerp(smoothedScale, targetScale, main.scaleSmoothness);
+		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
+
+		mat.SetColor("_EmissiveColor", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
+		mat.color = new(color.r, color.g, color.b, smoothedAlpha);
+		//mat.SetFloat("_Alpha", smoothedAlpha);
+		transform.localScale = smoothedScale * Vector3.one;
+	}
 	void PerformDragging()
 	{
+		if (!dragging) return;
+
 		Camera mainCamera = Camera.main;
 
 		int numaxes = (int)(axes.x + axes.y + axes.z);
