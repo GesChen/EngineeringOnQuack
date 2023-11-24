@@ -122,6 +122,7 @@ public class RotateAxis : MonoBehaviour
 			main.axisIndicator.inUse = true;
 			main.axisIndicator.rotation = main.transform.rotation * Quaternion.LookRotation(axis, Vector3.up);
 			main.axisIndicator.color = mat.color;
+			main.axisIndicator.transform.position = transform.position;
 
 			firstFrameAfterStartDrag = true;
 		}

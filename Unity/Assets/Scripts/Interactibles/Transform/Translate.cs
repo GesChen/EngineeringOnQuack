@@ -70,6 +70,8 @@ public class Translate : MonoBehaviour
 
 		PerformDragging();
 
+		UseAxisIndicator();
+
 		lastOver = over;
 		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
@@ -171,6 +173,9 @@ public class Translate : MonoBehaviour
 		main.transform.position = main.target.position;
 		transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
 
+		main.axisIndicator.inUse = false;
+		main.axisIndicator.transform.localScale = new(.015f, .015f, 2f);
+
 		dragging = false;
 		main.dragging = false;
 		if (over)
@@ -237,5 +242,16 @@ public class Translate : MonoBehaviour
 
 		// move target with direction
 		main.target.transform.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+	}
+	void UseAxisIndicator()
+	{
+		if (dragging && (axes.x + axes.y + axes.z) == 1)
+		{
+			main.axisIndicator.inUse = true;
+			main.axisIndicator.color = color;
+			main.axisIndicator.transform.position = (transform.position + dragStartPos) / 2;
+			main.axisIndicator.transform.localScale = new(.015f, .015f, (transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
+			main.axisIndicator.rotation = Quaternion.LookRotation(axes, transform.up);
+		}
 	}
 }
