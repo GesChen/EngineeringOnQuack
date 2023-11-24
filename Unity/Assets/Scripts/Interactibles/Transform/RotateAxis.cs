@@ -195,9 +195,11 @@ public class RotateAxis : MonoBehaviour
 		if (firstFrameAfterStartDrag)
 		{
 			targetStartRotation = main.target.rotation;
-			arbitrarySecondaryVectorOnPlane = (planePos - planeHitPos).normalized;
+			arbitrarySecondaryVectorOnPlane = planeHitPos;
 		}
-		float angle = Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal) - 180;
+		float angle = Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal);
+		DebugExtra.DrawPoint(arbitrarySecondaryVectorOnPlane, Color.red);
+		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue);
 		Debug.Log(angle);
 
 		transform.localRotation = Quaternion.AngleAxis(angle, axis);

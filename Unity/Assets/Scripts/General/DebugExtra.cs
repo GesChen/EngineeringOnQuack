@@ -65,26 +65,38 @@ public class DebugExtra : MonoBehaviour
 		Vector3 pz = pos + size * Vector3.forward;
 		Vector3 nz = pos + size * Vector3.back;
 
-		Debug.DrawLine(px, nx, color);
 		Debug.DrawLine(px, py, color);
 		Debug.DrawLine(px, ny, color);
 		Debug.DrawLine(px, pz, color);
 		Debug.DrawLine(px, nz, color);
 
-		Debug.DrawLine(nx, nx, color);
 		Debug.DrawLine(nx, py, color);
 		Debug.DrawLine(nx, ny, color);
 		Debug.DrawLine(nx, pz, color);
 		Debug.DrawLine(nx, nz, color);
+		
+		Debug.DrawLine(px, nx, color);
+		Debug.DrawLine(py, ny, color);
+		Debug.DrawLine(pz, nz, color);
+
+		Debug.DrawLine(py, pz, color);
+		Debug.DrawLine(py, nz, color);
+		Debug.DrawLine(ny, pz, color);
+		Debug.DrawLine(ny, nz, color);
 	}
 	public static void DrawPoint(Vector3 pos, float size)
 	{
 		DrawPoint(pos, size, Color.white);
 	}
+	public static void DrawPoint(Vector3 pos, Color color)
+	{
+		DrawPoint(pos, .1f, color);
+	}
 	public static void DrawPoint(Vector3 pos)
 	{
 		DrawPoint(pos, .1f);
 	}
+
 
 	public static void DrawGrid(Vector3 pos, Vector3 normal, int gridSize, int cellSize)
 	{
