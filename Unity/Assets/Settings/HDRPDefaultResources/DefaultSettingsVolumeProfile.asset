@@ -77,54 +77,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaa3b8214f75b354e9ba2caadd022259, type: 3}
   m_Name: DepthOfField
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   quality:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   focusMode:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 2
   focusDistance:
-    m_OverrideState: 0
-    m_Value: 9.22
+    m_OverrideState: 1
+    m_Value: 30.1
   focusDistanceMode:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   nearFocusStart:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   nearFocusEnd:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 9.99999
   farFocusStart:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 10
   farFocusEnd:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 20
   m_NearSampleCount:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 5
   m_NearMaxBlur:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 4
   m_FarSampleCount:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 7
   m_FarMaxBlur:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 8
   m_Resolution:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 2
   m_HighQualityFiltering:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   m_PhysicallyBased:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   m_LimitManualRangeNearBlur:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
 --- !u!114 &-5245666159142049531
 MonoBehaviour:
@@ -253,7 +253,6 @@ MonoBehaviour:
   - {fileID: 448115243408767295}
   - {fileID: -7089757308646879465}
   - {fileID: -8500501345142028434}
-  - {fileID: -2283267511157543123}
   - {fileID: -5967898119623030959}
 --- !u!114 &448115243408767295
 MonoBehaviour:

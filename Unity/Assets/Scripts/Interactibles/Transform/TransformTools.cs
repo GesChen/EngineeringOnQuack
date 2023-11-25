@@ -14,6 +14,13 @@ public class TransformTools : MonoBehaviour
 	public float intensitySmoothness = .3f;
 	public float scaleSmoothness = .3f;
 	public float alphaSmoothness = .1f;
+	public float moveSmoothness = .3f;
+
+	[Header("Customization")]
+	public float scaleAxesDistDefault = 1f;
+	public float scaleAxesDistWOthers = 1.4f;
+	public float scaleAxesScaleOffsetWithTransform = -.3f;
+	public float fullScaleFactor = .01f;
 
 	[Header("Default")]
 	public Vector3 defaultIntensity = Vector3.one;
@@ -45,6 +52,11 @@ public class TransformTools : MonoBehaviour
 	[Header("Debug")]
 	public bool hovering;
 	public bool dragging;
+	public bool specialCenterCase;
+	[Space]
+	public bool translating;
+	public bool rotating;
+	public bool scaling;
 
 	[HideInInspector] public InputMaster controls;
 
@@ -66,47 +78,10 @@ public class TransformTools : MonoBehaviour
 	{
 		if (!dragging)
 			transform.localScale = Vector3.Distance(Camera.main.transform.position, target.position) * size * Vector3.one;
+		
 		if (local && !dragging)
 			transform.rotation = target.rotation;
 		else if (!local)
 			transform.rotation = Quaternion.identity;
-	}
-	
-	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
-	{
-		Vector3 deltaP = linePoint2 - linePoint1;
-		float a = Vector3.Dot(lineVec1, lineVec1);
-		float b = Vector3.Dot(lineVec1, lineVec2);
-		float c = Vector3.Dot(lineVec2, lineVec2);
-		float d = Vector3.Dot(lineVec1, deltaP);
-		float e = Vector3.Dot(lineVec2, deltaP);
-
-		float denom = a * c - b * b;
-
-		if (denom == 0)
-		{
-			// Lines are parallel
-			return Vector3.zero;
-		}
-		float t1 = (b * e - c * d) / denom;
-		//float t2 = (a * e - b * d) / denom;
-
-		return linePoint1 + t1 * -lineVec1;
-		//closestPoint2 = p2 + t2 * v2;
-	}
-	public static Vector3 RayPlaneIntersect(Vector3 planePoint, Vector3 planeNormal, Vector3 rayOrigin, Vector3 rayDirection)
-	{
-		float t = Vector3.Dot(planeNormal, planePoint - rayOrigin) / Vector3.Dot(planeNormal, rayDirection);
-		Vector3 intersectionPoint = rayOrigin + t * rayDirection;
-
-		float epsilon = 0.0001f;
-		if (t < epsilon)
-			return Vector3.zero;
-
-		return intersectionPoint;
-	}
-	public static Color MultiplyColorByVector(Vector3 vector, Color color)
-	{
-		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 }

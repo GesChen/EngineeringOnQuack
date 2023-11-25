@@ -1,9 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using UnityEditor.Timeline;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class DebugExtra : MonoBehaviour
 {

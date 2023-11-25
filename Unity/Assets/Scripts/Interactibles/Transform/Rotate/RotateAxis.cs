@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
-public class RotateView : MonoBehaviour
+public class RotateAxis : MonoBehaviour
 { 
+	public Vector3 axis;
 	public float distance;
 
 	private TransformTools main;
@@ -22,15 +23,15 @@ public class RotateView : MonoBehaviour
 	bool hovering;
 	bool dragging;
 
-	float targetIntensity;
-	float smoothedIntensity;
+	Vector3 targetIntensity;
+	Vector3 smoothedIntensity;
 	float targetOutset;
 	float smoothedOutset;
 	float targetAlpha;
 	float smoothedAlpha;
 
 	bool firstFrameAfterStartDrag;
-	float angleOffset;
+	Vector3 arbitrarySecondaryVectorOnPlane;
 	Quaternion targetStartRotation;
 
 	void Awake()
@@ -39,7 +40,7 @@ public class RotateView : MonoBehaviour
 		mat = GetComponent<MeshRenderer>().material;
 		color = mat.color;
 
-		targetIntensity = main.defaultWhiteIntensity;
+		targetIntensity = main.defaultIntensity;
 		targetOutset = main.defaultOutset;
 		targetAlpha = main.defaultAlpha;
 
@@ -74,8 +75,8 @@ public class RotateView : MonoBehaviour
 	bool MouseOver()
 	{
 		// get screen point positions of all sample points
-		Vector2[] screenPointPositions = new Vector2[18];
-		for (int i = 0; i < 18; i++)
+		Vector2[] screenPointPositions = new Vector2[36];
+		for (int i = 0; i < 36; i++)
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
@@ -89,7 +90,7 @@ public class RotateView : MonoBehaviour
 			hovering = true;
 			main.hovering = true;
 
-			targetIntensity = main.hoverWhiteIntensity;
+			targetIntensity = main.hoverIntensity;
 			targetOutset = main.hoverOutset;
 			mat.SetFloat("_TransparentSortPriority", 1);
 			HDMaterial.ValidateMaterial(mat);
@@ -102,7 +103,7 @@ public class RotateView : MonoBehaviour
 			hovering = false;
 			main.hovering = false;
 
-			targetIntensity = main.defaultWhiteIntensity;
+			targetIntensity = main.defaultIntensity;
 			targetOutset = main.defaultOutset;
 			mat.SetFloat("_TransparentSortPriority", 0);
 			HDMaterial.ValidateMaterial(mat);
@@ -115,12 +116,13 @@ public class RotateView : MonoBehaviour
 			dragging = true;
 			main.dragging = true;
 
-			targetIntensity = main.draggingWhiteIntensity;
+			targetIntensity = main.draggingIntensity;
 			targetOutset = main.draggingOutset;
 
 			main.axisIndicator.inUse = true;
-			main.axisIndicator.rotation = transform.rotation;
-			main.axisIndicator.color = Color.white;
+			main.axisIndicator.rotation = main.transform.rotation * Quaternion.LookRotation(axis, Vector3.up);
+			main.axisIndicator.color = mat.color;
+			main.axisIndicator.transform.position = transform.position;
 
 			firstFrameAfterStartDrag = true;
 		}
@@ -136,14 +138,14 @@ public class RotateView : MonoBehaviour
 		{
 			hovering = true;
 			main.hovering = true;
-			targetIntensity = main.hoverWhiteIntensity;
+			targetIntensity = main.hoverIntensity;
 			targetOutset = main.hoverOutset;
 		}
 		else
 		{
 			hovering = false;
 			main.hovering = false;
-			targetIntensity = main.defaultWhiteIntensity;
+			targetIntensity = main.defaultIntensity;
 			targetOutset = main.defaultOutset;
 		}
 	}
@@ -154,13 +156,12 @@ public class RotateView : MonoBehaviour
 		else targetAlpha = main.defaultAlpha;
 		
 		// smoothing, can use different fucntions
-		smoothedIntensity = Mathf.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
+		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
 		smoothedOutset = Mathf.Lerp(smoothedOutset, targetOutset, main.scaleSmoothness);
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
 
-		transform.rotation = Camera.main.transform.rotation;
 		// rotation uses a different emission system
-		mat.SetColor("_Color", color * smoothedIntensity);
+		mat.SetColor("_Color", HelperFunctions.MultiplyColorByVector(smoothedIntensity, color));
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
 	}
@@ -168,21 +169,41 @@ public class RotateView : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector3 planePos = transform.position;
+		Vector3 planeNormal = (main.transform.rotation * axis).normalized;
 
-		Vector3 normal = Camera.main.transform.rotation * Vector3.forward;
+		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
-		float angle = -Vector2.SignedAngle(mousePos - (Vector2) Camera.main.WorldToScreenPoint(transform.position), Vector2.right);
+		Vector3 cameraPos = Camera.main.transform.position;
+		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
+
+		Quaternion planeRotation = Quaternion.LookRotation(planeNormal);
+		Debug.DrawRay(planePos, planeNormal, Color.blue);
+		Debug.DrawRay(planePos, planeRotation * Vector3.right * 5, Color.red);
+		Debug.DrawRay(planePos, planeRotation * Vector3.left  * 5, Color.red);
+		Debug.DrawRay(planePos, planeRotation * Vector3.up    * 5, Color.green);
+		Debug.DrawRay(planePos, planeRotation * Vector3.down  * 5, Color.green);
+
+		Debug.DrawRay(cameraPos, cameraVec * 50, Color.white, 0, true);
+
+		Vector3 planeHitPos = HelperFunctions.RayPlaneIntersect(
+			planePos, planeNormal, cameraPos, cameraVec);
+
+		DebugExtra.DrawEmpty(planeHitPos, .1f);
 
 		if (firstFrameAfterStartDrag)
 		{
 			targetStartRotation = main.target.rotation;
-			angleOffset = angle;
+			arbitrarySecondaryVectorOnPlane = planeHitPos;
 		}
+		float angle = Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal);
+		DebugExtra.DrawPoint(arbitrarySecondaryVectorOnPlane, Color.red);
+		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue);
 
-		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
-		main.axisIndicator.rotation = transform.rotation;
+		transform.localRotation = Quaternion.AngleAxis(angle, axis);
+		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle, Quaternion.Inverse(targetStartRotation) * planeNormal);
+
 		firstFrameAfterStartDrag = false;
 	}
-	
 }

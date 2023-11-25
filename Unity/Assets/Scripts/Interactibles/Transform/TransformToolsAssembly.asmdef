@@ -1,0 +1,18 @@
+{
+    "name": "TransformToolsAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:457756d89b35d2941b3e7b37b4ece6f1",
+        "GUID:1b37b5d0dc8a2c147bc43b3e56ad8620"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

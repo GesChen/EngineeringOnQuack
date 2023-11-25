@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
-public class Translate : MonoBehaviour
+public class Scale : MonoBehaviour
 {
-	public Vector3 axes;
+	public Vector3 axis;
+	public bool full;
 	[HideInInspector] public Vector3 localAxes;
-	public bool doDynamicBoundsOffset;
 
 	private TransformTools main;
 	private Material mat;
@@ -31,8 +31,9 @@ public class Translate : MonoBehaviour
 	float smoothedAlpha;
 
 	Vector3 dragStartPos;
-	float distance;
+	Vector2 dragStartMousePos;
 	Vector2 mouseOffset;
+	Vector3 startScale;
 
 	void Awake()
 	{
@@ -49,10 +50,9 @@ public class Translate : MonoBehaviour
 
 	void Update()
 	{
-		if (axes != Vector3.one)
-			localAxes = main.transform.rotation * axes;
+		localAxes = main.transform.rotation * axis;
 
-		over = MouseOver();
+		over = MouseOver() && !main.specialCenterCase;
 		mouseDown = main.controls.Transform.Drag.IsPressed();
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
@@ -68,7 +68,10 @@ public class Translate : MonoBehaviour
 
 		UpdateVisuals();
 
-		PerformDragging();
+		if (full)
+			PerformScalingFull();
+		else
+			PerformScalingAxis();
 
 		UseAxisIndicator();
 
@@ -104,23 +107,8 @@ public class Translate : MonoBehaviour
 		}
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		bool inBounds;
-
-		// dynamic bounds offset
-		if (doDynamicBoundsOffset)
-		{
-			float dot = Vector3.Dot(Vector3.one - localAxes, Camera.main.transform.forward);
-			float dynamicOffset = -((1 - dot) * 2 - 1) * main.boundsOffset;
-
-			inBounds = mousePos.x >= minScreen.x + dynamicOffset && mousePos.x <= maxScreen.x - dynamicOffset &&
-						mousePos.y >= minScreen.y + dynamicOffset && mousePos.y <= maxScreen.y - dynamicOffset;
-		}
-		else
-		{
-			// determine if mouse is inside ss bounds
-			inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
+		bool inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
 						mousePos.y >= minScreen.y + main.boundsOffset && mousePos.y <= maxScreen.y - main.boundsOffset;
-		}
 		return inBounds;
 	}
 	void StartOver()
@@ -161,9 +149,10 @@ public class Translate : MonoBehaviour
 
 			// axis indicator code here if going to use 
 
-			mouseOffset = main.controls.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
-			distance = Vector3.Distance(transform.position, Camera.main.transform.position);
+			dragStartMousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			dragStartPos = main.transform.position;
+			startScale = main.target.localScale;
 		}
 	}
 	void StopClicking()
@@ -171,7 +160,6 @@ public class Translate : MonoBehaviour
 		if (!dragging) return;
 
 		main.transform.position = main.target.position;
-		transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
 
 		main.axisIndicator.inUse = false;
 		main.axisIndicator.transform.localScale = new(.015f, .015f, 2f);
@@ -203,55 +191,55 @@ public class Translate : MonoBehaviour
 		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
 		smoothedScale = Mathf.Lerp(smoothedScale, targetScale, main.scaleSmoothness);
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
+		
+		if (!dragging) 
+			transform.localPosition = axis * ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault);
 
-		mat.SetColor("_EmissiveColor", TransformTools.MultiplyColorByVector(smoothedIntensity, color));
+		mat.SetColor("_EmissiveColor", HelperFunctions.MultiplyColorByVector(smoothedIntensity, color));
 		mat.color = new(color.r, color.g, color.b, smoothedAlpha);
 		//mat.SetFloat("_Alpha", smoothedAlpha);
 		transform.localScale = smoothedScale * Vector3.one;
 	}
-	void PerformDragging()
+	void PerformScalingAxis()
 	{
 		if (!dragging) return;
 
-		Camera mainCamera = Camera.main;
-
-		int numaxes = (int)(axes.x + axes.y + axes.z);
 		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
-		mouseScreenSpace.z = mainCamera.nearClipPlane;
+		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
-		Vector3 cameraPos = mainCamera.transform.position;
-		Vector3 cameraVec = mainCamera.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
+		Vector3 cameraPos = Camera.main.transform.position;
+		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
 
-		switch (numaxes)
-		{
-			case 1:
-				transform.position = TransformTools.ClosestPointAOnTwoLines(
-					dragStartPos, localAxes.normalized,
-					cameraPos, cameraVec.normalized); //alot of hacky stuff going on here that i dont understand
-				break;
-			case 2:
-				transform.position = TransformTools.RayPlaneIntersect(
-					dragStartPos, main.transform.rotation * (Vector3.one - axes),
-					cameraPos, cameraVec);
-				break;
-			case 3:
-				mouseScreenSpace.z = distance;
-				transform.position = mainCamera.ScreenToWorldPoint(mouseScreenSpace);
-				break;
-		};
+		Vector3 newPos = HelperFunctions.ClosestPointAOnTwoLines(
+			dragStartPos, localAxes.normalized,
+			cameraPos, cameraVec.normalized);
 
-		// move target with direction
-		main.target.transform.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+		transform.position = newPos;
+		float distance = transform.localPosition.magnitude;
+		float offset = ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault) - 1;
+
+		Vector3 keep = HelperFunctions.MV3(Vector3.one - axis, startScale);
+		Vector3 newScale = (distance * (1/(1+offset)) - 1) * axis;
+		main.target.transform.localScale = HelperFunctions.MV3(startScale, Vector3.one + newScale);
+	}
+	void PerformScalingFull()
+	{
+		if (!dragging) return;
+		
+		Vector2 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
+
+		float distance = (mouseScreenSpace - dragStartMousePos).magnitude;
+		main.target.localScale = startScale * distance * main.fullScaleFactor;
 	}
 	void UseAxisIndicator()
 	{
-		if (dragging && (axes.x + axes.y + axes.z) == 1)
+		if (dragging)
 		{
 			main.axisIndicator.inUse = true;
 			main.axisIndicator.color = color;
-			main.axisIndicator.transform.position = (transform.position + dragStartPos) / 2;
+			main.axisIndicator.transform.position = (main.target.position + dragStartPos) / 2;
 			main.axisIndicator.transform.localScale = new(.015f, .015f, (transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
-			main.axisIndicator.rotation = Quaternion.LookRotation(axes, transform.up);
+			main.axisIndicator.rotation = main.target.rotation * Quaternion.LookRotation(axis, transform.up);
 		}
 	}
 }
