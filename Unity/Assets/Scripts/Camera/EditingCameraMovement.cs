@@ -126,6 +126,6 @@ public class EditingCameraMovement : MonoBehaviour
 	}
 	float sumAxes(Vector3 v)
 	{
-		return v.x + v.y + v.z; //ayyy fellow blender nerd :D
+		return v.x + v.y + v.z;
 	}
 }
