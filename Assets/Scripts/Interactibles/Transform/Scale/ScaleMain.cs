@@ -14,6 +14,7 @@ public class ScaleMain : MonoBehaviour
         Y.enabled = main.scaling;
         Z.enabled = main.scaling;
         Full.enabled = main.scaling;
+        Full.gameObject.SetActive(!main.translating); // center conflicts 
 
         transform.localScale = main.scaling ? Vector3.one : Vector3.zero;
     }

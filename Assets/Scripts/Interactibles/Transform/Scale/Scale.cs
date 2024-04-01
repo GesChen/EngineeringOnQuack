@@ -233,7 +233,7 @@ public class Scale : MonoBehaviour
 	}
 	void UseAxisIndicator()
 	{
-		if (dragging)
+		if (dragging && !full)
 		{
 			main.axisIndicator.inUse = true;
 			main.axisIndicator.color = color;
