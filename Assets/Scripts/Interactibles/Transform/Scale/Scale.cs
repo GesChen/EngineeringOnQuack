@@ -1,7 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.UIElements;
 
 public class Scale : MonoBehaviour
 {
@@ -20,6 +19,8 @@ public class Scale : MonoBehaviour
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
+	float lastMouseDownTime;
+	bool resetting;
 
 	Color color;
 
@@ -32,6 +33,7 @@ public class Scale : MonoBehaviour
 
 	Vector3 dragStartPos;
 	Vector2 dragStartMousePos;
+	Vector2 dragStartSSPos;
 	Vector2 mouseOffset;
 	Vector3 startScale;
 
@@ -55,13 +57,17 @@ public class Scale : MonoBehaviour
 		over = MouseOver() && !main.specialCenterCase;
 		mouseDown = main.controls.Transform.Drag.IsPressed();
 
+		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+			ResetTransform();
+		if (mouseDown != lastMouseDown && !mouseDown) resetting = false;
+
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
 			StartOver();
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown)
+		if (mouseDown != lastMouseDown && mouseDown && !resetting)
 			StartClicking();
 		else if (mouseDown != lastMouseDown && !mouseDown)
 			StopClicking();
@@ -75,9 +81,19 @@ public class Scale : MonoBehaviour
 
 		UseAxisIndicator();
 
+		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
 		lastOver = over;
 		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
+	}
+	void ResetTransform()
+	{
+		resetting = true;
+		Vector3 scaling = main.target.transform.localScale;
+		scaling.Scale(Vector3.one - axis);
+		scaling += axis;
+		if (full) scaling = Vector3.one;
+		main.target.transform.localScale = scaling;
 	}
 	bool MouseOver()
 	{
@@ -150,6 +166,7 @@ public class Scale : MonoBehaviour
 			// axis indicator code here if going to use 
 
 			dragStartMousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
 			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			dragStartPos = main.transform.position;
 			startScale = main.target.localScale;
@@ -228,8 +245,13 @@ public class Scale : MonoBehaviour
 		
 		Vector2 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
 
-		float distance = (mouseScreenSpace - dragStartMousePos).magnitude;
-		main.target.localScale = startScale * distance * main.fullScaleFactor;
+		Debug.Log(dragStartMousePos);
+		Debug.Log(mouseScreenSpace);
+		Debug.Log(dragStartSSPos);
+
+		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
+
+		main.target.localScale = startScale * scale;
 	}
 	void UseAxisIndicator()
 	{

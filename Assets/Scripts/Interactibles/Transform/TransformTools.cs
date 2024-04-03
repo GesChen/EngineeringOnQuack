@@ -9,6 +9,7 @@ public class TransformTools : MonoBehaviour
 	public float size;
 	public float boundsOffset;
 	public float maxMouseSpeedToScaleOut;
+	public float doubleClickResetMaxTime = .2f;
 
 	[Header("Settings")]
 	public float intensitySmoothness = .3f;
@@ -48,8 +49,9 @@ public class TransformTools : MonoBehaviour
 	public AxisIndicator axisIndicator;
 	public float axisIndicatorAlpha;
 	public float axisIndicatorLengthOffset;
-	
+
 	[Header("Debug")]
+	public dynamic currentlyUsingTransformObj;
 	public bool hovering;
 	public bool dragging;
 	public bool specialCenterCase;
@@ -83,5 +85,11 @@ public class TransformTools : MonoBehaviour
 			transform.rotation = target.rotation;
 		else if (!local)
 			transform.rotation = Quaternion.identity;
+
+		if (Input.GetKeyDown(KeyCode.Escape))
+		{
+			currentlyUsingTransformObj.StopOver();
+			hovering = false;
+		}
 	}
 }

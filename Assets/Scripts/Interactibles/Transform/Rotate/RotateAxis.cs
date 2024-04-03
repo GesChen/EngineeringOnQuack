@@ -1,7 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
+//#define DEBUGMODE
+
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
 public class RotateAxis : MonoBehaviour
@@ -22,6 +21,7 @@ public class RotateAxis : MonoBehaviour
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
+	float lastMouseDownTime;
 
 	Vector3 targetIntensity;
 	Vector3 smoothedIntensity;
@@ -53,6 +53,9 @@ public class RotateAxis : MonoBehaviour
 		over = MouseOver();
 		mouseDown = main.controls.Transform.Drag.IsPressed();
 
+		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+			ResetTransform();
+
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
 			StartOver();
@@ -68,9 +71,16 @@ public class RotateAxis : MonoBehaviour
 
 		PerformRotating();
 
+		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
 		lastOver = over;
 		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
+	}
+	void ResetTransform()
+	{
+		Vector3 rotation = main.target.transform.rotation.eulerAngles;
+		rotation.Scale(Vector3.one - axis);
+		main.target.transform.rotation = Quaternion.Euler(rotation);
 	}
 	bool MouseOver()
 	{
@@ -87,6 +97,7 @@ public class RotateAxis : MonoBehaviour
 	{
 		if (!main.hovering && !dragging)
 		{
+			main.currentlyUsingTransformObj = this;
 			hovering = true;
 			main.hovering = true;
 
@@ -127,7 +138,7 @@ public class RotateAxis : MonoBehaviour
 			firstFrameAfterStartDrag = true;
 		}
 	}
-	void StopClicking()
+	public void StopClicking()
 	{
 		if (!dragging) return;
 
@@ -179,6 +190,7 @@ public class RotateAxis : MonoBehaviour
 		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
 
 		Quaternion planeRotation = Quaternion.LookRotation(planeNormal);
+#if DEBUGMODE
 		Debug.DrawRay(planePos, planeNormal, Color.blue);
 		Debug.DrawRay(planePos, planeRotation * Vector3.right * 5, Color.red);
 		Debug.DrawRay(planePos, planeRotation * Vector3.left  * 5, Color.red);
@@ -186,21 +198,24 @@ public class RotateAxis : MonoBehaviour
 		Debug.DrawRay(planePos, planeRotation * Vector3.down  * 5, Color.green);
 
 		Debug.DrawRay(cameraPos, cameraVec * 50, Color.white, 0, true);
+#endif
 
 		Vector3 planeHitPos = HelperFunctions.RayPlaneIntersect(
 			planePos, planeNormal, cameraPos, cameraVec);
 
+#if DEBUGMODE
 		DebugExtra.DrawEmpty(planeHitPos, .1f);
-
+#endif
 		if (firstFrameAfterStartDrag)
 		{
 			targetStartRotation = main.target.rotation;
 			arbitrarySecondaryVectorOnPlane = planeHitPos;
 		}
 		float angle = Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal);
+#if DEBUGMODE
 		DebugExtra.DrawPoint(arbitrarySecondaryVectorOnPlane, Color.red);
 		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue);
-
+#endif
 		transform.localRotation = Quaternion.AngleAxis(angle, axis);
 		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle, Quaternion.Inverse(targetStartRotation) * planeNormal);
 

@@ -1,3 +1,4 @@
+using PlasticPipe.PlasticProtocol.Messages;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,6 +22,7 @@ public class RotateView : MonoBehaviour
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
+	float lastMouseDownTime;
 
 	float targetIntensity;
 	float smoothedIntensity;
@@ -52,6 +54,9 @@ public class RotateView : MonoBehaviour
 		over = MouseOver();
 		mouseDown = main.controls.Transform.Drag.IsPressed();
 
+		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+			ResetTransform();
+
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
 			StartOver();
@@ -67,9 +72,14 @@ public class RotateView : MonoBehaviour
 
 		PerformRotating();
 
+		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
 		lastOver = over;
 		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
+	}
+	void ResetTransform()
+	{
+		main.target.transform.rotation = Quaternion.identity;
 	}
 	bool MouseOver()
 	{

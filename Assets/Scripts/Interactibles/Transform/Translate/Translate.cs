@@ -125,8 +125,10 @@ public class Translate : MonoBehaviour
 	}
 	void StartOver()
 	{
-		if ((!main.hovering && !dragging) || axes == Vector3.one)
+		if (!main.hovering && !dragging)// || axes == Vector3.one)
 		{
+			main.currentlyUsingTransformObj = this;
+
 			if (axes == Vector3.one)
 				main.specialCenterCase = true;	
 
@@ -171,7 +173,7 @@ public class Translate : MonoBehaviour
 			dragStartPos = main.transform.position;
 		}
 	}
-	void StopClicking()
+	public void StopClicking()
 	{
 		if (!dragging) return;
 
