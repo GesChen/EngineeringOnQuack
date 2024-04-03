@@ -245,10 +245,6 @@ public class Scale : MonoBehaviour
 		
 		Vector2 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
 
-		Debug.Log(dragStartMousePos);
-		Debug.Log(mouseScreenSpace);
-		Debug.Log(dragStartSSPos);
-
 		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
 
 		main.target.localScale = startScale * scale;

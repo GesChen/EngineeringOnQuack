@@ -79,4 +79,10 @@ public static class HelperFunctions
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 	public static Vector3 MV3(Vector3 a, Vector3 b) => new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+	// gets the distance from refernce to point along a given direction
+	// expects normalized direction
+	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
+	{
+		return Vector3.Dot(point - reference, direction);
+	}
 }
