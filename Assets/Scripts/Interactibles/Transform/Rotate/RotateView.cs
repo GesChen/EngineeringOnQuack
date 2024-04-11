@@ -185,6 +185,9 @@ public class RotateView : MonoBehaviour
 			angleOffset = angle;
 		}
 
+		if (main.snapping)
+			angle = Mathf.Round(angle / main.rotateSnappingIncrement) * main.rotateSnappingIncrement;
+
 		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
 		firstFrameAfterStartDrag = false;
 	}

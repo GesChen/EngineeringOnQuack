@@ -8,7 +8,7 @@ public class Tester : MonoBehaviour
 	void Start()
 	{
 		Interpreter interpreter = GetComponent<Interpreter>();
-		interpreter.script = new(new List<string> { "(1+2*(3-4))/5" });
+		interpreter.script = new(new List<string> { "(1+2*( 3 -4) )/ 5" });
 		Evaluator evaluator = GetComponent<Evaluator>();
 		Debug.Log(evaluator.Evaluate(interpreter.script.Lines[0], interpreter));
 	}

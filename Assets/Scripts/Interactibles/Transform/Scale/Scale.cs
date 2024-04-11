@@ -235,9 +235,16 @@ public class Scale : MonoBehaviour
 		float distance = transform.localPosition.magnitude;
 		float offset = ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault) - 1;
 
-		Vector3 keep = HelperFunctions.MV3(Vector3.one - axis, startScale);
-		Vector3 newScale = (distance * (1/(1+offset)) - 1) * axis;
-		main.target.transform.localScale = HelperFunctions.MV3(startScale, Vector3.one + newScale);
+		//Vector3 keep = HelperFunctions.MV3(Vector3.one - axis, startScale);
+
+		float scaleInAxis = distance - offset;
+
+		if (main.snapping)
+			scaleInAxis = Mathf.Round(scaleInAxis / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
+
+		Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
+
+		main.target.transform.localScale = HelperFunctions.MV3(startScale, newScale);
 	}
 	void PerformScalingFull()
 	{
@@ -246,6 +253,14 @@ public class Scale : MonoBehaviour
 		Vector2 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
 
 		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
+
+		Debug.Log(scale);
+
+		if (scale > 1)
+			scale = 1 + scale * main.fullScaleFactor;
+
+		if (main.snapping)
+			scale = Mathf.Round(scale / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
 
 		main.target.localScale = startScale * scale;
 	}

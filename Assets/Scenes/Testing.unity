@@ -24,7 +24,7 @@ RenderSettings:
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 4
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
@@ -1081,7 +1081,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &578040683
 Transform:
   m_ObjectHideFlags: 0
@@ -1114,11 +1114,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 1150528312}
-  local: 1
+  local: 0
   size: 0.17
   boundsOffset: 5
   maxMouseSpeedToScaleOut: 10
   doubleClickResetMaxTime: 0.3
+  translateSnappingIncrement: 1
+  rotateSnappingIncrement: 15
+  scaleSnappingIncrement: 1
+  rotateSnapIndicator: {fileID: 0}
   intensitySmoothness: 0.1
   scaleSmoothness: 0.4
   alphaSmoothness: 0.2
@@ -1126,7 +1130,7 @@ MonoBehaviour:
   scaleAxesDistDefault: 1
   scaleAxesDistWOthers: 1.4
   scaleAxesScaleOffsetWithTransform: -0.3
-  fullScaleFactor: 0.01
+  fullScaleFactor: 0.1
   defaultIntensity: {x: 1, y: 1, z: 1}
   defaultWhiteIntensity: 1
   defaultOutset: 0.035
@@ -1147,10 +1151,12 @@ MonoBehaviour:
   axisIndicatorAlpha: 0.6
   axisIndicatorLengthOffset: 0.5
   hovering: 0
+  hoveringTransforms: []
   dragging: 0
   specialCenterCase: 0
-  translating: 1
-  rotating: 1
+  snapping: 0
+  translating: 0
+  rotating: 0
   scaling: 1
 --- !u!1 &619581808
 GameObject:
@@ -1778,7 +1784,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1150528309
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2909,7 +2915,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1681030639}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
@@ -5855,6 +5861,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5928977212090283868}
   - component: {fileID: 6416545282266672615}
+  - component: {fileID: 6416545282266672616}
   m_Layer: 9
   m_Name: Translate
   m_TagString: Untagged
@@ -5883,6 +5890,19 @@ MonoBehaviour:
   - {fileID: 8938242394602340200}
   - {fileID: 8686675412870638392}
   - {fileID: 3980092041254691703}
+--- !u!114 &6416545282266672616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6416545282266672614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cad9e3076dac6a547b647dea56d610e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  main: {fileID: 578040684}
 --- !u!4 &6496505406766981413
 Transform:
   m_ObjectHideFlags: 0
@@ -6174,6 +6194,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 0, z: 1}
   distance: 10
+  snappingIndicatorsParent: {fileID: 0}
+  snappingIndicatorMaterial: {fileID: 0}
 --- !u!4 &7631948761716684957
 Transform:
   m_ObjectHideFlags: 0
@@ -6595,6 +6617,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
   distance: 10
+  snappingIndicatorsParent: {fileID: 0}
+  snappingIndicatorMaterial: {fileID: 0}
 --- !u!33 &8686675412870638391
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -6756,6 +6780,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   axis: {x: 1, y: 0, z: 0}
   distance: 10
+  snappingIndicatorsParent: {fileID: 0}
+  snappingIndicatorMaterial: {fileID: 0}
 --- !u!1 &8986211429462991299
 GameObject:
   m_ObjectHideFlags: 0

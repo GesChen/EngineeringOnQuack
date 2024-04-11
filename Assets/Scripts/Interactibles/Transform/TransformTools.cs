@@ -11,6 +11,12 @@ public class TransformTools : MonoBehaviour
 	public float maxMouseSpeedToScaleOut;
 	public float doubleClickResetMaxTime = .2f;
 
+	[Header("Snapping")]
+	public float translateSnappingIncrement = 1f;
+	public float rotateSnappingIncrement = 15f;
+	public float scaleSnappingIncrement = 1f;
+	public RotateSnapIndicator rotateSnapIndicator;
+
 	[Header("Settings")]
 	public float intensitySmoothness = .3f;
 	public float scaleSmoothness = .3f;
@@ -53,8 +59,10 @@ public class TransformTools : MonoBehaviour
 	[Header("Debug")]
 	public dynamic currentlyUsingTransformObj;
 	public bool hovering;
+	public List<Transform> hoveringTransforms;
 	public bool dragging;
 	public bool specialCenterCase;
+	public bool snapping;
 	[Space]
 	public bool translating;
 	public bool rotating;
@@ -91,5 +99,7 @@ public class TransformTools : MonoBehaviour
 			currentlyUsingTransformObj.StopOver();
 			hovering = false;
 		}
+
+		snapping = controls.Transform.Snap.IsPressed();
 	}
 }

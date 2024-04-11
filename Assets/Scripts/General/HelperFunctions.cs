@@ -23,6 +23,7 @@ public static class HelperFunctions
 
 		return minDistance;
 	}
+	
 	public static float PointToLineSegmentDistance(Vector2 point, Vector2 p1, Vector2 p2)
 	{
 		Vector2 v = p2 - p1;
@@ -41,6 +42,7 @@ public static class HelperFunctions
 
 		return Vector2.Distance(point, pb);
 	}
+	
 	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
 	{
 		Vector3 deltaP = linePoint2 - linePoint1;
@@ -63,6 +65,7 @@ public static class HelperFunctions
 		return linePoint1 + t1 * -lineVec1;
 		//closestPoint2 = p2 + t2 * v2;
 	}
+	
 	public static Vector3 RayPlaneIntersect(Vector3 planePoint, Vector3 planeNormal, Vector3 rayOrigin, Vector3 rayDirection)
 	{
 		float t = Vector3.Dot(planeNormal, planePoint - rayOrigin) / Vector3.Dot(planeNormal, rayDirection);
@@ -74,15 +77,38 @@ public static class HelperFunctions
 
 		return intersectionPoint;
 	}
+	
 	public static Color MultiplyColorByVector(Vector3 vector, Color color)
 	{
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
-	public static Vector3 MV3(Vector3 a, Vector3 b) => new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
-	// gets the distance from refernce to point along a given direction
-	// expects normalized direction
-	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
+	
+	public static Vector3 MV3(Vector3 a, Vector3 b) 
+		=> new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+	
+	public static Vector3 Vector3Round(Vector3 v)
+		=> new Vector3(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
+	
+	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t)
 	{
-		return Vector3.Dot(point - reference, direction);
+		return new Vector3(
+			Mathf.Lerp(a.x, b.x, t.x),
+			Mathf.Lerp(a.y, b.y, t.y),
+			Mathf.Lerp(a.z, b.z, t.z));
 	}
+	
+	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
+		=> Vector3.Dot(point - reference, direction);
+	
+	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir)
+		=> new (Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
+	
+	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal)
+	{
+		float dist = Vector3.Dot(point - planeOrig, planeNormal);
+		return point - dist * planeNormal;
+	}
+
+	public static Vector2 Vector2Round(Vector2 v) 
+		=> new (Mathf.Round(v.x), Mathf.Round(v.y));
 }

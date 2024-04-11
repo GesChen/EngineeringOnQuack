@@ -1,5 +1,6 @@
-//#define DEBUGMODE
+#define DEBUGMODE
 
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
@@ -7,6 +8,8 @@ public class RotateAxis : MonoBehaviour
 { 
 	public Vector3 axis;
 	public float distance;
+	public Transform snappingIndicatorsParent;
+	public Material snappingIndicatorMaterial;
 
 	private TransformTools main;
 	private Material mat;
@@ -31,7 +34,7 @@ public class RotateAxis : MonoBehaviour
 	float smoothedAlpha;
 
 	bool firstFrameAfterStartDrag;
-	Vector3 arbitrarySecondaryVectorOnPlane;
+	float startAngle;
 	Quaternion targetStartRotation;
 
 	void Awake()
@@ -130,11 +133,17 @@ public class RotateAxis : MonoBehaviour
 			targetIntensity = main.draggingIntensity;
 			targetOutset = main.draggingOutset;
 
+			// handle axis indicator
 			main.axisIndicator.inUse = true;
 			main.axisIndicator.rotation = main.transform.rotation * Quaternion.LookRotation(axis, Vector3.up);
 			main.axisIndicator.color = mat.color;
 			main.axisIndicator.transform.position = transform.position;
-
+			
+			/*/ handle rotate snap indicator
+			main.rotateSnapIndicator.inUse = true;
+			main.rotateSnapIndicator.parent = snappingIndicatorsParent;
+			main.rotateSnapIndicator.material = snappingIndicatorMaterial;
+			*/
 			firstFrameAfterStartDrag = true;
 		}
 	}
@@ -143,6 +152,7 @@ public class RotateAxis : MonoBehaviour
 		if (!dragging) return;
 
 		main.axisIndicator.inUse = false;
+		//main.rotateSnapIndicator.inUse = false;
 		dragging = false;
 		main.dragging = false;
 		if (over)
@@ -176,6 +186,7 @@ public class RotateAxis : MonoBehaviour
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
 	}
+
 	void PerformRotating()
 	{
 		if (!dragging) return;
@@ -190,6 +201,7 @@ public class RotateAxis : MonoBehaviour
 		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
 
 		Quaternion planeRotation = Quaternion.LookRotation(planeNormal);
+
 #if DEBUGMODE
 		Debug.DrawRay(planePos, planeNormal, Color.blue);
 		Debug.DrawRay(planePos, planeRotation * Vector3.right * 5, Color.red);
@@ -206,19 +218,38 @@ public class RotateAxis : MonoBehaviour
 #if DEBUGMODE
 		DebugExtra.DrawEmpty(planeHitPos, .1f);
 #endif
+
+		Vector2 localPosPointOnPlane = HelperFunctions.CoordinatesOfPointOnPlane(planeHitPos - planePos, planePos, planeRotation * Vector3.right, planeRotation * Vector3.up);
+		float angle = Mathf.Rad2Deg * Mathf.Atan2(localPosPointOnPlane.y, localPosPointOnPlane.x);
+
 		if (firstFrameAfterStartDrag)
 		{
+			startAngle = angle;
 			targetStartRotation = main.target.rotation;
-			arbitrarySecondaryVectorOnPlane = planeHitPos;
+			//main.rotateSnapIndicator.startAngle = startAngle;
 		}
-		float angle = Vector3.SignedAngle(arbitrarySecondaryVectorOnPlane - planePos, planeHitPos - planePos, planeNormal);
-#if DEBUGMODE
-		DebugExtra.DrawPoint(arbitrarySecondaryVectorOnPlane, Color.red);
-		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue);
-#endif
-		transform.localRotation = Quaternion.AngleAxis(angle, axis);
-		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle, Quaternion.Inverse(targetStartRotation) * planeNormal);
 
+		float angleDelta = angle - startAngle;
+		if (main.snapping)
+			angleDelta = Mathf.Round(angleDelta / main.rotateSnappingIncrement) * main.rotateSnappingIncrement;
+			/*if (main.local)
+			else
+			{
+				Vector2 startRotProjectionOnPlane = HelperFunctions.ProjectPointOntoPlane(targetStartRotation * Vector3.forward, planePos, planeNormal);
+				float startRotAngleInAxis = Mathf.Rad2Deg * Mathf.Atan2(startRotProjectionOnPlane.y, startRotProjectionOnPlane.x);
+				DebugExtra.DrawArrow(planePos, targetStartRotation * Vector3.forward);
+				Debug.Log($"pp {startRotProjectionOnPlane}");
+				Debug.Log($"sa {startRotAngleInAxis}");
+				angleDelta = Mathf.Round(angle / main.rotateSnappingIncrement) * main.rotateSnappingIncrement;
+			}*/
+
+#if DEBUGMODE
+		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue); 
+#endif
+
+		transform.localRotation = Quaternion.AngleAxis(angleDelta, axis);
+		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angleDelta, Quaternion.Inverse(targetStartRotation) * planeNormal);
+		
 		firstFrameAfterStartDrag = false;
 	}
 }

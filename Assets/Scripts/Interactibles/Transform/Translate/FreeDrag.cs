@@ -24,13 +24,16 @@ public class FreeDrag : MonoBehaviour
             StartClicking();
         else if (mouseDown != lastMouseDown && !mouseDown)
             StopClicking();
-
+        
         PerformDragging();
 
         lastMouseDown = mouseDown;
+
 	}
     void StartClicking()
 	{
+        if (main.hovering || main.dragging) return;
+
         if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit))
         {
             if (hit.transform.GetComponent<Part>()) // is a part, not some random obj
@@ -58,7 +61,11 @@ public class FreeDrag : MonoBehaviour
         dragging = false;
         main.hovering = false;
         main.dragging = false;
-        main.transform.position = draggingObj.position;
+        try
+        {
+            main.transform.position = draggingObj.position;
+        }
+        catch { return; }
     }
     void PerformDragging()
     {

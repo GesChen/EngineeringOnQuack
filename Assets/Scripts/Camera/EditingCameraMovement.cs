@@ -50,8 +50,7 @@ public class EditingCameraMovement : MonoBehaviour
 	}
 	void OnEnable()
 	{
-		if (controls == null)
-			controls = new InputMaster();
+		controls ??= new InputMaster();
 		controls.Enable();
 	}
 	void OnDisable()
@@ -78,6 +77,7 @@ public class EditingCameraMovement : MonoBehaviour
 		yaw = (yaw + vel.x) % 360;
 
 		Zoom();
+
 		if(focusing && (target - focus).sqrMagnitude < focusThreshold)
 		{
 			focusing = false;
@@ -92,9 +92,9 @@ public class EditingCameraMovement : MonoBehaviour
 	void Orbit()
 	{
 		if (sumAxes(v2Abs(lastvel) - v2Abs(vel)) > 0)
-			vel = Vector2.Lerp(vel, controls.Camera.Mouse.ReadValue<Vector2>() * orbitSensitivity * globalSensitivity, 1 - orbitDrift);
+			vel = Vector2.Lerp(vel, globalSensitivity * orbitSensitivity * controls.Camera.Mouse.ReadValue<Vector2>(), 1 - orbitDrift);
 		else
-			vel = controls.Camera.Mouse.ReadValue<Vector2>() * orbitSensitivity * globalSensitivity;
+			vel = globalSensitivity * orbitSensitivity * controls.Camera.Mouse.ReadValue<Vector2>();
 		lastvel = vel;
 	}
 	void Zoom()
@@ -104,8 +104,7 @@ public class EditingCameraMovement : MonoBehaviour
 	}
 	void Focus(InputAction.CallbackContext context)
 	{
-		RaycastHit hit;
-		if (Physics.Raycast(Camera.main.ScreenPointToRay(controls.Camera.MousePos.ReadValue<Vector2>()), out hit)) { 
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(controls.Camera.MousePos.ReadValue<Vector2>()), out RaycastHit hit)) { 
 			if (hit.transform.GetComponent<Part>())
 			{
 				targetTransform = hit.transform;

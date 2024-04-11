@@ -1,11 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
+using Unity.VisualScripting.YamlDotNet.Serialization;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
 public class Translate : MonoBehaviour
 {
-	public Vector3 axes;
+	public Vector3Int axes;
 	[HideInInspector] public Vector3 localAxes;
 	public bool doDynamicBoundsOffset;
 
@@ -223,7 +222,8 @@ public class Translate : MonoBehaviour
 
 		Camera mainCamera = Camera.main;
 
-		int numaxes = (int)(axes.x + axes.y + axes.z);
+		int numaxes = axes.x + axes.y + axes.z;
+
 		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
 		mouseScreenSpace.z = mainCamera.nearClipPlane;
 
@@ -249,7 +249,47 @@ public class Translate : MonoBehaviour
 		};
 
 		// move target with direction
-		main.target.transform.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+		main.target.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+	
+		
+		if (main.snapping)
+		{
+			switch (numaxes)
+			{
+				case 1:
+					float distanceAlongAxis = HelperFunctions.DistanceInDirection(main.target.position, dragStartPos, axes);
+					float snappedDist = Mathf.Round(distanceAlongAxis / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					main.target.position = dragStartPos + localAxes * snappedDist;
+					break;
+				case 2:
+					Vector3 planeXVector = Vector3.zero;
+					Vector3 planeYVector = Vector3.zero;
+
+					if (axes.x != 0)
+						planeXVector = main.transform.rotation * Vector3.right;
+					if (axes.y != 0)
+					{
+						if (planeXVector == Vector3.zero)
+							planeXVector = main.transform.rotation * Vector3.up;
+						else
+							planeYVector = main.transform.rotation * Vector3.up;
+					}
+					if (axes.z != 0)
+						planeYVector = main.transform.rotation * Vector3.forward;
+
+					Vector2 planePoint = HelperFunctions.CoordinatesOfPointOnPlane(main.target.position, dragStartPos, planeXVector, planeYVector);
+					Vector2 snappedPoint = HelperFunctions.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					Vector3 worldSpacePoint = dragStartPos + planeXVector * snappedPoint.x + planeYVector * snappedPoint.y;
+
+					main.target.position = worldSpacePoint;
+
+					break;
+				case 3:
+					Vector3 snappedPos = HelperFunctions.Vector3Round(main.target.position / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					main.target.position = snappedPos;
+					break;
+			}
+		}
 	}
 	void UseAxisIndicator()
 	{
