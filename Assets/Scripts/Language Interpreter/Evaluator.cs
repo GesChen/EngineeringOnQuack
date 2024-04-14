@@ -107,9 +107,10 @@ public class Evaluator : MonoBehaviour
 		"|!",
 		"!!"
 	};
+
 	void Log(string s)
 	{
-		//Debug.Log(s);
+		Debug.Log(s);
 	}
 	bool IsOperator(string s, int i)
 	{
@@ -216,7 +217,7 @@ public class Evaluator : MonoBehaviour
 			else if (state == 2) // get variable 
 			{
 				// accumulate full string, no operators allowed inside variable names!!! 
-				
+
 				if (!IsOperator(expression, i))
 				{
 					accumBuilder.Append(c);
@@ -269,7 +270,7 @@ public class Evaluator : MonoBehaviour
 			}
 		}
 		// if number at end, it would not be accumulated. manually add to parts
-		if (state == 0) 
+		if (state == 0)
 		{
 			string builtString = accumBuilder.ToString();
 			accumBuilder.Clear();
@@ -285,8 +286,8 @@ public class Evaluator : MonoBehaviour
 			}
 		}
 
-		foreach(ExpressionPart part in parts)
-		{ 
+		foreach (ExpressionPart part in parts)
+		{
 			Log(part.ToString());
 		}
 
@@ -299,7 +300,7 @@ public class Evaluator : MonoBehaviour
 
 			// numbers should be on odd indexes
 			if (p % 2 == 0 && !part.valueType)
-				 return new(new Error("Operator in bad position", interpreter));
+				return new(new Error("Operator in bad position", interpreter));
 			if (p % 2 == 1 && part.valueType)
 				if (part.valueType) return new(new Error("Number in bad position", interpreter));
 		}

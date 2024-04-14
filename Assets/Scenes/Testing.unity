@@ -2920,6 +2920,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  expr: -.5+2.*-abc + (1.52/10*abc)
 --- !u!114 &1681030647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2942,7 +2943,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1681030639}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67a990085ece4be47a4cc3461616d015, type: 3}
+  m_Script: {fileID: 11500000, guid: 6f7a91e9ffbb7a545bca46e6e1548e28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1748898712
