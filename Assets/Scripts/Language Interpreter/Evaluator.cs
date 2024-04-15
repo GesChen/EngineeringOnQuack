@@ -409,7 +409,7 @@ public class Evaluator : MonoBehaviour
 		#endregion
 
 		#region parse non operation parts
-		List<dynamic> tokens = new List<dynamic>();
+		List<dynamic> tokens = new();
 		foreach (string tokenString in tokenStrings)
 		{
 			if (!operators.Contains(tokenString))
