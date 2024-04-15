@@ -2,48 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
-
-/* operations:
- * 0  - number type, no operation
- * 1  +
- * 2  -
- * 3  *
- * 4  /
- * 5  ^ 
- * 6  %
- * 7  ==
- * 8  !=
- * 9  <
- * 10 >
- * 11 <=
- * 12 >=
- * 13 &&
- * 14 ||
- * 15 !  - this type of node will only have a left side, to be evaluated as not
- */
-
-class ExpressionPart
-{
-	public bool valueType;
-	public double value;
-	public string operation;
-	public ExpressionPart(double value)
-	{
-		valueType = true;
-		this.value = value;
-	}
-	public ExpressionPart(string operation)
-	{
-		this.operation = operation;
-	}
-	public override string ToString()
-	{
-		return $"valueType {valueType}, value {value}, operation {operation}";
-	}
-}
 
 public class Evaluator : MonoBehaviour
 {
@@ -60,15 +20,15 @@ public class Evaluator : MonoBehaviour
 		{ "<" , 3 },
 		{ ">" , 3 },
 		{ "<=", 3 },
-		{ ">=", 4 },
+		{ ">=", 3 },
 		{ "&&", 4 },
 		{ "||", 4 },
-		{ "!" , 4 },
 		{ "!&", 4 },
 		{ "&!", 4 },
 		{ "!|", 4 },
 		{ "|!", 4 },
-		{ "!!", 4 }
+		{ "!!", 4 },
+		{ "!" , 5 }
 	};
 
 	readonly string[] operators =
@@ -89,364 +49,478 @@ public class Evaluator : MonoBehaviour
 		"||",
 		"!",
 		"!&",
-		"&!",
+		//"&!",
 		"!|",
-		"|!",
+		//"|!",
 		"!!"
 	};
 	readonly string[] booleanOperators =
 	{
 		"==",
-		"!=",
-		"&&",
-		"||",
-		"!",
-		"!&",
-		"&!",
-		"!|",
-		"|!",
-		"!!"
+		"!=", 
+		"&&", //and
+		"||", //or
+		"!", //not
+		"!&", //nand
+		//"&!",
+		"!|", //nor
+		//"|!", //
+		"!!"  //xor
 	};
 
 	void Log(string s)
 	{
 		Debug.Log(s);
 	}
-	bool IsOperator(string s, int i)
+	string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 	{
-		if (operators.Contains(s[i].ToSafeString())) return true; // one char check - is operator
-		if (i != s.Length - 1 && operators.Contains(new string(new char[] { s[i], s[i + 1] }))) return true; // two char check - is operator
-		if (i != 0 && operators.Contains(new string(new char[] { s[i - 1], s[i] }))) return true; // two char check backwards - is operator
-
-		return false;
+		return original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 	}
-	bool ValidNumber(string s, int i)
-	{
-		char c = s[i];
-		bool validNegative = c == '-' && (i == 0 || IsOperator(s, i - 1));
-		return char.IsDigit(c) || validNegative || c == '.';
-	}
-	public Output Evaluate(string expression, Interpreter interpreter)
-	{
-		Log($"Evaluating expression: {expression}");
-		// part 1: split into tokens
-		// complex example: (1+2*(3-4))/5
-		// output: evaluated value of 1+2*(3-4), /, 5
 
-		List<ExpressionPart> parts = new();
-		StringBuilder accumBuilder = new();
-		int state = 0; // 0 - number; 1 - finding matching parentheses; 2 - operator
-		int deepness = 0;
-		for (int i = 0; i < expression.Length; i++)
+	Output ParseFloatPart(string s, Interpreter interpreter)
+	{
+		float value = 0;
+		try
 		{
-			char c = expression[i];
-			Log($"Char {c} at {i}, state {state}, {parts.Count} parts, builder is {accumBuilder.ToString()}");
-			if (state == 0)
+			value = float.Parse(s);
+		}
+		catch
+		{ // could be a variable
+			bool negative = s[0] == '-';
+			if (negative) s = s[1..];
+
+			Output result = interpreter.FetchVariable(s);
+			if (!result.success) { return new Output(result.error); }
+			else
 			{
-				if (ValidNumber(expression, i))
+				dynamic variable = result.value;
+				if (variable is float || variable is int)
 				{
-					Log("valid");
-					accumBuilder.Append(c);
+					value = (float)variable;
 				}
-				else
+				else if (variable is string)
 				{
-					Log("invalid, building");
-					string builtString = accumBuilder.ToString();
-					accumBuilder.Clear();
-
-					if (double.TryParse(builtString, out double parsedValue))
-					{
-						parts.Add(new ExpressionPart(parsedValue));
-						accumBuilder.Clear();
+					try {
+						value = float.Parse(variable);
 					}
-
-					if (c == '(') // start of parentheses, switch to parentheses
-					{
-						state = 1;
-					}
-					else if (char.IsLetter(c))
-					{
-						state = 2;
-					}
-					else if (IsOperator(expression, i)) // operator, switch to operator
-					{
-						state = 3;
-					}
-					else
-					{
-						return new Output(new Error($"Unable to parse {builtString}", interpreter));
-					}
-					Log($"state: {state}");
-				}
-			} // else if for parentheses to skip first parentheses
-			if (state == 1) // search for matching end parentheses, ignore all else 
-			{
-				accumBuilder.Append(c);
-				if (c == '(')
-					deepness++;
-				else if (c == ')')
-				{
-					deepness--;
-					if (deepness == 0) // found matching end 
-					{
-						string subexp = accumBuilder.ToString();
-						accumBuilder.Clear();
-
-						// strip outer parentheses and evaluate, then set that part to the evaluated value
-						// deeper parenthese chains will cause more recursion obviously
-						subexp = subexp[1..^1];
-						Output output = Evaluate(subexp, interpreter);
-						if (!output.Success) return output; // incase there was an error while parsing
-
-						double evaluatedValue = output.Value;
-
-						parts.Add(new ExpressionPart(evaluatedValue));
-
-						if (i != expression.Length - 1) // don't go to operator if end of expression, 
-						{
-							state = 3;
-							continue;
-						}
+					catch { // not a parseable float string, or a variable
+						return Errors.UnableToParseStrAsNum(value.ToString(), interpreter);
 					}
 				}
-				else if (i == expression.Length - 1) // havent found matching, this is error
+				if (negative)
 				{
-					return new Output(new Error("Mismatched parentheses", interpreter));
-				}
-			}
-			else if (state == 2) // get variable 
-			{
-				// accumulate full string, no operators allowed inside variable names!!! 
-
-				if (!IsOperator(expression, i))
-				{
-					accumBuilder.Append(c);
-				}
-				else
-				{ // got full variable name
-					string variableName = accumBuilder.ToString();
-					accumBuilder.Clear();
-					if (interpreter.variables.Keys.Contains(variableName))
-					{
-						dynamic value = interpreter.variables[variableName];
-						bool isNumeric = value is int || value is float || value is double;
-						if (isNumeric)
-						{
-							double doubleValue = (double)value;
-							parts.Add(new ExpressionPart(doubleValue));
-							state = 3;
-						}
-					}
-					else
-					{ // variable not found
-						return new Output(new Error($"Unknown variable: \"{variableName}\"", interpreter));
-					}
-				}
-
-			}
-			if (state == 3) // get operator 
-			{
-				Log("getting operator");
-				if (IsOperator(expression, i))
-				{
-					Log("valid operator");
-					if (i == expression.Length - 1) return new Output(new Error("Operator at end of expression", interpreter));
-
-					string doubleOperator = new(new char[] { c, expression[i + 1] });
-					if (operators.Contains(doubleOperator))
-					{ // double length
-						parts.Add(new ExpressionPart(doubleOperator));
-					}
-					else if (operators.Contains(c.ToSafeString()))
-					{ // single length 
-						parts.Add(new ExpressionPart(c.ToSafeString()));
-					}
-					state = 0; // look for values
-				}
-				else
-				{
-					return new Output(new Error($"Invalid operator / Unable to find operator \"{c}\"", interpreter));
+					value *= -1;
 				}
 			}
 		}
-		// if number at end, it would not be accumulated. manually add to parts
-		if (state == 0)
-		{
-			string builtString = accumBuilder.ToString();
-			accumBuilder.Clear();
+		return new Output(value);
+	}
 
-			if (double.TryParse(builtString, out double parsedValue))
+	bool CheckListForm(string s)
+	{
+		int depth = 0;
+		foreach(char c in s)
+		{
+			if (c == '[') depth++;
+			else if (c == ']') depth--;
+		}
+		return depth == 0; // well formed lists should have equal [ and ], therefore closed
+	}
+
+	string DetermineTypeFromString(string s)
+	{
+		if (s.Length == 0) return null;
+
+		if (s[0] == '"' && s[^1] == '"') return "string";
+		else if (s[0] == '"' && s[^1] != '"' || s[0] != '"' && s[^1] == '"') return "malformed string"; // start is " but not end, or end is " but not start
+		
+		if (s[0] == '[' && s[^1] == ']') return "list";
+		else if (s[0] == '[' && s[^1] != ']' || s[0] != '[' && s[^1] == ']') return "malformed list"; // start is " but not end, or end is " but not start
+
+		bool isnumber = true;
+		foreach (char c in s) if (!(char.IsDigit(c) || c == '.' || c == '-')) isnumber = false;
+		if (isnumber) return "number";
+
+		if (s == "true" || s == "false") return "bool";
+		return "variable"; //TODO!!!!!!!!!!
+	}
+
+	string DetermineTypeFromVariable(dynamic v)
+	{
+		if (v is string) return "string";
+		else if (v is int || v is float || v is long) return "number";
+		else if (v is bool) return "bool";
+		else if (v is List<dynamic>) return "list";
+		return "unknown";
+	}
+
+	Output DynamicStringParse(string s, Interpreter interpreter)
+	{
+		string type = DetermineTypeFromString(s);
+
+		if (type == "malformed string") return Errors.MalformedString(s, interpreter);
+		else if (type == "malformed list") return Errors.MalformedList(s, interpreter);
+
+		dynamic value = null;
+
+		if (type == "number")
+		{
+			Output result = ParseFloatPart(s, interpreter);
+			if (!result.success) return new Output(result.error);
+			value = result.value;
+		}
+		else if (type == "string") value = s.Trim('"');
+		else if (type == "bool") value = s == "true";
+		else if (type == "list")
+		{
+			Output attemptR = EvaluateList(s, interpreter);
+			if (!attemptR.success) return new Output(attemptR.error);
+
+			value = attemptR.value;
+		}
+		else if (type == "variable")
+		{
+			Output result = interpreter.FetchVariable(s);
+			if (!result.success) return new Output(result.error);
+			value = result.value;
+		}
+
+		return new Output(value);
+	}
+
+	public Output EvaluateList(string expr, Interpreter interpreter)
+	{
+		if (!CheckListForm(expr)) return Errors.MalformedList(expr, interpreter);
+		expr = expr[1..^1];
+
+		List<dynamic> items = new();
+		
+		bool inString = false;
+		int depth = 0;
+		string accum = "";
+		Output evaluate;
+		for (int i = 0; i < expr.Length; i++)
+		{
+			char c = expr[i];
+
+			if (c == '[') depth++;
+			else if (c == ']') depth--;
+
+			if (c == '"') inString = !inString;
+			if (c != ',' || inString || depth != 0) // commas are allowed in strings 
 			{
-				parts.Add(new ExpressionPart(parsedValue));
-				accumBuilder.Clear();
+				accum += c;
+			}
+			else
+			{ // , and not in string
+				evaluate = Evaluate(accum.Trim(), interpreter);
+				if (!evaluate.success) return new Output(evaluate.error);
+
+				items.Add(evaluate.value);
+				accum = "";
+			}
+		}
+		evaluate = Evaluate(accum.Trim(), interpreter);
+		if (!evaluate.success) return new Output(evaluate.error);
+
+		items.Add(evaluate.value);
+
+		return new Output(items);
+	}
+
+	public string ConvertToString(dynamic value)
+	{
+		if (value is string) return $"\"{value}\"";
+		else if (value is int || value is float || value is bool) return value.ToString();
+		else if (value is List<dynamic>)
+		{
+			string builtString = "[";
+			for (int i = 0; i < value.Count; i++)
+			{
+				builtString += ConvertToString(value[i]);
+				if (i < value.Count - 1) builtString += ", ";
+			}
+			builtString += "]";
+			return builtString;
+		}
+		return value.ToString();
+	}
+
+	public Output Evaluate(string expr, Interpreter interpreter)
+	{
+		#region remove all spaces except inside ""
+		string tempstring = "";
+		bool inQuotes = false;
+		foreach(char c in expr)
+		{
+			if (c == '"') inQuotes = !inQuotes;
+			if (c != ' ' || inQuotes) // anything but space unless in quotes
+				tempstring += c;
+		}
+		expr = tempstring;
+		#endregion
+
+		#region handle parentheses
+		while (expr.Contains('(') || expr.Contains(')'))
+		{
+			// find the first instance of (
+			int parenthesesStartIndex = expr.IndexOf('(');
+			int parenthesesEndIndex = -1;
+
+			// search for matching parentheses
+			int depth = 0;
+			for (int i = parenthesesStartIndex; i < expr.Length; i++)
+			{
+				char c = expr[i];
+				if (c == '(') depth++;
+				if (c == ')')
+				{
+					depth--;
+					if (depth == 0)
+					{
+						parenthesesEndIndex = i;
+						break;
+					}
+				}
+			}
+
+			// either missing ( or ) isnt closed properly
+			if (parenthesesStartIndex == -1 || parenthesesEndIndex == -1) 
+				return Errors.MismatchedParentheses(interpreter);
+
+			string newexpr = expr.Substring(parenthesesStartIndex + 1, parenthesesEndIndex - parenthesesStartIndex - 1);
+			string evaledvalue = ConvertToString(Evaluate(newexpr, interpreter).value);
+
+			// replace the chunk of parentheses with the evalled value 
+			expr = ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
+			Log(expr);
+		}
+		#endregion
+
+		#region tokenize the expression
+		List<string> tokenStrings = new();
+		string accum = "";
+		bool instring = false;
+		bool exitGrace = false; // this is because when you exit string or list, it wants to interpret final char as operator
+		int listDepth = 0;
+		for (int i = 0; i < expr.Length; i++)
+		{
+			char c = expr[i];
+
+			if (c == '"') { instring = !instring; exitGrace = true; }
+			else if (c == '[') listDepth++;
+			else if (c == ']') { listDepth--; exitGrace = true; }
+
+			if (char.IsDigit(c) || c == '.' || char.IsLetter(c) // digits, . and letters are never operators
+				|| instring || exitGrace // also ignore anything when in a string
+				|| listDepth != 0) // or if in a list
+			{
+				accum += c;
+				exitGrace = false;
 			}
 			else
 			{
-				return new Output(new Error($"Unable to parse {builtString}", interpreter));
-			}
-		}
-
-		foreach (ExpressionPart part in parts)
-		{
-			Log(part.ToString());
-		}
-
-		// part 1.5: validate that operators and parts are in correct positions
-		for (int p = 0; p < parts.Count; p++)
-		{
-			ExpressionPart part = parts[p];
-			// first part cannot be operator
-			if (p == 0 && !part.valueType) return new(new Error("Operator at start of expression", interpreter));
-
-			// numbers should be on odd indexes
-			if (p % 2 == 0 && !part.valueType)
-				return new(new Error("Operator in bad position", interpreter));
-			if (p % 2 == 1 && part.valueType)
-				if (part.valueType) return new(new Error("Number in bad position", interpreter));
-		}
-
-		// part 2: actually evaluate the parts
-
-		while (parts.Count > 1)
-		{
-			// step 1: find highest ranked operator
-			int highestRankOpIndex = 0;
-			int highestRankOpRank = -1;
-			string highestRankOp = "";
-			for (int p = 0; p < parts.Count; p++)
-			{
-				ExpressionPart part = parts[p];
-				if (!part.valueType) // only look at operators
+				bool minusIsNegative = false;
+				if (c == '-') // handle - sign, annoying af
 				{
-					int rank = operatorRanks[part.operation];
-					if (rank > highestRankOpRank)
+					minusIsNegative = i == 0; // is first char
+					if (!minusIsNegative)
+						minusIsNegative = // case where previous operator 
+							!char.IsDigit(expr[i - 1]) &&   // previous char is not a digit (operator)
+							expr[i - 1] != '.';             // and previous char is not .
+				}
+
+				if (minusIsNegative)
+				{
+					accum += c;
+				}
+				else
+				{
+					if (accum.Length > 0)
+						tokenStrings.Add(accum);
+					accum = "";
+
+					string op = c.ToString();
+					// handle 2 len operators
+					if (i != expr.Length - 1)
 					{
-						highestRankOpRank = rank;
-						highestRankOpIndex = p;
-						highestRankOp = part.operation;
+						char next = expr[i + 1];
+						if (operators.Contains(c.ToString()+next.ToString())) // would adding the next char still make it an operator
+						{
+							i++; // already checked to see if last, shouldnt break hopefully
+							op += expr[i]; // add next char to the operator
+						}
 					}
+					else // additional check can be added, operators shouldnt be at end
+						return Errors.OperatorInBadPosition(op, interpreter);
+
+					if (operators.Contains(op))
+					{ // valid operator
+						tokenStrings.Add(op);
+					}
+					else
+						return Errors.OperatorDoesntExist(op, interpreter);
 				}
 			}
-			if (highestRankOp == "") return new(new Error("How the fuck did this happen", interpreter));
-			if (highestRankOpIndex == 0) // not sure how this would happen but operator at star
-				return new(new Error("Operator at start of expression", interpreter));
-			else if (highestRankOpIndex == parts.Count - 1) // same with end, should be caught earlier
-				return new(new Error("Operator at end of expression", interpreter));
-
-			// step 2: find parts to left and right 
-			double left = parts[highestRankOpIndex - 1].value;
-			double right = parts[highestRankOpIndex + 1].value;
-
-			// step 3: check if operation is boolean
-			bool leftBool = false;
-			bool rightBool = false;
-			bool isBooleanOperation = booleanOperators.Contains(highestRankOp);
-			if (isBooleanOperation)
-			{
-				if (left == 1)
-					leftBool = true;
-				else if (left == 0)
-					leftBool = false;
-				else
-					return new(new Error($"Attempted to interpret {left} as a boolean", interpreter));
-
-				if (right == 1)
-					rightBool = true;
-				else if (right == 0)
-					rightBool = false;
-				else
-					return new(new Error($"Attempted to interpret {right} as a boolean", interpreter));
-			}
-
-			// step 4: evaluate
-			double evaluatedValue;
-			switch (highestRankOp)
-			{
-				case "+":
-					evaluatedValue = left + right;
-					break;
-
-				case "-":
-					evaluatedValue = left - right;
-					break;
-
-				case "*":
-					evaluatedValue = left * right;
-					break;
-
-				case "/":
-					evaluatedValue = left / right;
-					break;
-
-				case "^":
-					evaluatedValue = Math.Pow(left, right);
-					break;
-
-				case "%":
-					evaluatedValue = left % right;
-					break;
-
-				case "==":
-					evaluatedValue = leftBool == rightBool ? 1 : 0;
-					break;
-
-				case "!=":
-					evaluatedValue = leftBool != rightBool ? 1 : 0;
-					break;
-
-				case "<":
-					evaluatedValue = left < right ? 1 : 0;
-					break;
-
-				case ">":
-					evaluatedValue = left > right ? 1 : 0;
-					break;
-
-				case "<=":
-					evaluatedValue = left <= right ? 1 : 0;
-					break;
-
-				case ">=":
-					evaluatedValue = left >= right ? 1 : 0;
-					break;
-
-				case "&&":
-					evaluatedValue = leftBool && rightBool ? 1 : 0;
-					break;
-
-				case "||":
-					evaluatedValue = leftBool || rightBool ? 1 : 0;
-					break;
-
-				case "!&":
-					evaluatedValue = !(leftBool && rightBool) ? 1 : 0;
-					break;
-
-				case "&!":
-					evaluatedValue = !(leftBool && rightBool) ? 1 : 0;
-					break;
-
-				case "!|":
-					evaluatedValue = !(leftBool || rightBool) ? 1 : 0;
-					break;
-
-				case "|!":
-					evaluatedValue = !(leftBool || rightBool) ? 1 : 0;
-					break;
-
-				case "!!":
-					evaluatedValue = leftBool ^ rightBool ? 1 : 0;
-					break;
-
-
-				default:
-					return new(new Error($"Could not find operator {highestRankOp} (how the fuck did this happen?)", interpreter));
-			}
-
-			// step 5: replace original parts with output
-			parts.RemoveRange(highestRankOpIndex - 1, 3);
-			parts.Insert(highestRankOpIndex - 1, new(evaluatedValue));
 		}
-		return new Output(parts[0].value);
+		tokenStrings.Add(accum);
+		#endregion
+
+		#region handle ! modifier
+		List<string> temp = new();
+		for (int i = 0; i < tokenStrings.Count; i++)
+		{
+			if (tokenStrings[i] == "!")
+			{
+				if (i != tokenStrings.Count - 1)
+				{
+					Output evaluateboolean = Evaluate(tokenStrings[i + 1], interpreter);
+					if (!evaluateboolean.success) return new Output(evaluateboolean.error);
+
+					string newToken;
+					if (evaluateboolean.value is string) newToken = evaluateboolean.value;
+					else newToken = evaluateboolean.value ? "true" : "false";
+					temp.Add(newToken);
+					i++;
+				}
+				else // shouldnt be at end
+					return Errors.OperatorInBadPosition("!", interpreter);
+			}
+			else
+			{
+				temp.Add(tokenStrings[i]);
+			}
+		}
+		tokenStrings = temp;
+		#endregion
+
+		#region check if operators are in correct positions (odd indices), not in front
+		for (int t = 0; t < tokenStrings.Count; t++)
+		{
+			if (t % 2 == 0)
+			{
+				if (operators.Contains(tokenStrings[t])) return Errors.OperatorInBadPosition(tokenStrings[t], interpreter);
+			}
+			else
+			{
+				if (!operators.Contains(tokenStrings[t])) return Errors.OperatorInBadPosition(interpreter);
+			}
+		}
+		#endregion
+
+		#region parse non operation parts
+		List<dynamic> tokens = new List<dynamic>();
+		foreach (string tokenString in tokenStrings)
+		{
+			if (!operators.Contains(tokenString))
+			{
+				Output parsed = DynamicStringParse(tokenString, interpreter);
+				if (!parsed.success) return new Output(parsed.error);
+
+				tokens.Add(parsed.value);
+			}
+			else
+				tokens.Add(tokenString);
+		}
+		#endregion
+
+		#region iteratively evaluate with pemdas
+		while (tokens.Count > 1)
+		{
+			#region find the index of left most and highest ranking operator
+			int lmhrIndex = -1;
+			int lmhrRank = -1;
+			for (int t = 1; t < tokens.Count; t += 2)
+			{ // premature check already confirmed all odd indices are ops
+				int rank = operatorRanks[tokens[t]];
+				if (rank > lmhrRank)
+				{
+					lmhrRank = rank;
+					lmhrIndex = t;
+				}
+			}
+
+			if (lmhrIndex == -1) return Errors.Error("how.", interpreter); // code should have found at least one op
+			if (lmhrIndex == tokens.Count - 1 || lmhrIndex == 0) return Errors.OperatorInBadPosition(tokens[^1], interpreter); // operators shouldnt be at end
+			#endregion
+
+			// operator definitely has items on both sides
+			// left and right types
+			dynamic left = tokens[lmhrIndex - 1];
+			string leftType = DetermineTypeFromVariable(left);
+
+			dynamic right = tokens[lmhrIndex + 1];
+			string rightType = DetermineTypeFromVariable(right);
+
+			string operation = tokens[lmhrIndex];
+			dynamic result = 0;
+
+			try
+			{
+				if (leftType == "number")
+				{
+					if (rightType != "number")
+					{ // attempt to convert to number
+						if (rightType == "string")
+						{
+							try
+							{
+								right = float.Parse(right.Trim('"'));
+							}
+							catch
+							{
+								return Errors.UnableToParseStrAsNum(right, interpreter);
+							}
+						}
+						else if (rightType == "bool")
+						{
+							right = right ? 1 : 0;
+						}
+						else if (rightType == "list")
+						{
+							right = 1;
+						}
+					}
+
+					switch (operation)
+					{
+						case "+":  result = left + right; break;
+						case "-":  result = left - right; break;
+						case "*":  result = left * right; break;
+						case "/":  result = left / right; break;
+						case "^":  result = Mathf.Pow(left, right); break;
+						case "%":  result = left % right; break;
+						case "==": result = left == right; break;
+						case "!=": result = left != right; break;
+						case "<":  result = left < right; break;
+						case ">":  result = left > right; break;
+						case "<=": result = left <= right; break;
+						case ">=": result = left >= right; break;
+					}
+				}
+				else if (leftType == "string")
+				{
+					if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
+					right = ConvertToString(right);
+
+					result = left + right;
+				}
+				else if (leftType == "list")
+				{
+					if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
+				}
+			}
+			catch
+			{
+				return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
+			}
+
+			tokens.RemoveAt(lmhrIndex + 1); // remove right side
+			tokens[lmhrIndex] = result; // replace operator with result
+			tokens.RemoveAt(lmhrIndex - 1); // remove left
+		}
+		#endregion
+
+		return new Output(tokens[0]);
 	}
 }

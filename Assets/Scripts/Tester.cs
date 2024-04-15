@@ -9,13 +9,20 @@ public class Tester : MonoBehaviour
 	void Start()
 	{
 		Interpreter interpreter = GetComponent<Interpreter>();
-		interpreter.variables = new Dictionary<string, dynamic> { { "abc", 100 } };
+		interpreter.variables = new Dictionary<string, dynamic> { { "abc", 100 }, { "ohno", "69" } };
 		interpreter.script = new(new List<string> { expr }); // "(1+2*( 3 -4) )/ 5" });
-		BetterEvaluator evaluator = GetComponent<BetterEvaluator>();
-		Debug.Log(evaluator.Evaluate(interpreter.script.Lines[0], interpreter));
-	}
-	void Update()
-	{
+		Evaluator evaluator = GetComponent<Evaluator>();
+		Output test = evaluator.EvaluateList(interpreter.script.Lines[0], interpreter);
+
+		if (!test.success) Debug.Log(test.error);
+		else
+		{
+			List<dynamic> outputList = test.value;
+			foreach (dynamic item in outputList)
+			{
+				Debug.Log($"{item} type {((object)item).GetType()}");
+			}
+		}
 
 	}
 }

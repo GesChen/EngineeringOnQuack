@@ -22,28 +22,28 @@ public class Error
 }
 public class Output
 {
-    public bool Success  { get; private set; }
-    public Error Error   { get; private set; }
-	public dynamic Value { get; private set; }
+    public bool success  { get; private set; }
+    public Error error   { get; private set; }
+	public dynamic value { get; private set; }
 
 
 	public Output(Error error)
     {
-        Error = error;
-        Value = "Error";
-        Success = false;
+        this.error = error;
+        value = "Error";
+        success = false;
     }
     public Output(dynamic value)
     {
-        Value = value;
-        Success = true;
+        this.value = value;
+        success = true;
     }
 
     public override string ToString()
     {
-        if (Value == null) return "Output is null";
-        if (Success) return $"Output {Value.ToString()} (Type: {Value.GetType().FullName})";
-        return Error.ToString();
+        if (value == null) return "Output is null";
+        if (success) return $"Output {value.ToString()} (Type: {value.GetType().FullName})";
+        return error.ToString();
     }
 }
 public class Script
@@ -68,6 +68,12 @@ public class Interpreter : MonoBehaviour
     public void Interpret(Script script)
     {
         StartCoroutine(InterpretCoroutine(script));
+    }
+    public Output FetchVariable(string name)
+    {
+        if (!variables.ContainsKey(name))
+            return Errors.UnknownVariable(name, this);
+        return new Output(variables[name]);
     }
     private IEnumerator InterpretCoroutine(Script script)
     {
