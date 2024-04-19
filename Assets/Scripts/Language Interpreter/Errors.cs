@@ -37,13 +37,25 @@ public static class Errors
 
 	public static Output UnsupportedOperation(string op, string type1, string type2, Interpreter interpreter) =>
 		Error($"Unsupported operation: {op} between {type1} and {type2}", interpreter);
+	
+	public static Output DivisionByZero(Interpreter interpreter) =>
+		Error($"Attempted to divide by zero", interpreter);
 
 	public static Output MalformedString(string s, Interpreter interpreter) =>
 		Error($"String {s} was malformed, could not parse", interpreter);
 
 	public static Output MalformedList(string s, Interpreter interpreter) =>
-		Error($"List {s} was malformed, could not parse", interpreter);
+		Error($"Could not parse malformed list: {s}", interpreter);
 
 	public static Output UnknownVariable(string name, Interpreter interpreter) =>
 		Error($"Unknown variable \"{name}\"", interpreter);
+
+	public static Output UnableToParseBool(Interpreter interpreter) =>
+		Error($"Unable to parse bool ", interpreter);
+
+	public static Output IndexListWithType(string type, Interpreter interpreter) =>
+		Error($"Attempted to index a list with a {type} (only whole numbers are allowed)", interpreter);
+
+	public static Output IndexOutOfRange(int index, Interpreter interpreter) =>
+		Error($"List index {index} was out of range.", interpreter);
 }

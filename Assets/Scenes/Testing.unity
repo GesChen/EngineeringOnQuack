@@ -2920,7 +2920,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  expr: '[ 2 - 3, -5, !true, "test foo", [1,2,3], ohno+109+["test", 1]]'
+  expr: '[1,2,3][1,2,0,1,0,2,1,1]'
+  testCases: []
 --- !u!114 &1681030647
 MonoBehaviour:
   m_ObjectHideFlags: 0

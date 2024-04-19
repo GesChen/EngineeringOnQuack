@@ -1,8 +1,5 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
 public class Evaluator : MonoBehaviour
@@ -72,6 +69,34 @@ public class Evaluator : MonoBehaviour
 	{
 		Debug.Log(s);
 	}
+	
+	bool ExpressionContains(char symbol, string expr)
+	{
+		bool inString = false;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (c == symbol && !inString) return true;
+		}
+		return false;
+	}
+	int ExpressionCountSymbol(char symbol, string expr)
+	{
+		int count = 0;
+		bool inString = false;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (c == symbol && !inString) count++;
+		}
+		return count;
+	}
+	bool ExpressionContainsParentheses(string expr)
+	{
+		return ExpressionContains('(', expr) || ExpressionContains(')', expr);
+	}
+	
+
 	string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 	{
 		return original[..startIndex] + replaceWith + original[(endIndex + 1)..];
@@ -90,7 +115,14 @@ public class Evaluator : MonoBehaviour
 			if (negative) s = s[1..];
 
 			Output result = interpreter.FetchVariable(s);
-			if (!result.success) { return new Output(result.error); }
+			string type = DetermineTypeFromString(s);
+			if (!result.success) 
+			{
+				if (type != "number")
+					return new Output(result.error);
+				else
+					return Errors.UnableToParseStrAsNum(s, interpreter);
+			}
 			else
 			{
 				dynamic variable = result.value;
@@ -116,15 +148,41 @@ public class Evaluator : MonoBehaviour
 		return new Output(value);
 	}
 
-	bool CheckListForm(string s)
+	bool CheckListForm(string s) // returns if a list is properly formed, expects single lists, not chained or expressions
 	{
+		string nospaces = s.Replace(" ", "");
+		if (nospaces[0] != '[' || nospaces[^1] != ']') return false;
+
 		int depth = 0;
+		bool instring = false;
 		foreach(char c in s)
 		{
-			if (c == '[') depth++;
-			else if (c == ']') depth--;
+			if (c == '"') instring = !instring;
+			if (c == '[' && !instring) depth++;
+			else if (c == ']' && !instring) depth--;
 		}
-		return depth == 0; // well formed lists should have equal [ and ], therefore closed
+		bool paritycheck = depth == 0; // well formed lists should have equal [ and ], therefore closed
+		if (!paritycheck) return false;
+
+		// commas should always have something between them
+		nospaces = nospaces[1..^1]; // made sure started and ended with [], now remove them
+		instring = false;
+		bool inlist = false;
+		for (int i = 0; i < nospaces.Length; i++)
+		{
+			char c = nospaces[i];
+			if (c == '"') instring = !instring;
+			if ((c == '[' || c == ']') && !instring) inlist = !inlist;
+			if (nospaces[i] == ',' && !(instring || inlist)) // dont process commas inside of nested list or string
+			{
+				if (i == 0 || i == nospaces.Length - 1) // shouldnt be at start or end
+					return false;
+				
+				if (nospaces[i+1] == ',' || nospaces[i-1] == ',') // shouldnt be next to each other
+					return false;
+			}
+		}
+		return true; // if paritycheck was false, would have already returned 
 	}
 
 	string DetermineTypeFromString(string s)
@@ -170,7 +228,12 @@ public class Evaluator : MonoBehaviour
 			value = result.value;
 		}
 		else if (type == "string") value = s.Trim('"');
-		else if (type == "bool") value = s == "true";
+		else if (type == "bool")
+		{
+			if (s == "true") value = true;
+			else if (s == "false") value = false;
+			else return Errors.UnableToParseBool(interpreter);
+		}
 		else if (type == "list")
 		{
 			Output attemptR = EvaluateList(s, interpreter);
@@ -188,16 +251,71 @@ public class Evaluator : MonoBehaviour
 		return new Output(value);
 	}
 
-	public Output EvaluateList(string expr, Interpreter interpreter)
-	{
-		if (!CheckListForm(expr)) return Errors.MalformedList(expr, interpreter);
+	Output EvaluateRangeList(string expr, bool isAlone, int baseListLength, Interpreter interpreter) // isalone determines behavior of range from positive to negative
+	{ // expects well formed list (not checking again)
+		string[] parts = expr.Split("..."); // there should only be one ... therefore two sides
+		if (parts.Length > 2) return Errors.MalformedList(expr, interpreter);
+		
 		expr = expr[1..^1];
+		parts = expr.Split("...");
+
+		string startString = parts[0];
+		string endString = parts[1];
+		string intervalString = "1";
+		int commaCount = ExpressionCountSymbol(',', startString);
+		if (commaCount > 1)
+			return Errors.MalformedList(expr, interpreter);
+		else if (commaCount == 1)
+		{
+			intervalString = startString.Split(',')[1];
+			startString = startString.Split(',')[0];
+		}
+
+		Output tryEval = Evaluate(startString, interpreter);
+		if (!tryEval.success) return new Output(tryEval.error);
+		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
+		float start = tryEval.value;
+
+		tryEval = Evaluate(endString, interpreter);
+		if (!tryEval.success) return new Output(tryEval.error);
+		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
+		float end = tryEval.value;
+
+		tryEval = Evaluate(intervalString, interpreter);
+		if (!tryEval.success) return new Output(tryEval.error);
+		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
+		float interval = tryEval.value;
+
+		List<dynamic> values = new();
+		if (start < end)
+			for (float v = start; v <= end; v += interval)
+				values.Add(v);
+		else
+			for (float v = start; v >= end; v -= interval)
+				values.Add(v);
+
+		return new Output(values);
+	}
+
+	public Output EvaluateSingularList(string expr, Interpreter interpreter)
+	{
+		return EvaluateSingularList(expr, true, 0, interpreter);
+	}
+	public Output EvaluateSingularList(string expr, bool isAlone, int baseListLength, Interpreter interpreter)
+	{
+		// check for well formed list
+		if (!CheckListForm(expr)) return Errors.MalformedList(expr, interpreter);
+		
+		// check if this is a range list [x,y...z] [x...y]
+		if (expr.Contains("...")) return EvaluateRangeList(expr, isAlone, baseListLength, interpreter);
+		
+		expr = expr[1..^1]; // trim first and last [ ] 
 
 		List<dynamic> items = new();
-		
-		bool inString = false;
+
 		int depth = 0;
 		string accum = "";
+		bool inString = false;
 		Output evaluate;
 		for (int i = 0; i < expr.Length; i++)
 		{
@@ -228,10 +346,90 @@ public class Evaluator : MonoBehaviour
 		return new Output(items);
 	}
 
+	public Output EvaluateList(string expr, Interpreter interpreter)
+	{
+		#region extract the parts from the expression
+		List<string> parts = new();
+		bool inString = false;
+		int depth = 0;
+		string accum = "";
+		for (int i = 0; i < expr.Length; i++)
+		{
+			char c = expr[i];
+
+			if (c == ' ' && !inString) continue; // ignore spaces
+
+			accum += c;
+
+			if (c == '"') inString = !inString;
+			else if (c == '[' && !inString) depth++;
+			else if (c == ']' && !inString) depth--;
+
+			// list ending or end of expresion, not in nested list or string
+			if ((c == ']' || i == expr.Length - 1) && depth == 0 && !inString)
+			{
+				parts.Add(accum);
+				accum = "";
+			}
+		}
+		if (depth != 0) return Errors.MalformedList(expr, interpreter);
+		//parts.Reverse();
+		#endregion
+
+		if (parts.Count > 1)
+		{ // some kind of indexing is going on
+			// eval first part first
+
+			Output tryEval = EvaluateSingularList(parts[0], interpreter);
+			if (!tryEval.success) return new Output(tryEval.error);
+			List<dynamic> baseList = tryEval.value;
+
+			parts.RemoveAt(0);
+
+			// iteratively evaluate the next lists, using their returned items as indexes
+			foreach (string part in parts)
+			{
+				tryEval = EvaluateSingularList(part, false, baseList.Count, interpreter);
+				if (!tryEval.success) return new Output(tryEval.error);
+				List<dynamic> dynamicIndexes = tryEval.value;
+
+				// only whole numbers allowed in the indexes
+				foreach (dynamic index in dynamicIndexes)
+				{
+					if (index is not float && index is not int)
+						return Errors.IndexListWithType(DetermineTypeFromVariable(index), interpreter);
+					if (Mathf.Round(index) != index)
+						return Errors.IndexListWithType(DetermineTypeFromVariable(index), interpreter);
+				}
+				List<int> indexes = new();
+				foreach (dynamic index in dynamicIndexes) indexes.Add((int)index);
+
+				// indexes have to be in range
+				foreach (int index in indexes)
+					if (index < -baseList.Count || index >= baseList.Count) // negatives can get up to amount, cant go over length - 1
+						return Errors.IndexOutOfRange(index, interpreter);
+
+				// index the list
+				List<dynamic> temp = new();
+				foreach (int index in indexes)
+					temp.Add(baseList[index < 0 ? ^Mathf.Abs(index): index]); // handle - indexes
+				baseList = temp;
+			}
+
+			return new Output(baseList);
+		}
+		else
+		{ // no indexing, normal list
+			// return the one part 
+			return EvaluateSingularList(expr, interpreter);
+		}
+	}
+
 	public string ConvertToString(dynamic value)
 	{
 		if (value is string) return $"\"{value}\"";
-		else if (value is int || value is float || value is bool) return value.ToString();
+		else if (value is int || value is float) return value.ToString();
+		else if (value is bool) return value ? "true" : "false";
 		else if (value is List<dynamic>)
 		{
 			string builtString = "[";
@@ -250,30 +448,42 @@ public class Evaluator : MonoBehaviour
 	{
 		#region remove all spaces except inside ""
 		string tempstring = "";
-		bool inQuotes = false;
+		bool inString = false;
 		foreach(char c in expr)
 		{
-			if (c == '"') inQuotes = !inQuotes;
-			if (c != ' ' || inQuotes) // anything but space unless in quotes
+			if (c == '"') inString = !inString;
+			if (c != ' ' || inString) // anything but space unless in quotes
 				tempstring += c;
 		}
 		expr = tempstring;
 		#endregion
 
 		#region handle parentheses
-		while (expr.Contains('(') || expr.Contains(')'))
+		while (ExpressionContainsParentheses(expr))
 		{
-			// find the first instance of (
-			int parenthesesStartIndex = expr.IndexOf('(');
+			// find the first instance of ( not inside of string
+			int parenthesesStartIndex = 0;
+			inString = false;
+			for (int i = 0; i < expr.Length; i++)
+			{
+				if (expr[i] == '"') inString = !inString;
+				if (expr[i] == '(' && !inString)
+				{
+					parenthesesStartIndex = i;
+					break;
+				}
+			}
 			int parenthesesEndIndex = -1;
 
 			// search for matching parentheses
 			int depth = 0;
+			inString = false;
 			for (int i = parenthesesStartIndex; i < expr.Length; i++)
 			{
 				char c = expr[i];
-				if (c == '(') depth++;
-				if (c == ')')
+				if (c == '"') inString = !inString;
+				if (c == '(' && !inString) depth++;
+				if (c == ')' && !inString)
 				{
 					depth--;
 					if (depth == 0)
@@ -289,7 +499,10 @@ public class Evaluator : MonoBehaviour
 				return Errors.MismatchedParentheses(interpreter);
 
 			string newexpr = expr.Substring(parenthesesStartIndex + 1, parenthesesEndIndex - parenthesesStartIndex - 1);
-			string evaledvalue = ConvertToString(Evaluate(newexpr, interpreter).value);
+
+			Output tryEval = Evaluate(newexpr, interpreter);
+			if (!tryEval.success) return new Output(tryEval.error);
+			string evaledvalue = ConvertToString(tryEval.value);
 
 			// replace the chunk of parentheses with the evalled value 
 			expr = ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
@@ -300,19 +513,19 @@ public class Evaluator : MonoBehaviour
 		#region tokenize the expression
 		List<string> tokenStrings = new();
 		string accum = "";
-		bool instring = false;
+		inString = false;
 		bool exitGrace = false; // this is because when you exit string or list, it wants to interpret final char as operator
 		int listDepth = 0;
 		for (int i = 0; i < expr.Length; i++)
 		{
 			char c = expr[i];
 
-			if (c == '"') { instring = !instring; exitGrace = true; }
-			else if (c == '[') listDepth++;
-			else if (c == ']') { listDepth--; exitGrace = true; }
+			if (c == '"') { inString = !inString; exitGrace = true; }
+			else if (c == '[' && !inString) listDepth++;
+			else if (c == ']' && !inString) { listDepth--; exitGrace = true; }
 
 			if (char.IsDigit(c) || c == '.' || char.IsLetter(c) // digits, . and letters are never operators
-				|| instring || exitGrace // also ignore anything when in a string
+				|| inString || exitGrace // also ignore anything when in a string
 				|| listDepth != 0) // or if in a list
 			{
 				accum += c;
@@ -378,8 +591,8 @@ public class Evaluator : MonoBehaviour
 					if (!evaluateboolean.success) return new Output(evaluateboolean.error);
 
 					string newToken;
-					if (evaluateboolean.value is string) newToken = evaluateboolean.value;
-					else newToken = evaluateboolean.value ? "true" : "false";
+					if (evaluateboolean.value is string) newToken = !evaluateboolean.value;
+					else newToken = evaluateboolean.value ? "false" : "true";
 					temp.Add(newToken);
 					i++;
 				}
@@ -476,10 +689,7 @@ public class Evaluator : MonoBehaviour
 						{
 							right = right ? 1 : 0;
 						}
-						else if (rightType == "list")
-						{
-							right = 1;
-						}
+						else if (rightType == "list") return Errors.UnsupportedOperation(operation, "number", "list", interpreter);
 					}
 
 					switch (operation)
@@ -487,15 +697,18 @@ public class Evaluator : MonoBehaviour
 						case "+":  result = left + right; break;
 						case "-":  result = left - right; break;
 						case "*":  result = left * right; break;
-						case "/":  result = left / right; break;
+						case "/":  // check for division by zero
+							if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
+							else result = left / right; break;
 						case "^":  result = Mathf.Pow(left, right); break;
-						case "%":  result = left % right; break;
+						case "%":  result = left % right; break; //
 						case "==": result = left == right; break;
 						case "!=": result = left != right; break;
 						case "<":  result = left < right; break;
 						case ">":  result = left > right; break;
 						case "<=": result = left <= right; break;
 						case ">=": result = left >= right; break;
+						default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
 					}
 				}
 				else if (leftType == "string")
@@ -508,6 +721,42 @@ public class Evaluator : MonoBehaviour
 				else if (leftType == "list")
 				{
 					if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
+					if (rightType == "list") result = left + right;
+					else
+					{
+						left.Add(right);
+						result = left;
+					} 
+				}
+				else if (leftType == "bool")
+				{
+					if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
+					if (rightType != "bool")
+					{
+						if (rightType == "string")
+						{
+							if (right == "true") right = true;
+							else if (right == "false") right = false;
+							else return Errors.UnsupportedOperation(operation, "bool", "string", interpreter);
+						}
+						else if (rightType == "number")
+						{
+							if (right == 1) right = true;
+							else if (right == 0) right = false;
+							else return Errors.UnsupportedOperation(operation, "bool", "number", interpreter);
+						}
+						else if (rightType == "list") return Errors.UnsupportedOperation(operation, "bool", "list", interpreter);
+					}
+					switch (operation)
+					{
+						case "==": result = left == right; break;
+						case "!=": result = left != right; break;
+						case "&&": result = left && right; break;
+						case "||": result = left || right; break;
+						case "!&": result = !(left && right); break;
+						case "!|": result = !(left || right); break;
+						case "!!": result = left ^ right; break;
+					}
 				}
 			}
 			catch

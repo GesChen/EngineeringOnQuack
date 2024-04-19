@@ -5,6 +5,7 @@ using UnityEngine;
 public class Tester : MonoBehaviour
 {
 	public string expr;
+	public List<string> testCases = new();
 	// Start is called before the first frame update
 	void Start()
 	{
@@ -24,5 +25,13 @@ public class Tester : MonoBehaviour
 			}
 		}
 
+		for (int t = 0; t < testCases.Count; t++)
+		{
+			string tc = testCases[t];
+			test = evaluator.Evaluate(tc, interpreter);
+			Debug.Log(test.success);
+			if (!test.success) Debug.Log(test.error);
+			else Debug.Log(test.value);
+		}
 	}
 }

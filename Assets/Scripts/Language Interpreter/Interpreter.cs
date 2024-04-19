@@ -61,13 +61,17 @@ public class Interpreter : MonoBehaviour
     public Script script;
     public Dictionary<string, dynamic> variables = new()
     {
-        { "true", 1 },
-        { "false",0 }
+        //{ "true", 1 },
+        //{ "false",0 }
     };
 
     public void Interpret(Script script)
     {
         StartCoroutine(InterpretCoroutine(script));
+    }
+    public void StoreVariable(string name, dynamic value)
+    {
+        variables[name] = value;
     }
     public Output FetchVariable(string name)
     {
