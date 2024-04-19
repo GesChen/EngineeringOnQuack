@@ -46,6 +46,7 @@ public class Output
         return error.ToString();
     }
 }
+[System.Serializable]
 public class Script
 {
     public List<string> Lines { get; private set; }
@@ -65,9 +66,9 @@ public class Interpreter : MonoBehaviour
         //{ "false",0 }
     };
 
-    public void Interpret(Script script)
+    public void Interpret(Script script, Evaluator evaluator)
     {
-        StartCoroutine(InterpretCoroutine(script));
+        StartCoroutine(InterpretCoroutine(script, evaluator));
     }
     public void StoreVariable(string name, dynamic value)
     {
@@ -79,7 +80,7 @@ public class Interpreter : MonoBehaviour
             return Errors.UnknownVariable(name, this);
         return new Output(variables[name]);
     }
-    private IEnumerator InterpretCoroutine(Script script)
+    private IEnumerator InterpretCoroutine(Script script, Evaluator evaluator)
     {
         foreach(string line in script.Lines)
         {
