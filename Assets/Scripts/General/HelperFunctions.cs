@@ -84,10 +84,10 @@ public static class HelperFunctions
 	}
 	
 	public static Vector3 MV3(Vector3 a, Vector3 b) 
-		=> new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+		=> new (a.x * b.x, a.y * b.y, a.z * b.z);
 	
 	public static Vector3 Vector3Round(Vector3 v)
-		=> new Vector3(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
+		=> new (Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 	
 	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t)
 	{
@@ -111,4 +111,27 @@ public static class HelperFunctions
 
 	public static Vector2 Vector2Round(Vector2 v) 
 		=> new (Mathf.Round(v.x), Mathf.Round(v.y));
+
+	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
+		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
+
+	public static string ConvertToString(dynamic value)
+	{
+		if (value is string) return $"\"{value}\"";
+		else if (value is int || value is float) return value.ToString();
+		else if (value is bool) return value ? "true" : "false";
+		else if (value is List<dynamic>)
+		{
+			string builtString = "[";
+			for (int i = 0; i < value.Count; i++)
+			{
+				builtString += ConvertToString(value[i]);
+				if (i < value.Count - 1) builtString += ", ";
+			}
+			builtString += "]";
+			return builtString;
+		}
+		return value.ToString();
+	}
+
 }

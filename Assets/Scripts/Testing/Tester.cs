@@ -31,7 +31,7 @@ public class Tester : MonoBehaviour
 			test = evaluator.Evaluate(tc, interpreter);
 			Debug.Log(test.success);
 			if (!test.success) Debug.Log(test.error);
-			else Debug.Log(test.value);
+			else Debug.Log(HelperFunctions.ConvertToString(test.value));
 		}
 	}
 }

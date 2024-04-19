@@ -65,11 +65,6 @@ public class Evaluator : MonoBehaviour
 		"!!"  //xor
 	};
 
-	void Log(string s)
-	{
-		Debug.Log(s);
-	}
-	
 	bool ExpressionContains(char symbol, string expr)
 	{
 		bool inString = false;
@@ -96,12 +91,7 @@ public class Evaluator : MonoBehaviour
 		return ExpressionContains('(', expr) || ExpressionContains(')', expr);
 	}
 	
-
-	string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
-	{
-		return original[..startIndex] + replaceWith + original[(endIndex + 1)..];
-	}
-
+	
 	Output ParseFloatPart(string s, Interpreter interpreter)
 	{
 		float value = 0;
@@ -287,6 +277,12 @@ public class Evaluator : MonoBehaviour
 		float interval = tryEval.value;
 
 		List<dynamic> values = new();
+		if (isAlone)
+		{
+			if (start < 0) start = baseListLength + start;
+			if (end < 0) end = baseListLength + end;
+		}
+
 		if (start < end)
 			for (float v = start; v <= end; v += interval)
 				values.Add(v);
@@ -389,7 +385,7 @@ public class Evaluator : MonoBehaviour
 			// iteratively evaluate the next lists, using their returned items as indexes
 			foreach (string part in parts)
 			{
-				tryEval = EvaluateSingularList(part, false, baseList.Count, interpreter);
+				tryEval = EvaluateSingularList(part, true, baseList.Count, interpreter);
 				if (!tryEval.success) return new Output(tryEval.error);
 				List<dynamic> dynamicIndexes = tryEval.value;
 
@@ -425,25 +421,7 @@ public class Evaluator : MonoBehaviour
 		}
 	}
 
-	public string ConvertToString(dynamic value)
-	{
-		if (value is string) return $"\"{value}\"";
-		else if (value is int || value is float) return value.ToString();
-		else if (value is bool) return value ? "true" : "false";
-		else if (value is List<dynamic>)
-		{
-			string builtString = "[";
-			for (int i = 0; i < value.Count; i++)
-			{
-				builtString += ConvertToString(value[i]);
-				if (i < value.Count - 1) builtString += ", ";
-			}
-			builtString += "]";
-			return builtString;
-		}
-		return value.ToString();
-	}
-
+	
 	public Output Evaluate(string expr, Interpreter interpreter)
 	{
 		#region blankcheck
@@ -507,11 +485,10 @@ public class Evaluator : MonoBehaviour
 
 			Output tryEval = Evaluate(newexpr, interpreter);
 			if (!tryEval.success) return new Output(tryEval.error);
-			string evaledvalue = ConvertToString(tryEval.value);
+			string evaledvalue = HelperFunctions.ConvertToString(tryEval.value);
 
 			// replace the chunk of parentheses with the evalled value 
-			expr = ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
-			Log(expr);
+			expr = HelperFunctions.ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
 		}
 		#endregion
 
@@ -719,19 +696,18 @@ public class Evaluator : MonoBehaviour
 				else if (leftType == "string")
 				{
 					if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
-					right = ConvertToString(right);
+					if (rightType != "string") right = HelperFunctions.ConvertToString(right);
 
 					result = left + right;
 				}
 				else if (leftType == "list")
 				{
 					if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
-					if (rightType == "list") result = left + right;
+					if (rightType == "list")
+						left.AddRange(right);
 					else
-					{
 						left.Add(right);
-						result = left;
-					} 
+					result = left;
 				}
 				else if (leftType == "bool")
 				{
