@@ -7,7 +7,7 @@ public static class Errors
 		new (new Error("test", interpreter));
 
 	public static Output MismatchedParentheses(Interpreter interpreter) =>
-		new (new Error("Mismatched parentheses", interpreter));
+		Error("Mismatched parentheses", interpreter);
 	
 	public static Output MismatchedBrackets(Interpreter interpreter) =>
 		Error("Mismatched brackets", interpreter);
@@ -30,10 +30,10 @@ public static class Errors
 		Error($"Unable to parse \"{str}\" as number", interpreter);
 
 	public static Output OperationFailed(string op, Interpreter interpreter) =>
-			Error($"Operation {op} failed unexpectedly", interpreter);
+		Error($"Operation {op} failed unexpectedly", interpreter);
 
 	public static Output InvaidString(string str, Interpreter interpreter) =>
-			Error($"String \"{str}\" is not a valid string", interpreter);
+		Error($"String \"{str}\" is not a valid string", interpreter);
 
 	public static Output UnsupportedOperation(string op, string type1, string type2, Interpreter interpreter) =>
 		Error($"Unsupported operation: {op} between {type1} and {type2}", interpreter);
@@ -51,11 +51,14 @@ public static class Errors
 		Error($"Unknown variable \"{name}\"", interpreter);
 
 	public static Output UnableToParseBool(Interpreter interpreter) =>
-		Error($"Unable to parse bool ", interpreter);
+		Error($"Unable to parse bool", interpreter);
 
 	public static Output IndexListWithType(string type, Interpreter interpreter) =>
 		Error($"Attempted to index a list with a {type} (only whole numbers are allowed)", interpreter);
 
 	public static Output IndexOutOfRange(int index, Interpreter interpreter) =>
-		Error($"List index {index} was out of range.", interpreter);
+		Error($"List index {index} was out of range", interpreter);
+
+	public static Output EvaluatedNothing(Interpreter interpreter) =>
+		Error($"Attempted to evaluate nothing", interpreter);
 }

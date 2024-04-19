@@ -261,7 +261,7 @@ public class Evaluator : MonoBehaviour
 
 		string startString = parts[0];
 		string endString = parts[1];
-		string intervalString = "1";
+		string intervalString = "1"; // default interval is 1
 		int commaCount = ExpressionCountSymbol(',', startString);
 		if (commaCount > 1)
 			return Errors.MalformedList(expr, interpreter);
@@ -446,8 +446,13 @@ public class Evaluator : MonoBehaviour
 
 	public Output Evaluate(string expr, Interpreter interpreter)
 	{
+		#region blankcheck
+		if (expr.Replace(" ", "") == "")
+			return Errors.EvaluatedNothing(interpreter);
+		#endregion
+
 		#region remove all spaces except inside ""
-		string tempstring = "";
+			string tempstring = "";
 		bool inString = false;
 		foreach(char c in expr)
 		{
