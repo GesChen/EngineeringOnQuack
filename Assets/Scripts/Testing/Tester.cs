@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using System.Linq;
 
 public class Tester : MonoBehaviour
 {
@@ -9,11 +11,14 @@ public class Tester : MonoBehaviour
 
 	public Interpreter interpreter;
 	public Evaluator evaluator;
-	public Script script;
+	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
 
-	// Start is called before the first frame update
 	void Start()
 	{
+		string[] contents = File.ReadAllLines(scriptFilePath);
+		
+		Script script = new (contents.ToList());
+
 		interpreter.Interpret(script, evaluator);
 	}
 }

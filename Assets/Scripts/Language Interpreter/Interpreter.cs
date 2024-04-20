@@ -1,90 +1,137 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 public class Error
 {
-    public string Message { get; private set; }
-    public int Line { get; private set; }
-    private readonly Interpreter interpreter;
+	public string Message { get; private set; }
+	public int Line { get; private set; }
+	private readonly Interpreter interpreter;
 
-    public Error(string message, Interpreter interpreter)
+	public Error(string message, Interpreter interpreter)
 	{
 		Message = message;
-        this.interpreter = interpreter;
+		this.interpreter = interpreter;
 		Line = interpreter.currentLine;
 	}
 
-    public override string ToString()
-    {
-        return $"An error has occurred on line {Line} ({interpreter.script.Lines[Line]}):\n {Message}";
-    }
+	public override string ToString()
+	{
+		return $"An error has occurred on line {Line} ({interpreter.script.Lines[Line]}):\n {Message}";
+	}
 }
 public class Output
 {
-    public bool success  { get; private set; }
-    public Error error   { get; private set; }
+	public bool success  { get; private set; }
+	public Error error   { get; private set; }
 	public dynamic value { get; private set; }
 
 
 	public Output(Error error)
-    {
-        this.error = error;
-        value = "Error";
-        success = false;
-    }
-    public Output(dynamic value)
-    {
-        this.value = value;
-        success = true;
-    }
+	{
+		this.error = error;
+		value = "Error";
+		success = false;
+	}
+	public Output(dynamic value)
+	{
+		this.value = value;
+		success = true;
+	}
 
-    public override string ToString()
-    {
-        if (value == null) return "Output is null";
-        if (success) return $"Output {value.ToString()} (Type: {value.GetType().FullName})";
-        return error.ToString();
-    }
+	public override string ToString()
+	{
+		if (value == null) return "Output is null";
+		if (success) return $"Output {value.ToString()} (Type: {value.GetType().FullName})";
+		return error.ToString();
+	}
 }
-[System.Serializable]
+
 public class Script
 {
-    public List<string> Lines { get; private set; }
+	public List<string> Lines { get; private set; }
 
-    public Script(List<string> lines)
+	public Script(List<string> lines)
 	{
 		Lines = lines;
 	}
 }
 public class Interpreter : MonoBehaviour
 {
-    public int currentLine;
-    public Script script;
-    public Dictionary<string, dynamic> variables = new()
-    {
-        //{ "true", 1 },
-        //{ "false",0 }
-    };
+	public int currentLine;
+	public Script script;
+	public Dictionary<string, dynamic> variables = new()
+	{
+		//{ "true", 1 },
+		//{ "false",0 }
+	};
 
-    public void Interpret(Script script, Evaluator evaluator)
-    {
-        StartCoroutine(InterpretCoroutine(script, evaluator));
-    }
-    public void StoreVariable(string name, dynamic value)
-    {
-        variables[name] = value;
-    }
-    public Output FetchVariable(string name)
-    {
-        if (!variables.ContainsKey(name))
-            return Errors.UnknownVariable(name, this);
-        return new Output(variables[name]);
-    }
-    private IEnumerator InterpretCoroutine(Script script, Evaluator evaluator)
-    {
-        foreach(string line in script.Lines)
-        {
-            yield return new();
-        }
-    }
+	public void Interpret(Script script, Evaluator evaluator)
+	{
+		StartCoroutine(InterpretCoroutine(script, evaluator));
+	}
+	public void StoreVariable(string name, dynamic value)
+	{
+		variables[name] = value;
+	}
+	public Output FetchVariable(string name)
+	{
+		if (!variables.ContainsKey(name))
+			return Errors.UnknownVariable(name, this);
+		return new Output(variables[name]);
+	}
+	
+	int GetIndent(string s)
+	{
+		int curIndent = 0;
+		foreach (char c in s)
+		{
+			if (!char.IsWhiteSpace(c)) break;
+			if (c == ' ') curIndent++;
+			else if (c == '\t') curIndent += 4;
+		}
+		return curIndent;
+	}
+
+	List<dynamic> ConvertToList(Script script, int curIndent, ref int lineNum)
+	{
+		List<dynamic> lines = new();
+		while (lineNum < script.Lines.Count)
+		{
+			string line = script.Lines[lineNum];
+			string trimmedLine = line.Trim();
+
+			if (string.IsNullOrWhiteSpace(trimmedLine))
+			{
+				lineNum++;
+				continue;
+			}
+
+			int indent = GetIndent(line);
+
+			if (indent > curIndent)
+			{
+				lines.Add(ConvertToList(script, indent, ref lineNum));
+				lines.Add(script.Lines[lineNum].Trim()); // add current, not added because got broken out of
+			}
+			else if (indent < curIndent)
+			{
+				return lines;
+			}
+			else
+			{
+				lines.Add(trimmedLine);
+			}
+			lineNum++;
+		}
+		return lines;
+	}
+	private IEnumerator InterpretCoroutine(Script script, Evaluator evaluator)
+	{
+		int lineNum = 0;
+		List<dynamic> lines = ConvertToList(script, 0, ref lineNum);
+		Debug.Log(HelperFunctions.ConvertToString(lines));
+		yield break;
+	}
 }
