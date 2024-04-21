@@ -429,7 +429,10 @@ public class Interpreter : MonoBehaviour
 							break;
 						case "+=":
 							// try to add onto existing variable
-							tryEval = evaluator.Evaluate($"({variableValue})+({tryEval.value})", this);
+							tryEval = evaluator.Evaluate(
+								$"({HelperFunctions.ConvertToString(variableValue)})" +
+								$"+" +
+								$"({HelperFunctions.ConvertToString(tryEval.value)})", this);
 							if (!tryEval.success)
 							{
 								callback(tryEval);
@@ -440,7 +443,10 @@ public class Interpreter : MonoBehaviour
 							break;
 						case "-=":
 							// try to add onto existing variable
-							tryEval = evaluator.Evaluate($"({variableValue})-({tryEval.value})", this);
+							tryEval = evaluator.Evaluate(
+								$"({HelperFunctions.ConvertToString(variableValue)})" +
+								$"-" +
+								$"({HelperFunctions.ConvertToString(tryEval.value)})", this);
 							if (!tryEval.success)
 							{
 								callback(tryEval);
@@ -449,7 +455,6 @@ public class Interpreter : MonoBehaviour
 
 							StoreVariable(varName, tryEval.value);
 							break;
-
 					}
 				}
 			}

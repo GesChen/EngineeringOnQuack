@@ -1,21 +1,16 @@
-with open(r'D:\Projects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Testing\testscript.quack') as file:
-    print(file.readlines());
+test = True
 
-for i in range(10):
-    print(i)
+secondvar = 100 + 2
 
-print(i)
+test = "false" + str(5 * 10)
 
-i = 0 
+secondvar -= 2 * 5 + 10
 
-print (i)
+random = 69
 
-def test (a, b):
-    return a + b
+secondvar -= random
+secondvar -= 1
 
-for i in range(10):
-    if i == 0:
-        print(i)
-    # lesser
+test += str(secondvar)
 
-i+- 2
+print()

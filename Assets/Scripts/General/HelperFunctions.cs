@@ -123,7 +123,7 @@ public static class HelperFunctions
 		if (value is string) return $"\"{value}\"";
 		else if (value is int || value is float) return value.ToString();
 		else if (value is bool) return value ? "true" : "false";
-		else if (value is List<dynamic>)
+		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
 		{
 			string builtString = "[";
 			for (int i = 0; i < value.Count; i++)
@@ -136,12 +136,15 @@ public static class HelperFunctions
 		}
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
 		{
+			List<string> keys = new (value.Keys);
 			string builtString = "{";
-			foreach (dynamic key in value.Keys)
+			for (int i = 0; i < keys.Count; i++)
 			{
+				dynamic key = keys[i];
 				builtString += ConvertToString(key);
 				builtString += " : ";
 				builtString += ConvertToString(value[key]);
+				if (i != keys.Count - 1) builtString += ", ";
 			}
 			builtString += "}";
 			return builtString;

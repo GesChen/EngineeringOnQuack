@@ -1,1 +1,14 @@
 test = true
+
+secondvar = 100 + 2
+
+test = "false" + 5 * 10
+
+secondvar -= 2 * 5 + 10
+
+random = 69
+
+secondvar -= random
+secondvar--
+
+test += secondvar
