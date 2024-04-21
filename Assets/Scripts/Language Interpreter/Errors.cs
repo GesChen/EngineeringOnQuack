@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 public static class Errors 
 {
 	public static Output Error(string error, Interpreter interpreter) =>
@@ -13,7 +15,7 @@ public static class Errors
 		Error("Mismatched brackets", interpreter);
 
 	public static Output AttemptedEvalStringAsExpr(Interpreter interpreter) =>
-		Error("Attempted to evaluate a string as an expression", interpreter);
+		Error("Cannot evaluate a string as an expression", interpreter);
 	
 	public static Output OperatorInBadPosition(string op, Interpreter interpreter) =>
 		Error($"Operator {op} in bad position", interpreter);
@@ -39,13 +41,13 @@ public static class Errors
 		Error($"Unsupported operation: {op} between {type1} and {type2}", interpreter);
 	
 	public static Output DivisionByZero(Interpreter interpreter) =>
-		Error($"Attempted to divide by zero", interpreter);
+		Error($"Division by zero", interpreter);
 
 	public static Output MalformedString(string s, Interpreter interpreter) =>
-		Error($"String {s} was malformed, could not parse", interpreter);
+		Error($"Cannot parse malformed string: \"{s}\"", interpreter);
 
 	public static Output MalformedList(string s, Interpreter interpreter) =>
-		Error($"Could not parse malformed list: {s}", interpreter);
+		Error($"Cannot parse malformed list: {s}", interpreter);
 
 	public static Output UnknownVariable(string name, Interpreter interpreter) =>
 		Error($"Unknown variable \"{name}\"", interpreter);
@@ -54,11 +56,23 @@ public static class Errors
 		Error($"Unable to parse bool", interpreter);
 
 	public static Output IndexListWithType(string type, Interpreter interpreter) =>
-		Error($"Attempted to index a list with a {type} (only whole numbers are allowed)", interpreter);
+		Error($"Cannot index a list with a {type} (only whole numbers are allowed)", interpreter);
 
 	public static Output IndexOutOfRange(int index, Interpreter interpreter) =>
 		Error($"List index {index} was out of range", interpreter);
 
 	public static Output EvaluatedNothing(Interpreter interpreter) =>
-		Error($"Attempted to evaluate nothing", interpreter);
+		Error($"Cannot evaluate nothing", interpreter);
+
+	public static Output FunctionAlreadyExists(string name, int numArgs, Interpreter interpreter) =>
+		Error($"Function \"{name}\" with {numArgs} args already exists", interpreter);
+
+	public static Output NoFunctionExists(string name, int numargs, Interpreter interpreter) =>
+		Error($"No function \"{name}\" exists that takes {numargs} arguments", interpreter);
+
+	public static Output CannotSetKeyword(string name, Interpreter interpreter) =>
+		Error($"Cannot set keyword \"{name}\"", interpreter);
+
+	public static Output UnexpectedIndent(Interpreter interpreter) =>
+		Error($"Unexpected indent", interpreter);
 }

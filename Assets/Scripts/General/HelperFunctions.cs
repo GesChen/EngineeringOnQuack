@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -117,6 +118,8 @@ public static class HelperFunctions
 
 	public static string ConvertToString(dynamic value)
 	{
+		Type t = value.GetType();
+		if (value == null) return "";
 		if (value is string) return $"\"{value}\"";
 		else if (value is int || value is float) return value.ToString();
 		else if (value is bool) return value ? "true" : "false";
@@ -131,7 +134,88 @@ public static class HelperFunctions
 			builtString += "]";
 			return builtString;
 		}
+		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+		{
+			string builtString = "{";
+			foreach (dynamic key in value.Keys)
+			{
+				builtString += ConvertToString(key);
+				builtString += " : ";
+				builtString += ConvertToString(value[key]);
+			}
+			builtString += "}";
+			return builtString;
+		}
 		return value.ToString();
+	}
+
+	public static bool ContainsSubstringOutsideQuotes(string text, string substring)
+	{
+		if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(substring))
+		{
+			return false;
+		}
+
+		bool inQuotes = false;
+		int prevCharIndex = -1;
+
+		for (int i = 0; i < text.Length; i++)
+		{
+			char currentChar = text[i];
+
+			// Handle escaped quotes within quotes
+			if (currentChar == '"' && prevCharIndex >= 0 && text[prevCharIndex] == '\\')
+			{
+				prevCharIndex = -1;
+				continue;
+			}
+
+			// Toggle quote state
+			if (currentChar == '"')
+			{
+				inQuotes = !inQuotes;
+			}
+
+			// Check substring if not within quotes
+			else if (!inQuotes)
+			{
+				if (text[i..].StartsWith(substring))
+				{
+					return true;
+				}
+			}
+
+			prevCharIndex = i;
+		}
+
+		return false;
+	}
+
+	public static string DetermineTypeFromString(string s)
+	{
+		if (s.Length == 0) return null;
+
+		if (s[0] == '"' && s[^1] == '"') return "string";
+		else if (s[0] == '"' && s[^1] != '"' || s[0] != '"' && s[^1] == '"') return "malformed string"; // start is " but not end, or end is " but not start
+
+		if (s[0] == '[' && s[^1] == ']') return "list";
+		else if (s[0] == '[' && s[^1] != ']' || s[0] != '[' && s[^1] == ']') return "malformed list"; // start is " but not end, or end is " but not start
+
+		bool isnumber = true;
+		foreach (char c in s) if (!(char.IsDigit(c) || c == '.' || c == '-')) isnumber = false;
+		if (isnumber) return "number";
+
+		if (s == "true" || s == "false") return "bool";
+		return "variable"; //TODO!!!!!!!!!!
+	}
+
+	public static string DetermineTypeFromVariable(dynamic v)
+	{
+		if (v is string) return "string";
+		else if (v is int || v is float || v is long) return "number";
+		else if (v is bool) return "bool";
+		else if (v is List<dynamic>) return "list";
+		return "unknown";
 	}
 
 }

@@ -105,11 +105,11 @@ public class Evaluator : MonoBehaviour
 			if (negative) s = s[1..];
 
 			Output result = interpreter.FetchVariable(s);
-			string type = DetermineTypeFromString(s);
+			string type = HelperFunctions.DetermineTypeFromString(s);
 			if (!result.success) 
 			{
 				if (type != "number")
-					return new Output(result.error);
+					return result;
 				else
 					return Errors.UnableToParseStrAsNum(s, interpreter);
 			}
@@ -175,36 +175,9 @@ public class Evaluator : MonoBehaviour
 		return true; // if paritycheck was false, would have already returned 
 	}
 
-	string DetermineTypeFromString(string s)
-	{
-		if (s.Length == 0) return null;
-
-		if (s[0] == '"' && s[^1] == '"') return "string";
-		else if (s[0] == '"' && s[^1] != '"' || s[0] != '"' && s[^1] == '"') return "malformed string"; // start is " but not end, or end is " but not start
-		
-		if (s[0] == '[' && s[^1] == ']') return "list";
-		else if (s[0] == '[' && s[^1] != ']' || s[0] != '[' && s[^1] == ']') return "malformed list"; // start is " but not end, or end is " but not start
-
-		bool isnumber = true;
-		foreach (char c in s) if (!(char.IsDigit(c) || c == '.' || c == '-')) isnumber = false;
-		if (isnumber) return "number";
-
-		if (s == "true" || s == "false") return "bool";
-		return "variable"; //TODO!!!!!!!!!!
-	}
-
-	string DetermineTypeFromVariable(dynamic v)
-	{
-		if (v is string) return "string";
-		else if (v is int || v is float || v is long) return "number";
-		else if (v is bool) return "bool";
-		else if (v is List<dynamic>) return "list";
-		return "unknown";
-	}
-
 	Output DynamicStringParse(string s, Interpreter interpreter)
 	{
-		string type = DetermineTypeFromString(s);
+		string type = HelperFunctions.DetermineTypeFromString(s);
 
 		if (type == "malformed string") return Errors.MalformedString(s, interpreter);
 		else if (type == "malformed list") return Errors.MalformedList(s, interpreter);
@@ -214,7 +187,7 @@ public class Evaluator : MonoBehaviour
 		if (type == "number")
 		{
 			Output result = ParseFloatPart(s, interpreter);
-			if (!result.success) return new Output(result.error);
+			if (!result.success) return result;
 			value = result.value;
 		}
 		else if (type == "string") value = s.Trim('"');
@@ -227,14 +200,14 @@ public class Evaluator : MonoBehaviour
 		else if (type == "list")
 		{
 			Output attemptR = EvaluateList(s, interpreter);
-			if (!attemptR.success) return new Output(attemptR.error);
+			if (!attemptR.success) return attemptR;
 
 			value = attemptR.value;
 		}
 		else if (type == "variable")
 		{
 			Output result = interpreter.FetchVariable(s);
-			if (!result.success) return new Output(result.error);
+			if (!result.success) return result;
 			value = result.value;
 		}
 
@@ -260,19 +233,34 @@ public class Evaluator : MonoBehaviour
 			intervalString = startString.Split(',')[1];
 			startString = startString.Split(',')[0];
 		}
+		
+		Output tryEval;
+		float start;
+		if (!string.IsNullOrEmpty(startString))
+		{
+			tryEval = Evaluate(startString, interpreter);
+			if (!tryEval.success) return tryEval;
+			if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
+			start = tryEval.value;
+		}
+		else
+			start = 0;
 
-		Output tryEval = Evaluate(startString, interpreter);
-		if (!tryEval.success) return new Output(tryEval.error);
-		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
-		float start = tryEval.value;
-
-		tryEval = Evaluate(endString, interpreter);
-		if (!tryEval.success) return new Output(tryEval.error);
-		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
-		float end = tryEval.value;
+		float end;
+		if (!string.IsNullOrEmpty(endString))
+		{
+			tryEval = Evaluate(endString, interpreter);
+			if (!tryEval.success) return tryEval;
+			if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
+			end = tryEval.value;
+		}
+		else if (!isAlone)
+			end = baseListLength - 1;
+		else
+			return Errors.TestError(interpreter);
 
 		tryEval = Evaluate(intervalString, interpreter);
-		if (!tryEval.success) return new Output(tryEval.error);
+		if (!tryEval.success) return tryEval;
 		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
 		float interval = tryEval.value;
 
@@ -328,14 +316,14 @@ public class Evaluator : MonoBehaviour
 			else
 			{ // , and not in string
 				evaluate = Evaluate(accum.Trim(), interpreter);
-				if (!evaluate.success) return new Output(evaluate.error);
+				if (!evaluate.success) return evaluate;
 
 				items.Add(evaluate.value);
 				accum = "";
 			}
 		}
 		evaluate = Evaluate(accum.Trim(), interpreter);
-		if (!evaluate.success) return new Output(evaluate.error);
+		if (!evaluate.success) return evaluate;
 
 		items.Add(evaluate.value);
 
@@ -377,7 +365,7 @@ public class Evaluator : MonoBehaviour
 			// eval first part first
 
 			Output tryEval = EvaluateSingularList(parts[0], interpreter);
-			if (!tryEval.success) return new Output(tryEval.error);
+			if (!tryEval.success) return tryEval;
 			List<dynamic> baseList = tryEval.value;
 
 			parts.RemoveAt(0);
@@ -385,17 +373,17 @@ public class Evaluator : MonoBehaviour
 			// iteratively evaluate the next lists, using their returned items as indexes
 			foreach (string part in parts)
 			{
-				tryEval = EvaluateSingularList(part, true, baseList.Count, interpreter);
-				if (!tryEval.success) return new Output(tryEval.error);
+				tryEval = EvaluateSingularList(part, false, baseList.Count, interpreter);
+				if (!tryEval.success) return tryEval;
 				List<dynamic> dynamicIndexes = tryEval.value;
 
 				// only whole numbers allowed in the indexes
 				foreach (dynamic index in dynamicIndexes)
 				{
 					if (index is not float && index is not int)
-						return Errors.IndexListWithType(DetermineTypeFromVariable(index), interpreter);
+						return Errors.IndexListWithType(HelperFunctions.DetermineTypeFromVariable(index), interpreter);
 					if (Mathf.Round(index) != index)
-						return Errors.IndexListWithType(DetermineTypeFromVariable(index), interpreter);
+						return Errors.IndexListWithType(HelperFunctions.DetermineTypeFromVariable(index), interpreter);
 				}
 				List<int> indexes = new();
 				foreach (dynamic index in dynamicIndexes) indexes.Add((int)index);
@@ -484,7 +472,7 @@ public class Evaluator : MonoBehaviour
 			string newexpr = expr.Substring(parenthesesStartIndex + 1, parenthesesEndIndex - parenthesesStartIndex - 1);
 
 			Output tryEval = Evaluate(newexpr, interpreter);
-			if (!tryEval.success) return new Output(tryEval.error);
+			if (!tryEval.success) return tryEval;
 			string evaledvalue = HelperFunctions.ConvertToString(tryEval.value);
 
 			// replace the chunk of parentheses with the evalled value 
@@ -570,7 +558,7 @@ public class Evaluator : MonoBehaviour
 				if (i != tokenStrings.Count - 1)
 				{
 					Output evaluateboolean = Evaluate(tokenStrings[i + 1], interpreter);
-					if (!evaluateboolean.success) return new Output(evaluateboolean.error);
+					if (!evaluateboolean.success) return evaluateboolean;
 
 					string newToken;
 					if (evaluateboolean.value is string) newToken = !evaluateboolean.value;
@@ -610,7 +598,7 @@ public class Evaluator : MonoBehaviour
 			if (!operators.Contains(tokenString))
 			{
 				Output parsed = DynamicStringParse(tokenString, interpreter);
-				if (!parsed.success) return new Output(parsed.error);
+				if (!parsed.success) return parsed;
 
 				tokens.Add(parsed.value);
 			}
@@ -642,10 +630,10 @@ public class Evaluator : MonoBehaviour
 			// operator definitely has items on both sides
 			// left and right types
 			dynamic left = tokens[lmhrIndex - 1];
-			string leftType = DetermineTypeFromVariable(left);
+			string leftType = HelperFunctions.DetermineTypeFromVariable(left);
 
 			dynamic right = tokens[lmhrIndex + 1];
-			string rightType = DetermineTypeFromVariable(right);
+			string rightType = HelperFunctions.DetermineTypeFromVariable(right);
 
 			string operation = tokens[lmhrIndex];
 			dynamic result = 0;

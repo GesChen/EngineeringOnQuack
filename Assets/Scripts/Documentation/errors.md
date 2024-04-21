@@ -7,7 +7,7 @@ Mismatched parentheses
 Mismatched brackets
 
 `AttemptedEvalStringAsExpr`\
-Attempted to evaluate a string as an expression
+Cannot evaluate a string as an expression
 
 `OperatorInBadPosition` `(op)`\
 Operator `{op}` in bad position
@@ -34,13 +34,13 @@ String \"`{str}`\" is not a valid string
 Unsupported operation: `{op}` between `{type1}` and `{type2}`
 
 `DivisionByZero`\
-Attempted to divide by zero
+Division by zero
 
 `MalformedString` `(s)`\
-String `{s}` was malformed, could not parse
+Cannot parse malformed string: \"`{s}`\"
 
 `MalformedList` `(s)`\
-Could not parse malformed list: `{s}`
+Cannot parse malformed list: `{s}`
 
 `UnknownVariable` `(name)`\
 Unknown variable \"`{name}`\"
@@ -49,11 +49,20 @@ Unknown variable \"`{name}`\"
 Unable to parse bool
 
 `IndexListWithType` `(type)`\
-Attempted to index a list with a `{type}` (only whole numbers are allowed)
+Cannot index a list with a `{type}` (only whole numbers are allowed)
 
 `IndexOutOfRange` `(index)`\
 List index `{index}` was out of range
 
 `EvaluatedNothing`\
-Attempted to evaluate nothing
+Cannot evaluate nothing
+
+`FunctionAlreadyExists` `(name,)` `(argNames)`\
+Function \"`{name}`\" with args `{HelperFunctions.ConvertToString(argNames)}` already exists
+
+`NoFunctionExists` `(name,)` `(numargs)`\
+No function \"`{name}`\" exists that takes `{numargs}` arguments
+
+`CannotSetKeyword` `(name)`\
+Cannot set keyword \"`{name}`\"
 

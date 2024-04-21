@@ -131,3 +131,10 @@ List index `{index}` was out of range
 `EvaluatedNothing`\
 Attempted to evaluate nothing
 
+# variables
+all variables are stored as `dynamic`s\
+
+naming convention:
+ - starts either with letter or _
+ - following characters can be letter, number or _
+ - variable names are case sensitive
