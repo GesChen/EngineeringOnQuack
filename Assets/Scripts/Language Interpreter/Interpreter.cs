@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
-
 public class Error
 {
 	public string Message { get; }
@@ -19,7 +18,7 @@ public class Error
 
 	public override string ToString()
 	{
-		return $"An error has occurred on line {Line} ({interpreter.script.Lines[Line]}):\n {Message}";
+		return $"An error has occurred on line {Line + 1} ({interpreter.script.Lines[Line]}):\n {Message}";
 	}
 }
 public class Output
@@ -118,7 +117,7 @@ public class Interpreter : MonoBehaviour
 	}
 	readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "++", "--" };
 
-	public string[] keywords = new string[]
+	public readonly string[] keywords = new string[]
 	{
 		"if",
 		"else",
@@ -130,11 +129,7 @@ public class Interpreter : MonoBehaviour
 		"def",
 		"return"
 	};
-	public string[] reservedVariableNames = new string[]
-	{
-		"__return__"
-	};
-	public dynamic __return__;
+	private dynamic __return__;
 
 	public Dictionary<string, Function> Functions = new();
 
@@ -146,7 +141,7 @@ public class Interpreter : MonoBehaviour
 	}
 	public Output StoreVariable(string name, dynamic value)
 	{
-		if (reservedVariableNames.Contains(name) || keywords.Contains(name)) 
+		if (keywords.Contains(name)) 
 			return Errors.CannotSetKeyword(name, value);
 		variables[name] = value;
 		return new Output(true);
@@ -174,6 +169,7 @@ public class Interpreter : MonoBehaviour
 		Functions[name] = new (name, script, argNames, this, evaluator);
 		return new Output(true); // return true on success
 	}
+	
 	int GetIndent(string s)
 	{
 		int curIndent = 0;
@@ -218,12 +214,107 @@ public class Interpreter : MonoBehaviour
 		}
 		return lines;
 	}
+	Output ExtractArgs(string line, string keyword, int numExpected, Evaluator evaluator)
+	{
+		// rest of line should be the expression
+		string remaining = line[keyword.Length..];
+		bool inString = false;
+		int parenthesesDepth = 0;
+		string expression = "";
+		int endPos = -1;
+		for (int i = 0; i < remaining.Length; i++)
+		{
+			char c = remaining[i];
+			if (c == '"') inString = !inString;
+			if (c == '(' && !inString) parenthesesDepth++;
+			else if (c == ')' && !inString) parenthesesDepth--;
+			else if (parenthesesDepth == 1) expression += c;
+			if (c == ')' && parenthesesDepth == 0) { endPos = i; break; }
+		}
+		if (parenthesesDepth != 0 || endPos == -1)
+		{
+			return Errors.MismatchedParentheses(this);
+		}
+
+		string rest = remaining[(endPos + 1)..].Trim();
+		if (string.IsNullOrWhiteSpace(rest) && rest.Length != 0)
+		{
+			return Errors.UnexpectedStatementAfterParentheses(rest, this);
+		}
+
+		// if error checks succeeded, try eval, then print result
+		expression = "[" + expression + "]"; // eval it as a list
+		Output tryEval = evaluator.Evaluate(expression, this);
+		if (!tryEval.success)
+		{
+			return tryEval;
+		}
+		// value should be a list of the args (i swear if it somehow doesnt)
+
+		List<dynamic> results = tryEval.value;
+		if (results.Count != numExpected)
+		{
+			return Errors.UnexpectedNumberofArgs(keyword, numExpected, results.Count, this);
+		}
+
+		return new Output(results);
+	}
+	
 	void DumpState()
 	{
 		Debug.Log("**STATE DUMP**");
 		Debug.Log("VARIABLES: " + HelperFunctions.ConvertToString(variables));
 		Debug.Log("SCRIPT " + script);
 		Debug.Log("SCRIPT LINES " + HelperFunctions.ConvertToString(script.Lines));
+	}
+	
+	List<string> PreProcessScript(List<string> lines)
+	{
+		/* task: remove all comments from the code (will not be run by script)
+		 * -- single line comment, can be ended with matching --
+		 * --- multi line comment, can go across multiple lines
+		 */
+
+		List<string> result = new();
+		bool inString;
+		bool inSingleLine;
+		bool inMultiLine = false;
+		foreach (string line in lines) // pass 1 - remove single line commenting
+		{
+			// this is very bad code :(
+			// but it works;;;;
+			string newLine = "";
+			inString = false;
+			inSingleLine = false;
+			int i = 0;
+			while (i < line.Length)
+			{
+				char c = line[i];
+
+				if (c == '"') inString = !inString;
+
+				if (i < line.Length - 1)
+				{
+					if (c == '-' && line[i + 1] == '-')
+					{
+						if (i < line.Length - 2 && line[i + 2] == '-')
+						{
+							inMultiLine = !inMultiLine;
+							i += 3; // avoid self + last 2 being recognized as single line, may also terminate running this line
+						}
+						else inSingleLine = !inSingleLine;
+					}
+				}
+
+				if (i < line.Length) // i may be have been modified
+					if (!(inSingleLine || inMultiLine)) newLine += line[i];
+				
+				i++;
+			}
+			result.Add(newLine);
+		}
+
+		return result;
 	}
 	#endregion
 
@@ -235,83 +326,28 @@ public class Interpreter : MonoBehaviour
 
 	#endregion
 
-	/*
-	public Output InterpretLine(string line)
-	{
-		string keyword = "";
-		bool isVariable = true;
-		int position = 0;
-		foreach (string kw in keywords)
-		{
-			if (line.StartsWith(kw))
-			{
-				isVariable = false;
-				keyword = kw;
-				position = kw.Length;
-				break;
-			}
-		}
-
-		if (isVariable)
-		{ // set
-			string assignmentOperator = "";
-
-		}
-		else
-		{
-			
-		}
-
-		Debug.Log($"{line} var? {isVariable} kw {keyword}");
-	}
-	public Output InterpretLines(List<dynamic> list)
-	{
-		currentLine = 0;
-		string curLineContents = "";
-		int listIndex = 0;
-		while (currentLine < list.Count && !curLineContents.StartsWith("return"))
-		{
-			if (list[currentLine] is not List<dynamic>)
-				curLineContents = list[currentLine];
-			else
-				return Errors.unexp
-
-			string keyword = "";
-			bool isVariable = true;
-			int position = 0;
-			foreach (string kw in keywords)
-			{
-				if (line.StartsWith(kw))
-				{
-					isVariable = false;
-					keyword = kw;
-					position = kw.Length;
-					break;
-				}
-			}
-		}
-		return new Output(true);
-	}*/
-
 	IEnumerator StartInterpreting(Evaluator evaluator)
 	{
+		double start = Time.timeAsDouble;
 		Output result = null;
 		yield return StartCoroutine(InterpretCoroutine(script.Lines, evaluator, (callback) => { result = callback; }));
 
 		Log(result);
+		Log($"runtime: {Time.timeAsDouble - start}s");
 		DumpState();
 	}
 	public IEnumerator InterpretCoroutine(List<string> lines, Evaluator evaluator, Action<Output> callback)
 	{
-		/*
-		int lineNum = 0;
-		List<dynamic> lines = ConvertToList(script, 0, ref lineNum);
-		Debug.Log(HelperFunctions.ConvertToString(lines));
-		InterpretLines(lines);
-		*/
+		lines = PreProcessScript(lines);
+		Log("preprocessed: " + HelperFunctions.ConvertToString(lines));
+
 		currentLine = 0;
 		int lastIndentation = 0;
-		string line;
+		int allowedIndent = 0;
+		string line = "";
+		bool expectingElse = false;
+		int expectingElseIndentlevel = 0;
+		bool lastIfSucceeded = false;
 		while (currentLine < lines.Count)
 		{
 			line = lines[currentLine];
@@ -319,6 +355,23 @@ public class Interpreter : MonoBehaviour
 			line = line.Trim();
 
 			if (string.IsNullOrWhiteSpace(line)) { currentLine++; continue; }// skip blank lines
+
+			#region handle indent
+			if (indentation > lastIndentation)
+			{
+				if (indentation != allowedIndent)
+				{
+					callback(Errors.UnexpectedIndent(this));
+					yield break;
+				}
+			}
+			else if (indentation < allowedIndent)
+			{
+				allowedIndent = indentation;
+			}
+			#endregion
+
+			#region determine line type 
 
 			string keyword = "";
 			int type = 1; // 0 - keyword, 1 - variable, 2 - function
@@ -333,8 +386,188 @@ public class Interpreter : MonoBehaviour
 					break;
 				}
 			}
+			#endregion
 
-			if (type == 1)
+			if (type == 0)
+			{
+				// could use switch case, but doesn't look as neat, hope this wont backfire in the future
+				if (keyword == "log")
+				{
+					Output getArgs = ExtractArgs(line, keyword, 1, evaluator); // get the args
+					if (!getArgs.success)
+					{
+						callback(getArgs);
+						yield break;
+					}
+
+					Log(getArgs.value[0]); // perform actual function
+				}
+				else if (keyword == "wait")
+				{
+					Output getArgs = ExtractArgs(line, keyword, 1, evaluator); // get the args
+					if (!getArgs.success)
+					{
+						callback(getArgs);
+						yield break;
+					}
+
+					yield return new WaitForSeconds(getArgs.value[0]); // perform actual function
+				}
+				else if (keyword == "if")
+				{ // condition should be between if and 
+					#region evaluate expression in if 
+					string remaining = line[2..];
+					bool inString = false;
+					int colonIndex = -1;
+					for (int i = 0; i < remaining.Length; i++)
+					{
+						char c = remaining[i];
+						if (c == '"') inString = !inString;
+						if (!inString && c == ':')
+						{
+							colonIndex = i;
+							break;
+						}
+					}
+					if (colonIndex == -1)
+					{
+						callback(Errors.ExpectedColon(this));
+						yield break;
+					}
+					
+					string expression = remaining[..colonIndex];
+					Output tryEval = evaluator.Evaluate(expression, this);
+					if (!tryEval.success)
+					{
+						callback(tryEval);
+						yield break;
+					}
+					dynamic value = tryEval.value;
+
+					// attempt to force this value into a bool
+					tryEval = evaluator.Evaluate($"true&&{HelperFunctions.ConvertToString(value)}", this);
+					if (!tryEval.success)
+					{ // couldn't be forced into a bool
+						callback(Errors.ExpectedBoolInIf(HelperFunctions.DetermineTypeFromVariable(value), this));
+						yield break;
+					}
+					bool condition = tryEval.value; // should have outputted a bool if it didnt error
+					#endregion
+
+					if (condition)
+					{ // execute proceeding code
+						lastIfSucceeded = true;
+						string rest = remaining[(colonIndex + 1)..];
+						if (!string.IsNullOrEmpty(rest))
+						{ // makes it rerun current line with new thing
+							lines[currentLine] = rest; 
+							currentLine--; // bad solution but it gets ++ at end idk
+						}
+						else
+						{ // run the rest normally accounting for indent
+							if (currentLine != lines.Count - 1)
+							{
+								allowedIndent = GetIndent(lines[currentLine + 1]);
+							}
+						}
+					}
+					else
+					{ // skip past all indented lines or to end
+						lastIfSucceeded = false;
+						currentLine++;
+						while (GetIndent(lines[currentLine]) > indentation)
+						{
+							currentLine++;
+							if (currentLine >= lines.Count) break;
+						}
+						currentLine--;
+					}
+					expectingElse = true; // start to expect else, will be reset if next line is same indent as if
+					expectingElseIndentlevel = indentation;
+				}
+				else if (keyword == "else")
+				{ // from end of else to : shouldnt contain anything other than if, otherwise error
+				  // this has similar logic to if statements;;
+
+					if (!expectingElse)
+					{
+						callback(Errors.UnexpectedElse(this));
+						yield break;
+					}
+
+					#region determine if this is an else if 
+					int colonIndex = line.IndexOf(':');
+					if (colonIndex == -1)
+					{
+						callback(Errors.ExpectedColon(this));
+						yield break;
+					}
+					string inside = line[4..colonIndex].Trim();
+					bool isElseIf = false;
+					if (!string.IsNullOrEmpty(inside))
+					{
+						if (inside[..2] == "if")
+						{
+							isElseIf = true;
+						}
+						else
+						{
+							callback(Errors.ExpectedColon(this));
+							yield break;
+						}
+					}
+					else
+					{
+						isElseIf = false;
+					}
+					#endregion
+
+					if (!lastIfSucceeded)
+					{
+						if (isElseIf)
+						{
+							// this is kinda hacky, BUT it should probably work in MOST cases?
+							// replace this line with the actual if statement, and rerun this line..
+							// cuz that's tenically whats its doing anyway
+							lines[currentLine] = new string(' ', indentation) + line[4..].TrimStart();
+							currentLine--;
+						}
+						else
+						{ // nothing there, normal else
+						  // same logic as if
+							string rest = line[(colonIndex + 1)..].Trim();
+							if (!string.IsNullOrEmpty(rest))
+							{ // makes it rerun current line with new thing
+								lines[currentLine] = rest;
+								currentLine--; // bad solution but it gets ++ at end idk
+							}
+							else
+							{ // run the rest normally accounting for indent
+								if (currentLine != lines.Count - 1)
+								{
+									allowedIndent = GetIndent(lines[currentLine + 1]);
+								}
+							}
+
+							expectingElse = false; // shouldn't be any more after this 
+						}
+					}
+					else
+					{// skip past all indented lines or to end
+						currentLine++;
+						while (GetIndent(lines[currentLine]) > indentation)
+						{
+							currentLine++;
+							if (currentLine >= lines.Count) break;
+						}
+						currentLine--;
+
+						// else ifs can be followed by other else or else if 
+						expectingElse = isElseIf;
+					}
+				}
+			}
+			else if (type == 1)
 			{
 				// any assignment operators?
 				bool containsAnyAO = assignmentOperators.Any(ao => HelperFunctions.ContainsSubstringOutsideQuotes(line, ao));
@@ -375,7 +608,6 @@ public class Interpreter : MonoBehaviour
 				
 				remaining = remaining[ao.Length..].Trim(); // all that remains should be the expression
 
-				dynamic exprValue;
 				if (ao == "++" || ao == "--")
 				{ // all they do is + or - 1, no need to eval
 					Output fetch = FetchVariable(varName);
@@ -458,11 +690,14 @@ public class Interpreter : MonoBehaviour
 					}
 				}
 			}
-			else
+			else if (type == 2)
 			{
 
 			}
+			if (GetIndent(lines[currentLine]) == expectingElseIndentlevel && !line.StartsWith("if")) expectingElse = false;
+
 			currentLine++;
+			lastIndentation = indentation;
 		}
 		callback(new Output(true));
 		yield break;

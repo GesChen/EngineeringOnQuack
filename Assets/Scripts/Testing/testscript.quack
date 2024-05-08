@@ -1,14 +1,17 @@
-test = true
+if 1 == 2:
+    log("bad")
+else if 1 == 1:
+    log("good")
+else:
+    log("bad again")
 
-secondvar = 100 + 2
+-- lol funny comemnt
 
-test = "false" + 5 * 10
+if true:
+else if false:
+else:
+    log ("test")
 
-secondvar -= 2 * 5 + 10
-
-random = 69
-
-secondvar -= random
-secondvar--
-
-test += secondvar
+else:
+    log("should have errored")
+log("end test yk" + "how it is") -- comment, shouldnt do anything 

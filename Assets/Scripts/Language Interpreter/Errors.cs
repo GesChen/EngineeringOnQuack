@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public static class Errors 
 {
 	public static Output Error(string error, Interpreter interpreter) =>
 		new (new Error(error, interpreter));
-	
+
 	public static Output TestError(Interpreter interpreter) =>
 		new (new Error("test", interpreter));
 
@@ -69,10 +70,27 @@ public static class Errors
 
 	public static Output NoFunctionExists(string name, int numargs, Interpreter interpreter) =>
 		Error($"No function \"{name}\" exists that takes {numargs} arguments", interpreter);
+	public static Output UnexpectedNumberofArgs(string name, int expected, int got, Interpreter interpreter) =>
+		Error($"Unexpected number of args for method \"{name}\": got {got}, expected {expected}", interpreter);
 
 	public static Output CannotSetKeyword(string name, Interpreter interpreter) =>
 		Error($"Cannot set keyword \"{name}\"", interpreter);
 
 	public static Output UnexpectedIndent(Interpreter interpreter) =>
 		Error($"Unexpected indent", interpreter);
+
+	public static Output ExpectedColon(Interpreter interpreter) =>
+		Error($"Expected colon", interpreter);
+
+	public static Output ExpectedBoolInIf(string gottype, Interpreter interpreter) =>
+		Error($"Expected a boolean expression in if statement, got {gottype}", interpreter);
+
+	public static Output UnexpectedStatementAfterParentheses(string statement, Interpreter interpreter) =>
+		Error($"Unexpected statement \"{statement}\" after parentheses", interpreter);
+
+	public static Output ExpectedCustom(string expected, Interpreter interpreter) =>
+		Error($"Expected {expected}", interpreter);
+
+	public static Output UnexpectedElse(Interpreter interpreter) =>
+		Error($"Unexpected else statement", interpreter);
 }

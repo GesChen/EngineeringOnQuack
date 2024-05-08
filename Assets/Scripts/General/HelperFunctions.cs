@@ -121,7 +121,7 @@ public static class HelperFunctions
 		Type t = value.GetType();
 		if (value == null) return "";
 		if (value is string) return $"\"{value}\"";
-		else if (value is int || value is float) return value.ToString();
+		else if (value is int || value is float) return value.ToString("G10");
 		else if (value is bool) return value ? "true" : "false";
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
 		{
