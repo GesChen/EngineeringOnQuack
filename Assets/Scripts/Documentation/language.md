@@ -1,4 +1,10 @@
 # documentation for the language
+## contents
+- [expressions](#expressions)
+- [errors](#errors)
+- [variables](#variables)
+- [comments](#comments)
+
 ---
 
 # expressions
@@ -132,9 +138,31 @@ List index `{index}` was out of range
 Attempted to evaluate nothing
 
 # variables
-all variables are stored as `dynamic`s\
+all variables are stored as `dynamic`s
 
 naming convention:
  - starts either with letter or _
  - following characters can be letter, number or _
  - variable names are case sensitive
+
+---
+# comments
+**single line comments** can be toggled with `--` sort of like an ambiguation for both `/*` and `*/` in c# or simply `"""` in python
+
+**multi line comments** span across multiple lines, and can be toggled with `---`
+
+**examples:**
+
+single line comments:
+- `log("hello world") --comment`
+- they can also be used in the middle of code (if you wanted to for whatever reason)
+    - `if --interrupting comment who?-- true: log("test")`
+
+multiline comments:
+```
+---comment start
+blah blah
+more words---
+
+log("hello world!")
+```
