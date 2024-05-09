@@ -1,11 +1,8 @@
-using System.Collections;
+/*using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
-using Unity.VisualScripting;
-using UnityEngine.UIElements;
-
 public class Error
 {
 	public string Message { get; }
@@ -31,7 +28,7 @@ public class Output
 	public dynamic value { get; }
 
 
-	public static Output Success() { return new(true); }
+	public Output Success() => new(true);
 	public Output(Error error)
 	{
 		this.error = error;
@@ -64,10 +61,10 @@ public class Function : MonoBehaviour
 {
 	public string Name { get; }
 	public List<string> ArgumentNames { get; }
-	public List<dynamic> Script { get; }
+	public List<string> Script { get; }
 	public Interpreter UsingInterpreter { get; }
 	public Evaluator UsingEvaluator { get; }
-	public Function(string name, List<dynamic> script, List<string> argnames, Interpreter interpreter, Evaluator evaluator)
+	public Function(string name, List<string> script, List<string> argnames, Interpreter interpreter, Evaluator evaluator)
 	{
 		Name = name;
 		ArgumentNames = argnames;
@@ -95,24 +92,13 @@ public class Function : MonoBehaviour
 		}
 
 		dynamic result = null;
-		yield return StartCoroutine(UsingInterpreter.InterpretNestedForm(Script, UsingEvaluator, callback =>
+		yield return StartCoroutine(UsingInterpreter.InterpretCoroutine(Script, UsingEvaluator, callback =>
 		{
 			result = callback;
 		}));
 
 		UsingInterpreter.variables = variablesStateBefore;
 		callback(result);
-	}
-}
-
-public class ScriptLine
-{
-	public string Line { get; }
-	public int LineNumber { get; }
-	public ScriptLine(string line, int linenum)
-	{
-		Line = line;
-		LineNumber = linenum;
 	}
 }
 
@@ -129,7 +115,7 @@ public class Interpreter : MonoBehaviour
 		Iteration = 3,
 		Return = 4
 	}
-	readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
+	readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "++", "--" };
 
 	public readonly string[] keywords = new string[]
 	{
@@ -144,6 +130,7 @@ public class Interpreter : MonoBehaviour
 		"def",	// !todo
 		"return"// !todo
 	};
+	private dynamic __return__;
 
 	public Dictionary<string, Function> Functions = new();
 
@@ -178,7 +165,7 @@ public class Interpreter : MonoBehaviour
 		variables.Remove(name);
 		return new Output(true); // returns true if successful
 	}
-	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Evaluator evaluator)
+	public Output StoreFunction(string name, List<string> argNames, List<string> script, Evaluator evaluator)
 	{
 		// make sure function with this name and argnames doesnt already exist 
 		foreach (Function f in Functions.Values)
@@ -200,7 +187,7 @@ public class Interpreter : MonoBehaviour
 		}
 		return curIndent;
 	}
-	public List<dynamic> ConvertToNested(Script script, int curIndent, ref int lineNum)
+	List<dynamic> ConvertToList(Script script, int curIndent, ref int lineNum)
 	{
 		List<dynamic> lines = new();
 		while (lineNum < script.Lines.Count)
@@ -218,9 +205,8 @@ public class Interpreter : MonoBehaviour
 
 			if (indent > curIndent)
 			{
-				lines.Add(ConvertToNested(script, indent, ref lineNum));
-				if (lineNum < script.Lines.Count)
-					lines.Add(new ScriptLine(script.Lines[lineNum].Trim(), lineNum)); // add current, not added because got broken out of
+				lines.Add(ConvertToList(script, indent, ref lineNum));
+				lines.Add(script.Lines[lineNum].Trim()); // add current, not added because got broken out of
 			}
 			else if (indent < curIndent)
 			{
@@ -228,7 +214,7 @@ public class Interpreter : MonoBehaviour
 			}
 			else
 			{
-				lines.Add(new ScriptLine(trimmedLine, lineNum));
+				lines.Add(trimmedLine);
 			}
 			lineNum++;
 		}
@@ -279,25 +265,7 @@ public class Interpreter : MonoBehaviour
 
 		return new Output(results);
 	}
-	bool ScriptIsInstant(List<dynamic> script)
-	{
-		foreach (dynamic line in script)
-		{
-			if (line is ScriptLine)
-			{
-				if (line.Line.TrimStart().StartsWith("wait"))
-					return false;
-			}
-			else
-			{
-				if (!ScriptIsInstant(line)) return false;
-			}
-			
-		}
-		
-		return true;
-	}
-
+	
 	void DumpState()
 	{
 		LogColor("**STATE DUMP**", Color.yellow);
@@ -312,6 +280,8 @@ public class Interpreter : MonoBehaviour
 		 * -- single line comment, can be ended with matching --
 		 * --- multi line comment, can go across multiple lines
 		 */
+
+/*
 
 		List<string> result = new();
 		bool inString;
@@ -368,44 +338,54 @@ public class Interpreter : MonoBehaviour
 	{
 		double start = Time.timeAsDouble;
 		Output result = null;
-		//yield return StartCoroutine(InterpretCoroutine(script.Lines, evaluator, (callback) => { result = callback; }));
-
-		int lineNum = 0;
-		
-		List<dynamic> lines = ConvertToNested(script, 0, ref lineNum);
-		/*if (ScriptIsInstant(lines))
-			StartCoroutine(InterpretNestedForm(lines, evaluator, (callback) => { result = callback; }));
-		else*/
-		// tried to make it not yield wait if not needed, but there is still some delay, and result will be null if its too slow
-		yield return StartCoroutine(InterpretNestedForm(lines, evaluator, (callback) => { result = callback; }));
+		yield return StartCoroutine(InterpretCoroutine(script.Lines, evaluator, (callback) => { result = callback; }));
 
 		Debug.Log(result);
 		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
 		DumpState();
 	}
-
-	public IEnumerator InterpretNestedForm(List<dynamic> lines, Evaluator evaluator, Action<Output> callback)
+	public IEnumerator InterpretCoroutine(List<string> lines, Evaluator evaluator, Action<Output> callback)
 	{
-		int localLineNum = 0;
+		lines = PreProcessScript(lines);
+		//Log("preprocessed: " + HelperFunctions.ConvertToString(lines));
+
+		// flags
+		currentLine = 0;
+		int lastIndentation = 0;
+		int allowedIndent = 0;
 		string line = "";
-
-		bool lastIfSucceeded = false;
+		
 		bool expectingElse = false;
+		int expectingElseIndentlevel = 0;
+		bool lastIfSucceeded = false;
 
-		while (localLineNum < lines.Count)
+		bool forLooping = false;
+		string forLoopIterator;
+		while (currentLine < lines.Count)
 		{
-			if (lines[localLineNum] is ScriptLine)
+			line = lines[currentLine];
+			int indentation = GetIndent(line);
+			line = line.Trim();
+
+			if (string.IsNullOrWhiteSpace(line)) { currentLine++; continue; }// skip blank lines
+
+			#region handle indent
+			if (indentation > lastIndentation)
 			{
-				line = lines[localLineNum].Line;
-				currentLine = lines[localLineNum].LineNumber;
+				if (indentation != allowedIndent)
+				{
+					callback(Errors.UnexpectedIndent(this));
+					yield break;
+				}
 			}
-			else
-			{ // indented should have been handled by their respective functions, and skipped over
-				callback(Errors.UnexpectedIndent(this));
-				yield break;
+			else if (indentation < allowedIndent)
+			{
+				allowedIndent = indentation;
 			}
+			#endregion
 
 			#region determine line type 
+
 			string keyword = "";
 			int type = 1; // 0 - keyword, 1 - variable, 2 - function
 			int position = 0;
@@ -421,8 +401,9 @@ public class Interpreter : MonoBehaviour
 			}
 			#endregion
 
-			if (type == 0) // keyword
+			if (type == 0)
 			{
+				// could use switch case, but doesn't look as neat, hope this wont backfire in the future
 				if (keyword == "log")
 				{
 					Output getArgs = ExtractArgs(line, keyword, 1, evaluator); // get the args
@@ -492,32 +473,30 @@ public class Interpreter : MonoBehaviour
 						string rest = remaining[(colonIndex + 1)..];
 						if (!string.IsNullOrEmpty(rest))
 						{ // makes it rerun current line with new thing
-							lines[localLineNum] = rest; 
-							localLineNum--; // bad solution but it gets ++ at end idk
+							lines[currentLine] = rest; 
+							currentLine--; // bad solution but it gets ++ at end idk
 						}
 						else
-						{ 
-							localLineNum++; // step into the next part, whether be indent or normal
-							if (localLineNum < lines.Count && lines[localLineNum] is List<dynamic>) // if next isn't indented list, dont do anything
+						{ // run the rest normally accounting for indent
+							if (currentLine != lines.Count - 1)
 							{
-								// run everything indented
-								List<dynamic> indentedLines = lines[localLineNum];
-								Output result = null;
-								yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, (callback) => { result = callback; }));
-								if (!result.success)
-								{
-									callback(result);
-									yield break;
-								}
+								allowedIndent = GetIndent(lines[currentLine + 1]);
 							}
 						}
 					}
 					else
-					{ // skip past indented section
+					{ // skip past all indented lines or to end
 						lastIfSucceeded = false;
-						if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) localLineNum++; // skip next indented part 
+						currentLine++;
+						while (GetIndent(lines[currentLine]) > indentation)
+						{
+							currentLine++;
+							if (currentLine >= lines.Count) break;
+						}
+						currentLine--;
 					}
 					expectingElse = true; // start to expect else, will be reset if next line is same indent as if
+					expectingElseIndentlevel = indentation;
 				}
 				else if (keyword == "else")
 				{ // from end of else to : shouldnt contain anything other than if, otherwise error
@@ -563,8 +542,8 @@ public class Interpreter : MonoBehaviour
 							// this is kinda hacky, BUT it should probably work in MOST cases?
 							// replace this line with the actual if statement, and rerun this line..
 							// cuz that's tenically whats its doing anyway
-							lines[localLineNum] = line[4..].TrimStart();
-							localLineNum--;
+							lines[currentLine] = new string(' ', indentation) + line[4..].TrimStart();
+							currentLine--;
 						}
 						else
 						{ // nothing there, normal else
@@ -572,23 +551,14 @@ public class Interpreter : MonoBehaviour
 							string rest = line[(colonIndex + 1)..].Trim();
 							if (!string.IsNullOrEmpty(rest))
 							{ // makes it rerun current line with new thing
-								lines[localLineNum] = rest;
-								localLineNum--; // bad solution but it gets ++ at end idk
+								lines[currentLine] = rest;
+								currentLine--; // bad solution but it gets ++ at end idk
 							}
 							else
-							{ // run the rest
-								localLineNum++; // step into the next part, whether be indent or normal
-								if (localLineNum < lines.Count && lines[localLineNum] is List<dynamic>) // if next isn't indented list, dont do anything
+							{ // run the rest normally accounting for indent
+								if (currentLine != lines.Count - 1)
 								{
-									// run everything indented
-									List<dynamic> indentedLines = lines[localLineNum];
-									Output result = null;
-									yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, (callback) => { result = callback; }));
-									if (!result.success)
-									{
-										callback(result);
-										yield break;
-									}
+									allowedIndent = GetIndent(lines[currentLine + 1]);
 								}
 							}
 
@@ -596,8 +566,14 @@ public class Interpreter : MonoBehaviour
 						}
 					}
 					else
-					{// skip past indent
-						if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) localLineNum++; // skip next indented part 
+					{// skip past all indented lines or to end
+						currentLine++;
+						while (GetIndent(lines[currentLine]) > indentation)
+						{
+							currentLine++;
+							if (currentLine >= lines.Count) break;
+						}
+						currentLine--;
 
 						// else ifs can be followed by other else or else if 
 						expectingElse = isElseIf;
@@ -663,44 +639,13 @@ public class Interpreter : MonoBehaviour
 
 					// should now successfully have an iterator variable name and a list to iterate through
 					
-					List<dynamic> toRun;
-					if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
-					{
-						localLineNum++;
-						toRun = lines[localLineNum];
-					}
-					else
-					{
-						toRun = new List<dynamic>() { line[colonIndex..] };
-					}
-
-					// run torun on each item in the list
-					foreach (dynamic item in list)
-					{
-						StoreVariable(iterator, item); // store iterator
-
-						Output result = null;
-
-						/*
-						if (ScriptIsInstant(toRun))
-							StartCoroutine(InterpretNestedForm(toRun, evaluator, (callback) => { result = callback; }));
-						else
-						*/
-						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, (callback) => { result = callback; }));
-						
-						if (!result.success)
-						{
-							callback(result);
-							yield break;
-						}
-					}
 				}
 			}
-			else if (type == 1) // set variable
+			else if (type == 1)
 			{
 				// any assignment operators?
 				bool containsAnyAO = assignmentOperators.Any(ao => HelperFunctions.ContainsSubstringOutsideQuotes(line, ao));
-
+				
 				if (!containsAnyAO) // dont handle if no ao, this is some expression
 				{
 					Output tryEval = evaluator.Evaluate(line, this);
@@ -713,7 +658,7 @@ public class Interpreter : MonoBehaviour
 
 				// get the variable name first 
 				string varName = "";
-				for (int i = 0; i < line.Length; i++)
+				for(int i = 0; i < line.Length; i++)
 				{
 					char c = line[i];
 					if (!(char.IsLetter(c) || c == '_' || (char.IsNumber(c) && i != 0))) // variable naming criteria, if stoppped following then no longer in variable
@@ -734,7 +679,7 @@ public class Interpreter : MonoBehaviour
 					}
 				}
 				// ao shouldn't be blank now, checked if there was a valid one back there
-
+				
 				remaining = remaining[ao.Length..].Trim(); // all that remains should be the expression
 
 				if (ao == "++" || ao == "--")
@@ -816,58 +761,20 @@ public class Interpreter : MonoBehaviour
 
 							StoreVariable(varName, tryEval.value);
 							break;
-						case "*=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HelperFunctions.ConvertToString(variableValue)})" +
-								$"*" +
-								$"({HelperFunctions.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
-
-							StoreVariable(varName, tryEval.value);
-							break;
-						case "/=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HelperFunctions.ConvertToString(variableValue)})" +
-								$"/" +
-								$"({HelperFunctions.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
-
-							StoreVariable(varName, tryEval.value);
-							break;
-						case "^=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HelperFunctions.ConvertToString(variableValue)})" +
-								$"^" +
-								$"({HelperFunctions.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
-
-							StoreVariable(varName, tryEval.value);
-							break;
 					}
 				}
 			}
+			else if (type == 2)
+			{
 
-			//if (!line.StartsWith("if")) expectingElse = false;
+			}
+			if (GetIndent(lines[currentLine]) == expectingElseIndentlevel && !line.StartsWith("if")) expectingElse = false;
 
-			localLineNum++;
+			currentLine++;
+			lastIndentation = indentation;
 		}
-
-		callback(Output.Success());
+		callback(new Output(true));
 		yield break;
 	}
 }
+*/
