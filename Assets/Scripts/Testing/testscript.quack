@@ -1,19 +1,2 @@
-if 1 == 2:
-    log("bad")
-else if 1 == 1:
-    log("good")
-else:
-    log("bad again")
-
--- lol funny comemnt
-
-if false:
-    log("no")
-else if false:
-    log("whyat")
-else:
-    log ("test")
-
---else:
---    log("should have errored")
-log("end test yk" + "how it is") -- comment, shouldnt do anything 
+for i in [...3]:
+    log(i)

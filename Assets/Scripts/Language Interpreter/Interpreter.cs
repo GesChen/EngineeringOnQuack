@@ -119,15 +119,16 @@ public class Interpreter : MonoBehaviour
 
 	public readonly string[] keywords = new string[]
 	{
-		"if",
-		"else",
-		"try",
-		"catch",
-		"for",
-		"log", // print
-		"wait",
-		"def",
-		"return"
+		"if",	// done
+		"else",	// done
+		"try",	// !todo
+		"catch",// !todo
+		"for",	// doing
+		"while",// !todo
+		"log",	// done
+		"wait",	// done
+		"def",	// !todo
+		"return"// !todo
 	};
 	private dynamic __return__;
 
@@ -570,6 +571,67 @@ public class Interpreter : MonoBehaviour
 						// else ifs can be followed by other else or else if 
 						expectingElse = isElseIf;
 					}
+				}
+				else if (keyword == "for")
+				{
+					#region find iterator and list
+					bool inString = false;
+					int inIndex = -1;
+					int colonIndex = -1;
+					for (int i = 0; i < line.Length; i++)
+					{
+						char c = line[i];
+						if (c == '"') inString = !inString;
+						
+						else if (!inString && i < line.Length - 1 && c == 'i' && line[i + 1] == 'n' && inIndex == -1) // find "in
+							inIndex = i;
+						else if (!inString && c == ':' && colonIndex == -1)
+							colonIndex = i;
+					}
+
+					if (inIndex == -1)
+					{
+						callback(Errors.ExpectedCustom("in", this));
+						yield break;
+					}
+					else if (colonIndex == -1)
+					{
+						callback(Errors.ExpectedCustom(":", this));
+						yield break;
+					}
+
+					string iterator = line[3..inIndex].Trim();
+					string listString = line[(inIndex + 2)..colonIndex].Trim();
+					
+					if (string.IsNullOrEmpty(iterator))
+					{
+						callback(Errors.ExpectedCustom("iterator", this));
+						yield break;
+					}
+					else if (string.IsNullOrEmpty(listString))
+					{
+						callback(Errors.ExpectedCustom("list", this));
+						yield break;
+					}
+
+					// turn list string to actual list
+					Output evalListString = evaluator.Evaluate(listString, this);
+					if (!evalListString.success)
+					{
+						callback(evalListString);
+						yield break;
+					}
+
+					List<dynamic> list = new();
+					if (evalListString.value is not List<dynamic>)
+						list = new List<dynamic> { evalListString.value };
+					else
+						list = evalListString.value;
+
+					#endregion
+
+					// should now successfully have an iterator variable name and a list to iterate through
+					
 				}
 			}
 			else if (type == 1)
