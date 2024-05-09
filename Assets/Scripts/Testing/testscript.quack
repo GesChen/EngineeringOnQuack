@@ -7,11 +7,13 @@ else:
 
 -- lol funny comemnt
 
-if true:
+if false:
+    log("no")
 else if false:
+    log("whyat")
 else:
     log ("test")
 
-else:
-    log("should have errored")
+--else:
+--    log("should have errored")
 log("end test yk" + "how it is") -- comment, shouldnt do anything 

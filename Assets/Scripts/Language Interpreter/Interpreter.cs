@@ -134,11 +134,16 @@ public class Interpreter : MonoBehaviour
 	public Dictionary<string, Function> Functions = new();
 
 	#region internal methods
+	void LogColor(string str, Color color)
+	{
+		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
+	}
 	public void Interpret(Script targetScript, Evaluator evaluator)
 	{
 		script = targetScript;
 		StartCoroutine(StartInterpreting(evaluator));
 	}
+
 	public Output StoreVariable(string name, dynamic value)
 	{
 		if (keywords.Contains(name)) 
@@ -262,10 +267,10 @@ public class Interpreter : MonoBehaviour
 	
 	void DumpState()
 	{
-		Debug.Log("**STATE DUMP**");
-		Debug.Log("VARIABLES: " + HelperFunctions.ConvertToString(variables));
-		Debug.Log("SCRIPT " + script);
-		Debug.Log("SCRIPT LINES " + HelperFunctions.ConvertToString(script.Lines));
+		LogColor("**STATE DUMP**", Color.yellow);
+		LogColor("VARIABLES: " + HelperFunctions.ConvertToString(variables), Color.yellow);
+		LogColor("SCRIPT " + script, Color.yellow);
+		LogColor("SCRIPT LINES " + HelperFunctions.ConvertToString(script.Lines), Color.yellow);
 	}
 	
 	List<string> PreProcessScript(List<string> lines)
@@ -321,7 +326,7 @@ public class Interpreter : MonoBehaviour
 	#region functions
 	public void Log(dynamic str)
 	{
-		Debug.Log(HelperFunctions.ConvertToString(str));
+		LogColor(HelperFunctions.ConvertToString(str), Color.green);
 	}
 
 	#endregion
@@ -332,14 +337,14 @@ public class Interpreter : MonoBehaviour
 		Output result = null;
 		yield return StartCoroutine(InterpretCoroutine(script.Lines, evaluator, (callback) => { result = callback; }));
 
-		Log(result);
-		Log($"runtime: {Time.timeAsDouble - start}s");
+		Debug.Log(result);
+		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
 		DumpState();
 	}
 	public IEnumerator InterpretCoroutine(List<string> lines, Evaluator evaluator, Action<Output> callback)
 	{
 		lines = PreProcessScript(lines);
-		Log("preprocessed: " + HelperFunctions.ConvertToString(lines));
+		//Log("preprocessed: " + HelperFunctions.ConvertToString(lines));
 
 		currentLine = 0;
 		int lastIndentation = 0;
