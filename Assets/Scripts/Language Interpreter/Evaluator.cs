@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Evaluator : MonoBehaviour
 {
+	public bool DEBUGMODE = false;
+
 	readonly Dictionary<string, int> operatorRanks = new()
 	{
 		{ "+" , 1 },
@@ -195,7 +197,7 @@ public class Evaluator : MonoBehaviour
 		{
 			if (s == "true") value = true;
 			else if (s == "false") value = false;
-			else return Errors.UnableToParseBool(interpreter);
+			else return Errors.UnableToParseAsBool(s, interpreter);
 		}
 		else if (type == "list")
 		{
@@ -412,6 +414,8 @@ public class Evaluator : MonoBehaviour
 	
 	public Output Evaluate(string expr, Interpreter interpreter)
 	{
+		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
+
 		#region blankcheck
 		if (expr.Replace(" ", "") == "")
 			return Errors.EvaluatedNothing(interpreter);

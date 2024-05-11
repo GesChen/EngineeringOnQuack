@@ -53,8 +53,8 @@ public static class Errors
 	public static Output UnknownVariable(string name, Interpreter interpreter) =>
 		Error($"Unknown variable \"{name}\"", interpreter);
 
-	public static Output UnableToParseBool(Interpreter interpreter) =>
-		Error($"Unable to parse bool", interpreter);
+	public static Output UnableToParseAsBool(string s, Interpreter interpreter) =>
+		Error($"Unable to parse {s} as bool", interpreter);
 
 	public static Output IndexListWithType(string type, Interpreter interpreter) =>
 		Error($"Cannot index a list with a {type} (only whole numbers are allowed)", interpreter);

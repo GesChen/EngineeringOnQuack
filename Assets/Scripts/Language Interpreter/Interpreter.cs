@@ -121,14 +121,7 @@ public class Interpreter : MonoBehaviour
 	public int currentLine;
 	public Script script;
 	public Dictionary<string, dynamic> variables = new();
-	enum ControlStructure
-	{
-		Sequential = 0,
-		Assignment = 1,
-		Selection = 2,
-		Iteration = 3,
-		Return = 4
-	}
+	public Dictionary<string, Function> Functions = new();
 	readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
 
 	public readonly string[] keywords = new string[]
@@ -137,18 +130,16 @@ public class Interpreter : MonoBehaviour
 		"else",	// done
 		"try",	// !todo
 		"catch",// !todo
-		"for",	// doing
-		"while",// !todo
+		"for",	// done
+		"while",// doing
 		"log",	// done
 		"wait",	// done
 		"def",	// !todo
 		"return"// !todo
 	};
 
-	public Dictionary<string, Function> Functions = new();
-
 	#region internal methods
-	void LogColor(string str, Color color)
+	public void LogColor(string str, Color color)
 	{
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
 	}
@@ -292,9 +283,7 @@ public class Interpreter : MonoBehaviour
 			{
 				if (!ScriptIsInstant(line)) return false;
 			}
-			
 		}
-		
 		return true;
 	}
 
@@ -386,6 +375,8 @@ public class Interpreter : MonoBehaviour
 
 	public IEnumerator InterpretNestedForm(List<dynamic> lines, Evaluator evaluator, Action<Output> callback)
 	{
+		evaluator.DEBUGMODE = false;
+
 		int localLineNum = 0;
 		string line = "";
 
@@ -693,6 +684,83 @@ public class Interpreter : MonoBehaviour
 							callback(result);
 							yield break;
 						}
+					}
+				}
+				else if (keyword == "while")
+				{
+					#region get the expression to check
+					int colonIndex = -1;
+					bool inString = false;
+					for (int i = 0; i < line.Length; i++)
+					{
+						char c = line[i];
+						if (c == '"') inString = !inString;
+						else if (!inString && c == ':')
+						{
+							colonIndex = i; break;
+						}
+					}
+
+					if (colonIndex == -1)
+					{
+						callback(Errors.ExpectedColon(this));
+						yield break;
+					}
+					#endregion
+
+					List<dynamic> toRun;
+					if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
+					{
+						localLineNum++;
+						toRun = lines[localLineNum];
+					}
+					else
+					{
+						toRun = new List<dynamic>() { line[colonIndex..] };
+					}
+
+					#region eval expr
+					string expr = line[5..colonIndex].Trim();
+					Output eval = evaluator.Evaluate(expr, this); 
+					if (!eval.success)
+					{
+						callback(eval);
+						yield break;
+					}
+					eval = evaluator.Evaluate("true&&" + HelperFunctions.ConvertToString(eval.value), this); // force it to be a bool
+					if (!eval.success || eval.value is not bool)
+					{
+						callback(Errors.UnableToParseAsBool(HelperFunctions.ConvertToString(eval), this));
+						yield break;
+					}
+					bool result = eval.value;
+					#endregion
+
+					while (result)
+					{
+						Output output = null;
+						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, (callback) => { output = callback; }));
+						if (!output.success)
+						{
+							callback(output);
+							yield break;
+						}
+
+						#region eval expr
+						eval = evaluator.Evaluate(expr, this);
+						if (!eval.success)
+						{
+							callback(eval);
+							yield break;
+						}
+						eval = evaluator.Evaluate("true&&" + HelperFunctions.ConvertToString(eval.value), this); // force it to be a bool
+						if (!eval.success || eval.value is not bool)
+						{
+							callback(Errors.UnableToParseAsBool(HelperFunctions.ConvertToString(eval.value), this));
+							yield break;
+						}
+						#endregion
+						result = eval.value;
 					}
 				}
 			}

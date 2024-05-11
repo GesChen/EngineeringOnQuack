@@ -1,0 +1,6 @@
+x = 0
+while x < 5:
+    log(x)
+    x+=2
+    if x == 2:
+        log("hwelll yeah!!")
