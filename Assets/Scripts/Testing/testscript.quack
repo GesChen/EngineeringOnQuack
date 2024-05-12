@@ -1,6 +1,5 @@
-x = 0
-while x < 5:
-    log(x)
-    x+=2
-    if x == 2:
-        log("hwelll yeah!!")
+try:
+    a = 0
+    a = 1/0
+catch error:
+    log("errored "+error)

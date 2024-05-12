@@ -93,4 +93,11 @@ public static class Errors
 
 	public static Output UnexpectedElse(Interpreter interpreter) =>
 		Error($"Unexpected else statement", interpreter);
+	
+	public static Output BadVariableName(string badname, Interpreter interpreter) =>
+		Error($"Bad variable name: {badname}", interpreter);
+	
+	public static Output UnexpectedCatch(Interpreter interpreter) =>
+		Error("Unexpected catch statement", interpreter);
+
 }

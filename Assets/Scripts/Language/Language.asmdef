@@ -1,0 +1,16 @@
+{
+    "name": "Language",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1b37b5d0dc8a2c147bc43b3e56ad8620"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -117,10 +117,12 @@ public static class HelperFunctions
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
 	public static string ConvertToString(dynamic value)
+		=> ConvertToString(value, true);
+	public static string ConvertToString(dynamic value, bool stringQuotes)
 	{
 		Type t = value.GetType();
 		if (value == null) return "";
-		if (value is string) return $"\"{value}\"";
+		else if (value is string) return stringQuotes ? $"\"{value}\"" : value;
 		else if (value is int || value is float) return value.ToString("G10");
 		else if (value is bool) return value ? "true" : "false";
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
@@ -136,7 +138,7 @@ public static class HelperFunctions
 		}
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
 		{
-			List<string> keys = new (value.Keys);
+			List<string> keys = new(value.Keys);
 			string builtString = "{";
 			for (int i = 0; i < keys.Count; i++)
 			{
@@ -149,8 +151,11 @@ public static class HelperFunctions
 			builtString += "}";
 			return builtString;
 		}
+		else if (t.Name == "ScriptLine") return value.Line;
+
 		return value.ToString();
 	}
+
 
 	public static bool ContainsSubstringOutsideQuotes(string text, string substring)
 	{
@@ -221,4 +226,19 @@ public static class HelperFunctions
 		return "unknown";
 	}
 
+	public static bool VariableNameIsValid(string name)
+	{
+		/* naming convention:
+		 - starts either with letter or _
+		 - following characters can be letter, number or _
+		 - variable names are case sensitive
+		*/
+		if (string.IsNullOrWhiteSpace(name)) return false;
+		if (!(char.IsLetter(name[0]) || name[0] == '_')) return false;
+
+		foreach (char c in name)
+			if (!(char.IsLetter(c) || char.IsDigit(c) || c == '_')) return false;
+
+		return true;
+	}
 }

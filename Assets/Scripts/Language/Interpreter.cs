@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
-using Unity.VisualScripting;
-using UnityEngine.UIElements;
 
 public class Error
 {
@@ -21,7 +19,7 @@ public class Error
 
 	public override string ToString()
 	{
-		return $"An error has occurred on line {Line + 1} ({interpreter.script.Lines[Line]}):\n {Message}";
+		return $"An error has occurred on line {Line + 1} ({interpreter.script.Lines[Line].Trim()}):\n {Message}";
 	}
 }
 public class Output
@@ -95,10 +93,7 @@ public class Function : MonoBehaviour
 		}
 
 		dynamic result = null;
-		yield return StartCoroutine(UsingInterpreter.InterpretNestedForm(Script, UsingEvaluator, callback =>
-		{
-			result = callback;
-		}));
+		yield return StartCoroutine(UsingInterpreter.InterpretNestedForm(Script, UsingEvaluator, callback => { result = callback; }));
 
 		UsingInterpreter.variables = variablesStateBefore;
 		callback(result);
@@ -126,16 +121,17 @@ public class Interpreter : MonoBehaviour
 
 	public readonly string[] keywords = new string[]
 	{
-		"if",	// done
+		"if",	// done -- !todo - remake the code, have else handling with the if, no weird logic needed
 		"else",	// done
 		"try",	// !todo
 		"catch",// !todo
 		"for",	// done
-		"while",// doing
+		"while",// done
 		"log",	// done
 		"wait",	// done
 		"def",	// !todo
-		"return"// !todo
+		"return",// !todo
+		"class" // !todo...
 	};
 
 	#region internal methods
@@ -348,7 +344,7 @@ public class Interpreter : MonoBehaviour
 	#region functions
 	public void Log(dynamic str)
 	{
-		LogColor(HelperFunctions.ConvertToString(str), Color.green);
+		LogColor(HelperFunctions.ConvertToString(str, false), Color.green);
 	}
 
 	#endregion
@@ -357,16 +353,16 @@ public class Interpreter : MonoBehaviour
 	{
 		double start = Time.timeAsDouble;
 		Output result = null;
-		//yield return StartCoroutine(InterpretCoroutine(script.Lines, evaluator, (callback) => { result = callback; }));
+		//yield return StartCoroutine(InterpretCoroutine(script.Lines, evaluator, callback => { result = callback; }));
 
 		int lineNum = 0;
 		
 		List<dynamic> lines = ConvertToNested(script, 0, ref lineNum);
 		/*if (ScriptIsInstant(lines))
-			StartCoroutine(InterpretNestedForm(lines, evaluator, (callback) => { result = callback; }));
+			StartCoroutine(InterpretNestedForm(lines, evaluator, callback => { result = callback; }));
 		else*/
 		// tried to make it not yield wait if not needed, but there is still some delay, and result will be null if its too slow
-		yield return StartCoroutine(InterpretNestedForm(lines, evaluator, (callback) => { result = callback; }));
+		yield return StartCoroutine(InterpretNestedForm(lines, evaluator, callback => { result = callback; }));
 
 		Debug.Log(result);
 		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
@@ -457,7 +453,7 @@ public class Interpreter : MonoBehaviour
 						callback(Errors.ExpectedColon(this));
 						yield break;
 					}
-					
+
 					string expression = remaining[..colonIndex];
 					Output tryEval = evaluator.Evaluate(expression, this);
 					if (!tryEval.success)
@@ -483,18 +479,18 @@ public class Interpreter : MonoBehaviour
 						string rest = remaining[(colonIndex + 1)..];
 						if (!string.IsNullOrEmpty(rest))
 						{ // makes it rerun current line with new thing
-							lines[localLineNum] = rest; 
+							lines[localLineNum] = rest;
 							localLineNum--; // bad solution but it gets ++ at end idk
 						}
 						else
-						{ 
+						{
 							localLineNum++; // step into the next part, whether be indent or normal
 							if (localLineNum < lines.Count && lines[localLineNum] is List<dynamic>) // if next isn't indented list, dont do anything
 							{
 								// run everything indented
 								List<dynamic> indentedLines = lines[localLineNum];
 								Output result = null;
-								yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, (callback) => { result = callback; }));
+								yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, callback => { result = callback; }));
 								if (!result.success)
 								{
 									callback(result);
@@ -574,7 +570,7 @@ public class Interpreter : MonoBehaviour
 									// run everything indented
 									List<dynamic> indentedLines = lines[localLineNum];
 									Output result = null;
-									yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, (callback) => { result = callback; }));
+									yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, callback => { result = callback; }));
 									if (!result.success)
 									{
 										callback(result);
@@ -604,7 +600,7 @@ public class Interpreter : MonoBehaviour
 					{
 						char c = line[i];
 						if (c == '"') inString = !inString;
-						
+
 						else if (!inString && i < line.Length - 1 && c == 'i' && line[i + 1] == 'n' && inIndex == -1) // find "in
 							inIndex = i;
 						else if (!inString && c == ':' && colonIndex == -1)
@@ -624,7 +620,7 @@ public class Interpreter : MonoBehaviour
 
 					string iterator = line[3..inIndex].Trim();
 					string listString = line[(inIndex + 2)..colonIndex].Trim();
-					
+
 					if (string.IsNullOrEmpty(iterator))
 					{
 						callback(Errors.ExpectedCustom("iterator", this));
@@ -653,7 +649,7 @@ public class Interpreter : MonoBehaviour
 					#endregion
 
 					// should now successfully have an iterator variable name and a list to iterate through
-					
+
 					List<dynamic> toRun;
 					if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
 					{
@@ -674,11 +670,11 @@ public class Interpreter : MonoBehaviour
 
 						/*
 						if (ScriptIsInstant(toRun))
-							StartCoroutine(InterpretNestedForm(toRun, evaluator, (callback) => { result = callback; }));
+							StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => { result = callback; }));
 						else
 						*/
-						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, (callback) => { result = callback; }));
-						
+						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => { result = callback; }));
+
 						if (!result.success)
 						{
 							callback(result);
@@ -721,7 +717,7 @@ public class Interpreter : MonoBehaviour
 
 					#region eval expr
 					string expr = line[5..colonIndex].Trim();
-					Output eval = evaluator.Evaluate(expr, this); 
+					Output eval = evaluator.Evaluate(expr, this);
 					if (!eval.success)
 					{
 						callback(eval);
@@ -739,7 +735,7 @@ public class Interpreter : MonoBehaviour
 					while (result)
 					{
 						Output output = null;
-						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, (callback) => { output = callback; }));
+						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => { output = callback; }));
 						if (!output.success)
 						{
 							callback(output);
@@ -762,6 +758,81 @@ public class Interpreter : MonoBehaviour
 						#endregion
 						result = eval.value;
 					}
+				}
+				else if (keyword == "try")
+				{
+					// run the inner script
+					List<dynamic> toTry;
+					if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
+					{
+						localLineNum++;
+						toTry = lines[localLineNum];
+					}
+					else
+					{
+						toTry = new List<dynamic>() { line[3..].Trim() };
+					}
+
+					Output output = null;
+					yield return StartCoroutine(InterpretNestedForm(toTry, evaluator, callback => { output = callback; }));
+					
+					if (!output.success)
+					{ // find catch if fail
+						if (lines[localLineNum + 1] is ScriptLine)
+						{
+							localLineNum++;
+							currentLine = lines[localLineNum].LineNumber;
+							if (lines[localLineNum].Line.Trim().StartsWith("catch"))
+							{
+								#region find the variable name to store 
+								line = lines[localLineNum].Line.Trim();
+								int colonIndex = line.IndexOf(':');
+								if (colonIndex == -1)
+								{
+									callback(Errors.ExpectedColon(this));
+									yield break;
+								}
+
+								string errorVarName = line[5..colonIndex].Trim();
+								if (!string.IsNullOrWhiteSpace(errorVarName))
+								{
+									if (!HelperFunctions.VariableNameIsValid(errorVarName))
+									{
+										callback(Errors.BadVariableName(errorVarName, this));
+										yield break;
+									}
+
+									StoreVariable(errorVarName, output.error.ToString());
+								}
+								#endregion
+
+								List<dynamic> toRun;
+								if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
+								{
+									localLineNum++;
+									toRun = lines[localLineNum];
+								}
+								else
+								{
+									toRun = new List<dynamic>() { line[5..].Trim() };
+								}
+
+								yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => { output = callback; }));
+
+								// it will not catch again, unless there is a try catch inside of torun
+								if (!output.success)
+								{
+									callback(output);
+									yield break;
+								}
+							}
+						}
+					}
+				}
+				else if (keyword == "catch")
+				{ // catch was already handled in the try block, shouldn't see it again
+					callback(Errors.UnexpectedCatch(this));
+					yield break;
 				}
 			}
 			else if (type == 1) // set variable
@@ -789,6 +860,12 @@ public class Interpreter : MonoBehaviour
 					varName += c;
 				}
 				varName = varName.Trim();
+
+				if (!HelperFunctions.VariableNameIsValid(varName))
+				{
+					callback(Errors.BadVariableName(varName, this));
+					yield break;
+				}
 
 				// extract the assignment operator (=, +=, -=, ++, --)
 				string remaining = line[varName.Length..].Trim();
