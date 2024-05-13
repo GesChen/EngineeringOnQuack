@@ -93,7 +93,7 @@ public class RotateAxis : MonoBehaviour
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		float mouseToCircleDistance = HelperFunctions.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
+		float mouseToCircleDistance = HF.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
 	void StartOver()
@@ -182,7 +182,7 @@ public class RotateAxis : MonoBehaviour
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
 
 		// rotation uses a different emission system
-		mat.SetColor("_Color", HelperFunctions.MultiplyColorByVector(smoothedIntensity, color));
+		mat.SetColor("_Color", HF.MultiplyColorByVector(smoothedIntensity, color));
 		mat.SetFloat("_Alpha", smoothedAlpha);
 		mat.SetFloat("_VertexOffset", smoothedOutset);
 	}
@@ -212,14 +212,14 @@ public class RotateAxis : MonoBehaviour
 		Debug.DrawRay(cameraPos, cameraVec * 50, Color.white, 0, true);
 #endif
 
-		Vector3 planeHitPos = HelperFunctions.RayPlaneIntersect(
+		Vector3 planeHitPos = HF.RayPlaneIntersect(
 			planePos, planeNormal, cameraPos, cameraVec);
 
 #if DEBUGMODE
 		DebugExtra.DrawEmpty(planeHitPos, .1f);
 #endif
 
-		Vector2 localPosPointOnPlane = HelperFunctions.CoordinatesOfPointOnPlane(planeHitPos - planePos, planePos, planeRotation * Vector3.right, planeRotation * Vector3.up);
+		Vector2 localPosPointOnPlane = HF.CoordinatesOfPointOnPlane(planeHitPos - planePos, planePos, planeRotation * Vector3.right, planeRotation * Vector3.up);
 		float angle = Mathf.Rad2Deg * Mathf.Atan2(localPosPointOnPlane.y, localPosPointOnPlane.x);
 
 		if (firstFrameAfterStartDrag)

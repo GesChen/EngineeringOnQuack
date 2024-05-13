@@ -212,7 +212,7 @@ public class Scale : MonoBehaviour
 		if (!dragging) 
 			transform.localPosition = axis * ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault);
 
-		mat.SetColor("_EmissiveColor", HelperFunctions.MultiplyColorByVector(smoothedIntensity, color));
+		mat.SetColor("_EmissiveColor", HF.MultiplyColorByVector(smoothedIntensity, color));
 		mat.color = new(color.r, color.g, color.b, smoothedAlpha);
 		//mat.SetFloat("_Alpha", smoothedAlpha);
 		transform.localScale = smoothedScale * Vector3.one;
@@ -227,7 +227,7 @@ public class Scale : MonoBehaviour
 		Vector3 cameraPos = Camera.main.transform.position;
 		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
 
-		Vector3 newPos = HelperFunctions.ClosestPointAOnTwoLines(
+		Vector3 newPos = HF.ClosestPointAOnTwoLines(
 			dragStartPos, localAxes.normalized,
 			cameraPos, cameraVec.normalized);
 
@@ -244,7 +244,7 @@ public class Scale : MonoBehaviour
 
 		Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
 
-		main.target.transform.localScale = HelperFunctions.MV3(startScale, newScale);
+		main.target.transform.localScale = HF.MV3(startScale, newScale);
 	}
 	void PerformScalingFull()
 	{

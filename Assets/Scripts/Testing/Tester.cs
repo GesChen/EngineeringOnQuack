@@ -9,6 +9,7 @@ public class Tester : MonoBehaviour
 	//public string expr;
 	//public List<string> testCases = new();
 
+	public bool debug;
 	public Interpreter interpreter;
 	public Evaluator evaluator;
 	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
@@ -19,6 +20,7 @@ public class Tester : MonoBehaviour
 		
 		Script script = new (contents.ToList());
 
+		interpreter.DEBUGMODE = debug;
 		interpreter.Interpret(script, evaluator);
 	}
 }

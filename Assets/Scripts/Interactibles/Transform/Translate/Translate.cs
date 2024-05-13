@@ -211,7 +211,7 @@ public class Translate : MonoBehaviour
 		smoothedScale = Mathf.Lerp(smoothedScale, targetScale, main.scaleSmoothness);
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
 
-		mat.SetColor("_EmissiveColor", HelperFunctions.MultiplyColorByVector(smoothedIntensity, color));
+		mat.SetColor("_EmissiveColor", HF.MultiplyColorByVector(smoothedIntensity, color));
 		mat.color = new(color.r, color.g, color.b, smoothedAlpha);
 		//mat.SetFloat("_Alpha", smoothedAlpha);
 		transform.localScale = smoothedScale * Vector3.one;
@@ -233,12 +233,12 @@ public class Translate : MonoBehaviour
 		switch (numaxes)
 		{
 			case 1:
-				transform.position = HelperFunctions.ClosestPointAOnTwoLines(
+				transform.position = HF.ClosestPointAOnTwoLines(
 					dragStartPos, localAxes.normalized,
 					cameraPos, cameraVec.normalized); //alot of hacky stuff going on here that i dont understand
 				break;
 			case 2:
-				transform.position = HelperFunctions.RayPlaneIntersect(
+				transform.position = HF.RayPlaneIntersect(
 					dragStartPos, main.transform.rotation * (Vector3.one - axes),
 					cameraPos, cameraVec);
 				break;
@@ -257,7 +257,7 @@ public class Translate : MonoBehaviour
 			switch (numaxes)
 			{
 				case 1:
-					float distanceAlongAxis = HelperFunctions.DistanceInDirection(main.target.position, dragStartPos, axes);
+					float distanceAlongAxis = HF.DistanceInDirection(main.target.position, dragStartPos, axes);
 					float snappedDist = Mathf.Round(distanceAlongAxis / main.translateSnappingIncrement) * main.translateSnappingIncrement;
 					main.target.position = dragStartPos + localAxes * snappedDist;
 					break;
@@ -277,15 +277,15 @@ public class Translate : MonoBehaviour
 					if (axes.z != 0)
 						planeYVector = main.transform.rotation * Vector3.forward;
 
-					Vector2 planePoint = HelperFunctions.CoordinatesOfPointOnPlane(main.target.position, dragStartPos, planeXVector, planeYVector);
-					Vector2 snappedPoint = HelperFunctions.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					Vector2 planePoint = HF.CoordinatesOfPointOnPlane(main.target.position, dragStartPos, planeXVector, planeYVector);
+					Vector2 snappedPoint = HF.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
 					Vector3 worldSpacePoint = dragStartPos + planeXVector * snappedPoint.x + planeYVector * snappedPoint.y;
 
 					main.target.position = worldSpacePoint;
 
 					break;
 				case 3:
-					Vector3 snappedPos = HelperFunctions.Vector3Round(main.target.position / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					Vector3 snappedPos = HF.Vector3Round(main.target.position / main.translateSnappingIncrement) * main.translateSnappingIncrement;
 					main.target.position = snappedPos;
 					break;
 			}

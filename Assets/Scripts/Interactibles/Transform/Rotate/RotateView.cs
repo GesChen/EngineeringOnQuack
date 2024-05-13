@@ -89,7 +89,7 @@ public class RotateView : MonoBehaviour
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		float mouseToCircleDistance = HelperFunctions.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
+		float mouseToCircleDistance = HF.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
 	void StartOver()

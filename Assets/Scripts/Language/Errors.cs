@@ -91,13 +91,29 @@ public static class Errors
 	public static Output ExpectedCustom(string expected, Interpreter interpreter) =>
 		Error($"Expected {expected}", interpreter);
 
+	public static Output ExpectedParentheses(Interpreter interpreter) =>
+		Error($"Expected parentheses", interpreter);
+
+
 	public static Output UnexpectedElse(Interpreter interpreter) =>
 		Error($"Unexpected else statement", interpreter);
 	
 	public static Output BadVariableName(string badname, Interpreter interpreter) =>
 		Error($"Bad variable name: {badname}", interpreter);
-	
+
+	public static Output BadFunctionName(string badname, Interpreter interpreter) =>
+		Error($"Bad function name: {badname}", interpreter);
+
+
 	public static Output UnexpectedCatch(Interpreter interpreter) =>
 		Error("Unexpected catch statement", interpreter);
 
+	public static Output EmptyFunction(Interpreter interpreter) =>
+		Error("Function definition is empty", interpreter);
+
+	public static Output DuplicateArguments(string duplicatename, Interpreter interpreter) =>
+		Error($"Duplicate arguments: {duplicatename}", interpreter);
+
+	public static Output MaxRecursion(int maxdepth, Interpreter interpreter) =>
+		Error($"Max recursion depth reached ({maxdepth})", interpreter);
 }

@@ -24,7 +24,7 @@ public class AxisIndicator : MonoBehaviour
 		else
 			alpha = Mathf.Lerp(alpha, 0f, main.alphaSmoothness);
 
-		mat.color = color == Color.white ? Color.white * main.draggingWhiteIntensity : HelperFunctions.MultiplyColorByVector(main.draggingIntensity, color);
+		mat.color = color == Color.white ? Color.white * main.draggingWhiteIntensity : HF.MultiplyColorByVector(main.draggingIntensity, color);
 		mat.SetFloat("_Alpha", alpha);
 		transform.rotation = rotation;
 	}

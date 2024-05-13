@@ -1,5 +1,5 @@
-try:
-    a = 0
-    a = 1/0
-catch error:
-    log("errored "+error)
+def a(b,c,d):
+    log("test")
+    a(b,c,d)
+
+a(1,2,3)

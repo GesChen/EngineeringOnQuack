@@ -107,7 +107,7 @@ public class Evaluator : MonoBehaviour
 			if (negative) s = s[1..];
 
 			Output result = interpreter.FetchVariable(s);
-			string type = HelperFunctions.DetermineTypeFromString(s);
+			string type = HF.DetermineTypeFromString(s);
 			if (!result.success) 
 			{
 				if (type != "number")
@@ -179,7 +179,7 @@ public class Evaluator : MonoBehaviour
 
 	Output DynamicStringParse(string s, Interpreter interpreter)
 	{
-		string type = HelperFunctions.DetermineTypeFromString(s);
+		string type = HF.DetermineTypeFromString(s);
 
 		if (type == "malformed string") return Errors.MalformedString(s, interpreter);
 		else if (type == "malformed list") return Errors.MalformedList(s, interpreter);
@@ -383,9 +383,9 @@ public class Evaluator : MonoBehaviour
 				foreach (dynamic index in dynamicIndexes)
 				{
 					if (index is not float && index is not int)
-						return Errors.IndexListWithType(HelperFunctions.DetermineTypeFromVariable(index), interpreter);
+						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
 					if (Mathf.Round(index) != index)
-						return Errors.IndexListWithType(HelperFunctions.DetermineTypeFromVariable(index), interpreter);
+						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
 				}
 				List<int> indexes = new();
 				foreach (dynamic index in dynamicIndexes) indexes.Add((int)index);
@@ -411,7 +411,6 @@ public class Evaluator : MonoBehaviour
 		}
 	}
 
-	
 	public Output Evaluate(string expr, Interpreter interpreter)
 	{
 		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
@@ -477,10 +476,10 @@ public class Evaluator : MonoBehaviour
 
 			Output tryEval = Evaluate(newexpr, interpreter);
 			if (!tryEval.success) return tryEval;
-			string evaledvalue = HelperFunctions.ConvertToString(tryEval.value);
+			string evaledvalue = HF.ConvertToString(tryEval.value);
 
 			// replace the chunk of parentheses with the evalled value 
-			expr = HelperFunctions.ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
+			expr = HF.ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
 		}
 		#endregion
 
@@ -634,10 +633,10 @@ public class Evaluator : MonoBehaviour
 			// operator definitely has items on both sides
 			// left and right types
 			dynamic left = tokens[lmhrIndex - 1];
-			string leftType = HelperFunctions.DetermineTypeFromVariable(left);
+			string leftType = HF.DetermineTypeFromVariable(left);
 
 			dynamic right = tokens[lmhrIndex + 1];
-			string rightType = HelperFunctions.DetermineTypeFromVariable(right);
+			string rightType = HF.DetermineTypeFromVariable(right);
 
 			string operation = tokens[lmhrIndex];
 			dynamic result = 0;
@@ -688,7 +687,7 @@ public class Evaluator : MonoBehaviour
 				else if (leftType == "string")
 				{
 					if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
-					if (rightType != "string") right = HelperFunctions.ConvertToString(right);
+					if (rightType != "string") right = HF.ConvertToString(right);
 
 					result = left + right;
 				}

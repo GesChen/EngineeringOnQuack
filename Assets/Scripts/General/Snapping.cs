@@ -274,7 +274,7 @@ public class Snapping
 		foreach (Vector3 vert in verts)
 		{
 
-			float dist = HelperFunctions.DistanceInDirection(transform.TransformPoint(vert), cam.transform.position, cam.transform.forward);// (transform.position - cam.transform.position).normalized);
+			float dist = HF.DistanceInDirection(transform.TransformPoint(vert), cam.transform.position, cam.transform.forward);// (transform.position - cam.transform.position).normalized);
 			if (dist > farthestDist)
 			{
 				farthestDist = dist;
@@ -289,7 +289,7 @@ public class Snapping
 		float closestDist = Mathf.Infinity;
 		foreach (Vector3 vert in mesh.vertices)
 		{
-			float dist = HelperFunctions.DistanceInDirection(transform.TransformPoint(vert), cam.transform.position, cam.transform.forward); // (transform.position - cam.transform.position).normalized);
+			float dist = HF.DistanceInDirection(transform.TransformPoint(vert), cam.transform.position, cam.transform.forward); // (transform.position - cam.transform.position).normalized);
 			if (dist < closestDist)
 			{
 				closestDist = dist;

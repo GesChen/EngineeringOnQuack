@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class HelperFunctions
-{
+public static class HF {
 	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
 	{
 		float minDistance = float.MaxValue;
@@ -130,7 +128,7 @@ public static class HelperFunctions
 			string builtString = "[";
 			for (int i = 0; i < value.Count; i++)
 			{
-				builtString += ConvertToString(value[i]);
+				builtString += ConvertToString(value[i], stringQuotes);
 				if (i < value.Count - 1) builtString += ", ";
 			}
 			builtString += "]";
@@ -143,9 +141,9 @@ public static class HelperFunctions
 			for (int i = 0; i < keys.Count; i++)
 			{
 				dynamic key = keys[i];
-				builtString += ConvertToString(key);
+				builtString += ConvertToString(key, stringQuotes);
 				builtString += " : ";
-				builtString += ConvertToString(value[key]);
+				builtString += ConvertToString(value[key], stringQuotes);
 				if (i != keys.Count - 1) builtString += ", ";
 			}
 			builtString += "}";
