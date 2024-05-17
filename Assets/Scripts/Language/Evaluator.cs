@@ -92,8 +92,7 @@ public class Evaluator : MonoBehaviour
 	{
 		return ExpressionContains('(', expr) || ExpressionContains(')', expr);
 	}
-	
-	
+
 	Output ParseFloatPart(string s, Interpreter interpreter)
 	{
 		float value = 0;
@@ -421,7 +420,7 @@ public class Evaluator : MonoBehaviour
 		#endregion
 
 		#region remove all spaces except inside ""
-			string tempstring = "";
+		string tempstring = "";
 		bool inString = false;
 		foreach(char c in expr)
 		{
@@ -430,6 +429,73 @@ public class Evaluator : MonoBehaviour
 				tempstring += c;
 		}
 		expr = tempstring;
+		#endregion
+
+		#region function check 
+		// look for all functions, replace with evaluated output, or error if fail
+		bool foundFunction = expr.IndexOf('(') != -1; // kinda jank? idk
+		string functionName = null;
+		inString = false;
+		int depth = 0;
+		while (foundFunction)
+		{
+			// find the first valid set of parentheses
+			inString = false;
+			depth = 0;
+			foundFunction = false;
+			int startIndex = -1;
+			int endIndex = -1;
+			for (int i = 0; i < expr.Length; i++)
+			{
+				char c = expr[i];
+				if (c == '"') inString = !inString;
+				else if (!inString && c == '(')
+				{
+					if (depth == 0) startIndex = i;
+					depth++;
+				}
+				else if (!inString && c == ')')
+				{
+					depth--;
+					if (depth == 0) { endIndex = i; break; }
+				}
+			}
+
+			// find closest index of operator
+			int checkingIndex = startIndex;
+			bool currentIndexIsOperator = false; // if char at this index or this and char before is an operator
+			while (checkingIndex > 0)
+			{
+				if (startIndex != -1 && endIndex != -1)
+				{
+					if ((checkingIndex >= 1 && operators.Contains(expr[checkingIndex - 1].ToString()))
+						|| (checkingIndex >= 2 && operators.Contains(expr.Substring(checkingIndex - 2, 2))))
+						currentIndexIsOperator = true;
+				}
+
+				if (currentIndexIsOperator)
+				{
+					if (checkingIndex == startIndex - 1) // operator immediately before, this is not a function
+						foundFunction = false;
+					else 
+						foundFunction = true;
+					
+					checkingIndex++;
+					break;
+				}
+
+				checkingIndex--;
+			}
+			if (foundFunction)
+			{
+				functionName = expr[checkingIndex..startIndex];
+
+				if (interpreter.functions.ContainsKey(functionName)) // valid function
+				{
+					Output functionOutput = interpreter.
+				}
+			}
+		}
 		#endregion
 
 		#region handle parentheses
@@ -450,7 +516,7 @@ public class Evaluator : MonoBehaviour
 			int parenthesesEndIndex = -1;
 
 			// search for matching parentheses
-			int depth = 0;
+			depth = 0;
 			inString = false;
 			for (int i = parenthesesStartIndex; i < expr.Length; i++)
 			{

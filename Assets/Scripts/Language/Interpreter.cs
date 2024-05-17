@@ -78,6 +78,31 @@ public class Function
 		return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
 	}
 }
+public class ClassDefinition
+{
+	public string Name { get; }
+	public Interpreter OwnInterpreter { get; }
+	public Script Definition { get; }
+	public Script Constructor { get; }
+	public ClassDefinition(string name, Evaluator evaluator, GameObject mainGameobject, List<dynamic> initializationScript, List<dynamic> constructor)
+	{
+		Name = name;
+		OwnInterpreter = mainGameobject.AddComponent<Interpreter>();
+		OwnInterpreter.evaluator = evaluator;
+		Definition = new Script(OwnInterpreter.ConvertToList(initializationScript, 1, 0)); // a bit backwards but it works hopefully not too inefficient
+		Constructor = new Script(OwnInterpreter.ConvertToList(constructor, 1, 0));	
+	}
+	
+}
+public class ClassInstance
+{
+	public string Name;
+	public Interpreter OwnInterpreter { get; }
+	public ClassInstance(ClassDefinition classDef, string name)
+	{
+
+	}
+}
 
 public class ScriptLine
 {
@@ -93,15 +118,18 @@ public class ScriptLine
 public class Interpreter : MonoBehaviour
 {
 	public bool DEBUGMODE = false;
-	public const int MAX_RECURSION_DEPTH = 20;
+	public static readonly int MAX_RECURSION_DEPTH = 20;
+	
+	public bool isClass = false;
 
+	public Evaluator evaluator;
 	public int currentLine;
 	public Script script;
 	public Dictionary<string, dynamic> variables = new();
 	public Dictionary<string, Function> functions = new();
-	readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
-
-	public readonly string[] keywords = new string[]
+	public Dictionary<string, ClassDefinition> classes = new();
+	static readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
+	static readonly string[] keywords = new string[]
 	{
 		"if",	// done -- !todo - remake the code, have else handling with the if, no weird logic needed
 		"else",	// done
@@ -111,9 +139,9 @@ public class Interpreter : MonoBehaviour
 		"while",// done
 		"log",	// done
 		"wait",	// done
-		"def",	// !todo
-		"return",// !todo
-		"class" // !todo...
+		"def",	// done
+		"return",//done
+		"class" // doing...
 	};
 
 	#region internal methods
@@ -121,16 +149,26 @@ public class Interpreter : MonoBehaviour
 	{
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
 	}
+	public void Interpret(Script targetScript)
+	{
+		if (evaluator == null) return;
+		Interpret(targetScript, evaluator);
+	}
 	public void Interpret(Script targetScript, Evaluator evaluator)
 	{
+		this.evaluator = evaluator;
+
 		script = targetScript;
-		StartCoroutine(StartInterpreting(evaluator));
+		StartCoroutine(StartInterpreting());
 	}
 
 	public Output StoreVariable(string name, dynamic value)
 	{
 		if (keywords.Contains(name))
-			return Errors.CannotSetKeyword(name, value);
+			return Errors.CannotSetKeyword(name, this);
+		if (classes.ContainsKey(name))
+			return Errors.AlreadyIsClass(name, this);
+
 		variables[name] = value;
 		return new Output(true);
 	}
@@ -151,7 +189,7 @@ public class Interpreter : MonoBehaviour
 		variables.Remove(name);
 		return new Output(true); // returns true if successful
 	}
-	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Evaluator evaluator)
+	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script)
 	{
 		// make sure function with this name and argnames doesnt already exist 
 		foreach (Function f in functions.Values)
@@ -174,7 +212,7 @@ public class Interpreter : MonoBehaviour
 
 		return true;
 	}
-	IEnumerator RunFunction(Function F, List<dynamic> args, Action<Output> callback, int depth = 0)
+	public IEnumerator RunFunction(Function F, List<dynamic> args, Action<Output> callback, int depth = 0)
 	{
 		if (args.Count != F.ArgumentNames.Count)
 		{
@@ -195,7 +233,7 @@ public class Interpreter : MonoBehaviour
 		}
 
 		Output result = null;
-		yield return StartCoroutine(F.UsingInterpreter.InterpretNestedForm(F.Script, F.UsingEvaluator, interpretcallback => result = interpretcallback, depth + 1));
+		yield return StartCoroutine(F.UsingInterpreter.Interpret(F.Script, interpretcallback => result = interpretcallback, depth + 1));
 
 		F.UsingInterpreter.variables = variablesStateBefore;
 		callback(result);
@@ -245,7 +283,20 @@ public class Interpreter : MonoBehaviour
 		}
 		return lines;
 	}
-	Output ExtractArgs(string line, string keyword, int numExpected, Evaluator evaluator)
+	public List<string> ConvertToList(List<dynamic> script, int spacesPerIndent, int curIndent)
+	{
+		List<string> lines = new();
+		foreach (dynamic i in script)
+		{
+			if (i is ScriptLine)
+				lines.Add(new string(' ', curIndent * spacesPerIndent) + i.Line); // make new line with correct indentation and add to lines
+			else if (i is List<dynamic>) // not sure how it would break??? instead of having else???
+				lines.AddRange(ConvertToList(i, spacesPerIndent, curIndent + 1));
+		}
+
+		return lines;
+	}
+	Output ExtractArgs(string line, string keyword, int numExpected)
 	{
 		// rest of line should be the expression
 		string remaining = line[keyword.Length..];
@@ -314,16 +365,6 @@ public class Interpreter : MonoBehaviour
 		}
 		return true;
 	}
-
-	void DumpState()
-	{
-		LogColor("**STATE DUMP**", Color.yellow);
-		LogColor("VARIABLES: " + HF.ConvertToString(variables), Color.yellow);
-		LogColor("FUNCTIONS: "+HF.ConvertToString(functions), Color.yellow);
-		LogColor("SCRIPT " + script, Color.yellow);
-		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
-	}
-	
 	List<string> PreProcessScript(List<string> lines)
 	{
 		/* task: remove all comments from the code (will not be run by script)
@@ -373,6 +414,63 @@ public class Interpreter : MonoBehaviour
 
 		return result;
 	}
+
+	void DumpState()
+	{
+		LogColor("**STATE DUMP**", Color.yellow);
+		LogColor("VARIABLES: " + HF.ConvertToString(variables), Color.yellow);
+		LogColor("FUNCTIONS: "+HF.ConvertToString(functions), Color.yellow);
+		LogColor("SCRIPT " + script, Color.yellow);
+		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
+	}
+	
+	Output ProcessClass(string startLine, List<dynamic> definition)
+	{
+		// get class name
+		int colonIndex = startLine.IndexOf(':');
+		if (colonIndex == -1)
+			return Errors.ExpectedColon(this);
+
+		string name = startLine[5..colonIndex].Trim();
+		if (!HF.VariableNameIsValid(name))
+			return Errors.BadClassName(name, this);
+
+		if (classes.ContainsKey(name))
+			return Errors.ClassAlreadyExists(name, this);
+
+		// find the constructor
+		List<dynamic> constructor = new();
+		for (int i = 0; i < definition.Count; i++)
+		{
+			dynamic item = definition[i];
+			if (item is ScriptLine && item.Line.StartsWith("def "))
+			{
+				string line = item.Line;
+				int startParenthesesPos = line.IndexOf('(');
+				currentLine = item.LineNumber;
+				if (startParenthesesPos == -1) return Errors.ExpectedParentheses(this);
+
+				string functionname = line[3..startParenthesesPos].Trim();
+				if (functionname == name) // the function name that is the same as the class name is the constructor
+				{
+					constructor.Add(i);
+					if (i < definition.Count - 1 && definition[i + 1] is List<dynamic>)
+					{
+						constructor.Add(definition[i + 1]);
+						definition.Remove(definition[i + 1]);
+					}
+					definition.Remove(item);
+				}
+			}
+		}
+
+		// create the new class
+		ClassDefinition newClass = new(name, evaluator, gameObject, definition, constructor);
+
+		classes.Add(name, newClass);
+
+		return new(true);
+	}
 	#endregion
 
 	#region functions
@@ -383,7 +481,7 @@ public class Interpreter : MonoBehaviour
 
 	#endregion
 
-	IEnumerator StartInterpreting(Evaluator evaluator)
+	IEnumerator StartInterpreting()
 	{
 		double start = Time.timeAsDouble;
 		Output result = null;
@@ -394,18 +492,18 @@ public class Interpreter : MonoBehaviour
 		script = new(PreProcessScript(script.Lines));
 		List<dynamic> lines = ConvertToNested(script, 0, ref lineNum);
 		
-		yield return StartCoroutine(InterpretNestedForm(lines, evaluator, callback => result = callback ));
+		yield return StartCoroutine(Interpret(lines, callback => result = callback ));
 
 		Debug.Log(result);
 		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
 		DumpState();
 	}
 
-	public IEnumerator InterpretNestedForm(List<dynamic> lines, Evaluator evaluator, Action<Output> callback, int recursiondepth = 0)
+	public IEnumerator Interpret(List<dynamic> lines, Action<Output> callback, int recursiondepth = 0)
 	{
 		if (recursiondepth > MAX_RECURSION_DEPTH)
 		{
-			callback(Errors.MaxRecursion(this));
+			callback(Errors.MaxRecursion(MAX_RECURSION_DEPTH, this));
 			yield break;
 		}
 		evaluator.DEBUGMODE = DEBUGMODE;
@@ -476,7 +574,7 @@ public class Interpreter : MonoBehaviour
 			{
 				if (keyword == "log")
 				{
-					Output getArgs = ExtractArgs(line, keyword, 1, evaluator); // get the args
+					Output getArgs = ExtractArgs(line, keyword, 1); // get the args
 					if (!getArgs.success)
 					{
 						callback(getArgs);
@@ -487,7 +585,7 @@ public class Interpreter : MonoBehaviour
 				}
 				else if (keyword == "wait")
 				{
-					Output getArgs = ExtractArgs(line, keyword, 1, evaluator); // get the args
+					Output getArgs = ExtractArgs(line, keyword, 1); // get the args
 					if (!getArgs.success)
 					{
 						callback(getArgs);
@@ -554,7 +652,7 @@ public class Interpreter : MonoBehaviour
 								// run everything indented
 								List<dynamic> indentedLines = lines[localLineNum];
 								Output result = null;
-								yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, callback => result = callback));
+								yield return StartCoroutine(Interpret(indentedLines, callback => result = callback));
 								if (!result.success)
 								{
 									callback(result);
@@ -634,7 +732,7 @@ public class Interpreter : MonoBehaviour
 									// run everything indented
 									List<dynamic> indentedLines = lines[localLineNum];
 									Output result = null;
-									yield return StartCoroutine(InterpretNestedForm(indentedLines, evaluator, callback => result = callback));
+									yield return StartCoroutine(Interpret(indentedLines, callback => result = callback));
 									if (!result.success)
 									{
 										callback(result);
@@ -743,7 +841,7 @@ public class Interpreter : MonoBehaviour
 							StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => { result = callback; }));
 						else
 						*/
-						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => result = callback));
+						yield return StartCoroutine(Interpret(toRun, callback => result = callback));
 
 						if (!result.success)
 						{
@@ -805,7 +903,7 @@ public class Interpreter : MonoBehaviour
 					while (result)
 					{
 						Output output = null;
-						yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => output = callback ));
+						yield return StartCoroutine(Interpret(toRun, callback => output = callback ));
 						if (!output.success)
 						{
 							callback(output);
@@ -844,7 +942,7 @@ public class Interpreter : MonoBehaviour
 					}
 
 					Output output = null;
-					yield return StartCoroutine(InterpretNestedForm(toTry, evaluator, callback => output = callback));
+					yield return StartCoroutine(Interpret(toTry, callback => output = callback));
 
 					if (!output.success)
 					{ // find catch if fail
@@ -892,7 +990,7 @@ public class Interpreter : MonoBehaviour
 									toRun = new List<dynamic>() { line[5..].Trim() };
 								}
 
-								yield return StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => output = callback));
+								yield return StartCoroutine(Interpret(toRun, callback => output = callback));
 
 								// it will not catch again, unless there is a try catch inside of torun
 								if (!output.success)
@@ -968,7 +1066,13 @@ public class Interpreter : MonoBehaviour
 					}
 					#endregion
 
-					Output tryStore = StoreFunction(name, argnames, function, evaluator);
+					Output tryStore = StoreFunction(name, argnames, function);
+				
+					if (!tryStore.success)
+					{
+						callback(tryStore);
+						yield break;
+					}
 				}
 				else if (keyword == "return")
 				{	// it should hopefully be just as simple as this 
@@ -977,6 +1081,22 @@ public class Interpreter : MonoBehaviour
 
 					callback(eval);
 					yield break;
+				}
+				else if (keyword == "class")
+				{ // aw hell naw
+					if (localLineNum == lines.Count - 1 || lines[localLineNum + 1] is not List<dynamic>)
+					{
+						callback(Errors.ExpectedClassDef(this));
+						yield break;
+					}
+					localLineNum++;
+
+					Output result = ProcessClass(line, lines[localLineNum]);
+					if (!result.success)
+					{
+						callback(result);
+						yield break;
+					}
 				}
 			}
 			else if (type == 1) // set variable
@@ -1183,7 +1303,7 @@ public class Interpreter : MonoBehaviour
 			}
 			else if (type == 2)
 			{   // function should be defined hopefully no exceptions??
-				Output tryArgs = ExtractArgs(line, keyword, functions[keyword].ArgumentNames.Count, evaluator);
+				Output tryArgs = ExtractArgs(line, keyword, functions[keyword].ArgumentNames.Count);
 				if (!tryArgs.success)
 				{
 					callback(tryArgs);

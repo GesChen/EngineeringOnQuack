@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-
 public static class Errors 
 {
 	public static Output Error(string error, Interpreter interpreter) =>
@@ -68,8 +65,13 @@ public static class Errors
 	public static Output FunctionAlreadyExists(string name, int numArgs, Interpreter interpreter) =>
 		Error($"Function \"{name}\" with {numArgs} args already exists", interpreter);
 
+	public static Output ClassAlreadyExists(string name, Interpreter interpreter) =>
+		Error($"A class called \"{name}\" already exists", interpreter);
+
+
 	public static Output NoFunctionExists(string name, int numargs, Interpreter interpreter) =>
 		Error($"No function \"{name}\" exists that takes {numargs} arguments", interpreter);
+	
 	public static Output UnexpectedNumberofArgs(string name, int expected, int got, Interpreter interpreter) =>
 		Error($"Unexpected number of args for method \"{name}\": got {got}, expected {expected}", interpreter);
 
@@ -103,7 +105,9 @@ public static class Errors
 
 	public static Output BadFunctionName(string badname, Interpreter interpreter) =>
 		Error($"Bad function name: {badname}", interpreter);
-
+	
+	public static Output BadClassName(string badname, Interpreter interpreter) =>
+		Error($"Bad class name: {badname}", interpreter);
 
 	public static Output UnexpectedCatch(Interpreter interpreter) =>
 		Error("Unexpected catch statement", interpreter);
@@ -116,4 +120,10 @@ public static class Errors
 
 	public static Output MaxRecursion(int maxdepth, Interpreter interpreter) =>
 		Error($"Max recursion depth reached ({maxdepth})", interpreter);
+
+	public static Output ExpectedClassDef(Interpreter interpreter) =>
+		Error($"Expected class definition", interpreter);
+
+	public static Output AlreadyIsClass(string name, Interpreter interpreter) =>
+		Error($"\"{name}\" is a class, cannot be overwritten.", interpreter);
 }

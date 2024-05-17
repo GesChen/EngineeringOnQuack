@@ -1,5 +1,17 @@
-def a(b,c,d):
-    log("test")
-    a(b,c,d)
+class a:
+    A = 0
+    B = 0
 
-a(1,2,3)
+    log("hell yeah")
+
+    def a(a, b):
+        A = a
+        B = b
+    
+    def thing():
+        log(A + B)
+
+def op(x):
+    return x + 1
+
+test = 2 * op(10)
