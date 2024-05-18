@@ -494,7 +494,7 @@ public class Evaluator : MonoBehaviour
 
 				if (interpreter.functions.ContainsKey(functionName)) // valid function
 				{
-					Output functionOutput = interpreter.
+					//Output functionOutput = interpreter.
 				}
 			}
 		}

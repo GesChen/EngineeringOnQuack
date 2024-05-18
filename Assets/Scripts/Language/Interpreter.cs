@@ -138,7 +138,7 @@ public class Interpreter : MonoBehaviour
 		"for",	// done
 		"while",// done
 		"log",	// done
-		"wait",	// done
+		//"wait",	// done - removed, if there's a better solution in the future then might do idk
 		"def",	// done
 		"return",//done
 		"class" // doing...
@@ -159,7 +159,7 @@ public class Interpreter : MonoBehaviour
 		this.evaluator = evaluator;
 
 		script = targetScript;
-		StartCoroutine(StartInterpreting());
+		StartInterpreting();
 	}
 
 	public Output StoreVariable(string name, dynamic value)
@@ -212,31 +212,23 @@ public class Interpreter : MonoBehaviour
 
 		return true;
 	}
-	public IEnumerator RunFunction(Function F, List<dynamic> args, Action<Output> callback, int depth = 0)
+	public Output RunFunction(Function F, List<dynamic> args, int depth = 0)
 	{
 		if (args.Count != F.ArgumentNames.Count)
-		{
-			callback(Errors.NoFunctionExists(F.Name, args.Count, F.UsingInterpreter));
-			yield break; // callback + yield break equiv to return, have to retrieve in weird manner outside but works
-		}
+			return Errors.NoFunctionExists(F.Name, args.Count, F.UsingInterpreter);
 
 		Dictionary<string, dynamic> variablesStateBefore = F.UsingInterpreter.variables; // keep copy before running
 		F.UsingInterpreter.ResetVariables();
 		for (int i = 0; i < args.Count; i++)
 		{
 			Output tryStore = F.UsingInterpreter.StoreVariable(F.ArgumentNames[i], args[i]);
-			if (!tryStore.success)
-			{
-				callback(tryStore);
-				yield break;
-			}
+			if (!tryStore.success) return tryStore;
 		}
 
-		Output result = null;
-		yield return StartCoroutine(F.UsingInterpreter.Interpret(F.Script, interpretcallback => result = interpretcallback, depth + 1));
+		Output result = F.UsingInterpreter.Interpret(F.Script,  depth + 1);
 
 		F.UsingInterpreter.variables = variablesStateBefore;
-		callback(result);
+		return result;
 	}
 
 	int GetIndent(string s)
@@ -481,31 +473,25 @@ public class Interpreter : MonoBehaviour
 
 	#endregion
 
-	IEnumerator StartInterpreting()
+	void StartInterpreting()
 	{
 		double start = Time.timeAsDouble;
-		Output result = null;
-
 
 		int lineNum = 0;
 
 		script = new(PreProcessScript(script.Lines));
 		List<dynamic> lines = ConvertToNested(script, 0, ref lineNum);
 		
-		yield return StartCoroutine(Interpret(lines, callback => result = callback ));
+		Output result = Interpret(lines);
 
 		Debug.Log(result);
 		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
 		DumpState();
 	}
 
-	public IEnumerator Interpret(List<dynamic> lines, Action<Output> callback, int recursiondepth = 0)
+	public Output Interpret(List<dynamic> lines, int recursiondepth = 0)
 	{
-		if (recursiondepth > MAX_RECURSION_DEPTH)
-		{
-			callback(Errors.MaxRecursion(MAX_RECURSION_DEPTH, this));
-			yield break;
-		}
+		if (recursiondepth > MAX_RECURSION_DEPTH) return Errors.MaxRecursion(MAX_RECURSION_DEPTH, this);
 		evaluator.DEBUGMODE = DEBUGMODE;
 
 		int localLineNum = 0;
@@ -530,11 +516,8 @@ public class Interpreter : MonoBehaviour
 				line = lines[localLineNum].Line;
 				currentLine = lines[localLineNum].LineNumber;
 			}
-			else
-			{ // indented should have been handled by their respective functions, and skipped over
-				callback(Errors.UnexpectedIndent(this));
-				yield break;
-			}
+			else // indented should have been handled by their respective functions, and skipped over
+				return Errors.UnexpectedIndent(this);
 			#endregion
 
 			#region determine line type 
@@ -575,24 +558,9 @@ public class Interpreter : MonoBehaviour
 				if (keyword == "log")
 				{
 					Output getArgs = ExtractArgs(line, keyword, 1); // get the args
-					if (!getArgs.success)
-					{
-						callback(getArgs);
-						yield break;
-					}
+					if (!getArgs.success) return getArgs;
 
 					Log(getArgs.value[0]); // perform actual function
-				}
-				else if (keyword == "wait")
-				{
-					Output getArgs = ExtractArgs(line, keyword, 1); // get the args
-					if (!getArgs.success)
-					{
-						callback(getArgs);
-						yield break;
-					}
-
-					yield return new WaitForSeconds(getArgs.value[0]); // perform actual function
 				}
 				else if (keyword == "if")
 				{ // condition should be between if and 
@@ -610,28 +578,17 @@ public class Interpreter : MonoBehaviour
 							break;
 						}
 					}
-					if (colonIndex == -1)
-					{
-						callback(Errors.ExpectedColon(this));
-						yield break;
-					}
-
+					if (colonIndex == -1) return (Errors.ExpectedColon(this));
 					string expression = remaining[..colonIndex];
 					Output tryEval = evaluator.Evaluate(expression, this);
-					if (!tryEval.success)
-					{
-						callback(tryEval);
-						yield break;
-					}
+					if (!tryEval.success) return (tryEval);
 					dynamic value = tryEval.value;
 
 					// attempt to force this value into a bool
 					tryEval = evaluator.Evaluate($"true&&{HF.ConvertToString(value)}", this);
-					if (!tryEval.success)
-					{ // couldn't be forced into a bool
-						callback(Errors.ExpectedBoolInIf(HF.DetermineTypeFromVariable(value), this));
-						yield break;
-					}
+					if (!tryEval.success) // couldn't be forced into a bool
+						return Errors.ExpectedBoolInIf(HF.DetermineTypeFromVariable(value), this);
+
 					bool condition = tryEval.value; // should have outputted a bool if it didnt error
 					#endregion
 
@@ -651,13 +608,8 @@ public class Interpreter : MonoBehaviour
 							{
 								// run everything indented
 								List<dynamic> indentedLines = lines[localLineNum];
-								Output result = null;
-								yield return StartCoroutine(Interpret(indentedLines, callback => result = callback));
-								if (!result.success)
-								{
-									callback(result);
-									yield break;
-								}
+								Output result = (Interpret(indentedLines));
+								if (!result.success) return result;
 							}
 						}
 					}
@@ -672,19 +624,10 @@ public class Interpreter : MonoBehaviour
 				{ // from end of else to : shouldnt contain anything other than if, otherwise error
 				  // this has similar logic to if statements;;
 
-					if (!expectingElse)
-					{
-						callback(Errors.UnexpectedElse(this));
-						yield break;
-					}
-
+					if (!expectingElse) return Errors.UnexpectedElse(this);
 					#region determine if this is an else if 
 					int colonIndex = line.IndexOf(':');
-					if (colonIndex == -1)
-					{
-						callback(Errors.ExpectedColon(this));
-						yield break;
-					}
+					if (colonIndex == -1) return Errors.ExpectedColon(this);
 					string inside = line[4..colonIndex].Trim();
 					bool isElseIf = false;
 					if (!string.IsNullOrEmpty(inside))
@@ -695,8 +638,7 @@ public class Interpreter : MonoBehaviour
 						}
 						else
 						{
-							callback(Errors.ExpectedColon(this));
-							yield break;
+							return Errors.ExpectedColon(this);
 						}
 					}
 					else
@@ -731,13 +673,8 @@ public class Interpreter : MonoBehaviour
 								{
 									// run everything indented
 									List<dynamic> indentedLines = lines[localLineNum];
-									Output result = null;
-									yield return StartCoroutine(Interpret(indentedLines, callback => result = callback));
-									if (!result.success)
-									{
-										callback(result);
-										yield break;
-									}
+									Output result = Interpret(indentedLines);
+									if (!result.success) return result;
 								}
 							}
 
@@ -769,38 +706,18 @@ public class Interpreter : MonoBehaviour
 							colonIndex = i;
 					}
 
-					if (inIndex == -1)
-					{
-						callback(Errors.ExpectedCustom("in", this));
-						yield break;
-					}
-					else if (colonIndex == -1)
-					{
-						callback(Errors.ExpectedCustom(":", this));
-						yield break;
-					}
+					if (inIndex == -1) return Errors.ExpectedCustom("in", this);
+					else if (colonIndex == -1) return Errors.ExpectedCustom(":", this);
 
 					string iterator = line[3..inIndex].Trim();
 					string listString = line[(inIndex + 2)..colonIndex].Trim();
 
-					if (string.IsNullOrEmpty(iterator))
-					{
-						callback(Errors.ExpectedCustom("iterator", this));
-						yield break;
-					}
-					else if (string.IsNullOrEmpty(listString))
-					{
-						callback(Errors.ExpectedCustom("list", this));
-						yield break;
-					}
+					if (string.IsNullOrEmpty(iterator)) return Errors.ExpectedCustom("iterator", this);
+					else if (string.IsNullOrEmpty(listString)) return Errors.ExpectedCustom("list", this);
 
 					// turn list string to actual list
 					Output evalListString = evaluator.Evaluate(listString, this);
-					if (!evalListString.success)
-					{
-						callback(evalListString);
-						yield break;
-					}
+					if (!evalListString.success) return evalListString;
 
 					List<dynamic> list = new();
 					if (evalListString.value is not List<dynamic>)
@@ -830,24 +747,16 @@ public class Interpreter : MonoBehaviour
 						Output result = null;
 
 						result = StoreVariable(iterator, item); // store iterator
-						if (!result.success)
-						{
-							callback(result);
-							yield break;
-						}
+						if (!result.success) return result;
 
 						/*
 						if (ScriptIsInstant(toRun))
-							StartCoroutine(InterpretNestedForm(toRun, evaluator, callback => { result = callback; }));
+							StartCoroutine(InterpretNestedForm(toRun, evaluator, return => { result = return; }));
 						else
 						*/
-						yield return StartCoroutine(Interpret(toRun, callback => result = callback));
+						result = Interpret(toRun);
 
-						if (!result.success)
-						{
-							callback(result);
-							yield break;
-						}
+						if (!result.success) return result;
 					}
 				}
 				else if (keyword == "while")
@@ -866,10 +775,7 @@ public class Interpreter : MonoBehaviour
 					}
 
 					if (colonIndex == -1)
-					{
-						callback(Errors.ExpectedColon(this));
-						yield break;
-					}
+						return Errors.ExpectedColon(this);
 					#endregion
 
 					List<dynamic> toRun;
@@ -886,43 +792,26 @@ public class Interpreter : MonoBehaviour
 					#region eval expr
 					string expr = line[5..colonIndex].Trim();
 					Output eval = evaluator.Evaluate(expr, this);
-					if (!eval.success)
-					{
-						callback(eval);
-						yield break;
-					}
+					if (!eval.success) return eval;
+
 					eval = evaluator.Evaluate("true&&" + HF.ConvertToString(eval.value), this); // force it to be a bool
 					if (!eval.success || eval.value is not bool)
-					{
-						callback(Errors.UnableToParseAsBool(HF.ConvertToString(eval), this));
-						yield break;
-					}
+						return Errors.UnableToParseAsBool(HF.ConvertToString(eval), this);
 					bool result = eval.value;
 					#endregion
 
 					while (result)
 					{
-						Output output = null;
-						yield return StartCoroutine(Interpret(toRun, callback => output = callback ));
-						if (!output.success)
-						{
-							callback(output);
-							yield break;
-						}
+						Output output = Interpret(toRun);
+						if (!output.success) return output;
 
 						#region eval expr
 						eval = evaluator.Evaluate(expr, this);
-						if (!eval.success)
-						{
-							callback(eval);
-							yield break;
-						}
+						if (!eval.success) return eval;
+
 						eval = evaluator.Evaluate("true&&" + HF.ConvertToString(eval.value), this); // force it to be a bool
 						if (!eval.success || eval.value is not bool)
-						{
-							callback(Errors.UnableToParseAsBool(HF.ConvertToString(eval.value), this));
-							yield break;
-						}
+							return Errors.UnableToParseAsBool(HF.ConvertToString(eval.value), this);
 						#endregion
 						result = eval.value;
 					}
@@ -941,8 +830,7 @@ public class Interpreter : MonoBehaviour
 						toTry = new List<dynamic>() { line[3..].Trim() };
 					}
 
-					Output output = null;
-					yield return StartCoroutine(Interpret(toTry, callback => output = callback));
+					Output output = Interpret(toTry);
 
 					if (!output.success)
 					{ // find catch if fail
@@ -955,27 +843,16 @@ public class Interpreter : MonoBehaviour
 								#region find the variable name to store 
 								line = lines[localLineNum].Line.Trim();
 								int colonIndex = line.IndexOf(':');
-								if (colonIndex == -1)
-								{
-									callback(Errors.ExpectedColon(this));
-									yield break;
-								}
+								if (colonIndex == -1) return Errors.ExpectedColon(this);
 
 								string errorVarName = line[5..colonIndex].Trim();
 								if (!string.IsNullOrWhiteSpace(errorVarName))
 								{
 									if (!HF.VariableNameIsValid(errorVarName))
-									{
-										callback(Errors.BadVariableName(errorVarName, this));
-										yield break;
-									}
+										return Errors.BadVariableName(errorVarName, this);
 
 									Output trystore = StoreVariable(errorVarName, output.error.ToString());
-									if (!trystore.success)
-									{
-										callback(trystore);
-										yield break;
-									}
+									if (!trystore.success) return trystore;
 								}
 								#endregion
 
@@ -990,39 +867,28 @@ public class Interpreter : MonoBehaviour
 									toRun = new List<dynamic>() { line[5..].Trim() };
 								}
 
-								yield return StartCoroutine(Interpret(toRun, callback => output = callback));
+								output = (Interpret(toRun));
 
 								// it will not catch again, unless there is a try catch inside of torun
-								if (!output.success)
-								{
-									callback(output);
-									yield break;
-								}
+								if (!output.success) return output;
 							}
 						}
 					}
 				}
 				else if (keyword == "catch")
-				{ // catch was already handled in the try block, shouldn't see it again
-					callback(Errors.UnexpectedCatch(this));
-					yield break;
+				{
+					return Errors.UnexpectedCatch(this);
 				}
 				else if (keyword == "def")
 				{
 					#region get the name and args
 					int startParenthesesIndex = line.IndexOf('(');
 					if (startParenthesesIndex == -1)
-					{
-						callback(Errors.ExpectedParentheses(this));
-						yield break;
-					}
+						return Errors.ExpectedParentheses(this);
 
 					string name = line[3..startParenthesesIndex].Trim();
 					if (!HF.VariableNameIsValid(name))
-					{
-						callback(Errors.BadFunctionName(name, this));
-						yield break;
-					}
+						return Errors.BadFunctionName(name, this);
 
 					List<string> argnames = new();
 					int endParenthesesIndex = line.IndexOf(')');
@@ -1031,16 +897,10 @@ public class Interpreter : MonoBehaviour
 					foreach (string argName in args)
 					{
 						if (!HF.VariableNameIsValid(argName))
-						{
-							callback(Errors.BadVariableName(argName, this));
-							yield break;
-						}
+							return Errors.BadVariableName(argName, this);
 
 						if (argnames.Contains(argName))
-						{
-							callback(Errors.DuplicateArguments(argName, this));
-							yield break;
-						}
+							return Errors.DuplicateArguments(argName, this);
 
 						argnames.Add(argName);
 					}
@@ -1060,43 +920,28 @@ public class Interpreter : MonoBehaviour
 					}
 
 					if (FunctionIsEmpty(function))
-					{
-						callback(Errors.EmptyFunction(this));
-						yield break;
-					}
+						return Errors.EmptyFunction(this);
 					#endregion
 
 					Output tryStore = StoreFunction(name, argnames, function);
-				
-					if (!tryStore.success)
-					{
-						callback(tryStore);
-						yield break;
-					}
+
+					if (!tryStore.success) return tryStore;
 				}
 				else if (keyword == "return")
-				{	// it should hopefully be just as simple as this 
+				{   // it should hopefully be just as simple as this 
 					string toReturn = line[6..];
 					Output eval = evaluator.Evaluate(toReturn, this);
 
-					callback(eval);
-					yield break;
+					return eval;
 				}
 				else if (keyword == "class")
 				{ // aw hell naw
 					if (localLineNum == lines.Count - 1 || lines[localLineNum + 1] is not List<dynamic>)
-					{
-						callback(Errors.ExpectedClassDef(this));
-						yield break;
-					}
+						return Errors.ExpectedClassDef(this);
 					localLineNum++;
 
 					Output result = ProcessClass(line, lines[localLineNum]);
-					if (!result.success)
-					{
-						callback(result);
-						yield break;
-					}
+					if (!result.success) return result;
 				}
 			}
 			else if (type == 1) // set variable
@@ -1107,11 +952,7 @@ public class Interpreter : MonoBehaviour
 				if (!containsAnyAO) // dont handle if no ao, this is some expression
 				{
 					Output tryEval = evaluator.Evaluate(line, this);
-					if (!tryEval.success)
-					{
-						callback(tryEval);
-						yield break;
-					}
+					if (!tryEval.success) return tryEval;
 				}
 
 				// get the variable name first 
@@ -1126,10 +967,7 @@ public class Interpreter : MonoBehaviour
 				varName = varName.Trim();
 
 				if (!HF.VariableNameIsValid(varName))
-				{
-					callback(Errors.BadVariableName(varName, this));
-					yield break;
-				}
+					return Errors.BadVariableName(varName, this);
 
 				// extract the assignment operator (=, +=, -=, ++, --)
 				string remaining = line[varName.Length..].Trim();
@@ -1149,11 +987,7 @@ public class Interpreter : MonoBehaviour
 				if (ao == "++" || ao == "--")
 				{ // all they do is + or - 1, no need to eval
 					Output fetch = FetchVariable(varName);
-					if (!fetch.success)
-					{
-						callback(fetch);
-						yield break;
-					}
+					if (!fetch.success) return fetch;
 
 					// increment/decrement can only be done to existing number variables
 					if (fetch.value is float v)
@@ -1165,29 +999,20 @@ public class Interpreter : MonoBehaviour
 					}
 					else
 					{
-						callback(Errors.UnsupportedOperation(ao[0].ToString(), HF.DetermineTypeFromVariable(fetch.value), "number", this));
-						yield break;
+						return Errors.UnsupportedOperation(ao[0].ToString(), HF.DetermineTypeFromVariable(fetch.value), "number", this);
 					}
 				}
 				else
 				{
 					Output tryEval = evaluator.Evaluate(remaining, this);
-					if (!tryEval.success)
-					{
-						callback(tryEval);
-						yield break;
-					}
+					if (!tryEval.success) return tryEval;
 
 					// all other aos modify original, variable has to already exist
 					dynamic variableValue = 0;
 					if (ao != "=")
 					{
 						Output fetch = FetchVariable(varName);
-						if (!fetch.success)
-						{
-							callback(fetch);
-							yield break;
-						}
+						if (!fetch.success) return fetch;
 						variableValue = fetch.value;
 					}
 
@@ -1196,11 +1021,7 @@ public class Interpreter : MonoBehaviour
 					{
 						case "=":
 							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 							break;
 						case "+=":
 							// try to add onto existing variable
@@ -1208,18 +1029,10 @@ public class Interpreter : MonoBehaviour
 								$"({HF.ConvertToString(variableValue)})" +
 								$"+" +
 								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 
 							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 							break;
 						case "-=":
 							// try to add onto existing variable
@@ -1227,18 +1040,10 @@ public class Interpreter : MonoBehaviour
 								$"({HF.ConvertToString(variableValue)})" +
 								$"-" +
 								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 
 							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 							break;
 						case "*=":
 							// try to add onto existing variable
@@ -1247,17 +1052,10 @@ public class Interpreter : MonoBehaviour
 								$"*" +
 								$"({HF.ConvertToString(tryEval.value)})", this);
 							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							return tryEval;
 
 							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 							break;
 						case "/=":
 							// try to add onto existing variable
@@ -1265,18 +1063,10 @@ public class Interpreter : MonoBehaviour
 								$"({HF.ConvertToString(variableValue)})" +
 								$"/" +
 								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 
 							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 							break;
 						case "^=":
 							// try to add onto existing variable
@@ -1284,18 +1074,10 @@ public class Interpreter : MonoBehaviour
 								$"({HF.ConvertToString(variableValue)})" +
 								$"^" +
 								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 
 							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success)
-							{
-								callback(tryEval);
-								yield break;
-							}
+							if (!tryEval.success) return tryEval;
 
 							break;
 					}
@@ -1304,29 +1086,17 @@ public class Interpreter : MonoBehaviour
 			else if (type == 2)
 			{   // function should be defined hopefully no exceptions??
 				Output tryArgs = ExtractArgs(line, keyword, functions[keyword].ArgumentNames.Count);
-				if (!tryArgs.success)
-				{
-					callback(tryArgs);
-					yield break;
-				}
+				if (!tryArgs.success) return tryArgs;
 
-				Output result = null;
-				Action<Output> onFunctionComplete = functioncallback => result = functioncallback;
-				yield return StartCoroutine(RunFunction(functions[keyword], tryArgs.value, onFunctionComplete, recursiondepth));
+				Output result = RunFunction(functions[keyword], tryArgs.value, recursiondepth);
 
-				if (result != null && !result.success)
-				{
-					callback(result);
-					yield break;
-				}
+				if (!result.success) return result;
 			}
-
-			//if (!line.StartsWith("if")) expectingElse = false;
 
 			localLineNum++;
 		}
 
-		callback(Output.Success());
-		yield break;
+		return Output.Success();
+		
 	}
 }
