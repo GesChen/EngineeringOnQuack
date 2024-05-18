@@ -56,7 +56,7 @@ public class Evaluator : MonoBehaviour
 	readonly string[] booleanOperators =
 	{
 		"==",
-		"!=", 
+		"!=",
 		"&&", //and
 		"||", //or
 		"!", //not
@@ -107,7 +107,7 @@ public class Evaluator : MonoBehaviour
 
 			Output result = interpreter.FetchVariable(s);
 			string type = HF.DetermineTypeFromString(s);
-			if (!result.success) 
+			if (!result.success)
 			{
 				if (type != "number")
 					return result;
@@ -123,10 +123,12 @@ public class Evaluator : MonoBehaviour
 				}
 				else if (variable is string)
 				{
-					try {
+					try
+					{
 						value = float.Parse(variable);
 					}
-					catch { // not a parseable float string, or a variable
+					catch
+					{ // not a parseable float string, or a variable
 						return Errors.UnableToParseStrAsNum(value.ToString(), interpreter);
 					}
 				}
@@ -146,7 +148,7 @@ public class Evaluator : MonoBehaviour
 
 		int depth = 0;
 		bool instring = false;
-		foreach(char c in s)
+		foreach (char c in s)
 		{
 			if (c == '"') instring = !instring;
 			if (c == '[' && !instring) depth++;
@@ -168,8 +170,8 @@ public class Evaluator : MonoBehaviour
 			{
 				if (i == 0 || i == nospaces.Length - 1) // shouldnt be at start or end
 					return false;
-				
-				if (nospaces[i+1] == ',' || nospaces[i-1] == ',') // shouldnt be next to each other
+
+				if (nospaces[i + 1] == ',' || nospaces[i - 1] == ',') // shouldnt be next to each other
 					return false;
 			}
 		}
@@ -219,7 +221,7 @@ public class Evaluator : MonoBehaviour
 	{ // expects well formed list (not checking again)
 		string[] parts = expr.Split("..."); // there should only be one ... therefore two sides
 		if (parts.Length > 2) return Errors.MalformedList(expr, interpreter);
-		
+
 		expr = expr[1..^1];
 		parts = expr.Split("...");
 
@@ -234,7 +236,7 @@ public class Evaluator : MonoBehaviour
 			intervalString = startString.Split(',')[1];
 			startString = startString.Split(',')[0];
 		}
-		
+
 		Output tryEval;
 		float start;
 		if (!string.IsNullOrEmpty(startString))
@@ -290,10 +292,10 @@ public class Evaluator : MonoBehaviour
 	{
 		// check for well formed list
 		if (!CheckListForm(expr)) return Errors.MalformedList(expr, interpreter);
-		
+
 		// check if this is a range list [x,y...z] [x...y]
 		if (expr.Contains("...")) return EvaluateRangeList(expr, isAlone, baseListLength, interpreter);
-		
+
 		expr = expr[1..^1]; // trim first and last [ ] 
 
 		List<dynamic> items = new();
@@ -363,7 +365,7 @@ public class Evaluator : MonoBehaviour
 
 		if (parts.Count > 1)
 		{ // some kind of indexing is going on
-			// eval first part first
+		  // eval first part first
 
 			Output tryEval = EvaluateSingularList(parts[0], interpreter);
 			if (!tryEval.success) return tryEval;
@@ -397,7 +399,7 @@ public class Evaluator : MonoBehaviour
 				// index the list
 				List<dynamic> temp = new();
 				foreach (int index in indexes)
-					temp.Add(baseList[index < 0 ? ^Mathf.Abs(index): index]); // handle - indexes
+					temp.Add(baseList[index < 0 ? ^Mathf.Abs(index) : index]); // handle - indexes
 				baseList = temp;
 			}
 
@@ -405,7 +407,7 @@ public class Evaluator : MonoBehaviour
 		}
 		else
 		{ // no indexing, normal list
-			// return the one part 
+		  // return the one part 
 			return EvaluateSingularList(expr, interpreter);
 		}
 	}
@@ -422,7 +424,7 @@ public class Evaluator : MonoBehaviour
 		#region remove all spaces except inside ""
 		string tempstring = "";
 		bool inString = false;
-		foreach(char c in expr)
+		foreach (char c in expr)
 		{
 			if (c == '"') inString = !inString;
 			if (c != ' ' || inString) // anything but space unless in quotes
@@ -477,9 +479,9 @@ public class Evaluator : MonoBehaviour
 				{
 					if (checkingIndex == startIndex - 1) // operator immediately before, this is not a function
 						foundFunction = false;
-					else 
+					else
 						foundFunction = true;
-					
+
 					checkingIndex++;
 					break;
 				}
@@ -535,7 +537,7 @@ public class Evaluator : MonoBehaviour
 			}
 
 			// either missing ( or ) isnt closed properly
-			if (parenthesesStartIndex == -1 || parenthesesEndIndex == -1) 
+			if (parenthesesStartIndex == -1 || parenthesesEndIndex == -1)
 				return Errors.MismatchedParentheses(interpreter);
 
 			string newexpr = expr.Substring(parenthesesStartIndex + 1, parenthesesEndIndex - parenthesesStartIndex - 1);
@@ -597,7 +599,7 @@ public class Evaluator : MonoBehaviour
 					if (i != expr.Length - 1)
 					{
 						char next = expr[i + 1];
-						if (operators.Contains(c.ToString()+next.ToString())) // would adding the next char still make it an operator
+						if (operators.Contains(c.ToString() + next.ToString())) // would adding the next char still make it an operator
 						{
 							i++; // already checked to see if last, shouldnt break hopefully
 							op += expr[i]; // add next char to the operator
@@ -733,18 +735,18 @@ public class Evaluator : MonoBehaviour
 
 					switch (operation)
 					{
-						case "+":  result = left + right; break;
-						case "-":  result = left - right; break;
-						case "*":  result = left * right; break;
+						case "+": result = left + right; break;
+						case "-": result = left - right; break;
+						case "*": result = left * right; break;
 						case "/":  // check for division by zero
 							if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
 							else result = left / right; break;
-						case "^":  result = Mathf.Pow(left, right); break;
-						case "%":  result = left % right; break; //
+						case "^": result = Mathf.Pow(left, right); break;
+						case "%": result = left % right; break; //
 						case "==": result = left == right; break;
 						case "!=": result = left != right; break;
-						case "<":  result = left < right; break;
-						case ">":  result = left > right; break;
+						case "<": result = left < right; break;
+						case ">": result = left > right; break;
 						case "<=": result = left <= right; break;
 						case ">=": result = left >= right; break;
 						default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
