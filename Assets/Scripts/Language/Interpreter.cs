@@ -288,7 +288,7 @@ public class Interpreter : MonoBehaviour
 
 		return lines;
 	}
-	Output ExtractArgs(string line, string keyword, int numExpected)
+	public Output ExtractArgs(string line, string keyword, int numExpected)
 	{
 		// rest of line should be the expression
 		string remaining = line[keyword.Length..];
@@ -300,9 +300,11 @@ public class Interpreter : MonoBehaviour
 		{
 			char c = remaining[i];
 			if (c == '"') inString = !inString;
-			if (c == '(' && !inString) parenthesesDepth++;
+			else if (c == '(' && !inString) parenthesesDepth++;
 			else if (c == ')' && !inString) parenthesesDepth--;
-			else if (parenthesesDepth == 1) expression += c;
+
+			if (parenthesesDepth >= 1 && !(c == '(' && parenthesesDepth == 1)) expression += c; // second check ensures starting parentheses not included
+			
 			if (c == ')' && parenthesesDepth == 0) { endPos = i; break; }
 		}
 		if (parenthesesDepth != 0 || endPos == -1)
@@ -310,8 +312,9 @@ public class Interpreter : MonoBehaviour
 			return Errors.MismatchedParentheses(this);
 		}
 
+		// check if theres more stuff after the parentheses
 		string rest = remaining[(endPos + 1)..].Trim();
-		if (string.IsNullOrWhiteSpace(rest) && rest.Length != 0)
+		if (!string.IsNullOrWhiteSpace(rest) && rest.Length != 0)
 		{
 			return Errors.UnexpectedStatementAfterParentheses(rest, this);
 		}

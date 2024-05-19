@@ -1,4 +1,4 @@
-class a:
+---class a:
     A = 0
     B = 0
 
@@ -10,8 +10,12 @@ class a:
     
     def thing():
         log(A + B)
-
+---
 def op(x):
     return x + 1
 
-test = 2 * op(10)
+def an(x):
+    return 2 * x
+
+test = 2 * op(an(10)) + 1
+--test = op(1)

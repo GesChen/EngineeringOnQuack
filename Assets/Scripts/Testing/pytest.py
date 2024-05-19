@@ -1,6 +1,9 @@
-class test:
-    def __init__(this, a,b):
-        this.A = a
-        this.B = b
+def op(x):
+    return x + 1
 
-new = 2(10)
+def an(x):
+    return 2 * x
+
+test = 2 * op(an(10)) + 1
+
+print(test)

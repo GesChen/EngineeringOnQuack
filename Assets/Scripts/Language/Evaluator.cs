@@ -464,18 +464,19 @@ public class Evaluator : MonoBehaviour
 			}
 
 			// find closest index of operator
-			int checkingIndex = startIndex;
-			bool currentIndexIsOperator = false; // if char at this index or this and char before is an operator
-			while (checkingIndex > 0)
+			int checkingIndex = startIndex - 1;
+			bool curIndexIsNotPartOfName = false; // if char at this index or this and char before is an operator
+			while (checkingIndex >= 0)
 			{
 				if (startIndex != -1 && endIndex != -1)
 				{
-					if ((checkingIndex >= 1 && operators.Contains(expr[checkingIndex - 1].ToString()))
-						|| (checkingIndex >= 2 && operators.Contains(expr.Substring(checkingIndex - 2, 2))))
-						currentIndexIsOperator = true;
+					if ((checkingIndex >= 1 && operators.Contains(expr[checkingIndex].ToString()))
+						|| (checkingIndex >= 2 && operators.Contains(expr.Substring(checkingIndex - 1, 2)))
+						|| !(char.IsLetterOrDigit(expr[checkingIndex]) || expr[checkingIndex] == '_'))
+						curIndexIsNotPartOfName = true;
 				}
 
-				if (currentIndexIsOperator)
+				if (curIndexIsNotPartOfName)
 				{
 					if (checkingIndex == startIndex - 1) // operator immediately before, this is not a function
 						foundFunction = false;
@@ -483,6 +484,12 @@ public class Evaluator : MonoBehaviour
 						foundFunction = true;
 
 					checkingIndex++;
+					break;
+				}
+				else if (checkingIndex == 0) // if it breaks because hit 0 then include 0
+				{
+					if (checkingIndex == startIndex - 1) foundFunction = false;
+					else foundFunction = true;
 					break;
 				}
 
@@ -494,7 +501,14 @@ public class Evaluator : MonoBehaviour
 
 				if (interpreter.functions.ContainsKey(functionName)) // valid function
 				{
-					//Output functionOutput = interpreter.
+					Output tryEval = interpreter.ExtractArgs(expr[checkingIndex..(endIndex+1)], functionName, interpreter.functions[functionName].ArgumentNames.Count);
+					if (!tryEval.success) return tryEval;
+					List<dynamic> args = tryEval.value;
+
+					tryEval = interpreter.RunFunction(interpreter.functions[functionName], args);
+					if (!tryEval.success) return tryEval;
+
+					expr = HF.ReplaceSection(expr, checkingIndex, endIndex, HF.ConvertToString(tryEval.value));
 				}
 			}
 		}
