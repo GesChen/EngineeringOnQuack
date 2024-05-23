@@ -24,3 +24,5 @@ test.thing()
 
 normal = 0
 log("nromal"+normal)
+
+log(test.B)

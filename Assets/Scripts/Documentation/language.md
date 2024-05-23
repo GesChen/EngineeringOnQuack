@@ -4,6 +4,7 @@
 - [errors](#errors)
 - [variables](#variables)
 - [comments](#comments)
+- [classes](#classes)
 
 ---
 
@@ -166,3 +167,24 @@ more words---
 
 log("hello world!")
 ```
+
+# classes
+**to define a new class, just write `class`, followed by the name, and a colon**
+- classes work by having their own interpreter, which everything related to it runs on
+- add a constructor to the class to allow new instances, in the format of a normal function except with the name of the class
+- to create a new instance of the class, call the class name, with the appropriate arguments
+
+example:
+```
+class foo:
+    -- this is a variable local to the class itself
+    A = 0
+    
+    -- this is a constructor
+    def foo(argument): 
+        A = argument
+
+-- creating a new instance of the class
+newinstance = foo(5)
+
+log()

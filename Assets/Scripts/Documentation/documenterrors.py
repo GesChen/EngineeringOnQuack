@@ -1,4 +1,4 @@
-errorsfile = r'D:\Projects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Language Interpreter\Errors.cs'
+errorsfile = r'D:\Projects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Language\Errors.cs'
 output = r'errors.md'
 
 with open(errorsfile, 'r') as file:

@@ -228,6 +228,25 @@ public class Interpreter : MonoBehaviour
 	}
 	public Output FetchVariable(string name)
 	{
+		// handle class variables
+		int periodIndex = name.IndexOf('.');
+		if (periodIndex != -1)
+		{
+			if (periodIndex == name.Length - 1)
+				return Errors.EvaluatedNothing(this);
+
+			string instancename = name[..periodIndex];
+			if (!variables.ContainsKey(instancename))
+				return Errors.UnknownVariable(name, this);
+
+			if (variables[instancename] is not ClassInstance)
+				return Errors.TypeHasNoAttributes(HF.DetermineTypeFromVariable(variables[instancename]), this);
+
+			ClassInstance instance = variables[instancename];
+
+			return evaluator.Evaluate(name[(periodIndex + 1)..], instance.OwnInterpreter);
+		}
+
 		if (!variables.ContainsKey(name))
 			return Errors.UnknownVariable(name, this);
 		return new Output(variables[name]);

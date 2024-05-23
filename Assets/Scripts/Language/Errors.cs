@@ -135,4 +135,7 @@ public static class Errors
 
 	public static Output InterpreterDoesntHaveEval(Interpreter interpreter) =>
 		Error("Interpreter doesn't have an evaluator. How did you manage to do this?", interpreter);
+
+	public static Output TypeHasNoAttributes(string typeName, Interpreter interpreter) =>
+		Error($"A {typeName} has no attributes", interpreter);
 }
