@@ -21,7 +21,7 @@ public class Tester : MonoBehaviour
 		Script script = new (contents.ToList());
 
 		interpreter.DEBUGMODE = debug;
-		interpreter.Interpret(script, evaluator);
+		interpreter.Run(script, evaluator);
 	}
 }
 /*

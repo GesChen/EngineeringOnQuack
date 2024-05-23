@@ -1,21 +1,26 @@
----class a:
+class testclass:
     A = 0
     B = 0
 
     log("hell yeah")
 
-    def a(a, b):
+    dump()
+    def testclass(a, b):
         A = a
         B = b
-    
+        dump()
+
     def thing():
         log(A + B)
----
-def op(x):
-    return x + 1
 
-def an(x):
-    return 2 * x
+log("done define")
 
-test = 2 * op(an(10)) + 1
---test = op(1)
+test = testclass(1,2)
+
+test.thing()
+
+test.A = 10
+test.thing()
+
+normal = 0
+log("nromal"+normal)

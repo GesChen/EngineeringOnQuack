@@ -107,7 +107,7 @@ public class Evaluator : MonoBehaviour
 
 			Output result = interpreter.FetchVariable(s);
 			string type = HF.DetermineTypeFromString(s);
-			if (!result.success)
+			if (!result.Success)
 			{
 				if (type != "number")
 					return result;
@@ -116,7 +116,7 @@ public class Evaluator : MonoBehaviour
 			}
 			else
 			{
-				dynamic variable = result.value;
+				dynamic variable = result.Value;
 				if (variable is float || variable is int)
 				{
 					value = (float)variable;
@@ -190,8 +190,8 @@ public class Evaluator : MonoBehaviour
 		if (type == "number")
 		{
 			Output result = ParseFloatPart(s, interpreter);
-			if (!result.success) return result;
-			value = result.value;
+			if (!result.Success) return result;
+			value = result.Value;
 		}
 		else if (type == "string") value = s.Trim('"');
 		else if (type == "bool")
@@ -203,15 +203,15 @@ public class Evaluator : MonoBehaviour
 		else if (type == "list")
 		{
 			Output attemptR = EvaluateList(s, interpreter);
-			if (!attemptR.success) return attemptR;
+			if (!attemptR.Success) return attemptR;
 
-			value = attemptR.value;
+			value = attemptR.Value;
 		}
 		else if (type == "variable")
 		{
 			Output result = interpreter.FetchVariable(s);
-			if (!result.success) return result;
-			value = result.value;
+			if (!result.Success) return result;
+			value = result.Value;
 		}
 
 		return new Output(value);
@@ -242,9 +242,9 @@ public class Evaluator : MonoBehaviour
 		if (!string.IsNullOrEmpty(startString))
 		{
 			tryEval = Evaluate(startString, interpreter);
-			if (!tryEval.success) return tryEval;
-			if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
-			start = tryEval.value;
+			if (!tryEval.Success) return tryEval;
+			if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
+			start = tryEval.Value;
 		}
 		else
 			start = 0;
@@ -253,9 +253,9 @@ public class Evaluator : MonoBehaviour
 		if (!string.IsNullOrEmpty(endString))
 		{
 			tryEval = Evaluate(endString, interpreter);
-			if (!tryEval.success) return tryEval;
-			if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
-			end = tryEval.value;
+			if (!tryEval.Success) return tryEval;
+			if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
+			end = tryEval.Value;
 		}
 		else if (!isAlone)
 			end = baseListLength - 1;
@@ -263,9 +263,9 @@ public class Evaluator : MonoBehaviour
 			return Errors.TestError(interpreter);
 
 		tryEval = Evaluate(intervalString, interpreter);
-		if (!tryEval.success) return tryEval;
-		if (tryEval.value is not float && tryEval.value is not int) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
-		float interval = tryEval.value;
+		if (!tryEval.Success) return tryEval;
+		if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
+		float interval = tryEval.Value;
 
 		List<dynamic> values = new();
 		if (isAlone)
@@ -319,16 +319,16 @@ public class Evaluator : MonoBehaviour
 			else
 			{ // , and not in string
 				evaluate = Evaluate(accum.Trim(), interpreter);
-				if (!evaluate.success) return evaluate;
+				if (!evaluate.Success) return evaluate;
 
-				items.Add(evaluate.value);
+				items.Add(evaluate.Value);
 				accum = "";
 			}
 		}
 		evaluate = Evaluate(accum.Trim(), interpreter);
-		if (!evaluate.success) return evaluate;
+		if (!evaluate.Success) return evaluate;
 
-		items.Add(evaluate.value);
+		items.Add(evaluate.Value);
 
 		return new Output(items);
 	}
@@ -368,8 +368,8 @@ public class Evaluator : MonoBehaviour
 		  // eval first part first
 
 			Output tryEval = EvaluateSingularList(parts[0], interpreter);
-			if (!tryEval.success) return tryEval;
-			List<dynamic> baseList = tryEval.value;
+			if (!tryEval.Success) return tryEval;
+			List<dynamic> baseList = tryEval.Value;
 
 			parts.RemoveAt(0);
 
@@ -377,8 +377,8 @@ public class Evaluator : MonoBehaviour
 			foreach (string part in parts)
 			{
 				tryEval = EvaluateSingularList(part, false, baseList.Count, interpreter);
-				if (!tryEval.success) return tryEval;
-				List<dynamic> dynamicIndexes = tryEval.value;
+				if (!tryEval.Success) return tryEval;
+				List<dynamic> dynamicIndexes = tryEval.Value;
 
 				// only whole numbers allowed in the indexes
 				foreach (dynamic index in dynamicIndexes)
@@ -436,9 +436,8 @@ public class Evaluator : MonoBehaviour
 		#region function check 
 		// look for all functions, replace with evaluated output, or error if fail
 		bool foundFunction = expr.IndexOf('(') != -1; // kinda jank? idk
-		string functionName = null;
-		inString = false;
-		int depth = 0;
+		string functionName;
+		int depth;
 		while (foundFunction)
 		{
 			// find the first valid set of parentheses
@@ -488,7 +487,7 @@ public class Evaluator : MonoBehaviour
 				}
 				else if (checkingIndex == 0) // if it breaks because hit 0 then include 0
 				{
-					if (checkingIndex == startIndex - 1) foundFunction = false;
+					if (checkingIndex == startIndex) foundFunction = false;
 					else foundFunction = true;
 					break;
 				}
@@ -499,17 +498,19 @@ public class Evaluator : MonoBehaviour
 			{
 				functionName = expr[checkingIndex..startIndex];
 
-				if (interpreter.functions.ContainsKey(functionName)) // valid function
-				{
-					Output tryEval = interpreter.ExtractArgs(expr[checkingIndex..(endIndex+1)], functionName, interpreter.functions[functionName].ArgumentNames.Count);
-					if (!tryEval.success) return tryEval;
-					List<dynamic> args = tryEval.value;
+				if (!interpreter.functions.ContainsKey(functionName))
+					return Errors.UnknownFunction(functionName, interpreter);
 
-					tryEval = interpreter.RunFunction(interpreter.functions[functionName], args);
-					if (!tryEval.success) return tryEval;
+				Output tryEval = interpreter.ExtractArgs(expr[checkingIndex..(endIndex+1)], functionName, interpreter.functions[functionName].ArgumentNames.Count);
+				if (!tryEval.Success) return tryEval;
+				List<dynamic> args = tryEval.Value;
 
-					expr = HF.ReplaceSection(expr, checkingIndex, endIndex, HF.ConvertToString(tryEval.value));
-				}
+				tryEval = interpreter.RunFunction(interpreter.functions[functionName], args);
+				if (!tryEval.Success) return tryEval;
+				if (tryEval.Value is ClassInstance) return new(tryEval.Value); // classes are immediately returned
+
+				expr = HF.ReplaceSection(expr, checkingIndex, endIndex, HF.ConvertToString(tryEval.Value));
+
 			}
 		}
 		#endregion
@@ -557,8 +558,8 @@ public class Evaluator : MonoBehaviour
 			string newexpr = expr.Substring(parenthesesStartIndex + 1, parenthesesEndIndex - parenthesesStartIndex - 1);
 
 			Output tryEval = Evaluate(newexpr, interpreter);
-			if (!tryEval.success) return tryEval;
-			string evaledvalue = HF.ConvertToString(tryEval.value);
+			if (!tryEval.Success) return tryEval;
+			string evaledvalue = HF.ConvertToString(tryEval.Value);
 
 			// replace the chunk of parentheses with the evalled value 
 			expr = HF.ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
@@ -643,11 +644,11 @@ public class Evaluator : MonoBehaviour
 				if (i != tokenStrings.Count - 1)
 				{
 					Output evaluateboolean = Evaluate(tokenStrings[i + 1], interpreter);
-					if (!evaluateboolean.success) return evaluateboolean;
+					if (!evaluateboolean.Success) return evaluateboolean;
 
 					string newToken;
-					if (evaluateboolean.value is string) newToken = !evaluateboolean.value;
-					else newToken = evaluateboolean.value ? "false" : "true";
+					if (evaluateboolean.Value is string) newToken = !evaluateboolean.Value;
+					else newToken = evaluateboolean.Value ? "false" : "true";
 					temp.Add(newToken);
 					i++;
 				}
@@ -683,9 +684,9 @@ public class Evaluator : MonoBehaviour
 			if (!operators.Contains(tokenString))
 			{
 				Output parsed = DynamicStringParse(tokenString, interpreter);
-				if (!parsed.success) return parsed;
+				if (!parsed.Success) return parsed;
 
-				tokens.Add(parsed.value);
+				tokens.Add(parsed.Value);
 			}
 			else
 				tokens.Add(tokenString);

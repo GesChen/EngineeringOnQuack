@@ -150,7 +150,6 @@ public static class HF {
 			return builtString;
 		}
 		else if (t.Name == "ScriptLine") return value.Line;
-
 		return value.ToString();
 	}
 

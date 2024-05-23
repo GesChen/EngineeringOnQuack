@@ -24,28 +24,26 @@ public class Error
 }
 public class Output
 {
-	public bool success  { get; }
-	public Error error   { get; private set; }
-	public dynamic value { get; }
+	public bool Success  { get; }
+	public Error Error   { get; private set; }
+	public dynamic Value { get; }
 
-
-	public static Output Success() { return new(true); }
 	public Output(Error error)
 	{
-		this.error = error;
-		value = "Error";
-		success = false;
+		this.Error = error;
+		Value = "Error";
+		Success = false;
 	}
 	public Output(dynamic value)
 	{
-		this.value = value;
-		success = true;
+		this.Value = value;
+		Success = true;
 	}
 	public override string ToString()
 	{
-		if (value == null) return "Output is null";
-		if (success) return $"Output {value.ToString()} (Type: {value.GetType().FullName})";
-		return error.ToString();
+		if (Value == null) return "Output is null";
+		if (Success) return $"Output {Value.ToString()} (Type: {Value.GetType().FullName})";
+		return Error.ToString();
 	}
 }
 
@@ -57,15 +55,24 @@ public class Script
 	{
 		Lines = lines;
 	}
+	public override string ToString()
+	{
+		return HF.ConvertToString(Lines);
+	}
 }
 public class Function
 {
 	public string Name { get; }
 	public List<string> ArgumentNames { get; }
-	public List<dynamic> Script { get; }
-	public Interpreter UsingInterpreter { get; }
+	public Script Script { get; }
+	public Interpreter UsingInterpreter { get; set; } // TODO: idk what to do here, for constructor to reset interpreter, has to be able to be set, or else big workaround.
 	public Evaluator UsingEvaluator { get; }
-	public Function(string name, List<dynamic> script, List<string> argnames, Interpreter interpreter, Evaluator evaluator)
+	public Function(
+		string name, 
+		Script script, 
+		List<string> argnames, 
+		Interpreter interpreter, 
+		Evaluator evaluator)
 	{
 		Name = name;
 		ArgumentNames = argnames;
@@ -81,26 +88,51 @@ public class Function
 public class ClassDefinition
 {
 	public string Name { get; }
-	public Interpreter OwnInterpreter { get; }
 	public Script Definition { get; }
-	public Script Constructor { get; }
-	public ClassDefinition(string name, Evaluator evaluator, GameObject mainGameobject, List<dynamic> initializationScript, List<dynamic> constructor)
+	public Function Constructor { get; }
+
+	public ClassDefinition(
+		string name,
+		Interpreter interpreter,
+		List<dynamic> initializationScript, 
+		Function constructor)
 	{
 		Name = name;
-		OwnInterpreter = mainGameobject.AddComponent<Interpreter>();
-		OwnInterpreter.evaluator = evaluator;
-		Definition = new Script(OwnInterpreter.ConvertToList(initializationScript, 1, 0)); // a bit backwards but it works hopefully not too inefficient
-		Constructor = new Script(OwnInterpreter.ConvertToList(constructor, 1, 0));	
+		Definition = new Script(interpreter.ConvertToList(initializationScript, 1, 0)); // a bit backwards but it works hopefully not too inefficient
+		Constructor = constructor;
 	}
-	
+
+	public bool FunctionIsConstructor(Function function)
+		=> function.ArgumentNames == Constructor.ArgumentNames && function.Name == Constructor.Name;
+
+	public override string ToString()
+	{
+		return $"Class definition object \"{Name}\"";
+	}
 }
 public class ClassInstance
 {
-	public string Name;
+	//public string Name { get; }
+	public ClassDefinition ClassDefinition { get; }
 	public Interpreter OwnInterpreter { get; }
-	public ClassInstance(ClassDefinition classDef, string name)
+	public ClassInstance(ClassDefinition classDef, Interpreter ownInterpreter, Evaluator evaluator)
 	{
-
+		ClassDefinition = classDef;
+		OwnInterpreter = ownInterpreter;
+		ownInterpreter.evaluator = evaluator;
+	}
+	public Output Initialize()
+	{
+		return OwnInterpreter.RunWithOutput(ClassDefinition.Definition);
+	}
+	public Output Construct(List<dynamic> args)
+	{
+		ClassDefinition.Constructor.UsingInterpreter = OwnInterpreter;
+		return OwnInterpreter.RunFunction(ClassDefinition.Constructor, args);
+	}
+	public override string ToString()
+	{
+		return $"Class instance of {ClassDefinition.Name}";
 	}
 }
 
@@ -117,8 +149,9 @@ public class ScriptLine
 
 public class Interpreter : MonoBehaviour
 {
+	public string NAME;
+	public const int MAX_RECURSION_DEPTH = 128;
 	public bool DEBUGMODE = false;
-	public static readonly int MAX_RECURSION_DEPTH = 20;
 	
 	public bool isClass = false;
 
@@ -138,6 +171,7 @@ public class Interpreter : MonoBehaviour
 		"for",	// done
 		"while",// done
 		"log",	// done
+		"dump", // debug purposes
 		//"wait",	// done - removed, if there's a better solution in the future then might do idk
 		"def",	// done
 		"return",//done
@@ -149,17 +183,35 @@ public class Interpreter : MonoBehaviour
 	{
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
 	}
-	public void Interpret(Script targetScript)
+	public void Run(Script targetScript)
 	{
 		if (evaluator == null) return;
-		Interpret(targetScript, evaluator);
+		Run(targetScript, evaluator);
 	}
-	public void Interpret(Script targetScript, Evaluator evaluator)
+	public void Run(Script targetScript, Evaluator evaluator)
 	{
 		this.evaluator = evaluator;
 
 		script = targetScript;
 		StartInterpreting();
+	}
+	public Output RunWithOutput(Script targetScript)
+	{
+		if (evaluator == null) return Errors.InterpreterDoesntHaveEval(this);
+		return RunWithOutput(targetScript, evaluator);
+	}
+	public Output RunWithOutput(Script targetScript, Evaluator evaluator)
+	{
+		// setup
+		script = targetScript;
+		this.evaluator = evaluator;
+
+		script = new(PreProcessScript(script.Lines));
+		List<dynamic> lines = ConvertToNested(script);
+
+		Output result = Interpret(lines);
+
+		return result;
 	}
 
 	public Output StoreVariable(string name, dynamic value)
@@ -168,6 +220,8 @@ public class Interpreter : MonoBehaviour
 			return Errors.CannotSetKeyword(name, this);
 		if (classes.ContainsKey(name))
 			return Errors.AlreadyIsClass(name, this);
+		if (functions.ContainsKey(name))
+			return Errors.AlreadyIsFunction(name, this);
 
 		variables[name] = value;
 		return new Output(true);
@@ -191,13 +245,20 @@ public class Interpreter : MonoBehaviour
 	}
 	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script)
 	{
+		return StoreFunction(name, argNames, new Script(ConvertToList(script, 1, 0)));
+	}
+
+	public Output StoreFunction(string name, List<string> argNames, Script script)
+	{
 		// make sure function with this name and argnames doesnt already exist 
 		foreach (Function f in functions.Values)
 			if (f.Name == name && f.ArgumentNames.Count == argNames.Count)
 				return Errors.FunctionAlreadyExists(name, argNames.Count, this);
 
+		/*debug*/ if (DEBUGMODE) LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
+
 		functions[name] = new(name, script, argNames, this, evaluator);
-		return new Output(true); // return true on success
+		return new Output(functions[name]); // return the function on success
 	}
 	bool FunctionIsEmpty(List<dynamic> function)
 	{
@@ -214,23 +275,84 @@ public class Interpreter : MonoBehaviour
 	}
 	public Output RunFunction(Function F, List<dynamic> args, int depth = 0)
 	{
+		/*debug*/ if (DEBUGMODE) LogColor($"Running function {F}", Color.red);
 		if (args.Count != F.ArgumentNames.Count)
 			return Errors.NoFunctionExists(F.Name, args.Count, F.UsingInterpreter);
 
-		Dictionary<string, dynamic> variablesStateBefore = F.UsingInterpreter.variables; // keep copy before running
-		F.UsingInterpreter.ResetVariables();
-		for (int i = 0; i < args.Count; i++)
+		Script before = script;
+		script = F.Script;
+
+		// determine if this function is a constructor for a class or not, they are treated differently
+		bool isConstructor = false;
+		ClassDefinition constructorClass = null;
+		foreach (ClassDefinition c in classes.Values)
 		{
-			Output tryStore = F.UsingInterpreter.StoreVariable(F.ArgumentNames[i], args[i]);
-			if (!tryStore.success) return tryStore;
+			if (c.FunctionIsConstructor(F))
+			{
+				isConstructor = true;
+				constructorClass = c;
+				break;
+			}
 		}
 
-		Output result = F.UsingInterpreter.Interpret(F.Script,  depth + 1);
+		if (!isConstructor) // normal case
+		{
+			Dictionary<string, dynamic> variablesStateBefore = F.UsingInterpreter.variables; // keep copy before running
+			for (int i = 0; i < args.Count; i++)
+			{
+				Output tryStore = F.UsingInterpreter.StoreVariable(F.ArgumentNames[i], args[i]);
+				if (!tryStore.Success) { script = before; return tryStore; }
+			}
 
-		F.UsingInterpreter.variables = variablesStateBefore;
-		return result;
+			Output result = F.UsingInterpreter.Interpret(ConvertToNested(F.Script), depth + 1); // run it;
+
+			// handle variables afterwards
+			Dictionary<string, dynamic> temp = new();
+			foreach (string varname in F.UsingInterpreter.variables.Keys)
+			{
+				if (variablesStateBefore.ContainsKey(varname)) // any new variables will not be contained within 
+				{
+					if (F.ArgumentNames.Contains(varname)) 
+						temp.Add(varname, variablesStateBefore[varname]); // recall starting
+					else
+						temp.Add(varname, F.UsingInterpreter.variables[varname]); // or keep the changes
+				}
+			}
+			F.UsingInterpreter.ResetVariables(); // restore 
+			F.UsingInterpreter.variables = temp;
+
+			script = before;
+			return result;
+		}
+		else // constructor case
+		{
+			Interpreter newInterpreter = gameObject.AddComponent<Interpreter>();
+			newInterpreter.DEBUGMODE = DEBUGMODE;
+			newInterpreter.NAME = "CLASSINSTANCE";
+
+			ClassInstance newClassInstance = new(constructorClass, newInterpreter, evaluator);
+
+
+			// let the new instance run it's definition
+			Output result = newClassInstance.Initialize();
+			if (!result.Success) { script = before; return result; }
+
+			// construct it with the constructor function, should be defined in the definition, if no constructor, then do nothing
+			result = newClassInstance.Construct(args);
+			if (!result.Success) { script = before; return result; }
+
+			script = before;
+
+			return new(newClassInstance);
+		}
 	}
-
+	
+	void UpdateCurrentLine(List<dynamic> workingScript, int localLine)
+	{ // assumes nested form is not null
+		dynamic item = workingScript[localLine];
+		if (item is not ScriptLine) return;
+		currentLine = item.LineNumber;
+	}
 	int GetIndent(string s)
 	{
 		int curIndent = 0;
@@ -241,6 +363,11 @@ public class Interpreter : MonoBehaviour
 			else if (c == '\t') curIndent += 4;
 		}
 		return curIndent;
+	}
+	public List<dynamic> ConvertToNested(Script script)
+	{
+		int lineRef = 0;
+		return ConvertToNested(script, 0, ref lineRef);
 	}
 	public List<dynamic> ConvertToNested(Script script, int curIndent, ref int lineNum)
 	{
@@ -329,11 +456,11 @@ public class Interpreter : MonoBehaviour
 		{
 			expression = "[" + expression + "]"; // eval it as a list
 			Output tryEval = evaluator.Evaluate(expression, this);
-			if (!tryEval.success)
+			if (!tryEval.Success)
 			{
 				return tryEval;
 			}
-			results = tryEval.value;
+			results = tryEval.Value;
 		}
 		// value should be a list of the args (i swear if it somehow doesnt)
 
@@ -367,7 +494,7 @@ public class Interpreter : MonoBehaviour
 		 * --- multi line comment, can go across multiple lines
 		 */
 
-		List<string> result = new();
+		List<string> commaPass = new();
 		bool inString;
 		bool inSingleLine;
 		bool inMultiLine = false;
@@ -404,18 +531,24 @@ public class Interpreter : MonoBehaviour
 				i++;
 			}
 			if (!string.IsNullOrWhiteSpace(line))
-				result.Add(newLine);
+				commaPass.Add(newLine);
 		}
 
-		return result;
-	}
+		List<string> blankLinePass = new();
+		foreach (string line in commaPass)
+		{
+			if (!string.IsNullOrWhiteSpace(line))
+				blankLinePass.Add(line);
+		}
 
+		return blankLinePass;
+	}
 	void DumpState()
 	{
-		LogColor("**STATE DUMP**", Color.yellow);
+		LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
 		LogColor("VARIABLES: " + HF.ConvertToString(variables), Color.yellow);
 		LogColor("FUNCTIONS: "+HF.ConvertToString(functions), Color.yellow);
-		LogColor("SCRIPT " + script, Color.yellow);
+		LogColor("CLASSES: "+HF.ConvertToString(classes), Color.yellow);
 		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
 	}
 	
@@ -427,6 +560,7 @@ public class Interpreter : MonoBehaviour
 			return Errors.ExpectedColon(this);
 
 		string name = startLine[5..colonIndex].Trim();
+		/*debug*/ if (DEBUGMODE) LogColor($"Creating new class \"{name}\"", Color.red);
 		if (!HF.VariableNameIsValid(name))
 			return Errors.BadClassName(name, this);
 
@@ -434,36 +568,62 @@ public class Interpreter : MonoBehaviour
 			return Errors.ClassAlreadyExists(name, this);
 
 		// find the constructor
-		List<dynamic> constructor = new();
+		List<dynamic> constructor = null;
+		List<string> argNames = new();
 		for (int i = 0; i < definition.Count; i++)
 		{
 			dynamic item = definition[i];
 			if (item is ScriptLine && item.Line.StartsWith("def "))
 			{
 				string line = item.Line;
-				int startParenthesesPos = line.IndexOf('(');
 				currentLine = item.LineNumber;
+				int startParenthesesPos = line.IndexOf('(');
 				if (startParenthesesPos == -1) return Errors.ExpectedParentheses(this);
 
 				string functionname = line[3..startParenthesesPos].Trim();
 				if (functionname == name) // the function name that is the same as the class name is the constructor
 				{
-					constructor.Add(i);
+					// get the argument names
+
+					int endParenthesesIndex = line.IndexOf(')');
+					string argsstring = line[(startParenthesesPos + 1)..endParenthesesIndex].Trim();
+					if (string.IsNullOrWhiteSpace(argsstring)) // no args
+					{
+						argNames = new();
+					}
+					else
+					{
+						string[] args = argsstring.Split(',');
+						foreach (string argName in args)
+						{
+							string trimmedArgName = argName.Trim();
+							if (!HF.VariableNameIsValid(trimmedArgName))
+								return Errors.BadVariableName(trimmedArgName, this);
+
+							if (argNames.Contains(trimmedArgName))
+								return Errors.DuplicateArguments(trimmedArgName, this);
+
+							argNames.Add(trimmedArgName);
+						}
+					}
+
 					if (i < definition.Count - 1 && definition[i + 1] is List<dynamic>)
 					{
-						constructor.Add(definition[i + 1]);
-						definition.Remove(definition[i + 1]);
+						constructor = definition[i + 1];
 					}
-					definition.Remove(item);
 				}
 			}
 		}
 
-		// create the new class
-		ClassDefinition newClass = new(name, evaluator, gameObject, definition, constructor);
+		Output tryStore = StoreFunction(name, argNames, constructor);
+		if (!tryStore.Success) return tryStore;
+
+		// create the new class, constructor is the new constructor function (returned from storefunction)
+		ClassDefinition newClass = new(name, this, definition, tryStore.Value);
 
 		classes.Add(name, newClass);
 
+		/*debug*/ if (DEBUGMODE) { LogColor("Class creation successful", Color.red); DumpState(); }
 		return new(true);
 	}
 	#endregion
@@ -480,22 +640,20 @@ public class Interpreter : MonoBehaviour
 	{
 		double start = Time.timeAsDouble;
 
-		int lineNum = 0;
-
 		script = new(PreProcessScript(script.Lines));
-		List<dynamic> lines = ConvertToNested(script, 0, ref lineNum);
-		
+		List<dynamic> lines = ConvertToNested(script);
+
 		Output result = Interpret(lines);
 
 		Debug.Log(result);
 		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
-		DumpState();
+		if (DEBUGMODE) DumpState();
 	}
 
 	public Output Interpret(List<dynamic> lines, int recursiondepth = 0)
 	{
 		if (recursiondepth > MAX_RECURSION_DEPTH) return Errors.MaxRecursion(MAX_RECURSION_DEPTH, this);
-		evaluator.DEBUGMODE = DEBUGMODE;
+		//evaluator.DEBUGMODE = DEBUGMODE;
 
 		int localLineNum = 0;
 		string line = "";
@@ -505,19 +663,11 @@ public class Interpreter : MonoBehaviour
 
 		while (localLineNum < lines.Count)
 		{
-			#region debug
-			if (DEBUGMODE)
-			{
-				if (lines[localLineNum] is ScriptLine) LogColor($"Running line {lines[localLineNum].Line}", Color.cyan);
-				else LogColor("Current line is indented list", Color.cyan);
-			}
-			#endregion
-
 			#region preprocess
 			if (lines[localLineNum] is ScriptLine)
 			{
 				line = lines[localLineNum].Line;
-				currentLine = lines[localLineNum].LineNumber;
+				UpdateCurrentLine(lines, localLineNum);
 			}
 			else // indented should have been handled by their respective functions, and skipped over
 				return Errors.UnexpectedIndent(this);
@@ -525,7 +675,7 @@ public class Interpreter : MonoBehaviour
 
 			#region determine line type 
 			string keyword = "";
-			int type = 1; // 0 - keyword, 1 - variable, 2 - function
+			int type = 1; // -1 - expression, 0 - keyword, 1 - variable, 2 - function
 			int position = 0;
 			foreach (string kw in keywords)
 			{
@@ -537,22 +687,43 @@ public class Interpreter : MonoBehaviour
 					break;
 				}
 			}
-			if (type == 1)
+			if (type != 0)
 			{
-				int parenthesesStart = line.IndexOf('(');
-				if (parenthesesStart != -1)
+				foreach(string varname in variables.Keys)
 				{
-					foreach (string fn in functions.Keys)
+					if (line.StartsWith(varname))
 					{
-						if (line[..parenthesesStart] == fn)
+						type = 1;
+						keyword = varname;
+						position = varname.Length;
+						break;
+					}
+				}
+				if (type == 1)
+				{
+					int parenthesesStart = line.IndexOf('(');
+					if (parenthesesStart != -1)
+					{
+						foreach (string fn in functions.Keys)
 						{
-							type = 2;
-							keyword = fn;
-							position = fn.Length;
-							break;
+							if (line[..parenthesesStart] == fn)
+							{
+								type = 2;
+								keyword = fn;
+								position = fn.Length;
+								break;
+							}
 						}
 					}
 				}
+			}
+			#endregion
+
+			#region debug
+			if (DEBUGMODE)
+			{
+				if (lines[localLineNum] is ScriptLine) LogColor($"Running line {lines[localLineNum].LineNumber}: {lines[localLineNum].Line}, type: {type}", Color.cyan);
+				else LogColor("Current line is indented list", Color.cyan);
 			}
 			#endregion
 
@@ -561,9 +732,16 @@ public class Interpreter : MonoBehaviour
 				if (keyword == "log")
 				{
 					Output getArgs = ExtractArgs(line, keyword, 1); // get the args
-					if (!getArgs.success) return getArgs;
+					if (!getArgs.Success) return getArgs;
 
-					Log(getArgs.value[0]); // perform actual function
+					Log(getArgs.Value[0]); // perform actual function
+				}
+				else if (keyword == "dump")
+				{
+					Output getArgs = ExtractArgs(line, keyword, 0); // get the args
+					if (!getArgs.Success) return getArgs;
+
+					DumpState(); // perform actual function
 				}
 				else if (keyword == "if")
 				{ // condition should be between if and 
@@ -584,15 +762,15 @@ public class Interpreter : MonoBehaviour
 					if (colonIndex == -1) return (Errors.ExpectedColon(this));
 					string expression = remaining[..colonIndex];
 					Output tryEval = evaluator.Evaluate(expression, this);
-					if (!tryEval.success) return (tryEval);
-					dynamic value = tryEval.value;
+					if (!tryEval.Success) return (tryEval);
+					dynamic value = tryEval.Value;
 
 					// attempt to force this value into a bool
 					tryEval = evaluator.Evaluate($"true&&{HF.ConvertToString(value)}", this);
-					if (!tryEval.success) // couldn't be forced into a bool
+					if (!tryEval.Success) // couldn't be forced into a bool
 						return Errors.ExpectedBoolInIf(HF.DetermineTypeFromVariable(value), this);
 
-					bool condition = tryEval.value; // should have outputted a bool if it didnt error
+					bool condition = tryEval.Value; // should have outputted a bool if it didnt error
 					#endregion
 
 					if (condition)
@@ -603,16 +781,18 @@ public class Interpreter : MonoBehaviour
 						{ // makes it rerun current line with new thing
 							lines[localLineNum] = rest;
 							localLineNum--; // bad solution but it gets ++ at end idk
+							UpdateCurrentLine(lines, localLineNum);
 						}
 						else
 						{
 							localLineNum++; // step into the next part, whether be indent or normal
+							UpdateCurrentLine(lines, localLineNum);
 							if (localLineNum < lines.Count && lines[localLineNum] is List<dynamic>) // if next isn't indented list, dont do anything
 							{
 								// run everything indented
 								List<dynamic> indentedLines = lines[localLineNum];
 								Output result = (Interpret(indentedLines));
-								if (!result.success) return result;
+								if (!result.Success) return result;
 							}
 						}
 					}
@@ -659,6 +839,7 @@ public class Interpreter : MonoBehaviour
 							// cuz that's tenically whats its doing anyway
 							lines[localLineNum] = line[4..].TrimStart();
 							localLineNum--;
+							UpdateCurrentLine(lines, localLineNum);
 						}
 						else
 						{ // nothing there, normal else
@@ -668,16 +849,18 @@ public class Interpreter : MonoBehaviour
 							{ // makes it rerun current line with new thing
 								lines[localLineNum] = rest;
 								localLineNum--; // bad solution but it gets ++ at end idk
+								UpdateCurrentLine(lines, localLineNum);
 							}
 							else
 							{ // run the rest
 								localLineNum++; // step into the next part, whether be indent or normal
+								UpdateCurrentLine(lines, localLineNum);
 								if (localLineNum < lines.Count && lines[localLineNum] is List<dynamic>) // if next isn't indented list, dont do anything
 								{
 									// run everything indented
 									List<dynamic> indentedLines = lines[localLineNum];
 									Output result = Interpret(indentedLines);
-									if (!result.success) return result;
+									if (!result.Success) return result;
 								}
 							}
 
@@ -720,13 +903,13 @@ public class Interpreter : MonoBehaviour
 
 					// turn list string to actual list
 					Output evalListString = evaluator.Evaluate(listString, this);
-					if (!evalListString.success) return evalListString;
+					if (!evalListString.Success) return evalListString;
 
 					List<dynamic> list = new();
-					if (evalListString.value is not List<dynamic>)
-						list = new List<dynamic> { evalListString.value };
+					if (evalListString.Value is not List<dynamic>)
+						list = new List<dynamic> { evalListString.Value };
 					else
-						list = evalListString.value;
+						list = evalListString.Value;
 
 					#endregion
 
@@ -750,7 +933,7 @@ public class Interpreter : MonoBehaviour
 						Output result = null;
 
 						result = StoreVariable(iterator, item); // store iterator
-						if (!result.success) return result;
+						if (!result.Success) return result;
 
 						/*
 						if (ScriptIsInstant(toRun))
@@ -759,7 +942,7 @@ public class Interpreter : MonoBehaviour
 						*/
 						result = Interpret(toRun);
 
-						if (!result.success) return result;
+						if (!result.Success) return result;
 					}
 				}
 				else if (keyword == "while")
@@ -795,28 +978,28 @@ public class Interpreter : MonoBehaviour
 					#region eval expr
 					string expr = line[5..colonIndex].Trim();
 					Output eval = evaluator.Evaluate(expr, this);
-					if (!eval.success) return eval;
+					if (!eval.Success) return eval;
 
-					eval = evaluator.Evaluate("true&&" + HF.ConvertToString(eval.value), this); // force it to be a bool
-					if (!eval.success || eval.value is not bool)
+					eval = evaluator.Evaluate("true&&" + HF.ConvertToString(eval.Value), this); // force it to be a bool
+					if (!eval.Success || eval.Value is not bool)
 						return Errors.UnableToParseAsBool(HF.ConvertToString(eval), this);
-					bool result = eval.value;
+					bool result = eval.Value;
 					#endregion
 
 					while (result)
 					{
 						Output output = Interpret(toRun);
-						if (!output.success) return output;
+						if (!output.Success) return output;
 
 						#region eval expr
 						eval = evaluator.Evaluate(expr, this);
-						if (!eval.success) return eval;
+						if (!eval.Success) return eval;
 
-						eval = evaluator.Evaluate("true&&" + HF.ConvertToString(eval.value), this); // force it to be a bool
-						if (!eval.success || eval.value is not bool)
-							return Errors.UnableToParseAsBool(HF.ConvertToString(eval.value), this);
+						eval = evaluator.Evaluate("true&&" + HF.ConvertToString(eval.Value), this); // force it to be a bool
+						if (!eval.Success || eval.Value is not bool)
+							return Errors.UnableToParseAsBool(HF.ConvertToString(eval.Value), this);
 						#endregion
-						result = eval.value;
+						result = eval.Value;
 					}
 				}
 				else if (keyword == "try")
@@ -835,12 +1018,12 @@ public class Interpreter : MonoBehaviour
 
 					Output output = Interpret(toTry);
 
-					if (!output.success)
+					if (!output.Success)
 					{ // find catch if fail
 						if (lines[localLineNum + 1] is ScriptLine)
 						{
 							localLineNum++;
-							currentLine = lines[localLineNum].LineNumber;
+							UpdateCurrentLine(lines, localLineNum);
 							if (lines[localLineNum].Line.Trim().StartsWith("catch"))
 							{
 								#region find the variable name to store 
@@ -854,8 +1037,8 @@ public class Interpreter : MonoBehaviour
 									if (!HF.VariableNameIsValid(errorVarName))
 										return Errors.BadVariableName(errorVarName, this);
 
-									Output trystore = StoreVariable(errorVarName, output.error.ToString());
-									if (!trystore.success) return trystore;
+									Output trystore = StoreVariable(errorVarName, output.Error.ToString());
+									if (!trystore.Success) return trystore;
 								}
 								#endregion
 
@@ -863,6 +1046,7 @@ public class Interpreter : MonoBehaviour
 								if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
 								{
 									localLineNum++;
+									UpdateCurrentLine(lines, localLineNum);
 									toRun = lines[localLineNum];
 								}
 								else
@@ -873,7 +1057,7 @@ public class Interpreter : MonoBehaviour
 								output = (Interpret(toRun));
 
 								// it will not catch again, unless there is a try catch inside of torun
-								if (!output.success) return output;
+								if (!output.Success) return output;
 							}
 						}
 					}
@@ -896,16 +1080,24 @@ public class Interpreter : MonoBehaviour
 					List<string> argnames = new();
 					int endParenthesesIndex = line.IndexOf(')');
 					string argsstring = line[(startParenthesesIndex + 1)..endParenthesesIndex].Trim();
-					string[] args = argsstring.Split(',');
-					foreach (string argName in args)
+					if (string.IsNullOrWhiteSpace(argsstring)) // no args
 					{
-						if (!HF.VariableNameIsValid(argName))
-							return Errors.BadVariableName(argName, this);
+						argnames = new();
+					}
+					else
+					{
+						string[] args = argsstring.Split(',');
+						foreach (string argName in args)
+						{
+							string trimmedArgName = argName.Trim();
+							if (!HF.VariableNameIsValid(trimmedArgName))
+								return Errors.BadVariableName(trimmedArgName, this);
 
-						if (argnames.Contains(argName))
-							return Errors.DuplicateArguments(argName, this);
+							if (argnames.Contains(trimmedArgName))
+								return Errors.DuplicateArguments(trimmedArgName, this);
 
-						argnames.Add(argName);
+							argnames.Add(argName.Trim());
+						}
 					}
 
 					#endregion
@@ -915,6 +1107,7 @@ public class Interpreter : MonoBehaviour
 					if (localLineNum < lines.Count && lines[localLineNum + 1] is List<dynamic>) // if next isn't indented list, dont do anything
 					{
 						localLineNum++;
+						UpdateCurrentLine(lines, localLineNum);
 						function = lines[localLineNum];
 					}
 					else
@@ -928,7 +1121,7 @@ public class Interpreter : MonoBehaviour
 
 					Output tryStore = StoreFunction(name, argnames, function);
 
-					if (!tryStore.success) return tryStore;
+					if (!tryStore.Success) return tryStore;
 				}
 				else if (keyword == "return")
 				{   // it should hopefully be just as simple as this 
@@ -942,164 +1135,193 @@ public class Interpreter : MonoBehaviour
 					if (localLineNum == lines.Count - 1 || lines[localLineNum + 1] is not List<dynamic>)
 						return Errors.ExpectedClassDef(this);
 					localLineNum++;
+					UpdateCurrentLine(lines, localLineNum);
 
 					Output result = ProcessClass(line, lines[localLineNum]);
-					if (!result.success) return result;
+					if (!result.Success) return result;
 				}
 			}
-			else if (type == 1) // set variable
+			else if (type == 1) // variables
 			{
+				/* two types of variable operations 
+				 * 1. act on class, includes class name and . -> run the rest of the line inside that class instance's interpreter
+				 * 2. variable assignment
+				 */
+
 				// any assignment operators?
-				bool containsAnyAO = assignmentOperators.Any(ao => HF.ContainsSubstringOutsideQuotes(line, ao));
+				bool assignment = true;
 
-				if (!containsAnyAO) // dont handle if no ao, this is some expression
+				int periodIndex = line.IndexOf('.');
+				if (periodIndex != -1)
 				{
-					Output tryEval = evaluator.Evaluate(line, this);
-					if (!tryEval.success) return tryEval;
+					string beforePeriod = line[..periodIndex];
+					bool containsAnyAO = assignmentOperators.Any(ao => HF.ContainsSubstringOutsideQuotes(beforePeriod, ao));
+					assignment = containsAnyAO;
 				}
-
-				// get the variable name first 
-				string varName = "";
-				for (int i = 0; i < line.Length; i++)
+				// case 1 - contains assignment before .
+				if (assignment)
 				{
-					char c = line[i];
-					if (!(char.IsLetter(c) || c == '_' || (char.IsNumber(c) && i != 0))) // variable naming criteria, if stoppped following then no longer in variable
-						break;
-					varName += c;
-				}
-				varName = varName.Trim();
-
-				if (!HF.VariableNameIsValid(varName))
-					return Errors.BadVariableName(varName, this);
-
-				// extract the assignment operator (=, +=, -=, ++, --)
-				string remaining = line[varName.Length..].Trim();
-				string ao = "";
-				foreach (string op in assignmentOperators)
-				{
-					if (remaining.StartsWith(op))
+					// get the variable name first 
+					string varName = "";
+					for (int i = 0; i < line.Length; i++)
 					{
-						ao = op;
-						break;
+						char c = line[i];
+						if (!(char.IsLetter(c) || c == '_' || (char.IsNumber(c) && i != 0))) // variable naming criteria, if stoppped following then no longer in variable
+							break;
+						varName += c;
 					}
-				}
-				// ao shouldn't be blank now, checked if there was a valid one back there
+					varName = varName.Trim();
 
-				remaining = remaining[ao.Length..].Trim(); // all that remains should be the expression
+					if (!HF.VariableNameIsValid(varName))
+						return Errors.BadVariableName(varName, this);
 
-				if (ao == "++" || ao == "--")
-				{ // all they do is + or - 1, no need to eval
-					Output fetch = FetchVariable(varName);
-					if (!fetch.success) return fetch;
-
-					// increment/decrement can only be done to existing number variables
-					if (fetch.value is float v)
+					// extract the assignment operator (=, +=, -=, ++, --)
+					string remaining = line[varName.Length..].Trim();
+					string ao = "";
+					foreach (string op in assignmentOperators)
 					{
-						if (ao == "++")
-							StoreVariable(varName, v + 1);
+						if (remaining.StartsWith(op))
+						{
+							ao = op;
+							break;
+						}
+					}
+					// ao shouldn't be blank now, checked if there was a valid one back there
+
+					remaining = remaining[ao.Length..].Trim(); // all that remains should be the expression
+
+					if (ao == "++" || ao == "--")
+					{ // all they do is + or - 1, no need to eval
+						Output fetch = FetchVariable(varName);
+						if (!fetch.Success) return fetch;
+
+						// increment/decrement can only be done to existing number variables
+						if (fetch.Value is float v)
+						{
+							if (ao == "++")
+								StoreVariable(varName, v + 1);
+							else
+								StoreVariable(varName, v - 1);
+						}
 						else
-							StoreVariable(varName, v - 1);
+						{
+							return Errors.UnsupportedOperation(ao[0].ToString(), HF.DetermineTypeFromVariable(fetch.Value), "number", this);
+						}
 					}
 					else
 					{
-						return Errors.UnsupportedOperation(ao[0].ToString(), HF.DetermineTypeFromVariable(fetch.value), "number", this);
+						Output tryEval = evaluator.Evaluate(remaining, this);
+						if (!tryEval.Success) return tryEval;
+
+						// all other aos modify original, variable has to already exist
+						dynamic variableValue = 0;
+						if (ao != "=")
+						{
+							Output fetch = FetchVariable(varName);
+							if (!fetch.Success) return fetch;
+							variableValue = fetch.Value;
+						}
+
+						// if it was successful, store the value 
+						switch (ao)
+						{
+							case "=":
+								tryEval = StoreVariable(varName, tryEval.Value);
+								if (!tryEval.Success) return tryEval;
+								break;
+							case "+=":
+								// try to add onto existing variable
+								tryEval = evaluator.Evaluate(
+									$"({HF.ConvertToString(variableValue)})" +
+									$"+" +
+									$"({HF.ConvertToString(tryEval.Value)})", this);
+								if (!tryEval.Success) return tryEval;
+
+								tryEval = StoreVariable(varName, tryEval.Value);
+								if (!tryEval.Success) return tryEval;
+								break;
+							case "-=":
+								// try to add onto existing variable
+								tryEval = evaluator.Evaluate(
+									$"({HF.ConvertToString(variableValue)})" +
+									$"-" +
+									$"({HF.ConvertToString(tryEval.Value)})", this);
+								if (!tryEval.Success) return tryEval;
+
+								tryEval = StoreVariable(varName, tryEval.Value);
+								if (!tryEval.Success) return tryEval;
+								break;
+							case "*=":
+								// try to add onto existing variable
+								tryEval = evaluator.Evaluate(
+									$"({HF.ConvertToString(variableValue)})" +
+									$"*" +
+									$"({HF.ConvertToString(tryEval.Value)})", this);
+								if (!tryEval.Success)
+									return tryEval;
+
+								tryEval = StoreVariable(varName, tryEval.Value);
+								if (!tryEval.Success) return tryEval;
+								break;
+							case "/=":
+								// try to add onto existing variable
+								tryEval = evaluator.Evaluate(
+									$"({HF.ConvertToString(variableValue)})" +
+									$"/" +
+									$"({HF.ConvertToString(tryEval.Value)})", this);
+								if (!tryEval.Success) return tryEval;
+
+								tryEval = StoreVariable(varName, tryEval.Value);
+								if (!tryEval.Success) return tryEval;
+								break;
+							case "^=":
+								// try to add onto existing variable
+								tryEval = evaluator.Evaluate(
+									$"({HF.ConvertToString(variableValue)})" +
+									$"^" +
+									$"({HF.ConvertToString(tryEval.Value)})", this);
+								if (!tryEval.Success) return tryEval;
+
+								tryEval = StoreVariable(varName, tryEval.Value);
+								if (!tryEval.Success) return tryEval;
+
+								break;
+						}
 					}
 				}
+				// case 2 
 				else
 				{
-					Output tryEval = evaluator.Evaluate(remaining, this);
-					if (!tryEval.success) return tryEval;
-
-					// all other aos modify original, variable has to already exist
-					dynamic variableValue = 0;
-					if (ao != "=")
+					if (periodIndex != -1) // if no . found, just ignore as it is probably just an expression and won't do anything
 					{
-						Output fetch = FetchVariable(varName);
-						if (!fetch.success) return fetch;
-						variableValue = fetch.value;
-					}
+						string name = line[..periodIndex].Trim();
+						if (!variables.ContainsKey(name)) return Errors.UnknownVariable(name, this);
 
-					// if it was successful, store the value 
-					switch (ao)
-					{
-						case "=":
-							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success) return tryEval;
-							break;
-						case "+=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HF.ConvertToString(variableValue)})" +
-								$"+" +
-								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success) return tryEval;
-
-							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success) return tryEval;
-							break;
-						case "-=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HF.ConvertToString(variableValue)})" +
-								$"-" +
-								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success) return tryEval;
-
-							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success) return tryEval;
-							break;
-						case "*=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HF.ConvertToString(variableValue)})" +
-								$"*" +
-								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success)
-							return tryEval;
-
-							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success) return tryEval;
-							break;
-						case "/=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HF.ConvertToString(variableValue)})" +
-								$"/" +
-								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success) return tryEval;
-
-							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success) return tryEval;
-							break;
-						case "^=":
-							// try to add onto existing variable
-							tryEval = evaluator.Evaluate(
-								$"({HF.ConvertToString(variableValue)})" +
-								$"^" +
-								$"({HF.ConvertToString(tryEval.value)})", this);
-							if (!tryEval.success) return tryEval;
-
-							tryEval = StoreVariable(varName, tryEval.value);
-							if (!tryEval.success) return tryEval;
-
-							break;
+						dynamic item = variables[name];
+						if (item is ClassInstance)
+						{
+							ClassInstance instance = item;
+							string toRun = line[(periodIndex + 1)..].Trim();
+							Output result = instance.OwnInterpreter.RunWithOutput(new(new() { toRun })); // run it with the class instance's interpreter
+							if (!result.Success) return result;
+						}
 					}
 				}
 			}
 			else if (type == 2)
 			{   // function should be defined hopefully no exceptions??
 				Output tryArgs = ExtractArgs(line, keyword, functions[keyword].ArgumentNames.Count);
-				if (!tryArgs.success) return tryArgs;
+				if (!tryArgs.Success) return tryArgs;
 
-				Output result = RunFunction(functions[keyword], tryArgs.value, recursiondepth);
+				Output result = RunFunction(functions[keyword], tryArgs.Value, recursiondepth);
 
-				if (!result.success) return result;
+				if (!result.Success) return result;
 			}
 
 			localLineNum++;
 		}
+		localLineNum--;
 
-		return Output.Success();
-		
+		return new(true);
 	}
 }

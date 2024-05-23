@@ -50,6 +50,9 @@ public static class Errors
 	public static Output UnknownVariable(string name, Interpreter interpreter) =>
 		Error($"Unknown variable \"{name}\"", interpreter);
 
+	public static Output UnknownFunction(string name, Interpreter interpreter) =>
+		Error($"Unknown function \"{name}\"", interpreter);
+
 	public static Output UnableToParseAsBool(string s, Interpreter interpreter) =>
 		Error($"Unable to parse {s} as bool", interpreter);
 
@@ -125,5 +128,11 @@ public static class Errors
 		Error($"Expected class definition", interpreter);
 
 	public static Output AlreadyIsClass(string name, Interpreter interpreter) =>
-		Error($"\"{name}\" is a class, cannot be overwritten.", interpreter);
+		Error($"Cannot set variable \"{name}\" as it is a class", interpreter);
+
+	public static Output AlreadyIsFunction(string name, Interpreter interpreter) =>
+		Error($"Cannot set variable \"{name}\" as it is a function", interpreter);
+
+	public static Output InterpreterDoesntHaveEval(Interpreter interpreter) =>
+		Error("Interpreter doesn't have an evaluator. How did you manage to do this?", interpreter);
 }
