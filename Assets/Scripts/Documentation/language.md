@@ -4,6 +4,7 @@
 - [errors](#errors)
 - [variables](#variables)
 - [comments](#comments)
+- [functions](#functions)
 - [classes](#classes)
 
 ---
@@ -168,13 +169,42 @@ more words---
 log("hello world!")
 ```
 
+---
+# functions
+functions can be defined with `def`, followed by the function name, and in parentheses, the argument names, separated by commas
+
+arguments act as variables, and store whatever was passed into them in the local scope. if a global variable is overriden by an argument, it will not be changed after the function finishes
+
+global variables modified in functions however, will keep their new value after finishing
+
+functions can call themselves, this is called "recursion", however this is limited to a depth of 128 recursions, as memory issues arise after more than that
+
+call a function by typing its name, followed with the correct number of arguments in parentheses separated by commas
+
+use `return` to "return" information out of functions
+
+**example:**
+```
+def examplefunction(x, y):
+    log(x)
+    return x + y
+
+foo = examplefunction(1, 2)
+
+-- expected output: 
+-- logs "1"
+-- foo is assigned a new value of 3 (1 + 2) 
+
+```
+
+---
 # classes
 **to define a new class, just write `class`, followed by the name, and a colon**
 - classes work by having their own interpreter, which everything related to it runs on
 - add a constructor to the class to allow new instances, in the format of a normal function except with the name of the class
 - to create a new instance of the class, call the class name, with the appropriate arguments
 
-example:
+**example:**
 ```
 class foo:
     -- this is a variable local to the class itself
@@ -183,8 +213,19 @@ class foo:
     -- this is a constructor
     def foo(argument): 
         A = argument
+    
+    -- this is a method
+    def examplemethod(x):
+        log(A + x)
 
 -- creating a new instance of the class
 newinstance = foo(5)
 
-log()
+-- retrieve class variables (attributes) with .
+-- this should log 5
+log(newinstance.A) 
+
+-- you can also call methods with .
+-- this should log 7 (5+2)
+newinstance.examplemethod(2) 
+```
