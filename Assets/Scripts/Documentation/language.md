@@ -1,7 +1,7 @@
 # documentation for the language
 ## contents
 - [expressions](#expressions)
-- [errors](#errors)
+- [errors](errors.md)
 - [variables](#variables)
 - [comments](#comments)
 - [functions](#functions)
@@ -19,7 +19,8 @@
 operations are semi-soft-typed\
 the value on the left side of an operation determines the output type
 
-**all supported operations:**
+<details><summary><b>all supported operations:</b></summary>
+
  - `+` add
  - `-` subtract
  - `*` multiply
@@ -38,8 +39,11 @@ the value on the left side of an operation determines the output type
  - `!&` nand (not and )
  - `!|` nor (not or)
  - `!!` xor (exclusive or)
+</details>
 
-**supported operations for ints:**
+</br>
+
+<details><summary><b>supported operations for ints:</b></summary>
  - `+`
  - `-`
  - `-` (negative modifier)
@@ -53,8 +57,11 @@ the value on the left side of an operation determines the output type
  - `>`
  - `<=`
  - `>=`
+</details>
 
-**supported operations for bools:**
+</br>
+
+<details><summary><b>supported operations for bools:</b></summary>
  - `==`
  - `!=`
  - `&&`
@@ -63,10 +70,13 @@ the value on the left side of an operation determines the output type
  - `!&`
  - `!|`
  - `!!` 
+</details>
+
+</br>
 
 strings and lists only support `+`
 
-**supported operation type pairs:**
+<details><summary><b>supported operation type pairs:</b></summary>
  - `number` - `number`
  - `number` - `string` (if string is able to be parsed as number)
  - `number` - `bool` (true is 1, false is 0)
@@ -75,70 +85,9 @@ strings and lists only support `+`
  - `bool` - `number` (number has to either be `1` or `0`, otherwise will throw error)
  - `list` - `any` (single item will be added to end of list)
  - `list` - `list`
-
-
+</details>
 
 ---
-# errors
-`Error` `(error)`\
-`TestError`\
-`MismatchedParentheses`\
-Mismatched parentheses
-
-`MismatchedBrackets`\
-Mismatched brackets
-
-`AttemptedEvalStringAsExpr`\
-Attempted to evaluate a string as an expression
-
-`OperatorInBadPosition` `(op)`\
-Operator `{op}` in bad position
-
-`OperatorInBadPosition`\
-An operator is in a bad position
-
-`OperatorDoesntExist` `(op)`\
-Operator `{op}` doesn't exist
-
-`OperatorMissingSide` `(op)`\
-One side of operator `{op}` is missing a number
-
-`UnableToParseStrAsNum` `(str)`\
-Unable to parse \"`{str}`\" as number
-
-`OperationFailed` `(op)`\
-Operation `{op}` failed unexpectedly
-
-`InvaidString` `(str)`\
-String \"`{str}`\" is not a valid string
-
-`UnsupportedOperation` `(op,)` `(type1,)` `(type2)`\
-Unsupported operation: `{op}` between `{type1}` and `{type2}`
-
-`DivisionByZero`\
-Attempted to divide by zero
-
-`MalformedString` `(s)`\
-String `{s}` was malformed, could not parse
-
-`MalformedList` `(s)`\
-Could not parse malformed list: `{s}`
-
-`UnknownVariable` `(name)`\
-Unknown variable \"`{name}`\"
-
-`UnableToParseBool`\
-Unable to parse bool
-
-`IndexListWithType` `(type)`\
-Attempted to index a list with a `{type}` (only whole numbers are allowed)
-
-`IndexOutOfRange` `(index)`\
-List index `{index}` was out of range
-
-`EvaluatedNothing`\
-Attempted to evaluate nothing
-
 # variables
 all variables are stored as `dynamic`s
 
@@ -182,6 +131,8 @@ functions can call themselves, this is called "recursion", however this is limit
 call a function by typing its name, followed with the correct number of arguments in parentheses separated by commas
 
 use `return` to "return" information out of functions
+
+functions with no `return` will return an empty string to avoid nulls
 
 **example:**
 ```
