@@ -90,21 +90,26 @@ public class ClassDefinition
 	public string Name { get; }
 	public Script Definition { get; }
 	public Function Constructor { get; }
+	public Function ToStringFunction { get; }
 
 	public ClassDefinition(
 		string name,
 		Interpreter interpreter,
 		List<dynamic> initializationScript, 
-		Function constructor)
+		Function constructor,
+		Function tostring)
 	{
 		Name = name;
 		Definition = new Script(interpreter.ConvertToList(initializationScript, 1, 0)); // a bit backwards but it works hopefully not too inefficient
 		Constructor = constructor;
+		ToStringFunction = tostring;
 	}
 
 	public bool FunctionIsConstructor(Function function)
-		=> function.ArgumentNames == Constructor.ArgumentNames && function.Name == Constructor.Name;
-
+	{
+		if (Constructor is null) return false;
+		return function.ArgumentNames == Constructor.ArgumentNames && function.Name == Constructor.Name;
+	}
 	public override string ToString()
 	{
 		return $"Class definition object \"{Name}\"";
@@ -123,7 +128,7 @@ public class ClassInstance
 	}
 	public Output Initialize()
 	{
-		return OwnInterpreter.RunWithOutput(ClassDefinition.Definition);
+		return OwnInterpreter.Run(ClassDefinition.Definition);
 	}
 	public Output Construct(List<dynamic> args)
 	{
@@ -132,6 +137,13 @@ public class ClassInstance
 	}
 	public override string ToString()
 	{
+		if (ClassDefinition.ToStringFunction is not null)
+		{
+			Output eval = OwnInterpreter.Run(ClassDefinition.ToStringFunction.Script);
+			if (!eval.Success) return $"Class instance of {ClassDefinition.Name}"; // return default if errored
+
+			return HF.ConvertToString(eval.Value);
+		}
 		return $"Class instance of {ClassDefinition.Name}";
 	}
 }
@@ -183,33 +195,22 @@ public class Interpreter : MonoBehaviour
 	{
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
 	}
-	public void Run(Script targetScript)
-	{
-		if (evaluator == null) return;
-		Run(targetScript, evaluator);
-	}
-	public void Run(Script targetScript, Evaluator evaluator)
-	{
-		this.evaluator = evaluator;
-
-		script = targetScript;
-		StartInterpreting();
-	}
-	public Output RunWithOutput(Script targetScript)
+	public Output Run(Script targetScript)
 	{
 		if (evaluator == null) return Errors.InterpreterDoesntHaveEval(this);
-		return RunWithOutput(targetScript, evaluator);
+		return Run(targetScript, evaluator);
 	}
-	public Output RunWithOutput(Script targetScript, Evaluator evaluator)
+	public Output Run(Script targetScript, Evaluator evaluator)
 	{
 		// setup
-		script = targetScript;
+		script = new(PreProcessScript(targetScript.Lines));
+		List<dynamic> lines = ConvertToNested(script);
 		this.evaluator = evaluator;
 
-		script = new(PreProcessScript(script.Lines));
-		List<dynamic> lines = ConvertToNested(script);
-
 		Output result = Interpret(lines);
+
+		Debug.Log(result);
+		if (DEBUGMODE) DumpState();
 
 		return result;
 	}
@@ -587,7 +588,12 @@ public class Interpreter : MonoBehaviour
 			return Errors.ClassAlreadyExists(name, this);
 
 		// find the constructor
+		List<string> constructorArgNames = new();
 		List<dynamic> constructor = null;
+
+		List<string> stringFunctionArgNames = new();
+		List<dynamic> stringFunction = null;
+
 		List<string> argNames = new();
 		for (int i = 0; i < definition.Count; i++)
 		{
@@ -600,10 +606,8 @@ public class Interpreter : MonoBehaviour
 				if (startParenthesesPos == -1) return Errors.ExpectedParentheses(this);
 
 				string functionname = line[3..startParenthesesPos].Trim();
-				if (functionname == name) // the function name that is the same as the class name is the constructor
+				if (functionname == name || functionname == "string") // the function name that is the same as the class name is the constructor
 				{
-					// get the argument names
-
 					int endParenthesesIndex = line.IndexOf(')');
 					string argsstring = line[(startParenthesesPos + 1)..endParenthesesIndex].Trim();
 					if (string.IsNullOrWhiteSpace(argsstring)) // no args
@@ -628,17 +632,40 @@ public class Interpreter : MonoBehaviour
 
 					if (i < definition.Count - 1 && definition[i + 1] is List<dynamic>)
 					{
-						constructor = definition[i + 1];
+						if (functionname == name)
+						{
+							constructor = definition[i + 1];
+							constructorArgNames = argNames;	
+						}
+						else if (functionname == "string")
+						{
+							stringFunction = definition[i + 1];
+							stringFunctionArgNames = argNames;
+						}
 					}
 				}
 			}
 		}
 
-		Output tryStore = StoreFunction(name, argNames, constructor);
-		if (!tryStore.Success) return tryStore;
+		// convert dynamic lists into functions 
+		Function constructorFunction = null;
+		if (constructor is not null)
+		{
+			Output tryStore = StoreFunction(name, constructorArgNames, constructor);
+			if (!tryStore.Success) return tryStore;
+			constructorFunction = tryStore.Value;
+		}
+
+		Function actualStringFunction = null;
+		if (stringFunction is not null)
+		{
+			Output tryStore = StoreFunction("string", stringFunctionArgNames, stringFunction);
+			if (!tryStore.Success) return tryStore;
+			actualStringFunction = tryStore.Value;
+		}
 
 		// create the new class, constructor is the new constructor function (returned from storefunction)
-		ClassDefinition newClass = new(name, this, definition, tryStore.Value);
+		ClassDefinition newClass = new(name, this, definition, constructorFunction, actualStringFunction);
 
 		classes.Add(name, newClass);
 
@@ -650,24 +677,12 @@ public class Interpreter : MonoBehaviour
 	#region functions
 	public void Log(dynamic str)
 	{
+		if (str is Output) str = str.Value; // output the value if its an output
+
 		LogColor(HF.ConvertToString(str, false), Color.green);
 	}
 
 	#endregion
-
-	void StartInterpreting()
-	{
-		double start = Time.timeAsDouble;
-
-		script = new(PreProcessScript(script.Lines));
-		List<dynamic> lines = ConvertToNested(script);
-
-		Output result = Interpret(lines);
-
-		Debug.Log(result);
-		Debug.Log($"runtime: {Time.timeAsDouble - start}s");
-		if (DEBUGMODE) DumpState();
-	}
 
 	public Output Interpret(List<dynamic> lines, int recursiondepth = 0)
 	{
@@ -1145,6 +1160,7 @@ public class Interpreter : MonoBehaviour
 				else if (keyword == "return")
 				{   // it should hopefully be just as simple as this 
 					string toReturn = line[6..];
+					if (string.IsNullOrWhiteSpace(toReturn)) return new Output("");
 					Output eval = evaluator.Evaluate(toReturn, this);
 
 					return eval;
@@ -1321,7 +1337,7 @@ public class Interpreter : MonoBehaviour
 						{
 							ClassInstance instance = item;
 							string toRun = line[(periodIndex + 1)..].Trim();
-							Output result = instance.OwnInterpreter.RunWithOutput(new(new() { toRun })); // run it with the class instance's interpreter
+							Output result = instance.OwnInterpreter.Run(new(new() { toRun })); // run it with the class instance's interpreter
 							if (!result.Success) return result;
 						}
 					}
@@ -1341,6 +1357,6 @@ public class Interpreter : MonoBehaviour
 		}
 		localLineNum--;
 
-		return new(true);
+		return new("");
 	}
 }

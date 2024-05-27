@@ -20,8 +20,12 @@ public class Tester : MonoBehaviour
 		
 		Script script = new (contents.ToList());
 
+		double start = Time.timeAsDouble;
+
 		interpreter.DEBUGMODE = debug;
 		interpreter.Run(script, evaluator);
+	
+		Debug.Log((Time.time-start).ToString("G20"));
 	}
 }
 /*

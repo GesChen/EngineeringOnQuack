@@ -1,28 +1,19 @@
-class testclass:
-    A = 0
-    B = 0
+class dictionary:
+    keys = []
+    values = []
 
-    log("hell yeah")
+    def dictionary():
+        return
+    
+    def newItem(key, value):
+        keys += key
+        values += value
+    
+    def string():
+        return "dictionary with keys " + keys + " and values " + values
 
-    dump()
-    def testclass(a, b):
-        A = a
-        B = b
-        dump()
+newdict = dictionary()
 
-    def thing():
-        log(A + B)
+newdict.newItem("test", 1)
 
-log("done define")
-
-test = testclass(1,2)
-
-test.thing()
-
-test.A = 10
-test.thing()
-
-normal = 0
-log("nromal"+normal)
-
-log(test.B)
+log(newdict)

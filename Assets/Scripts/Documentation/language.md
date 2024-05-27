@@ -201,8 +201,18 @@ foo = examplefunction(1, 2)
 # classes
 **to define a new class, just write `class`, followed by the name, and a colon**
 - classes work by having their own interpreter, which everything related to it runs on
-- add a constructor to the class to allow new instances, in the format of a normal function except with the name of the class
 - to create a new instance of the class, call the class name, with the appropriate arguments
+
+**constructors:**
+- add a constructor to the class to allow new instances
+- constructors are functions with the name of the class
+- when called, they will return a new instance of the class, along with running whatever is inside of the function
+
+**other special functions:**
+- `string()`
+    - define a `string()` function to describe how a class should be represented as a string
+    - it will automatically be used whenever an instance is referenced
+    - if no return is defined, or the function terminates without returning anything, or an error occurs within the function, the default class instance return value will be returned ("`class instance of {}`")
 
 **example:**
 ```

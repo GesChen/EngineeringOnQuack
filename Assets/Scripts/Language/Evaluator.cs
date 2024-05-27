@@ -335,6 +335,10 @@ public class Evaluator : MonoBehaviour
 
 	public Output EvaluateList(string expr, Interpreter interpreter)
 	{
+		#region empty list check
+		if (expr.Replace(" ", "") == "[]") return new(new List<dynamic>());
+		#endregion
+		
 		#region extract the parts from the expression
 		List<string> parts = new();
 		bool inString = false;
@@ -417,7 +421,7 @@ public class Evaluator : MonoBehaviour
 		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
 
 		#region blankcheck
-		if (expr.Replace(" ", "") == "")
+		if (string.IsNullOrWhiteSpace(expr))
 			return Errors.EvaluatedNothing(interpreter);
 		#endregion
 
