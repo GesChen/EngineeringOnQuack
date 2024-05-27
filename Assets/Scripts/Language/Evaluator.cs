@@ -599,8 +599,10 @@ public class Evaluator : MonoBehaviour
 					minusIsNegative = i == 0; // is first char
 					if (!minusIsNegative)
 						minusIsNegative = // case where previous operator 
-							!char.IsDigit(expr[i - 1]) &&   // previous char is not a digit (operator)
-							expr[i - 1] != '.';             // and previous char is not .
+							!(char.IsDigit(expr[i - 1]) ||   // previous char is not a digit (operator)
+							char.IsLetter(expr[i - 1]) ||
+							expr[i - 1] == '_' ||
+							expr[i - 1] == '.');             // and previous char is not .
 				}
 
 				if (minusIsNegative)
@@ -695,6 +697,16 @@ public class Evaluator : MonoBehaviour
 			else
 				tokens.Add(tokenString);
 		}
+		#endregion
+
+		#region convert special types to string
+		List<dynamic> converted = new();
+		foreach (dynamic token in tokens)
+		{
+			if (token is ClassInstance || token is ClassDefinition) converted.Add(token.ToString());
+			else converted.Add(token);
+		}
+		tokens = converted;
 		#endregion
 
 		#region iteratively evaluate with pemdas

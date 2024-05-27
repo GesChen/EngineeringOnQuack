@@ -142,7 +142,7 @@ public class ClassInstance
 			Output eval = OwnInterpreter.Run(ClassDefinition.ToStringFunction.Script);
 			if (!eval.Success) return $"Class instance of {ClassDefinition.Name}"; // return default if errored
 
-			return HF.ConvertToString(eval.Value);
+			return HF.ConvertToString(eval.Value, false);
 		}
 		return $"Class instance of {ClassDefinition.Name}";
 	}
@@ -208,9 +208,6 @@ public class Interpreter : MonoBehaviour
 		this.evaluator = evaluator;
 
 		Output result = Interpret(lines);
-
-		Debug.Log(result);
-		if (DEBUGMODE) DumpState();
 
 		return result;
 	}
@@ -563,7 +560,7 @@ public class Interpreter : MonoBehaviour
 
 		return blankLinePass;
 	}
-	void DumpState()
+	public void DumpState()
 	{
 		LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
 		LogColor("VARIABLES: " + HF.ConvertToString(variables), Color.yellow);

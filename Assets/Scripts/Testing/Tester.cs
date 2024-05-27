@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
 public class Tester : MonoBehaviour
 {
@@ -14,18 +15,28 @@ public class Tester : MonoBehaviour
 	public Evaluator evaluator;
 	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
 
-	void Start()
+	void Test()
 	{
+		Stopwatch stopwatch = Stopwatch.StartNew();
+		
 		string[] contents = File.ReadAllLines(scriptFilePath);
 		
 		Script script = new (contents.ToList());
 
-		double start = Time.timeAsDouble;
 
 		interpreter.DEBUGMODE = debug;
-		interpreter.Run(script, evaluator);
-	
-		Debug.Log((Time.time-start).ToString("G20"));
+		Output output = interpreter.Run(script, evaluator);
+		
+		UnityEngine.Debug.Log(output);
+		if(debug) interpreter.DumpState();
+
+		stopwatch.Stop();
+		UnityEngine.Debug.Log(stopwatch.ElapsedMilliseconds);
+	}
+
+	private void Update()
+	{
+		Test();
 	}
 }
 /*
