@@ -32,7 +32,7 @@ public class Test : MonoBehaviour
 			obj.rotation = testcollision.rotation;
 			obj.localScale = testcollision.localScale;
 			//Debug.Log(Intersections.MeshesIntersect(obj, testcollision));
-			Snapping.Snap(obj);
+			Snapping.Snap(obj, Camera.main, precision);
 			Debug.Log(Time.realtimeSinceStartupAsDouble - start);
 			Debug.Log(1 / (Time.realtimeSinceStartupAsDouble - start));
 		}

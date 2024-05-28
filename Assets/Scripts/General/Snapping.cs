@@ -7,6 +7,11 @@ using UnityEngine;
 
 public class Snapping
 {
+	public static void Snap(Transform obj)
+	{
+		Snap(obj, Camera.main, 15);
+	}
+
 	public static void Snap(Transform obj, Camera cam, int precision)
 	{
 		Vector3 origPos = obj.position;
@@ -40,15 +45,15 @@ public class Snapping
 		float step = FarthestVertDistFromCamera(mesh, obj, cam) - ClosestVertDistFromCamera(mesh, obj, cam);
 		//step *= 5f / 6f; // make step smaller to avoid skipping over small objects
 
-		obj.position += direction * closest;
+		//obj.position += direction * closest;
 		
-		/*
+		
 		// part 1: find closest collision
 		int stepsTaken = 0;
 		bool didCollide = false;
 		while (stepsTaken < 20 && !didCollide)
 		{
-			obj.position += cam.transform.forward * step; // take a step
+			obj.position += direction * step; // take a step
 			foreach (Transform t in possibleCollisions)
 			{
 				if (Intersections.MeshesIntersect(obj, t))
@@ -62,8 +67,9 @@ public class Snapping
 
 		if (!didCollide)
 		{
+			obj.position = origPos;
 			return; // didn't collide, don't continue
-		}*/
+		}
 
 		// part 2: refine 
 		bool isColliding;
@@ -175,11 +181,6 @@ public class Snapping
 
 		foreach (Collider collider in obj.GetComponents<Collider>())
 			collider.enabled = true;
-	}
-
-	public static void Snap(Transform obj)
-	{
-		Snap(obj, Camera.main, 15);
 	}
 
 	// returns all objects that are behind the SS bounds of `obj` from `cam` perspective
