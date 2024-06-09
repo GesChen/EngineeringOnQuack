@@ -219,7 +219,7 @@ public class RotateAxis : MonoBehaviour
 		DebugExtra.DrawEmpty(planeHitPos, .1f);
 #endif
 
-		Vector2 localPosPointOnPlane = HF.CoordinatesOfPointOnPlane(planeHitPos - planePos, planePos, planeRotation * Vector3.right, planeRotation * Vector3.up);
+		Vector2 localPosPointOnPlane = HF.CoordinatesOfPointOnPlane(planeHitPos, planePos, planeRotation * Vector3.right, planeRotation * Vector3.up);
 		float angle = Mathf.Rad2Deg * Mathf.Atan2(localPosPointOnPlane.y, localPosPointOnPlane.x);
 
 		if (firstFrameAfterStartDrag)

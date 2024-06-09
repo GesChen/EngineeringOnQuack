@@ -1049,6 +1049,74 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Selection"",
+            ""id"": ""8df1483b-7e67-47ac-8ca6-5fecb0753c88"",
+            ""actions"": [
+                {
+                    ""name"": ""MousePos"",
+                    ""type"": ""Value"",
+                    ""id"": ""363cb0c3-edc4-46a4-9388-9d83823f925f"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Drag"",
+                    ""type"": ""Button"",
+                    ""id"": ""685e1efa-3e3c-44ab-9f7e-f225571ef079"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Multiselect"",
+                    ""type"": ""Button"",
+                    ""id"": ""166c9b83-3ac1-4fc9-b6b2-770106878e51"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""a98cad9a-512d-4f88-aed0-19305e0b3f97"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MousePos"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cb01d1a6-fa72-404d-a2f8-9586cbee2ac1"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d6b17f4d-7276-4d3c-9f03-bf26bc43c396"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Multiselect"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -1147,6 +1215,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Transform_Distance = m_Transform.FindAction("Distance", throwIfNotFound: true);
         m_Transform_MouseDelta = m_Transform.FindAction("MouseDelta", throwIfNotFound: true);
         m_Transform_Snap = m_Transform.FindAction("Snap", throwIfNotFound: true);
+        // Selection
+        m_Selection = asset.FindActionMap("Selection", throwIfNotFound: true);
+        m_Selection_MousePos = m_Selection.FindAction("MousePos", throwIfNotFound: true);
+        m_Selection_Drag = m_Selection.FindAction("Drag", throwIfNotFound: true);
+        m_Selection_Multiselect = m_Selection.FindAction("Multiselect", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1556,6 +1629,68 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         }
     }
     public TransformActions @Transform => new TransformActions(this);
+
+    // Selection
+    private readonly InputActionMap m_Selection;
+    private List<ISelectionActions> m_SelectionActionsCallbackInterfaces = new List<ISelectionActions>();
+    private readonly InputAction m_Selection_MousePos;
+    private readonly InputAction m_Selection_Drag;
+    private readonly InputAction m_Selection_Multiselect;
+    public struct SelectionActions
+    {
+        private @InputMaster m_Wrapper;
+        public SelectionActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @MousePos => m_Wrapper.m_Selection_MousePos;
+        public InputAction @Drag => m_Wrapper.m_Selection_Drag;
+        public InputAction @Multiselect => m_Wrapper.m_Selection_Multiselect;
+        public InputActionMap Get() { return m_Wrapper.m_Selection; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(SelectionActions set) { return set.Get(); }
+        public void AddCallbacks(ISelectionActions instance)
+        {
+            if (instance == null || m_Wrapper.m_SelectionActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_SelectionActionsCallbackInterfaces.Add(instance);
+            @MousePos.started += instance.OnMousePos;
+            @MousePos.performed += instance.OnMousePos;
+            @MousePos.canceled += instance.OnMousePos;
+            @Drag.started += instance.OnDrag;
+            @Drag.performed += instance.OnDrag;
+            @Drag.canceled += instance.OnDrag;
+            @Multiselect.started += instance.OnMultiselect;
+            @Multiselect.performed += instance.OnMultiselect;
+            @Multiselect.canceled += instance.OnMultiselect;
+        }
+
+        private void UnregisterCallbacks(ISelectionActions instance)
+        {
+            @MousePos.started -= instance.OnMousePos;
+            @MousePos.performed -= instance.OnMousePos;
+            @MousePos.canceled -= instance.OnMousePos;
+            @Drag.started -= instance.OnDrag;
+            @Drag.performed -= instance.OnDrag;
+            @Drag.canceled -= instance.OnDrag;
+            @Multiselect.started -= instance.OnMultiselect;
+            @Multiselect.performed -= instance.OnMultiselect;
+            @Multiselect.canceled -= instance.OnMultiselect;
+        }
+
+        public void RemoveCallbacks(ISelectionActions instance)
+        {
+            if (m_Wrapper.m_SelectionActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(ISelectionActions instance)
+        {
+            foreach (var item in m_Wrapper.m_SelectionActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_SelectionActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public SelectionActions @Selection => new SelectionActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -1637,5 +1772,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnDistance(InputAction.CallbackContext context);
         void OnMouseDelta(InputAction.CallbackContext context);
         void OnSnap(InputAction.CallbackContext context);
+    }
+    public interface ISelectionActions
+    {
+        void OnMousePos(InputAction.CallbackContext context);
+        void OnDrag(InputAction.CallbackContext context);
+        void OnMultiselect(InputAction.CallbackContext context);
     }
 }

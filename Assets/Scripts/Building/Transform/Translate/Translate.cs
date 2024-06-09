@@ -1,12 +1,12 @@
+using Unity.VisualScripting.YamlDotNet.Serialization;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
-using UnityEngine.UIElements;
 
-public class Scale : MonoBehaviour
+public class Translate : MonoBehaviour
 {
-	public Vector3 axis;
-	public bool full;
+	public Vector3Int axes;
 	[HideInInspector] public Vector3 localAxes;
+	public bool doDynamicBoundsOffset;
 
 	private TransformTools main;
 	private Material mat;
@@ -32,10 +32,8 @@ public class Scale : MonoBehaviour
 	float smoothedAlpha;
 
 	Vector3 dragStartPos;
-	Vector2 dragStartMousePos;
-	Vector2 dragStartSSPos;
+	float distance;
 	Vector2 mouseOffset;
-	Vector3 startScale;
 
 	void Awake()
 	{
@@ -52,9 +50,10 @@ public class Scale : MonoBehaviour
 
 	void Update()
 	{
-		localAxes = main.transform.rotation * axis;
+		if (axes != Vector3.one)
+			localAxes = main.transform.rotation * axes;
 
-		over = MouseOver() && !main.specialCenterCase;
+		over = MouseOver();
 		mouseDown = main.controls.Transform.Drag.IsPressed();
 
 		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
@@ -74,10 +73,7 @@ public class Scale : MonoBehaviour
 
 		UpdateVisuals();
 
-		if (full)
-			PerformScalingFull();
-		else
-			PerformScalingAxis();
+		PerformDragging();
 
 		UseAxisIndicator();
 
@@ -86,15 +82,14 @@ public class Scale : MonoBehaviour
 		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
-	void ResetTransform()
+
+	void ResetTransform() // reset ALL transforms (except position)
 	{
 		resetting = true;
-		Vector3 scaling = main.target.transform.localScale;
-		scaling.Scale(Vector3.one - axis);
-		scaling += axis;
-		if (full) scaling = Vector3.one;
-		main.target.transform.localScale = scaling;
+		main.target.transform.rotation = Quaternion.identity;
+		main.target.transform.localScale = Vector3.one;
 	}
+
 	bool MouseOver()
 	{
 		// get world bounds and camera
@@ -123,14 +118,34 @@ public class Scale : MonoBehaviour
 		}
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		bool inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
+		bool inBounds;
+
+		// dynamic bounds offset
+		if (doDynamicBoundsOffset)
+		{
+			float dot = Vector3.Dot(Vector3.one - localAxes, Camera.main.transform.forward);
+			float dynamicOffset = -((1 - dot) * 2 - 1) * main.boundsOffset;
+
+			inBounds = mousePos.x >= minScreen.x + dynamicOffset && mousePos.x <= maxScreen.x - dynamicOffset &&
+						mousePos.y >= minScreen.y + dynamicOffset && mousePos.y <= maxScreen.y - dynamicOffset;
+		}
+		else
+		{
+			// determine if mouse is inside ss bounds
+			inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
 						mousePos.y >= minScreen.y + main.boundsOffset && mousePos.y <= maxScreen.y - main.boundsOffset;
+		}
 		return inBounds;
 	}
 	void StartOver()
 	{
-		if (!main.hovering && !dragging)
+		if (!main.hovering && !dragging)// || axes == Vector3.one)
 		{
+			main.currentlyUsingTransformObj = this;
+
+			if (axes == Vector3.one)
+				main.specialCenterCase = true;	
+
 			hovering = true;
 			main.hovering = true;
 
@@ -152,6 +167,8 @@ public class Scale : MonoBehaviour
 			mat.SetFloat("_TransparentSortPriority", 0);
 			HDMaterial.ValidateMaterial(mat);
 		}
+		if (axes == Vector3.one)
+			main.specialCenterCase = false;
 	}
 	void StartClicking()
 	{
@@ -165,18 +182,17 @@ public class Scale : MonoBehaviour
 
 			// axis indicator code here if going to use 
 
-			dragStartMousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
-			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
+			mouseOffset = main.controls.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
+			distance = Vector3.Distance(transform.position, Camera.main.transform.position);
 			dragStartPos = main.transform.position;
-			startScale = main.target.localScale;
 		}
 	}
-	void StopClicking()
+	public void StopClicking()
 	{
 		if (!dragging) return;
 
-		main.transform.position = main.target.position;
+		main.UpdatePosition();
+		transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
 
 		main.axisIndicator.inUse = false;
 		main.axisIndicator.transform.localScale = new(.015f, .015f, 2f);
@@ -196,6 +212,7 @@ public class Scale : MonoBehaviour
 			main.hovering = false;
 			targetIntensity = main.defaultIntensity;
 			targetScale = 1f;
+			main.specialCenterCase = false;
 		}
 	}
 	void UpdateVisuals()
@@ -208,71 +225,96 @@ public class Scale : MonoBehaviour
 		smoothedIntensity = Vector3.Lerp(smoothedIntensity, targetIntensity, main.intensitySmoothness);
 		smoothedScale = Mathf.Lerp(smoothedScale, targetScale, main.scaleSmoothness);
 		smoothedAlpha = Mathf.Lerp(smoothedAlpha, targetAlpha, main.alphaSmoothness);
-		
-		if (!dragging) 
-			transform.localPosition = axis * ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault);
 
 		mat.SetColor("_EmissiveColor", HF.MultiplyColorByVector(smoothedIntensity, color));
 		mat.color = new(color.r, color.g, color.b, smoothedAlpha);
 		//mat.SetFloat("_Alpha", smoothedAlpha);
 		transform.localScale = smoothedScale * Vector3.one;
 	}
-	void PerformScalingAxis()
+	void PerformDragging()
 	{
 		if (!dragging) return;
+
+		Camera mainCamera = Camera.main;
+
+		int numaxes = axes.x + axes.y + axes.z;
 
 		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
-		mouseScreenSpace.z = Camera.main.nearClipPlane;
+		mouseScreenSpace.z = mainCamera.nearClipPlane;
 
-		Vector3 cameraPos = Camera.main.transform.position;
-		Vector3 cameraVec = Camera.main.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
+		Vector3 cameraPos = mainCamera.transform.position;
+		Vector3 cameraVec = mainCamera.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
 
-		Vector3 newPos = HF.ClosestPointAOnTwoLines(
-			dragStartPos, localAxes.normalized,
-			cameraPos, cameraVec.normalized);
+		switch (numaxes)
+		{
+			case 1:
+				transform.position = HF.ClosestPointAOnTwoLines(
+					dragStartPos, localAxes.normalized,
+					cameraPos, cameraVec.normalized); //alot of hacky stuff going on here that i dont understand
+				break;
+			case 2:
+				transform.position = HF.RayPlaneIntersect(
+					dragStartPos, main.transform.rotation * (Vector3.one - axes),
+					cameraPos, cameraVec);
+				break;
+			case 3:
+				mouseScreenSpace.z = distance;
+				transform.position = mainCamera.ScreenToWorldPoint(mouseScreenSpace);
+				break;
+		};
 
-		transform.position = newPos;
-		float distance = transform.localPosition.magnitude;
-		float offset = ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault) - 1;
-
-		//Vector3 keep = HelperFunctions.MV3(Vector3.one - axis, startScale);
-
-		float scaleInAxis = distance - offset;
-
-		if (main.snapping)
-			scaleInAxis = Mathf.Round(scaleInAxis / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
-
-		Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
-
-		main.target.transform.localScale = HF.MV3(startScale, newScale);
-	}
-	void PerformScalingFull()
-	{
-		if (!dragging) return;
+		// move target with direction
+		main.target.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+	
 		
-		Vector2 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
-
-		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
-
-		Debug.Log(scale);
-
-		if (scale > 1)
-			scale = 1 + scale * main.fullScaleFactor;
-
 		if (main.snapping)
-			scale = Mathf.Round(scale / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
+		{
+			switch (numaxes)
+			{
+				case 1:
+					float distanceAlongAxis = HF.DistanceInDirection(main.target.position, dragStartPos, axes);
+					float snappedDist = Mathf.Round(distanceAlongAxis / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					main.target.position = dragStartPos + localAxes * snappedDist;
+					break;
+				case 2:
+					Vector3 planeXVector = Vector3.zero;
+					Vector3 planeYVector = Vector3.zero;
 
-		main.target.localScale = startScale * scale;
+					if (axes.x != 0)
+						planeXVector = main.transform.rotation * Vector3.right;
+					if (axes.y != 0)
+					{
+						if (planeXVector == Vector3.zero)
+							planeXVector = main.transform.rotation * Vector3.up;
+						else
+							planeYVector = main.transform.rotation * Vector3.up;
+					}
+					if (axes.z != 0)
+						planeYVector = main.transform.rotation * Vector3.forward;
+
+					Vector2 planePoint = HF.CoordinatesOfPointOnPlane(main.target.position, dragStartPos, planeXVector, planeYVector);
+					Vector2 snappedPoint = HF.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					Vector3 worldSpacePoint = dragStartPos + planeXVector * snappedPoint.x + planeYVector * snappedPoint.y;
+
+					main.target.position = worldSpacePoint;
+
+					break;
+				case 3:
+					Vector3 snappedPos = HF.Vector3Round(main.target.position / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+					main.target.position = snappedPos;
+					break;
+			}
+		}
 	}
 	void UseAxisIndicator()
 	{
-		if (dragging && !full)
+		if (dragging && (axes.x + axes.y + axes.z) == 1)
 		{
 			main.axisIndicator.inUse = true;
 			main.axisIndicator.color = color;
-			main.axisIndicator.transform.position = (main.target.position + dragStartPos) / 2;
+			main.axisIndicator.transform.position = (transform.position + dragStartPos) / 2;
 			main.axisIndicator.transform.localScale = new(.015f, .015f, (transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
-			main.axisIndicator.rotation = main.target.rotation * Quaternion.LookRotation(axis, transform.up);
+			main.axisIndicator.rotation = Quaternion.LookRotation(localAxes, transform.up);
 		}
 	}
 }

@@ -3,6 +3,34 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public static class HF {
+	#region Base Class Extensions
+	public static Color MultiplyColorByVector(Vector3 vector, Color color)
+	{
+		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
+	}
+
+	public static Vector3 MV3(Vector3 a, Vector3 b)
+		=> new(a.x * b.x, a.y * b.y, a.z * b.z);
+
+	public static Vector3 Vector3Round(Vector3 v)
+		=> new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
+
+	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t)
+	{
+		return new Vector3(
+			Mathf.Lerp(a.x, b.x, t.x),
+			Mathf.Lerp(a.y, b.y, t.y),
+			Mathf.Lerp(a.z, b.z, t.z));
+	}
+
+	public static Vector2 Vector2Round(Vector2 v)
+		=> new(Mathf.Round(v.x), Mathf.Round(v.y));
+
+	public static Vector2 Vector2Abs(Vector2 v)
+		=> new (Mathf.Abs(v.x), Mathf.Abs(v.y));
+	#endregion
+
+
 	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
 	{
 		float minDistance = float.MaxValue;
@@ -77,25 +105,8 @@ public static class HF {
 		return intersectionPoint;
 	}
 	
-	public static Color MultiplyColorByVector(Vector3 vector, Color color)
-	{
-		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
-	}
-	
-	public static Vector3 MV3(Vector3 a, Vector3 b) 
-		=> new (a.x * b.x, a.y * b.y, a.z * b.z);
-	
-	public static Vector3 Vector3Round(Vector3 v)
-		=> new (Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
-	
-	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t)
-	{
-		return new Vector3(
-			Mathf.Lerp(a.x, b.x, t.x),
-			Mathf.Lerp(a.y, b.y, t.y),
-			Mathf.Lerp(a.z, b.z, t.z));
-	}
-	
+
+
 	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
 		=> Vector3.Dot(point - reference, direction);
 	
@@ -107,9 +118,6 @@ public static class HF {
 		float dist = Vector3.Dot(point - planeOrig, planeNormal);
 		return point - dist * planeNormal;
 	}
-
-	public static Vector2 Vector2Round(Vector2 v) 
-		=> new (Mathf.Round(v.x), Mathf.Round(v.y));
 
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];

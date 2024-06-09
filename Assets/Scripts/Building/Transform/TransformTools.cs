@@ -4,9 +4,12 @@ using UnityEngine;
 
 public class TransformTools : MonoBehaviour
 {
+	public bool active;
+
 	public Transform target;
 	public bool local;
 	public float size;
+	float currentSize;
 	public float boundsOffset;
 	public float maxMouseSpeedToScaleOut;
 	public float doubleClickResetMaxTime = .2f;
@@ -70,6 +73,7 @@ public class TransformTools : MonoBehaviour
 
 	[HideInInspector] public InputMaster controls;
 
+	#region input
 	void Awake()
 	{
 		controls = new InputMaster();
@@ -83,11 +87,14 @@ public class TransformTools : MonoBehaviour
 	{
 		controls.Disable();
 	}
+	#endregion
 
 	void Update()
 	{
+		currentSize = active ? size : 0;
+
 		if (!dragging)
-			transform.localScale = Vector3.Distance(Camera.main.transform.position, target.position) * size * Vector3.one;
+			transform.localScale = Vector3.Distance(Camera.main.transform.position, target.position) * currentSize * Vector3.one;
 		
 		if (local && !dragging)
 			transform.rotation = target.rotation;
@@ -101,5 +108,9 @@ public class TransformTools : MonoBehaviour
 		}
 
 		snapping = controls.Transform.Snap.IsPressed();
+	}
+	public void UpdatePosition()
+	{
+		transform.position = target.position;
 	}
 }

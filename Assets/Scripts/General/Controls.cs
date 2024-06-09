@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SelectionBox : MonoBehaviour
+public class Controls : MonoBehaviour
 {
+    public static float clickMaxDist = 5;
+    public static float clickMaxTime = .1f;
     // Start is called before the first frame update
     void Start()
     {
