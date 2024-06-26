@@ -5,8 +5,10 @@ using UnityEngine;
 public class TransformTools : MonoBehaviour
 {
 	public bool active;
-
-	public Transform target;
+	[Space]
+	public Transform selectionContainer;
+	public BuildingManager buildingManager;
+	[Space]
 	public bool local;
 	public float size;
 	float currentSize;
@@ -94,10 +96,10 @@ public class TransformTools : MonoBehaviour
 		currentSize = active ? size : 0;
 
 		if (!dragging)
-			transform.localScale = Vector3.Distance(Camera.main.transform.position, target.position) * currentSize * Vector3.one;
+			transform.localScale = Vector3.Distance(Camera.main.transform.position, selectionContainer.position) * currentSize * Vector3.one;
 		
 		if (local && !dragging)
-			transform.rotation = target.rotation;
+			transform.rotation = selectionContainer.rotation;
 		else if (!local)
 			transform.rotation = Quaternion.identity;
 
@@ -111,6 +113,6 @@ public class TransformTools : MonoBehaviour
 	}
 	public void UpdatePosition()
 	{
-		transform.position = target.position;
+		transform.position = selectionContainer.position;
 	}
 }

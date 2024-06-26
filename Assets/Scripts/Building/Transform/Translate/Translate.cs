@@ -86,8 +86,12 @@ public class Translate : MonoBehaviour
 	void ResetTransform() // reset ALL transforms (except position)
 	{
 		resetting = true;
-		main.target.transform.rotation = Quaternion.identity;
-		main.target.transform.localScale = Vector3.one;
+		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		{
+			t.rotation = Quaternion.identity;
+			t.localScale = Vector3.one;
+		}
+		main.buildingManager.SelectionManager.UpdateContainer();
 	}
 
 	bool MouseOver()
@@ -260,11 +264,15 @@ public class Translate : MonoBehaviour
 			case 3:
 				mouseScreenSpace.z = distance;
 				transform.position = mainCamera.ScreenToWorldPoint(mouseScreenSpace);
+				
+				if (main.snapping && main.local)
+					transform.position -= dragStartPos;
+
 				break;
 		};
 
 		// move target with direction
-		main.target.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+		main.selectionContainer.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
 	
 		
 		if (main.snapping)
@@ -272,9 +280,9 @@ public class Translate : MonoBehaviour
 			switch (numaxes)
 			{
 				case 1:
-					float distanceAlongAxis = HF.DistanceInDirection(main.target.position, dragStartPos, axes);
+					float distanceAlongAxis = HF.DistanceInDirection(main.selectionContainer.position, dragStartPos, localAxes);
 					float snappedDist = Mathf.Round(distanceAlongAxis / main.translateSnappingIncrement) * main.translateSnappingIncrement;
-					main.target.position = dragStartPos + localAxes * snappedDist;
+					main.selectionContainer.position = dragStartPos + localAxes * snappedDist;
 					break;
 				case 2:
 					Vector3 planeXVector = Vector3.zero;
@@ -292,16 +300,20 @@ public class Translate : MonoBehaviour
 					if (axes.z != 0)
 						planeYVector = main.transform.rotation * Vector3.forward;
 
-					Vector2 planePoint = HF.CoordinatesOfPointOnPlane(main.target.position, dragStartPos, planeXVector, planeYVector);
+					Vector2 planePoint = HF.CoordinatesOfPointOnPlane(main.selectionContainer.position, dragStartPos, planeXVector, planeYVector);
 					Vector2 snappedPoint = HF.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
 					Vector3 worldSpacePoint = dragStartPos + planeXVector * snappedPoint.x + planeYVector * snappedPoint.y;
 
-					main.target.position = worldSpacePoint;
+					main.selectionContainer.position = worldSpacePoint;
 
 					break;
 				case 3:
-					Vector3 snappedPos = HF.Vector3Round(main.target.position / main.translateSnappingIncrement) * main.translateSnappingIncrement;
-					main.target.position = snappedPos;
+					Vector3 snappedPos = main.local ?
+						  (transform.rotation * (HF.Vector3Round(Quaternion.Inverse(transform.rotation) * main.selectionContainer.position / main.translateSnappingIncrement) * main.translateSnappingIncrement))
+						: (HF.Vector3Round(main.selectionContainer.position / main.translateSnappingIncrement) * main.translateSnappingIncrement);
+
+					main.selectionContainer.position = snappedPos + (main.local ? dragStartPos : Vector3.zero);
+					if(main.local) transform.position += dragStartPos;
 					break;
 			}
 		}

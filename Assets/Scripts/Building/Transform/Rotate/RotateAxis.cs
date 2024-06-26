@@ -81,9 +81,13 @@ public class RotateAxis : MonoBehaviour
 	}
 	void ResetTransform()
 	{
-		Vector3 rotation = main.target.transform.rotation.eulerAngles;
-		rotation.Scale(Vector3.one - axis);
-		main.target.transform.rotation = Quaternion.Euler(rotation);
+		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		{
+			Vector3 rotation = t.rotation.eulerAngles;
+			rotation.Scale(Vector3.one - axis);
+			t.rotation = Quaternion.Euler(rotation);
+		}
+		main.buildingManager.SelectionManager.UpdateContainer();
 	}
 	bool MouseOver()
 	{
@@ -225,7 +229,7 @@ public class RotateAxis : MonoBehaviour
 		if (firstFrameAfterStartDrag)
 		{
 			startAngle = angle;
-			targetStartRotation = main.target.rotation;
+			targetStartRotation = main.selectionContainer.rotation;
 			//main.rotateSnapIndicator.startAngle = startAngle;
 		}
 
@@ -248,7 +252,7 @@ public class RotateAxis : MonoBehaviour
 #endif
 
 		transform.localRotation = Quaternion.AngleAxis(angleDelta, axis);
-		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angleDelta, Quaternion.Inverse(targetStartRotation) * planeNormal);
+		main.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angleDelta, Quaternion.Inverse(targetStartRotation) * planeNormal);
 		
 		firstFrameAfterStartDrag = false;
 	}

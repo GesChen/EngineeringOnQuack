@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.UIElements;
@@ -35,7 +36,7 @@ public class Scale : MonoBehaviour
 	Vector2 dragStartMousePos;
 	Vector2 dragStartSSPos;
 	Vector2 mouseOffset;
-	Vector3 startScale;
+	Dictionary<Transform,Vector3> startScales;
 
 	void Awake()
 	{
@@ -78,7 +79,7 @@ public class Scale : MonoBehaviour
 			PerformScalingFull();
 		else
 			PerformScalingAxis();
-
+		
 		UseAxisIndicator();
 
 		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
@@ -89,11 +90,15 @@ public class Scale : MonoBehaviour
 	void ResetTransform()
 	{
 		resetting = true;
-		Vector3 scaling = main.target.transform.localScale;
-		scaling.Scale(Vector3.one - axis);
-		scaling += axis;
-		if (full) scaling = Vector3.one;
-		main.target.transform.localScale = scaling;
+		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		{
+			Vector3 scaling = t.localScale;
+			scaling.Scale(Vector3.one - axis);
+			scaling += axis;
+			if (full) scaling = Vector3.one;
+			t.localScale = scaling;
+		}
+		main.buildingManager.SelectionManager.UpdateContainer();
 	}
 	bool MouseOver()
 	{
@@ -169,7 +174,12 @@ public class Scale : MonoBehaviour
 			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
 			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			dragStartPos = main.transform.position;
-			startScale = main.target.localScale;
+
+			startScales = new();
+			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			{
+				startScales[t] = t.localScale;
+			}
 		}
 	}
 	void StopClicking()
@@ -235,16 +245,33 @@ public class Scale : MonoBehaviour
 		float distance = transform.localPosition.magnitude;
 		float offset = ((main.translating || main.rotating) ? main.scaleAxesDistWOthers : main.scaleAxesDistDefault) - 1;
 
-		//Vector3 keep = HelperFunctions.MV3(Vector3.one - axis, startScale);
-
 		float scaleInAxis = distance - offset;
+		if (scaleInAxis < 1)
+			scaleInAxis = distance / (1 + offset);
 
-		if (main.snapping)
-			scaleInAxis = Mathf.Round(scaleInAxis / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
+		if (!main.snapping)
+		{
+			Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
 
-		Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
+			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			{
+				t.localScale = HF.MV3(startScales[t], newScale);
+			}
+		}
+		else
+		{	foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			{
+				float currentScaleInAxis = HF.MV3(startScales[t], axis).magnitude;
 
-		main.target.transform.localScale = HF.MV3(startScale, newScale);
+				scaleInAxis -= 1;
+				if (main.local) scaleInAxis += currentScaleInAxis; // different logic depending on local or not 
+				scaleInAxis = Mathf.Round(scaleInAxis / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
+				if (!main.local) scaleInAxis += currentScaleInAxis;
+
+				Vector3 newScale = HF.MV3(startScales[t], Vector3.one - axis) + axis * scaleInAxis;
+				t.localScale = newScale;
+			}
+		}
 	}
 	void PerformScalingFull()
 	{
@@ -260,7 +287,10 @@ public class Scale : MonoBehaviour
 		if (main.snapping)
 			scale = Mathf.Round(scale / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
 
-		main.target.localScale = startScale * scale;
+		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		{
+			t.localScale = startScales[t] * scale;
+		}
 	}
 	void UseAxisIndicator()
 	{
@@ -268,9 +298,9 @@ public class Scale : MonoBehaviour
 		{
 			main.axisIndicator.inUse = true;
 			main.axisIndicator.color = color;
-			main.axisIndicator.transform.position = (main.target.position + dragStartPos) / 2;
+			main.axisIndicator.transform.position = (main.selectionContainer.position + dragStartPos) / 2;
 			main.axisIndicator.transform.localScale = new(.015f, .015f, (transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
-			main.axisIndicator.rotation = main.target.rotation * Quaternion.LookRotation(axis, transform.up);
+			main.axisIndicator.rotation = main.selectionContainer.rotation * Quaternion.LookRotation(axis, transform.up);
 		}
 	}
 }

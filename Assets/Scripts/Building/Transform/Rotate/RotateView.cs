@@ -79,7 +79,11 @@ public class RotateView : MonoBehaviour
 	}
 	void ResetTransform()
 	{
-		main.target.transform.rotation = Quaternion.identity;
+		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		{
+			t.rotation = Quaternion.identity;
+		}
+		main.buildingManager.SelectionManager.UpdateContainer();
 	}
 	bool MouseOver()
 	{
@@ -181,14 +185,14 @@ public class RotateView : MonoBehaviour
 
 		if (firstFrameAfterStartDrag)
 		{
-			targetStartRotation = main.target.rotation;
+			targetStartRotation = main.selectionContainer.rotation;
 			angleOffset = angle;
 		}
 
 		if (main.snapping)
 			angle = Mathf.Round(angle / main.rotateSnappingIncrement) * main.rotateSnappingIncrement;
 
-		main.target.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
+		main.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
 		firstFrameAfterStartDrag = false;
 	}
 }

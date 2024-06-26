@@ -1,11 +1,10 @@
 {
-    "name": "TransformToolsAssembly",
+    "name": "BuildingAssembly",
     "rootNamespace": "",
     "references": [
-        "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:457756d89b35d2941b3e7b37b4ece6f1",
         "GUID:1b37b5d0dc8a2c147bc43b3e56ad8620",
-        "GUID:047b3dcd64d520c4e8e731dd9cc887eb"
+        "GUID:457756d89b35d2941b3e7b37b4ece6f1",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

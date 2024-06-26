@@ -173,7 +173,7 @@ public class SelectionManager : MonoBehaviour
 		}
 	}
 
-	void UpdateContainer()
+	public void UpdateContainer()
 	{
 		// remove objects from the container that are no longer in selection 
 		// (this is put before return, in case selection is empty then this will not happen
@@ -200,15 +200,22 @@ public class SelectionManager : MonoBehaviour
 			main.transformTools.active = true;
 		}
 
-		Vector3 total = Vector3.zero;
+		// handle position
+		Vector3 totalPosition = Vector3.zero;
 		foreach (Transform t in selection)
 		{
 			t.SetParent(main.mainPartsContainer, true);
-			total += t.position;
+			totalPosition += t.position;
 		}
 
-		selectionContainer.position = total / selection.Count;
+		selectionContainer.position = totalPosition / selection.Count;
 		main.transformTools.UpdatePosition();
+
+		// handle rotation (local, single selection, otherwise will act globally)
+		if (selection.Count == 1 && main.transformTools.local)
+			selectionContainer.rotation = selection[0].transform.rotation;
+		else
+			selectionContainer.rotation = Quaternion.identity;
 
 		foreach (Transform t in selection)
 		{
