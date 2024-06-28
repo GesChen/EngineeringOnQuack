@@ -9,6 +9,7 @@ public class Translate : MonoBehaviour
 	public bool doDynamicBoundsOffset;
 
 	private TransformTools main;
+	private TranslateMain parentMain;
 	private Material mat;
 	private Renderer objectRenderer;
 
@@ -21,6 +22,7 @@ public class Translate : MonoBehaviour
 	bool dragging;
 	float lastMouseDownTime;
 	bool resetting;
+	int numaxes;
 
 	Color color;
 
@@ -30,6 +32,8 @@ public class Translate : MonoBehaviour
 	float smoothedScale;
 	float targetAlpha;
 	float smoothedAlpha;
+	AxisIndicator axisIndicator;
+	AxisIndicator otherAxisIndicator; // used for 2 axes
 
 	Vector3 dragStartPos;
 	float distance;
@@ -38,6 +42,8 @@ public class Translate : MonoBehaviour
 	void Awake()
 	{
 		main = GetComponentInParent<TransformTools>();
+		parentMain = GetComponentInParent<TranslateMain>();
+
 		objectRenderer = GetComponent<Renderer>();
 		mat = objectRenderer.material;
 		color = mat.color;
@@ -46,6 +52,8 @@ public class Translate : MonoBehaviour
 		smoothedIntensity = main.defaultIntensity;
 		targetAlpha = main.defaultAlpha;
 		targetScale = 1f;
+
+		numaxes = axes.x + axes.y + axes.z;
 	}
 
 	void Update()
@@ -185,6 +193,8 @@ public class Translate : MonoBehaviour
 			targetScale = main.draggingScale;
 
 			// axis indicator code here if going to use 
+			if (numaxes < 3) axisIndicator = main.axisIndicatorManager.NewIndicator(); // full doesn't need
+			if (numaxes == 2) otherAxisIndicator = main.axisIndicatorManager.NewIndicator(); // two axes needs another
 
 			mouseOffset = main.controls.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			distance = Vector3.Distance(transform.position, Camera.main.transform.position);
@@ -198,8 +208,8 @@ public class Translate : MonoBehaviour
 		main.UpdatePosition();
 		transform.localPosition = axes == Vector3.one ? Vector3.zero : axes;
 
-		main.axisIndicator.inUse = false;
-		main.axisIndicator.transform.localScale = new(.015f, .015f, 2f);
+		main.axisIndicatorManager.DestroyIndicator(axisIndicator);
+		if (otherAxisIndicator != null) main.axisIndicatorManager.DestroyIndicator(otherAxisIndicator);
 
 		dragging = false;
 		main.dragging = false;
@@ -241,8 +251,6 @@ public class Translate : MonoBehaviour
 
 		Camera mainCamera = Camera.main;
 
-		int numaxes = axes.x + axes.y + axes.z;
-
 		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
 		mouseScreenSpace.z = mainCamera.nearClipPlane;
 
@@ -274,7 +282,6 @@ public class Translate : MonoBehaviour
 		// move target with direction
 		main.selectionContainer.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
 	
-		
 		if (main.snapping)
 		{
 			switch (numaxes)
@@ -320,13 +327,39 @@ public class Translate : MonoBehaviour
 	}
 	void UseAxisIndicator()
 	{
-		if (dragging && (axes.x + axes.y + axes.z) == 1)
+		if (!dragging) return;
+		switch(numaxes)
 		{
-			main.axisIndicator.inUse = true;
-			main.axisIndicator.color = color;
-			main.axisIndicator.transform.position = (transform.position + dragStartPos) / 2;
-			main.axisIndicator.transform.localScale = new(.015f, .015f, (transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
-			main.axisIndicator.rotation = Quaternion.LookRotation(localAxes, transform.up);
+			case 1:
+				axisIndicator.UpdateIndicator(
+					(transform.position + dragStartPos) / 2,
+					Quaternion.LookRotation(localAxes, transform.up),
+					color,
+					(transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
+				break;
+			case 2:
+				Vector3 axis0 =
+					axes == new Vector3(1, 1, 0) ?	new Vector3(1, 0, 0) : (
+					axes == new Vector3(0, 1, 1) ?	new Vector3(0, 1, 0) :
+										/*1,0,1*/	new Vector3(1, 0, 0));
+				Vector3 axis1 = axes - axis0;
+
+				axis0 = main.transform.rotation * axis0;
+				axis1 = main.transform.rotation * axis1;
+
+				axisIndicator.UpdateIndicator(
+					dragStartPos,
+					main.selectionContainer.rotation * Quaternion.LookRotation(axis0, transform.up),
+					parentMain.colorOfAxes[axis0],
+					(transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
+
+				otherAxisIndicator.UpdateIndicator(
+					dragStartPos,
+					main.selectionContainer.rotation * Quaternion.LookRotation(axis1, transform.up),
+					parentMain.colorOfAxes[axis1],
+					(transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
+
+				break;
 		}
 	}
 }

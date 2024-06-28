@@ -57,7 +57,7 @@ public class TransformTools : MonoBehaviour
 	public float draggingAlpha = .01f;
 	
 	[Header ("Axis Indicator")]
-	public AxisIndicator axisIndicator;
+	public AxisIndicatorManager axisIndicatorManager;
 	public float axisIndicatorAlpha;
 	public float axisIndicatorLengthOffset;
 

@@ -32,6 +32,7 @@ public class RotateAxis : MonoBehaviour
 	float smoothedOutset;
 	float targetAlpha;
 	float smoothedAlpha;
+	AxisIndicator axisIndicator;
 
 	bool firstFrameAfterStartDrag;
 	float startAngle;
@@ -114,7 +115,7 @@ public class RotateAxis : MonoBehaviour
 			HDMaterial.ValidateMaterial(mat);
 		}
 	}
-	void StopOver()
+	public void StopOver()
 	{
 		if (hovering && !dragging)
 		{
@@ -138,10 +139,11 @@ public class RotateAxis : MonoBehaviour
 			targetOutset = main.draggingOutset;
 
 			// handle axis indicator
-			main.axisIndicator.inUse = true;
-			main.axisIndicator.rotation = main.transform.rotation * Quaternion.LookRotation(axis, Vector3.up);
-			main.axisIndicator.color = mat.color;
-			main.axisIndicator.transform.position = transform.position;
+			axisIndicator = main.axisIndicatorManager.NewIndicator();
+			axisIndicator.UpdateIndicator(
+				transform.position,
+				main.transform.rotation * Quaternion.LookRotation(axis, Vector3.up),
+				mat.color);
 			
 			/*/ handle rotate snap indicator
 			main.rotateSnapIndicator.inUse = true;
@@ -155,7 +157,7 @@ public class RotateAxis : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		main.axisIndicator.inUse = false;
+		main.axisIndicatorManager.DestroyIndicator(axisIndicator);
 		//main.rotateSnapIndicator.inUse = false;
 		dragging = false;
 		main.dragging = false;

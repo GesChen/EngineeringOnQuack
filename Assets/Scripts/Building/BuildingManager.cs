@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BuildingManager : MonoBehaviour
@@ -18,6 +19,8 @@ public class BuildingManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Parts = FindObjectsOfType<Part>().ToList();
+
         foreach(Part part in Parts)
         {
             part.Selected = SelectionManager.selection.Contains(part.transform);

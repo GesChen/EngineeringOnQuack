@@ -4,28 +4,29 @@ using UnityEngine;
 
 public class AxisIndicator : MonoBehaviour
 {
-	public bool inUse;
-	public float alpha;
-	public Quaternion rotation;
-	public Color color;
-
 	private TransformTools main;
 	private Material mat;
-	void Start()
+	void Awake()
 	{
 		main = GetComponentInParent<TransformTools>();
 		mat = GetComponent<MeshRenderer>().material;
 	}
 
-	void Update()
+	public void UpdateIndicator(Vector3 position, Quaternion rotation, Color color, float length = 2)
 	{
+		transform.SetPositionAndRotation(position, rotation);
+		transform.localScale = new Vector3(.015f, .015f, length);
+		mat.color = color == Color.white ? Color.white * main.draggingWhiteIntensity : HF.MultiplyColorByVector(main.draggingIntensity, color);
+		mat.SetFloat("_Alpha", main.axisIndicatorAlpha);
+	}
+	/*
+	public void Update()
+	{
+		// main update loop responsible for updating alpha (constantly changing)
 		if (inUse)
 			alpha = Mathf.Lerp(alpha, main.axisIndicatorAlpha, main.alphaSmoothness);
 		else
 			alpha = Mathf.Lerp(alpha, 0f, main.alphaSmoothness);
 
-		mat.color = color == Color.white ? Color.white * main.draggingWhiteIntensity : HF.MultiplyColorByVector(main.draggingIntensity, color);
-		mat.SetFloat("_Alpha", alpha);
-		transform.rotation = rotation;
-	}
+	}*/
 }

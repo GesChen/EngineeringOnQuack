@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
-using UnityEngine.UIElements;
 
 public class Scale : MonoBehaviour
 {
@@ -12,6 +11,7 @@ public class Scale : MonoBehaviour
 	private TransformTools main;
 	private Material mat;
 	private Renderer objectRenderer;
+	private MeshFilter meshFilter;
 
 	bool over;
 	bool lastOver;
@@ -31,6 +31,9 @@ public class Scale : MonoBehaviour
 	float smoothedScale;
 	float targetAlpha;
 	float smoothedAlpha;
+	List<AxisIndicator> axisIndicators = new();
+	Dictionary<Transform, AxisIndicator> objectAxisIndicators = new();
+	List<Transform> lastSelection = new();
 
 	Vector3 dragStartPos;
 	Vector2 dragStartMousePos;
@@ -42,6 +45,7 @@ public class Scale : MonoBehaviour
 	{
 		main = GetComponentInParent<TransformTools>();
 		objectRenderer = GetComponent<Renderer>();
+		meshFilter = GetComponent<MeshFilter>();
 		mat = objectRenderer.material;
 		color = mat.color;
 
@@ -102,7 +106,7 @@ public class Scale : MonoBehaviour
 	}
 	bool MouseOver()
 	{
-		// get world bounds and camera
+		/*// get world bounds and camera
 		Bounds bounds = objectRenderer.bounds;
 		Camera mainCamera = Camera.main;
 
@@ -116,15 +120,19 @@ public class Scale : MonoBehaviour
 		boundsCorners[5] = mainCamera.WorldToScreenPoint(bounds.center + Vector3.Scale(bounds.extents, new Vector3(1, -1, -1)));
 		boundsCorners[6] = mainCamera.WorldToScreenPoint(bounds.center + Vector3.Scale(bounds.extents, new Vector3(-1, 1, -1)));
 		boundsCorners[7] = mainCamera.WorldToScreenPoint(bounds.center + Vector3.Scale(bounds.extents, new Vector3(-1, -1, -1)));
+		*/
 
 		// calculate the bounds of the screen space bounds
 		Vector2 minScreen = Vector2.positiveInfinity;
 		Vector2 maxScreen = Vector2.negativeInfinity;
 
-		foreach (Vector2 corner in boundsCorners)
+		for (int i = 0; i < meshFilter.sharedMesh.vertexCount; i++)
 		{
-			minScreen = Vector2.Min(minScreen, corner);
-			maxScreen = Vector2.Max(maxScreen, corner);
+			Vector3 vertexPos = transform.position + (Vector3)(transform.localToWorldMatrix * meshFilter.sharedMesh.vertices[i]);
+			DebugExtra.DrawPoint(vertexPos, .1f);
+			Vector2 ssPos = Camera.main.WorldToScreenPoint(vertexPos);
+			minScreen = Vector2.Min(minScreen, ssPos);
+			maxScreen = Vector2.Max(maxScreen, ssPos);
 		}
 
 		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
@@ -169,6 +177,7 @@ public class Scale : MonoBehaviour
 			targetScale = main.draggingScale;
 
 			// axis indicator code here if going to use 
+			UpdateAxisIndicators();
 
 			dragStartMousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
 			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
@@ -188,9 +197,9 @@ public class Scale : MonoBehaviour
 
 		main.UpdatePosition();
 
-		main.axisIndicator.inUse = false;
-		main.axisIndicator.transform.localScale = new(.015f, .015f, 2f);
+		ResetAxisIndicators();
 
+		// reset dragging logic
 		dragging = false;
 		main.dragging = false;
 		if (over)
@@ -294,13 +303,48 @@ public class Scale : MonoBehaviour
 	}
 	void UseAxisIndicator()
 	{
+		if (lastSelection != main.buildingManager.SelectionManager.selection) // selection changed, update axis indicator list
+		{
+			UpdateAxisIndicators();
+		}
+
 		if (dragging && !full)
 		{
-			main.axisIndicator.inUse = true;
-			main.axisIndicator.color = color;
-			main.axisIndicator.transform.position = (main.selectionContainer.position + dragStartPos) / 2;
-			main.axisIndicator.transform.localScale = new(.015f, .015f, (transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
-			main.axisIndicator.rotation = main.selectionContainer.rotation * Quaternion.LookRotation(axis, transform.up);
+			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			{
+				objectAxisIndicators[t].UpdateIndicator(
+					t.position,
+					t.rotation * Quaternion.LookRotation(axis, transform.up),
+					color,
+					(transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
+			}
 		}
+
+		lastSelection = main.buildingManager.SelectionManager.selection;
+	}
+	void UpdateAxisIndicators()
+	{
+		if (dragging)
+		{
+			ResetAxisIndicators();
+
+			axisIndicators = new();
+			objectAxisIndicators = new();
+			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			{
+				AxisIndicator axisIndicator = main.axisIndicatorManager.NewIndicator();
+				axisIndicators.Add(axisIndicator);
+				objectAxisIndicators.Add(t, axisIndicator);
+			}
+		}
+	}
+	void ResetAxisIndicators()
+	{
+		foreach (AxisIndicator axisIndicator in axisIndicators)
+		{
+			main.axisIndicatorManager.DestroyIndicator(axisIndicator);
+		}
+		axisIndicators = new();
+		objectAxisIndicators = new();
 	}
 }
