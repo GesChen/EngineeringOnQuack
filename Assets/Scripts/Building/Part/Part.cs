@@ -5,8 +5,8 @@ using UnityEngine;
 public class Part : MonoBehaviour
 {
     public bool Selected;
-    [HideInInspector] public Vector3[] allTris;
-	[HideInInspector] public Vector3[] allVerts;
+    public Vector3[] allTris;
+	public Vector3[] allVerts;
 
     void Awake()
     {

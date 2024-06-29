@@ -75,6 +75,9 @@ public class SelectionManager : MonoBehaviour
 			{ // counts as a click
 				ClickCheck();
 			}
+			else
+				FindObjectsInsideBounds();
+
 		}
 
 		dragging = mouseDown && !(main.transformTools.dragging || main.transformTools.hovering);
@@ -83,7 +86,6 @@ public class SelectionManager : MonoBehaviour
 		if (dragging)
 		{
 			HandleBox();
-			FindObjectsInsideBounds();
 		}
 
 		lastMouseDown = mouseDown;
@@ -108,13 +110,6 @@ public class SelectionManager : MonoBehaviour
 
 	void FindObjectsInsideBounds()
 	{
-		// both conditions must be met for another test, this takes like 6ms so it causes lag
-		// 1. its a test interval frame
-		// 2. the mouse moved far enough since the last test
-		if (!(Time.frameCount % testInterval == 0
-			&& (mousePosAtLastTest - mousePos).sqrMagnitude > minPixelsMovedForRetest * minPixelsMovedForRetest))
-			return;
-
 		mousePosAtLastTest = mousePos;
 		// handle multiselection
 		if (controls.Selection.Multiselect.IsPressed())
@@ -122,11 +117,12 @@ public class SelectionManager : MonoBehaviour
 		else
 			selection = new();
 
+		Camera maincamera = Camera.main;
 		foreach (Part part in main.Parts)
 		{
 			if (part == null) continue;
 
-			if (PartIntersectsWithSelectionBox(part, mousePos, dragStart) && 
+			if (PartIntersectsWithSelectionBox(part, mousePos, dragStart, maincamera) && 
 				!selection.Contains(part.transform))
 			{
 				selection.Add(part.transform);
@@ -134,39 +130,88 @@ public class SelectionManager : MonoBehaviour
 		}
 	}
 
-	bool PartIntersectsWithSelectionBox(Part part, Vector2 corner1, Vector2 corner2)
+	bool PartIntersectsWithSelectionBox(Part part, Vector2 corner1, Vector2 corner2, Camera maincamera)
 	{
-		/* following code is super fuckin slow if future person can optimize please do idfk what to do it dropst  olike 7 fps
-		Vector3[] tris = part.allTris;
+		// following code is super fuckin slow if future person can optimize please do idfk what to do it dropst  olike 7 fps
+		if (!PartWorldBoundsRectangleIntersect(part, corner1, corner2, maincamera))
+			return false;
+
+		Vector3[] tris = (Vector3[])part.allTris.Clone();
+
+		part.transform.TransformPoints(tris);
+
 		for (int i = 0; i < tris.Length; i += 3)
 		{
-			Vector3 v1 = part.transform.position + (Vector3)(part.transform.localToWorldMatrix * tris[i]);
-			Vector3 v2 = part.transform.position + (Vector3)(part.transform.localToWorldMatrix * tris[i + 1]);
-			Vector3 v3 = part.transform.position + (Vector3)(part.transform.localToWorldMatrix * tris[i + 2]);
+			Vector3 v1 = tris[i]; //pos + rot * Vector3.Scale(scale, tris[i]);
+			Vector3 v2 = tris[i + 1]; //pos + rot * Vector3.Scale(scale, tris[i + 1]);
+			Vector3 v3 = tris[i + 2]; //pos + rot * Vector3.Scale(scale, tris[i + 2]);
 
-			Vector2 ss1 = Camera.main.WorldToScreenPoint(v1);
-			Vector2 ss2 = Camera.main.WorldToScreenPoint(v2);
-			Vector2 ss3 = Camera.main.WorldToScreenPoint(v3);
+			Vector2 ss1 = maincamera.WorldToScreenPoint(v1);
+			Vector2 ss2 = maincamera.WorldToScreenPoint(v2);
+			Vector2 ss3 = maincamera.WorldToScreenPoint(v3);
 
 			bool intersect = RectangleTriangleIntersect(corner1, corner2, ss1, ss2, ss3);
 
 			if (intersect)
 				return true;
 		}
-		*/
+		return false; /* using the old code again since this is only called once 
 		// for now just do a cheap vertex check method
 		Vector2 rectMin = Vector2.Min(corner1, corner2);
 		Vector2 rectMax = Vector2.Max(corner1, corner2);
 
+		Vector3 pos = part.transform.position;
+		Quaternion rot = part.transform.rotation;
+		Vector3 scale = part.transform.localScale;
+
+
 		foreach (Vector3 vert in part.allVerts)
 		{
 			// convert vertex position to screen space
-			Vector2 ss = Camera.main.WorldToScreenPoint(part.transform.position + part.transform.rotation * HF.MV3(part.transform.localScale, vert));
+			Vector2 ss = Camera.main.WorldToScreenPoint(pos + rot * HF.MV3(scale, vert));
 			if (ss.x >= rectMin.x && ss.x <= rectMax.x &&
 				ss.y >= rectMin.y && ss.y <= rectMax.y) // vert in box
 				return true;
 		}
 		return false;
+	*/
+	}
+
+	// checks part's world bounds in ss intersection with rectangle
+	bool PartWorldBoundsRectangleIntersect(Part part, Vector2 corner1, Vector2 corner2, Camera maincamera)
+	{
+		Mesh mesh = part.GetComponent<MeshFilter>().sharedMesh;
+		Bounds bounds = mesh.bounds;
+
+		Vector3[] worldCorners = new Vector3[8] {
+			new(bounds.min.x, bounds.min.y, bounds.min.z),
+			new(bounds.min.x, bounds.min.y, bounds.max.z),
+			new(bounds.min.x, bounds.max.y, bounds.min.z),
+			new(bounds.min.x, bounds.max.y, bounds.max.z),
+			new(bounds.max.x, bounds.min.y, bounds.min.z),
+			new(bounds.max.x, bounds.min.y, bounds.max.z),
+			new(bounds.max.x, bounds.max.y, bounds.min.z),
+			new(bounds.max.x, bounds.max.y, bounds.max.z),
+		};
+
+		part.transform.TransformPoints(worldCorners);
+
+		Vector2 screenBoxMin = Vector2.positiveInfinity;
+		Vector2 screenBoxMax = Vector2.negativeInfinity;
+		foreach (Vector3 corner in worldCorners) 
+		{
+			Vector2 ss = maincamera.WorldToScreenPoint(corner);
+			screenBoxMin = Vector2.Min(screenBoxMin, ss);
+			screenBoxMax = Vector2.Max(screenBoxMax, ss);
+		}
+
+		Vector2 rectMin = Vector2.Min(corner1, corner2);
+		Vector2 rectMax = Vector2.Max(corner1, corner2);
+
+		bool intersecting = 
+			!(rectMax.x < screenBoxMin.x || rectMin.x > screenBoxMax.x ||
+			rectMax.y < screenBoxMin.y || rectMin.y > screenBoxMax.y);
+		return intersecting;
 	}
 
 	bool RectangleTriangleIntersect(
@@ -175,6 +220,13 @@ public class SelectionManager : MonoBehaviour
 	{
 		Vector2 rectMin = Vector2.Min(rectCorner1, rectCorner2);
 		Vector2 rectMax = Vector2.Max(rectCorner1, rectCorner2);
+		
+		Vector2 triMin = Vector2.Min(triCorner1, Vector2.Min(triCorner2, triCorner3));
+		Vector2 triMax = Vector2.Max(triCorner1, Vector2.Max(triCorner2, triCorner3));
+
+		// do the bounds not intersect/overlap?
+		if (rectMax.x < triMin.x || rectMin.x > triMax.x || rectMax.y < triMin.y || rectMin.y > triMax.y)
+			return false;
 
 		// any vert of tri in rect (axis aligned)
 		Vector2[] triCorners = new Vector2[3] { triCorner1, triCorner2, triCorner3 };
@@ -255,7 +307,12 @@ public class SelectionManager : MonoBehaviour
 				selected = hit.transform;
 		}
 
-		if (selected == null) return;
+		if (selected == null)
+		{
+			if (!controls.Selection.Multiselect.IsPressed())
+				selection = new();
+			return;
+		}
 
 		if (controls.Selection.Multiselect.IsPressed()) 
 		{	// toggle object in selection
