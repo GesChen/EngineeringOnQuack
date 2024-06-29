@@ -1969,11 +1969,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   main: {fileID: 825630085}
+  testInterval: 3
+  minPixelsMovedForRetest: 10
   selection: []
   selectionContainer: {fileID: 658128959}
   UIBox: {fileID: 32971815}
-  raycastResolution: 20
-  selectionSizeResolutionFalloff: 1
 --- !u!4 &1057437594
 Transform:
   m_ObjectHideFlags: 0
@@ -2110,6 +2110,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Selected: 0
+  allTris: []
+  allVerts: []
 --- !u!1 &1095288436
 GameObject:
   m_ObjectHideFlags: 0
@@ -2322,6 +2324,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Selected: 0
+  allTris: []
+  allVerts: []
 --- !u!1 &1185058849
 GameObject:
   m_ObjectHideFlags: 0
@@ -3164,6 +3168,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Selected: 0
+  allTris: []
+  allVerts: []
 --- !u!1 &1596101661
 GameObject:
   m_ObjectHideFlags: 0

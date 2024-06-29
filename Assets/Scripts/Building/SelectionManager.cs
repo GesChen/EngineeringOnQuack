@@ -8,6 +8,9 @@ public class SelectionManager : MonoBehaviour
 {
 	public BuildingManager main;
 
+	public int testInterval;
+	public int minPixelsMovedForRetest;
+
 	public List<Transform> selection;
 	public Transform selectionContainer;
 
@@ -18,6 +21,8 @@ public class SelectionManager : MonoBehaviour
 	Vector2 dragStart;
 	bool dragging;
 	bool lastMouseDown;
+	Vector2 lastMousePos;
+	Vector2 mousePosAtLastTest;
 	Vector2 mouseDownStartPos;
 	float mouseDownStartTime;
 	int lastSelectionCount;
@@ -82,6 +87,7 @@ public class SelectionManager : MonoBehaviour
 		}
 
 		lastMouseDown = mouseDown;
+		lastMousePos = mousePos;
 	}
 
 	void HandleContainer()
@@ -102,6 +108,14 @@ public class SelectionManager : MonoBehaviour
 
 	void FindObjectsInsideBounds()
 	{
+		// both conditions must be met for another test, this takes like 6ms so it causes lag
+		// 1. its a test interval frame
+		// 2. the mouse moved far enough since the last test
+		if (!(Time.frameCount % testInterval == 0
+			&& (mousePosAtLastTest - mousePos).sqrMagnitude > minPixelsMovedForRetest * minPixelsMovedForRetest))
+			return;
+
+		mousePosAtLastTest = mousePos;
 		// handle multiselection
 		if (controls.Selection.Multiselect.IsPressed())
 			selection = dragStartSelections;
@@ -147,7 +161,7 @@ public class SelectionManager : MonoBehaviour
 		foreach (Vector3 vert in part.allVerts)
 		{
 			// convert vertex position to screen space
-			Vector2 ss = Camera.main.WorldToScreenPoint(part.transform.position + (Vector3)(part.transform.localToWorldMatrix * vert));
+			Vector2 ss = Camera.main.WorldToScreenPoint(part.transform.position + part.transform.rotation * HF.MV3(part.transform.localScale, vert));
 			if (ss.x >= rectMin.x && ss.x <= rectMax.x &&
 				ss.y >= rectMin.y && ss.y <= rectMax.y) // vert in box
 				return true;
