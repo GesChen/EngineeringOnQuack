@@ -25,7 +25,7 @@ public class SelectionManager : MonoBehaviour
 	Vector2 mousePosAtLastTest;
 	Vector2 mouseDownStartPos;
 	float mouseDownStartTime;
-	int lastSelectionCount;
+	bool selectionChanged;
 
 	#region inputmaster
 	InputMaster controls;
@@ -94,11 +94,11 @@ public class SelectionManager : MonoBehaviour
 
 	void HandleContainer()
 	{
-		if (selection.Count != lastSelectionCount)
+		if (selectionChanged)
 		{
 			UpdateContainer();
+			selectionChanged = false;
 		}
-		lastSelectionCount = selection.Count;
 	}
 	
 	void HandleBox()
@@ -128,6 +128,8 @@ public class SelectionManager : MonoBehaviour
 				selection.Add(part.transform);
 			}
 		}
+
+		selectionChanged = true;
 	}
 
 	bool PartIntersectsWithSelectionBox(Part part, Vector2 corner1, Vector2 corner2, Camera maincamera)
@@ -299,6 +301,8 @@ public class SelectionManager : MonoBehaviour
 
 	void ClickCheck()
 	{
+		selectionChanged = true;
+
 		Transform selected = null;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit))
 		{
