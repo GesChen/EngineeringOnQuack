@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class SelectionManager : MonoBehaviour
 {
+	public bool selectionBoxDragging;
 	public BuildingManager main;
 
 	public int testInterval;
@@ -21,8 +22,6 @@ public class SelectionManager : MonoBehaviour
 	Vector2 dragStart;
 	bool dragging;
 	bool lastMouseDown;
-	Vector2 lastMousePos;
-	Vector2 mousePosAtLastTest;
 	Vector2 mouseDownStartPos;
 	float mouseDownStartTime;
 	bool selectionChanged;
@@ -77,10 +76,10 @@ public class SelectionManager : MonoBehaviour
 			}
 			else
 				FindObjectsInsideBounds();
-
 		}
 
 		dragging = mouseDown && !(main.transformTools.dragging || main.transformTools.hovering);
+		selectionBoxDragging = dragging;
 		UIBox.gameObject.SetActive(dragging);
 
 		if (dragging)
@@ -89,7 +88,6 @@ public class SelectionManager : MonoBehaviour
 		}
 
 		lastMouseDown = mouseDown;
-		lastMousePos = mousePos;
 	}
 
 	void HandleContainer()
@@ -110,7 +108,6 @@ public class SelectionManager : MonoBehaviour
 
 	void FindObjectsInsideBounds()
 	{
-		mousePosAtLastTest = mousePos;
 		// handle multiselection
 		if (controls.Selection.Multiselect.IsPressed())
 			selection = dragStartSelections;
