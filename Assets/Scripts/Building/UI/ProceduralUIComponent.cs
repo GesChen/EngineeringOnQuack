@@ -33,17 +33,6 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	public Button.ButtonClickedEvent OnClick = new();
 	public UIComponentReference reference;
 
-	public ProceduralUIComponent(
-		UIComponentType type, string text,
-		bool isDropDown = false, ProceduralUI dropdown = null, Button.ButtonClickedEvent onClick = null)
-	{
-		Type = type;
-		Text = text;
-		IsDropDown = isDropDown;
-		DropdownMenu = dropdown;
-		OnClick = onClick;
-	}
-
 	public void Click()
 	{
 		if (Type == UIComponentType.button)

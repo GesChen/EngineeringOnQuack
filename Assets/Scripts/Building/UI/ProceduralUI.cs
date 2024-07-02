@@ -21,7 +21,8 @@ public class ProceduralUI : MonoBehaviour
 	[Space]
 	public int fontSize;
 	public TMP_FontAsset fontAsset;
-
+	public Vector2 displayTopLeftCornerOffset;
+	public float minDistFromSides;
 
 	[Header("Technical")]
 	public GameObject panelPrefab;
@@ -35,6 +36,8 @@ public class ProceduralUI : MonoBehaviour
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
+	float width;
+	float height;
 
 	void Start()
 	{
@@ -50,6 +53,14 @@ public class ProceduralUI : MonoBehaviour
 		panel.name = $"Panel ({menuTitle})";
 		panelTransform = panel.GetComponent<RectTransform>();
 		panel.GetComponent<Image>().color = backgroundColor;
+
+		// add title
+		ProceduralUIComponent titleComponent = new()
+		{
+			Text = menuTitle,
+			Type = UIComponentType.text
+		};
+		components.Insert(0, titleComponent);
 
 		// create all the items
 		for (int i = 0; i < components.Count; i++)
@@ -73,8 +84,8 @@ public class ProceduralUI : MonoBehaviour
 			}
 		}
 
-		float width = longestTextWidth + sidePadding * 2;
-		float height = itemHeight * components.Count + verticalSpacing * (components.Count - 1) + sidePadding * 2;
+		width = longestTextWidth + sidePadding * 2;
+		height = itemHeight * components.Count + verticalSpacing * (components.Count - 1) + sidePadding * 2;
 
 		panelTransform.sizeDelta = new(width, height);
 
@@ -83,14 +94,24 @@ public class ProceduralUI : MonoBehaviour
 		grid.spacing = new(0, verticalSpacing);
 	}
 
-	void Display(Vector2 position)
-	{
+	public void Display(Vector2 position)
+	{ // automatically tries to position the top left corner at position, adjust with offset
+		panelTransform.gameObject.SetActive(true);
 
+		position += new Vector2(width, -height) / 2f; // place at top left corner
+		position += new Vector2(-displayTopLeftCornerOffset.x, displayTopLeftCornerOffset.y); // add offset
+
+		// make sure it wont go out of the screen
+		Vector2 screenSize = canvas.renderingDisplaySize;
+		position.x = Mathf.Clamp(position.x, width / 2f + minDistFromSides, screenSize.x - width / 2f - minDistFromSides);
+		position.y = Mathf.Clamp(position.y, height / 2f + minDistFromSides, screenSize.y - height / 2f - minDistFromSides);
+
+		panelTransform.position = position;
 	}
 
-	void Hide()
+	public void Hide()
 	{
-
+		panelTransform.gameObject.SetActive(false);
 	}
 
 	public float TextWidthApproximation(string text, TMP_FontAsset fontAsset, int fontSize)
@@ -136,6 +157,7 @@ public class ProceduralUI : MonoBehaviour
 					colorMultiplier = 1f
 				};
 				button.onClick = component.OnClick;
+				button.navigation = new() { mode = Navigation.Mode.None };
 				
 				break;
 			case UIComponentType.text:
