@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class Part : MonoBehaviour
 {
-    public bool Selected;
-    public Vector3[] allTris;
+	public bool Selected;
+	public Vector3[] allTris;
 	public Vector3[] allVerts;
 
-    void Awake()
-    {
+	void Awake()
+	{
 		List<Vector3> all = new();
 		GetAllTris(transform, ref all);
 		allTris = all.ToArray();
@@ -17,7 +17,7 @@ public class Part : MonoBehaviour
 		all = new();
 		GetMeshVertices(transform, ref all);
 		allVerts = all.ToArray();
-    }
+	}
 
 	void GetAllTris(Transform target, ref List<Vector3> allTris)
 	{
@@ -59,13 +59,13 @@ public class Part : MonoBehaviour
 
 	// Update is called once per frame
 	void Update()
-    {
-        if (Selected)
-        {
-            gameObject.layer = LayerMask.NameToLayer("Selected");
-        }
-        else
-        {
+	{
+		if (Selected)
+		{
+			gameObject.layer = LayerMask.NameToLayer("Selected");
+		}
+		else
+		{
 			gameObject.layer = LayerMask.NameToLayer("Part");
 		}
 	}

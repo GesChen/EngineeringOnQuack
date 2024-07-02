@@ -36,7 +36,12 @@ public class Tester : MonoBehaviour
 
 	private void Update()
 	{
-		Test();
+		//Test();
+	}
+
+	public void TestDebug()
+	{
+		UnityEngine.Debug.Log("Test");
 	}
 }
 /*

@@ -17,12 +17,10 @@ public class AxisIndicatorManager : MonoBehaviour
 
 	public void DestroyIndicator(AxisIndicator indicator)
 	{
-		Debug.Log("destroying indicator");
 		if (indicators.Contains(indicator))
 		{
 			indicators.Remove(indicator);
 			Destroy(indicator.gameObject);
-			
 		}
 	}
 }
