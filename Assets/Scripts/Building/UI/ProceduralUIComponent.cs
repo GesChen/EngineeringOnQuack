@@ -10,6 +10,7 @@ public struct UIComponentReference
 {
 	public ProceduralUIComponent mainComponent;
 	public Transform transform;
+	public RectTransform rectTransform;
 	public Image imageComponent;
 	public UIComponentType type;
 	public TextMeshProUGUI text;

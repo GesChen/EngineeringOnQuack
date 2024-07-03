@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ProceduralUI : MonoBehaviour
@@ -23,12 +24,17 @@ public class ProceduralUI : MonoBehaviour
 	public TMP_FontAsset fontAsset;
 	public Vector2 displayTopLeftCornerOffset;
 	public float minDistFromSides;
+	[Space]
+	public float dropDownArrowRightOffset;
+	public float dropDownArrowSize;
+	public float dropDownDisplayOffset;
 
 	[Header("Technical")]
 	public GameObject panelPrefab;
 	public GameObject componentPrefab;
 	public GameObject textPrefab;
 	public GameObject dividerPrefab;
+	public GameObject dropDownArrow;
 
 	public Canvas canvas;
 	public List<ProceduralUIComponent> components = new();
@@ -66,7 +72,9 @@ public class ProceduralUI : MonoBehaviour
 		for (int i = 0; i < components.Count; i++)
 		{
 			ProceduralUIComponent component = components[i];
-			UIComponentReference reference = GenerateUIComponent(ref component);
+			UIComponentReference reference = GenerateUIComponent(component);
+			component.reference = reference;
+
 			components[i] = component;
 			references.Add(reference);
 			reference.transform.SetParent(panelTransform);
@@ -94,12 +102,12 @@ public class ProceduralUI : MonoBehaviour
 		grid.spacing = new(0, verticalSpacing);
 	}
 
-	public void Display(Vector2 position)
+	public void Display(Vector2 position, bool doOffset = true)
 	{ // automatically tries to position the top left corner at position, adjust with offset
 		panelTransform.gameObject.SetActive(true);
 
 		position += new Vector2(width, -height) / 2f; // place at top left corner
-		position += new Vector2(-displayTopLeftCornerOffset.x, displayTopLeftCornerOffset.y); // add offset
+		if(doOffset) position += new Vector2(-displayTopLeftCornerOffset.x, displayTopLeftCornerOffset.y); // add offset
 
 		// make sure it wont go out of the screen
 		Vector2 screenSize = canvas.renderingDisplaySize;
@@ -136,7 +144,7 @@ public class ProceduralUI : MonoBehaviour
 		return width;
 	}
 
-	public UIComponentReference GenerateUIComponent(ref ProceduralUIComponent component)
+	public UIComponentReference GenerateUIComponent(ProceduralUIComponent component)
 	{
 		GameObject newObj = Instantiate(componentPrefab);
 		Image image = newObj.GetComponent<Image>();	
@@ -156,6 +164,19 @@ public class ProceduralUI : MonoBehaviour
 					pressedColor = buttonPressedColor,
 					colorMultiplier = 1f
 				};
+				if (component.IsDropDown)
+				{
+					EventTrigger.Entry pointerEnter = new() { eventID = EventTriggerType.PointerEnter };
+					pointerEnter.callback.AddListener((_) => { DisplayDropdown(component); });
+
+					EventTrigger.Entry pointerExit = new() { eventID = EventTriggerType.PointerExit };
+					pointerExit.callback.AddListener((_) => { HideDropdown(component); });
+
+					EventTrigger eventTrigger = button.gameObject.AddComponent<EventTrigger>();
+					eventTrigger.triggers.Add(pointerEnter);
+					eventTrigger.triggers.Add(pointerExit);
+				}
+
 				button.onClick = component.OnClick;
 				button.navigation = new() { mode = Navigation.Mode.None };
 				
@@ -179,6 +200,7 @@ public class ProceduralUI : MonoBehaviour
 		component.reference = new()
 		{
 			mainComponent = component,
+			rectTransform = newObj.GetComponent<RectTransform>(),
 			transform = newObj.transform,
 			imageComponent = image,
 			type = component.Type,
@@ -187,5 +209,42 @@ public class ProceduralUI : MonoBehaviour
 		};
 
 		return component.reference;
+	}
+
+	public void DisplayDropdown(ProceduralUIComponent component)
+	{
+		ProceduralUI dropdown = component.DropdownMenu;
+		if (component.Type == UIComponentType.button && dropdown != null)
+		{
+			Vector3[] corners = new Vector3[4];
+			component.reference.rectTransform.GetWorldCorners(corners);
+
+			// multiple conditions for placing this panel
+			// normal condition: place top left corner of dropdown at top right of button
+			// if placing at top left won't fit, place top right corner of dropdown at top left of button
+			// let the display script handle vertical issues
+
+			// check if would fit at right
+			bool wouldFit = corners[2].x + dropdown.width + dropDownDisplayOffset + sidePadding < canvas.renderingDisplaySize.x;
+			if (wouldFit)
+			{ // place top left at top right (3)
+				Vector2 position = (Vector2)corners[2] + dropDownDisplayOffset * Vector2.right + sidePadding * Vector2.one;
+				dropdown.Display(position, false);
+			}
+			else
+			{
+				// place top right corner of dropdown at top left (2)
+				Vector2 position = (Vector2)corners[1] + (dropdown.width + dropDownDisplayOffset) * Vector2.left + new Vector2(-sidePadding, sidePadding);
+				dropdown.Display(position, false);
+			}
+		}
+	}
+
+	public void HideDropdown(ProceduralUIComponent component)
+	{
+		if (component.Type == UIComponentType.button && component.DropdownMenu != null)
+		{
+			component.DropdownMenu.Hide();
+		}
 	}
 }

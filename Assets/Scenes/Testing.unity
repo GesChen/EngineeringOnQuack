@@ -1599,6 +1599,7 @@ GameObject:
   - component: {fileID: 825463387}
   - component: {fileID: 825463388}
   - component: {fileID: 825463386}
+  - component: {fileID: 825463389}
   m_Layer: 0
   m_Name: UI
   m_TagString: Untagged
@@ -1631,6 +1632,9 @@ MonoBehaviour:
   fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   displayTopLeftCornerOffset: {x: 10, y: 10}
   minDistFromSides: 5
+  dropDownArrowRightOffset: 2
+  dropDownArrowSize: 0
+  dropDownDisplayOffset: 0
   panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
     type: 3}
   componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
@@ -1638,6 +1642,113 @@ MonoBehaviour:
   textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
     type: 3}
   dividerPrefab: {fileID: 0}
+  dropDownArrow: {fileID: 0}
+  canvas: {fileID: 916857749}
+  components:
+  - Type: 1
+    Text: testing text
+    IsDropDown: 0
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+  - Type: 0
+    Text: this is a button
+    IsDropDown: 0
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1437857902}
+          m_TargetAssemblyTypeName: Tester, Assembly-CSharp
+          m_MethodName: TestDebug
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - Type: 0
+    Text: another butto
+    IsDropDown: 0
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+  - Type: 0
+    Text: test dropdown
+    IsDropDown: 1
+    DropdownMenu: {fileID: 825463389}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+--- !u!4 &825463387
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825463384}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &825463388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825463384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdb3822dc37cf854fa25f8af8847dd29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testpanel: {fileID: 825463386}
+--- !u!114 &825463389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825463384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d922fbe40c3de6a49b77b646d4270647, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  menuTitle: panel2
+  backgroundColor: {r: 1, g: 0, b: 0, a: 1}
+  buttonHoverColor: {r: 1, g: 0.98909175, b: 0, a: 1}
+  buttonPressedColor: {r: 0.034606934, g: 1, b: 0, a: 1}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  itemHeight: 30
+  verticalSpacing: 2
+  sidePadding: 2
+  textPadding: 3
+  fontSize: 22
+  fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  displayTopLeftCornerOffset: {x: 10, y: 10}
+  minDistFromSides: 5
+  dropDownArrowRightOffset: 2
+  dropDownArrowSize: 0
+  dropDownDisplayOffset: 0
+  panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
+    type: 3}
+  componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
+    type: 3}
+  textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
+    type: 3}
+  dividerPrefab: {fileID: 0}
+  dropDownArrow: {fileID: 0}
   canvas: {fileID: 916857749}
   components:
   - Type: 1
@@ -1680,34 +1791,6 @@ MonoBehaviour:
     OnClick:
       m_PersistentCalls:
         m_Calls: []
---- !u!4 &825463387
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 825463384}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &825463388
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 825463384}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdb3822dc37cf854fa25f8af8847dd29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  testpanel: {fileID: 825463386}
 --- !u!1 &825630083
 GameObject:
   m_ObjectHideFlags: 0
