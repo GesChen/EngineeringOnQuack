@@ -5,31 +5,12 @@ using UnityEngine;
 public class RightClick : MonoBehaviour
 {
 	public ProceduralUI testpanel;
-
-	#region inputmaster
-	InputMaster controls;
-
-	void Awake()
-	{
-		controls = new InputMaster();
-	}
-	void OnEnable()
-	{
-		controls ??= new InputMaster();
-		controls.Enable();
-	}
-	void OnDisable()
-	{
-		controls.Disable();
-	}
-	#endregion
-
 	
 	void Update()
 	{
-		if (controls.UI.RightClick.WasPressedThisFrame())
+		if (Controls.inputMaster.UI.RightClick.WasPressedThisFrame())
 		{
-			Vector2 mousePos = controls.UI.Point.ReadValue<Vector2>();
+			Vector2 mousePos = Controls.inputMaster.UI.Point.ReadValue<Vector2>();
 			testpanel.Display(mousePos);
 		}
 	}

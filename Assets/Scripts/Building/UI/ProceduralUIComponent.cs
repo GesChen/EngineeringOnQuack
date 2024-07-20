@@ -41,4 +41,18 @@ public class ProceduralUIComponent // general container for components, doesnt a
 			OnClick.Invoke();
 		}
 	}
+
+	public bool CheckMouseValidity(Vector2 mousePos, int margin)
+	{
+		Vector3[] corners = new Vector3[4];
+		reference.rectTransform.GetWorldCorners(corners);
+		Vector2 min = corners[0];
+		Vector2 max = corners[2];
+
+		// expanding by margin achieves same effect
+		min -= margin * Vector2.one;
+		max += margin * Vector2.one;
+
+		return mousePos.x < max.x && mousePos.y < max.y && mousePos.x > min.x && mousePos.y > min.y;
+	}
 }

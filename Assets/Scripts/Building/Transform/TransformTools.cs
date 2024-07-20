@@ -73,24 +73,6 @@ public class TransformTools : MonoBehaviour
 	public bool rotating;
 	public bool scaling;
 
-	[HideInInspector] public InputMaster controls;
-
-	#region input
-	void Awake()
-	{
-		controls = new InputMaster();
-	}
-	void OnEnable()
-	{
-		controls ??= new InputMaster();
-		controls.Enable();
-	}
-	void OnDisable()
-	{
-		controls.Disable();
-	}
-	#endregion
-
 	void Update()
 	{
 		// dont display while selecting, issues pop up with interference in hovering and stuff
@@ -110,7 +92,7 @@ public class TransformTools : MonoBehaviour
 			hovering = false;
 		}
 
-		snapping = controls.Transform.Snap.IsPressed();
+		snapping = Controls.inputMaster.Transform.Snap.IsPressed();
 	}
 	public void UpdatePosition()
 	{

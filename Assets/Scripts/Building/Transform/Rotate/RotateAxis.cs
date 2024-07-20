@@ -55,7 +55,7 @@ public class RotateAxis : MonoBehaviour
 	void Update()
 	{
 		over = MouseOver();
-		mouseDown = main.controls.Transform.Drag.IsPressed();
+		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
 		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
 			ResetTransform();
@@ -97,7 +97,7 @@ public class RotateAxis : MonoBehaviour
 		for (int i = 0; i < 36; i++)
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
-		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 		float mouseToCircleDistance = HF.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
@@ -200,7 +200,7 @@ public class RotateAxis : MonoBehaviour
 		Vector3 planePos = transform.position;
 		Vector3 planeNormal = (main.transform.rotation * axis).normalized;
 
-		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector3 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
 		Vector3 cameraPos = Camera.main.transform.position;

@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using TMPro;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -39,6 +41,10 @@ public class ProceduralUI : MonoBehaviour
 	public Canvas canvas;
 	public List<ProceduralUIComponent> components = new();
 	private List<UIComponentReference> references = new();
+	[Space]
+	public bool mouseOver;
+	[Description("How many pixels the mouse can move away form the rect to still be considered as over")]
+	public bool mouseValidityMargin;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
@@ -50,6 +56,30 @@ public class ProceduralUI : MonoBehaviour
 		// generate everything and then hide it
 		Generate();
 		Hide();
+	}
+	void MouseEvents()
+	{
+		EventTrigger.Entry pointerEnter = new() { eventID = EventTriggerType.PointerEnter };
+		pointerEnter.callback.AddListener((_) => { mouseOver = true; });
+
+		EventTrigger.Entry pointerExit = new() { eventID = EventTriggerType.PointerExit };
+		pointerExit.callback.AddListener((_) => { mouseOver = false; });
+
+		EventTrigger eventTrigger = panelTransform.gameObject.AddComponent<EventTrigger>();
+		eventTrigger.triggers.Add(pointerEnter);
+		eventTrigger.triggers.Add(pointerExit);
+	}
+
+	void Update()
+	{
+		CheckForMouse();
+	}
+	void CheckForMouse()
+	{
+		Vector2 mousePos = Controls.inputMaster.UI.Point.ReadValue<Vector2>();
+		Vector3[] corners = new Vector3[4];
+		panelTransform.GetWorldCorners(corners);
+		mouseOver = mousePos.x > corners[0].x && mousePos.x < corners[2].x && mousePos.y > corners[0].y && mousePos.y < corners[2].y;
 	}
 
 	void Generate()
@@ -219,11 +249,6 @@ public class ProceduralUI : MonoBehaviour
 			Vector3[] corners = new Vector3[4];
 			component.reference.rectTransform.GetWorldCorners(corners);
 
-			// multiple conditions for placing this panel
-			// normal condition: place top left corner of dropdown at top right of button
-			// if placing at top left won't fit, place top right corner of dropdown at top left of button
-			// let the display script handle vertical issues
-
 			// check if would fit at right
 			bool wouldFit = corners[2].x + dropdown.width + dropDownDisplayOffset + sidePadding < canvas.renderingDisplaySize.x;
 			if (wouldFit)
@@ -242,7 +267,9 @@ public class ProceduralUI : MonoBehaviour
 
 	public void HideDropdown(ProceduralUIComponent component)
 	{
-		if (component.Type == UIComponentType.button && component.DropdownMenu != null)
+		if (component.Type == UIComponentType.button && 
+			component.DropdownMenu != null && 
+			!component.DropdownMenu.mouseOver)
 		{
 			component.DropdownMenu.Hide();
 		}

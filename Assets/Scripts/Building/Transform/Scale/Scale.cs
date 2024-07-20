@@ -60,7 +60,7 @@ public class Scale : MonoBehaviour
 		localAxes = main.transform.rotation * axis;
 
 		over = MouseOver() && !main.specialCenterCase;
-		mouseDown = main.controls.Transform.Drag.IsPressed();
+		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
 		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
 			ResetTransform();
@@ -135,7 +135,7 @@ public class Scale : MonoBehaviour
 			maxScreen = Vector2.Max(maxScreen, ssPos);
 		}
 
-		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 		bool inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
 						mousePos.y >= minScreen.y + main.boundsOffset && mousePos.y <= maxScreen.y - main.boundsOffset;
 		return inBounds;
@@ -179,7 +179,7 @@ public class Scale : MonoBehaviour
 			// axis indicator code here if going to use 
 			UpdateAxisIndicators();
 
-			dragStartMousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+			dragStartMousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
 			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			dragStartPos = main.transform.position;
@@ -240,7 +240,7 @@ public class Scale : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		Vector3 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
+		Vector3 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
 		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
 		Vector3 cameraPos = Camera.main.transform.position;
@@ -286,7 +286,7 @@ public class Scale : MonoBehaviour
 	{
 		if (!dragging) return;
 		
-		Vector2 mouseScreenSpace = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 
 		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
 

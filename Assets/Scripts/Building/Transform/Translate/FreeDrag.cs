@@ -1,4 +1,3 @@
-using System.Reflection.Emit;
 using UnityEngine;
 
 public class FreeDrag : MonoBehaviour
@@ -17,8 +16,8 @@ public class FreeDrag : MonoBehaviour
 
 	void Update()
 	{
-		mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
-		mouseDown = main.controls.Transform.Drag.IsPressed();
+		mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
 		if (mouseDown != lastMouseDown && mouseDown)
 			StartClicking();

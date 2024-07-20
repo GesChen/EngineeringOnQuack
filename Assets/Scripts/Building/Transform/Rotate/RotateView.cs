@@ -52,7 +52,7 @@ public class RotateView : MonoBehaviour
 	void Update()
 	{
 		over = MouseOver();
-		mouseDown = main.controls.Transform.Drag.IsPressed();
+		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
 		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
 			ResetTransform();
@@ -92,7 +92,7 @@ public class RotateView : MonoBehaviour
 		for (int i = 0; i < 18; i++)
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
-		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 		float mouseToCircleDistance = HF.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
@@ -177,7 +177,7 @@ public class RotateView : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		Vector2 mousePos = main.controls.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
 
 		Vector3 normal = Camera.main.transform.rotation * Vector3.forward;
 

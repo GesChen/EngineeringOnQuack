@@ -26,24 +26,6 @@ public class SelectionManager : MonoBehaviour
 	float mouseDownStartTime;
 	bool selectionChanged;
 
-	#region inputmaster
-	InputMaster controls;
-
-	void Awake()
-	{
-		controls = new InputMaster();
-	}
-	void OnEnable()
-	{
-		controls ??= new InputMaster();
-		controls.Enable();
-	}
-	void OnDisable()
-	{
-		controls.Disable();
-	}
-	#endregion
-
 	void Update()
 	{
 		HandleInput();
@@ -52,8 +34,8 @@ public class SelectionManager : MonoBehaviour
 
 	void HandleInput()
 	{
-		bool mouseDown = controls.Selection.Drag.IsPressed();
-		mousePos = controls.Selection.MousePos.ReadValue<Vector2>();
+		bool mouseDown = Controls.inputMaster.Selection.Drag.IsPressed();
+		mousePos = Controls.inputMaster.Selection.MousePos.ReadValue<Vector2>();
 
 		// detect mouse down
 		if (mouseDown && mouseDown != lastMouseDown)
@@ -109,7 +91,7 @@ public class SelectionManager : MonoBehaviour
 	void FindObjectsInsideBounds()
 	{
 		// handle multiselection
-		if (controls.Selection.Multiselect.IsPressed())
+		if (Controls.inputMaster.Selection.Multiselect.IsPressed())
 			selection = dragStartSelections;
 		else
 			selection = new();
@@ -310,12 +292,12 @@ public class SelectionManager : MonoBehaviour
 
 		if (selected == null)
 		{
-			if (!controls.Selection.Multiselect.IsPressed())
+			if (!Controls.inputMaster.Selection.Multiselect.IsPressed())
 				selection = new();
 			return;
 		}
 
-		if (controls.Selection.Multiselect.IsPressed()) 
+		if (Controls.inputMaster.Selection.Multiselect.IsPressed()) 
 		{	// toggle object in selection
 			if (selection.Contains(selected))
 				selection.Remove(selected);
