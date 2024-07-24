@@ -1599,7 +1599,6 @@ GameObject:
   - component: {fileID: 825463387}
   - component: {fileID: 825463388}
   - component: {fileID: 825463386}
-  - component: {fileID: 825463389}
   m_Layer: 0
   m_Name: UI
   m_TagString: Untagged
@@ -1620,71 +1619,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuTitle: title
-  backgroundColor: {r: 1, g: 0, b: 0, a: 1}
-  buttonHoverColor: {r: 1, g: 0.98909175, b: 0, a: 1}
-  buttonPressedColor: {r: 0.034606934, g: 1, b: 0, a: 1}
-  textColor: {r: 1, g: 1, b: 1, a: 1}
-  itemHeight: 30
-  verticalSpacing: 2
-  sidePadding: 2
-  textPadding: 3
-  fontSize: 22
-  fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  displayTopLeftCornerOffset: {x: 10, y: 10}
-  minDistFromSides: 5
-  dropDownArrowRightOffset: 2
-  dropDownArrowSize: 0
-  dropDownDisplayOffset: 0
-  panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
-    type: 3}
-  componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
-    type: 3}
-  textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
-    type: 3}
-  dividerPrefab: {fileID: 0}
-  dropDownArrow: {fileID: 0}
   canvas: {fileID: 916857749}
   components:
-  - Type: 1
-    Text: testing text
+  - Type: 0
+    Text: ok what the fuck
     IsDropDown: 0
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-  - Type: 0
-    Text: this is a button
-    IsDropDown: 0
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1437857902}
-          m_TargetAssemblyTypeName: Tester, Assembly-CSharp
-          m_MethodName: TestDebug
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  - Type: 0
-    Text: another butto
-    IsDropDown: 0
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
-  - Type: 0
-    Text: test dropdown
-    IsDropDown: 1
-    DropdownMenu: {fileID: 825463389}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
+    type: 0
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
+  mouseOver: 0
+  mouseInRange: 0
+  visible: 0
+  width: 0
+  height: 0
+  dropdownParent: {fileID: 0}
 --- !u!4 &825463387
 Transform:
   m_ObjectHideFlags: 0
@@ -1713,84 +1669,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testpanel: {fileID: 825463386}
---- !u!114 &825463389
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 825463384}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d922fbe40c3de6a49b77b646d4270647, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  menuTitle: panel2
-  backgroundColor: {r: 1, g: 0, b: 0, a: 1}
-  buttonHoverColor: {r: 1, g: 0.98909175, b: 0, a: 1}
-  buttonPressedColor: {r: 0.034606934, g: 1, b: 0, a: 1}
-  textColor: {r: 1, g: 1, b: 1, a: 1}
-  itemHeight: 30
-  verticalSpacing: 2
-  sidePadding: 2
-  textPadding: 3
-  fontSize: 22
-  fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  displayTopLeftCornerOffset: {x: 10, y: 10}
-  minDistFromSides: 5
-  dropDownArrowRightOffset: 2
-  dropDownArrowSize: 0
-  dropDownDisplayOffset: 0
-  panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
-    type: 3}
-  componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
-    type: 3}
-  textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
-    type: 3}
-  dividerPrefab: {fileID: 0}
-  dropDownArrow: {fileID: 0}
-  canvas: {fileID: 916857749}
-  components:
-  - Type: 1
-    Text: testing text
-    IsDropDown: 0
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
-  - Type: 0
-    Text: this is a button
-    IsDropDown: 0
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1437857902}
-          m_TargetAssemblyTypeName: Tester, Assembly-CSharp
-          m_MethodName: TestDebug
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  - Type: 0
-    Text: another butto
-    IsDropDown: 0
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
-  - Type: 1
-    Text: does this just work?
-    IsDropDown: 0
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
 --- !u!1 &825630083
 GameObject:
   m_ObjectHideFlags: 0
@@ -3308,6 +3186,7 @@ GameObject:
   - component: {fileID: 1569215799}
   - component: {fileID: 1569215800}
   - component: {fileID: 1569215801}
+  - component: {fileID: 1569215802}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -3342,7 +3221,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bf7b723d7860004aa8f713e8acc731c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fpsLimit: 60
 --- !u!114 &1569215801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3355,6 +3233,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd02b984e6e914049a455a13fc0ba9aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1569215802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569215798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de14a18b6c1bb45458be86fb4a2b6d63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UI:
+    _backgroundColor: {r: 1, g: 0, b: 0, a: 1}
+    _buttonHoverColor: {r: 1, g: 1, b: 0, a: 1}
+    _buttonPressedColor: {r: 0, g: 0, b: 1, a: 1}
+    _textColor: {r: 1, g: 1, b: 1, a: 1}
+    _itemHeight: 30
+    _verticalSpacing: 2
+    _sidePadding: 2
+    _textPadding: 3
+    _fontSize: 22
+    _fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    _displayTopLeftCornerOffset: {x: 10, y: 10}
+    _minDistFromSides: 5
+    _dropDownArrowRightOffset: 2
+    _dropDownArrowSize: 0
+    _dropDownDisplayOffset: 0
+    _panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
+      type: 3}
+    _componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
+      type: 3}
+    _textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
+      type: 3}
+    _dividerPrefab: {fileID: 0}
+    _dropDownArrow: {fileID: 0}
+    _mouseValidityMargin: 50
+  _fpsLimit: 0
 --- !u!1 &1577646644
 GameObject:
   m_ObjectHideFlags: 0

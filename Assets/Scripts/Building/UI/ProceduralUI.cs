@@ -1,55 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using TMPro;
-using UnityEditor.Search;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ProceduralUI : MonoBehaviour
 {
-	[Header("Settings")]
 	public string menuTitle;
-	[Space]
-	public Color backgroundColor;
-	public Color buttonHoverColor;
-	public Color buttonPressedColor;
-	public Color textColor;
-	[Space]
-	public int itemHeight;
-	public int verticalSpacing;
-	public int sidePadding;
-	public int textPadding;
-	[Space]
-	public int fontSize;
-	public TMP_FontAsset fontAsset;
-	public Vector2 displayTopLeftCornerOffset;
-	public float minDistFromSides;
-	[Space]
-	public float dropDownArrowRightOffset;
-	public float dropDownArrowSize;
-	public float dropDownDisplayOffset;
-
-	[Header("Technical")]
-	public GameObject panelPrefab;
-	public GameObject componentPrefab;
-	public GameObject textPrefab;
-	public GameObject dividerPrefab;
-	public GameObject dropDownArrow;
 
 	public Canvas canvas;
 	public List<ProceduralUIComponent> components = new();
-	private List<UIComponentReference> references = new();
+
 	[Space]
+	[Header("Debug")]
 	public bool mouseOver;
-	[Description("How many pixels the mouse can move away form the rect to still be considered as over")]
-	public bool mouseValidityMargin;
+	public bool mouseInRange;
+	public bool visible;
+	public float width;
+	public float height;
+	public ProceduralUI dropdownParent;
+	//public ProceduralUIComponent dropdownComponent;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
-	float width;
-	float height;
 
 	void Start()
 	{
@@ -57,38 +30,72 @@ public class ProceduralUI : MonoBehaviour
 		Generate();
 		Hide();
 	}
-	void MouseEvents()
-	{
-		EventTrigger.Entry pointerEnter = new() { eventID = EventTriggerType.PointerEnter };
-		pointerEnter.callback.AddListener((_) => { mouseOver = true; });
-
-		EventTrigger.Entry pointerExit = new() { eventID = EventTriggerType.PointerExit };
-		pointerExit.callback.AddListener((_) => { mouseOver = false; });
-
-		EventTrigger eventTrigger = panelTransform.gameObject.AddComponent<EventTrigger>();
-		eventTrigger.triggers.Add(pointerEnter);
-		eventTrigger.triggers.Add(pointerExit);
-	}
 
 	void Update()
 	{
-		CheckForMouse();
+		if (Controls.mousePos != Controls.lastMousePos)
+		{
+			MouseUpdate();
+
+			foreach (ProceduralUIComponent component in components)
+			{
+				component.Update(this);
+			}
+		}
 	}
-	void CheckForMouse()
+
+	public void MouseUpdate()
 	{
-		Vector2 mousePos = Controls.inputMaster.UI.Point.ReadValue<Vector2>();
+		Debug.Log("update");
+
+		// hide this menu if the mouse is outside the range and the mouse is not in range of any active dropdowns
+		// + is not dropdown and button which shows it is hovered
+		mouseInRange = CheckMouseValidity(Config.UIConfig.MouseValidityMargin);
+		if (!mouseInRange) 
+		{ 
+			// any of its own children dropdown aren't 
+			bool anyDropDownsInRange = false;
+			foreach (ProceduralUIComponent component in components)
+			{
+				if (component.IsDropDown && component.DropdownMenu.mouseInRange)
+				{
+					anyDropDownsInRange = true;
+					break;
+				}
+			}
+
+			if (!anyDropDownsInRange)
+			{
+				Hide();
+			}
+		}
+	}
+
+	// used to see if should hide component when mouse leaves, 
+	// hover over buttons should use normal
+	public bool CheckMouseValidity(int margin)
+	{
+		Vector2 mousePos = Controls.mousePos;
+
 		Vector3[] corners = new Vector3[4];
 		panelTransform.GetWorldCorners(corners);
-		mouseOver = mousePos.x > corners[0].x && mousePos.x < corners[2].x && mousePos.y > corners[0].y && mousePos.y < corners[2].y;
+		Vector2 min = corners[0];
+		Vector2 max = corners[2];
+
+		// expanding by margin achieves same effect
+		min -= margin * Vector2.one;
+		max += margin * Vector2.one;
+
+		return mousePos.x < max.x && mousePos.y < max.y && mousePos.x > min.x && mousePos.y > min.y;
 	}
 
 	void Generate()
 	{
 		// create the panel
-		GameObject panel = Instantiate(panelPrefab, canvas.transform);
+		GameObject panel = Instantiate(Config.UIConfig.PanelPrefab, canvas.transform);
 		panel.name = $"Panel ({menuTitle})";
 		panelTransform = panel.GetComponent<RectTransform>();
-		panel.GetComponent<Image>().color = backgroundColor;
+		panel.GetComponent<Image>().color = Config.UIConfig.BackgroundColor;
 
 		// add title
 		ProceduralUIComponent titleComponent = new()
@@ -102,53 +109,60 @@ public class ProceduralUI : MonoBehaviour
 		for (int i = 0; i < components.Count; i++)
 		{
 			ProceduralUIComponent component = components[i];
-			UIComponentReference reference = GenerateUIComponent(component);
-			component.reference = reference;
+			GenerateUIComponent(ref component);
+			/*if (component.IsDropDown)
+			{
+				if (component.DropdownMenu == null)
+					Debug.LogError($"Dropdown {component.Text} has no required menu component");
+				else
+					component.DropdownMenu.dropdownComponent = component;
+			}*/
+			component.transform.SetParent(panelTransform);
 
 			components[i] = component;
-			references.Add(reference);
-			reference.transform.SetParent(panelTransform);
 		}
 
 		// setup the panel
 		// width is based off the longest text in the menu
 		float longestTextWidth = Mathf.NegativeInfinity;
-		foreach (UIComponentReference reference in references)
+		foreach (ProceduralUIComponent component in components)
 		{
-			if (reference.type == UIComponentType.text || reference.type == UIComponentType.button)
+			if (component.type == UIComponentType.text || component.type == UIComponentType.button)
 			{
-				float textwidth = TextWidthApproximation(reference.mainComponent.Text, fontAsset, fontSize) + 2 * textPadding;
+				float textwidth = TextWidthApproximation(component.mainComponent.Text, Config.UIConfig.FontAsset, Config.UIConfig.FontSize) + 2 * Config.UIConfig.TextPadding;
 				longestTextWidth = Mathf.Max(longestTextWidth, textwidth);
 			}
 		}
 
-		width = longestTextWidth + sidePadding * 2;
-		height = itemHeight * components.Count + verticalSpacing * (components.Count - 1) + sidePadding * 2;
+		width = longestTextWidth + Config.UIConfig.SidePadding * 2;
+		height = Config.UIConfig.ItemHeight * components.Count + Config.UIConfig.VerticalSpacing * (components.Count - 1) + Config.UIConfig.SidePadding * 2;
 
 		panelTransform.sizeDelta = new(width, height);
 
 		grid = panel.GetComponent<GridLayoutGroup>();
-		grid.cellSize = new(longestTextWidth, itemHeight);
-		grid.spacing = new(0, verticalSpacing);
+		grid.cellSize = new(longestTextWidth, Config.UIConfig.ItemHeight);
+		grid.spacing = new(0, Config.UIConfig.VerticalSpacing);
 	}
 
 	public void Display(Vector2 position, bool doOffset = true)
 	{ // automatically tries to position the top left corner at position, adjust with offset
+		visible = true;
 		panelTransform.gameObject.SetActive(true);
 
 		position += new Vector2(width, -height) / 2f; // place at top left corner
-		if(doOffset) position += new Vector2(-displayTopLeftCornerOffset.x, displayTopLeftCornerOffset.y); // add offset
+		if (doOffset) position += new Vector2(-Config.UIConfig.DisplayTopLeftCornerOffset.x, Config.UIConfig.DisplayTopLeftCornerOffset.y); // add offset
 
 		// make sure it wont go out of the screen
 		Vector2 screenSize = canvas.renderingDisplaySize;
-		position.x = Mathf.Clamp(position.x, width / 2f + minDistFromSides, screenSize.x - width / 2f - minDistFromSides);
-		position.y = Mathf.Clamp(position.y, height / 2f + minDistFromSides, screenSize.y - height / 2f - minDistFromSides);
+		position.x = Mathf.Clamp(position.x, width / 2f + Config.UIConfig.MinDistFromSides, screenSize.x - width / 2f - Config.UIConfig.MinDistFromSides);
+		position.y = Mathf.Clamp(position.y, height / 2f + Config.UIConfig.MinDistFromSides, screenSize.y - height / 2f - Config.UIConfig.MinDistFromSides);
 
 		panelTransform.position = position;
 	}
 
 	public void Hide()
 	{
+		visible = false;
 		panelTransform.gameObject.SetActive(false);
 	}
 
@@ -174,104 +188,73 @@ public class ProceduralUI : MonoBehaviour
 		return width;
 	}
 
-	public UIComponentReference GenerateUIComponent(ProceduralUIComponent component)
+	public void GenerateUIComponent(ref ProceduralUIComponent component)
 	{
-		GameObject newObj = Instantiate(componentPrefab);
-		Image image = newObj.GetComponent<Image>();	
+		GameObject newObj = Instantiate(Config.UIConfig.ComponentPrefab);
+		newObj.name = $"Item ({component.Text})";
+		Image image = newObj.GetComponent<Image>();
 		TextMeshProUGUI text = null;
 		Button button = null;
+
 		switch (component.Type)
 		{
 			case UIComponentType.button:
 				image.color = Color.white;
-				text = Instantiate(textPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
+
+				text = Instantiate(Config.UIConfig.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 				text.text = component.Text;
+
 				button = newObj.AddComponent<Button>();
 				button.colors = new()
 				{
-					normalColor = backgroundColor,
-					highlightedColor = buttonHoverColor,
-					pressedColor = buttonPressedColor,
+					normalColor = Config.UIConfig.BackgroundColor,
+					highlightedColor = Config.UIConfig.ButtonHoverColor,
+					pressedColor = Config.UIConfig.ButtonPressedColor,
 					colorMultiplier = 1f
 				};
-				if (component.IsDropDown)
-				{
-					EventTrigger.Entry pointerEnter = new() { eventID = EventTriggerType.PointerEnter };
-					pointerEnter.callback.AddListener((_) => { DisplayDropdown(component); });
-
-					EventTrigger.Entry pointerExit = new() { eventID = EventTriggerType.PointerExit };
-					pointerExit.callback.AddListener((_) => { HideDropdown(component); });
-
-					EventTrigger eventTrigger = button.gameObject.AddComponent<EventTrigger>();
-					eventTrigger.triggers.Add(pointerEnter);
-					eventTrigger.triggers.Add(pointerExit);
-				}
-
 				button.onClick = component.OnClick;
 				button.navigation = new() { mode = Navigation.Mode.None };
-				
+
+				//component.Init(this);
+
 				break;
 			case UIComponentType.text:
-				image.color = backgroundColor;
-				text = Instantiate(textPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
+				image.color = Config.UIConfig.BackgroundColor;
+				text = Instantiate(Config.UIConfig.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 				text.text = component.Text;
 				break;
 			case UIComponentType.divider:
-				image.color = backgroundColor;
-				Instantiate(dividerPrefab, newObj.transform);
+				image.color = Config.UIConfig.BackgroundColor;
+				Instantiate(Config.UIConfig.DividerPrefab, newObj.transform);
 				break;
 		}
 		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button)
 		{ // add text padding
-			text.rectTransform.offsetMin = new(textPadding, textPadding);
-			text.rectTransform.offsetMax = new(-textPadding, -textPadding);
+			text.rectTransform.offsetMin = new(Config.UIConfig.TextPadding, Config.UIConfig.TextPadding);
+			text.rectTransform.offsetMax = new(-Config.UIConfig.TextPadding, -Config.UIConfig.TextPadding);
 		}
 
-		component.reference = new()
-		{
-			mainComponent = component,
-			rectTransform = newObj.GetComponent<RectTransform>(),
-			transform = newObj.transform,
-			imageComponent = image,
-			type = component.Type,
-			text = text,
-			button = button
-		};
+		RectTransform rectTransform = newObj.GetComponent<RectTransform>();
+		component.mainComponent = component;
+		component.rectTransform = rectTransform;
+		component.transform = newObj.transform;
+		component.imageComponent = image;
+		component.type = component.Type;
+		component.textmeshproText = text;
+		component.button = button;
 
-		return component.reference;
+		//return component.reference;
 	}
 
-	public void DisplayDropdown(ProceduralUIComponent component)
+	public void HideAllDropdowns()
 	{
-		ProceduralUI dropdown = component.DropdownMenu;
-		if (component.Type == UIComponentType.button && dropdown != null)
+		foreach(ProceduralUIComponent component in components)
 		{
-			Vector3[] corners = new Vector3[4];
-			component.reference.rectTransform.GetWorldCorners(corners);
-
-			// check if would fit at right
-			bool wouldFit = corners[2].x + dropdown.width + dropDownDisplayOffset + sidePadding < canvas.renderingDisplaySize.x;
-			if (wouldFit)
-			{ // place top left at top right (3)
-				Vector2 position = (Vector2)corners[2] + dropDownDisplayOffset * Vector2.right + sidePadding * Vector2.one;
-				dropdown.Display(position, false);
-			}
-			else
+			if (component.IsDropDown)
 			{
-				// place top right corner of dropdown at top left (2)
-				Vector2 position = (Vector2)corners[1] + (dropdown.width + dropDownDisplayOffset) * Vector2.left + new Vector2(-sidePadding, sidePadding);
-				dropdown.Display(position, false);
+				component.HideDropdown();
 			}
 		}
 	}
-
-	public void HideDropdown(ProceduralUIComponent component)
-	{
-		if (component.Type == UIComponentType.button && 
-			component.DropdownMenu != null && 
-			!component.DropdownMenu.mouseOver)
-		{
-			component.DropdownMenu.Hide();
-		}
-	}
+	
 }

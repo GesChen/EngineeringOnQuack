@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class RightClick : MonoBehaviour
 {
@@ -8,7 +9,7 @@ public class RightClick : MonoBehaviour
 	
 	void Update()
 	{
-		if (Controls.inputMaster.UI.RightClick.WasPressedThisFrame())
+		if (Mouse.current.rightButton.wasPressedThisFrame)
 		{
 			Vector2 mousePos = Controls.inputMaster.UI.Point.ReadValue<Vector2>();
 			testpanel.Display(mousePos);

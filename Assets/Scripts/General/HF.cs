@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public static class HF {
 	#region Base Class Extensions
@@ -104,7 +105,20 @@ public static class HF {
 
 		return intersectionPoint;
 	}
-	
+
+	public static bool Vector2InAABB(Vector2 point, Vector2 min, Vector2 max)
+	{
+		return point.x < max.x && point.y < max.y && point.x > min.x && point.y > min.y;
+	}
+
+	public static bool Vector2InRectTransform(Vector2 point, RectTransform rect)
+	{
+		Vector3[] corners = new Vector3[4];
+		rect.GetWorldCorners(corners);
+		Vector2 min = corners[0];
+		Vector2 max = corners[2];
+		return Vector2InAABB(point, min, max);
+	}
 
 
 	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)

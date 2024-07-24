@@ -2,20 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 using TMPro;
 using UnityEngine.UI;
-
-public struct UIComponentReference
-{
-	public ProceduralUIComponent mainComponent;
-	public Transform transform;
-	public RectTransform rectTransform;
-	public Image imageComponent;
-	public UIComponentType type;
-	public TextMeshProUGUI text;
-	public Button button;
-}
 
 public enum UIComponentType
 {
@@ -32,27 +20,71 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	public bool IsDropDown;
 	public ProceduralUI DropdownMenu;
 	public Button.ButtonClickedEvent OnClick = new();
-	public UIComponentReference reference;
 
-	public void Click()
+	public ProceduralUIComponent mainComponent;
+	public Transform transform;
+	public RectTransform rectTransform;
+	public Image imageComponent;
+	public UIComponentType type;
+	public TextMeshProUGUI textmeshproText;
+	public Button button;
+	public bool mouseOver;
+
+	public void Update(ProceduralUI main)
 	{
-		if (Type == UIComponentType.button)
+		try
 		{
-			OnClick.Invoke();
+			mouseOver = HF.Vector2InRectTransform(Controls.mousePos, rectTransform) && main.visible;
+		}
+		catch
+		{
+			Debug.Log($"broken: {Text}");
+			Debug.Log(main);
+		}
+		if (mouseOver)
+		{
+			// all other dropdowns in the parent should hide
+			main.HideAllDropdowns();
+
+			if (IsDropDown)
+				DisplayDropdown(main);
 		}
 	}
 
-	public bool CheckMouseValidity(Vector2 mousePos, int margin)
+	public void DisplayDropdown(ProceduralUI main)
 	{
-		Vector3[] corners = new Vector3[4];
-		reference.rectTransform.GetWorldCorners(corners);
-		Vector2 min = corners[0];
-		Vector2 max = corners[2];
+		if (Type == UIComponentType.button && DropdownMenu != null)
+		{
+			Vector3[] corners = new Vector3[4];
+			rectTransform.GetWorldCorners(corners);
 
-		// expanding by margin achieves same effect
-		min -= margin * Vector2.one;
-		max += margin * Vector2.one;
+			// check if would fit at right
+			bool wouldFit = corners[2].x + DropdownMenu.width + Config.UIConfig.DropDownDisplayOffset + Config.UIConfig.SidePadding < main.canvas.renderingDisplaySize.x;
+			if (wouldFit)
+			{ // place top left at top right (3)
+				Vector2 position = (Vector2)corners[2] + Config.UIConfig.DropDownDisplayOffset * Vector2.right + Config.UIConfig.SidePadding * Vector2.one;
+				DropdownMenu.Display(position, false);
+			}
+			else
+			{
+				// place top right corner of dropdown at top left (2)
+				Vector2 position = 
+					(Vector2)corners[1] + 
+					(DropdownMenu.width + Config.UIConfig.DropDownDisplayOffset) * Vector2.left 
+					+ new Vector2(-Config.UIConfig.SidePadding, Config.UIConfig.SidePadding);
+				DropdownMenu.Display(position, false);
+			}
 
-		return mousePos.x < max.x && mousePos.y < max.y && mousePos.x > min.x && mousePos.y > min.y;
+			DropdownMenu.dropdownParent = main;
+		}
+	}
+
+	public void HideDropdown()
+	{
+		if (Type == UIComponentType.button &&
+			DropdownMenu != null)
+		{
+			DropdownMenu.Hide();
+		}
 	}
 }
