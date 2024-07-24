@@ -18,8 +18,6 @@ public class ProceduralUI : MonoBehaviour
 	public bool visible;
 	public float width;
 	public float height;
-	public ProceduralUI dropdownParent;
-	//public ProceduralUIComponent dropdownComponent;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
@@ -39,34 +37,43 @@ public class ProceduralUI : MonoBehaviour
 
 			foreach (ProceduralUIComponent component in components)
 			{
-				component.Update(this);
+				component.Update();
 			}
 		}
 	}
 
 	public void MouseUpdate()
 	{
-		Debug.Log("update");
-
 		// hide this menu if the mouse is outside the range and the mouse is not in range of any active dropdowns
 		// + is not dropdown and button which shows it is hovered
 		mouseInRange = CheckMouseValidity(Config.UIConfig.MouseValidityMargin);
 		if (!mouseInRange) 
 		{ 
-			// any of its own children dropdown aren't 
 			bool anyDropDownsInRange = false;
-			foreach (ProceduralUIComponent component in components)
-			{
-				if (component.IsDropDown && component.DropdownMenu.mouseInRange)
-				{
-					anyDropDownsInRange = true;
-					break;
-				}
-			}
+			CheckComponentsForInRange(this, ref anyDropDownsInRange);
 
 			if (!anyDropDownsInRange)
 			{
 				Hide();
+			}
+		}
+	}
+
+	// recursively checks components for dropdowns with mouse in range of the menu
+	void CheckComponentsForInRange(ProceduralUI procedural, ref bool inRange)
+	{
+		if (inRange) return;
+
+		foreach (ProceduralUIComponent component in procedural.components)
+		{
+			if (component.Type == UIComponentType.dropdown)
+			{
+				if (component.DropdownMenu.mouseInRange)
+				{
+					inRange = true;
+					return;
+				}
+				CheckComponentsForInRange(component.DropdownMenu, ref inRange);
 			}
 		}
 	}
@@ -110,13 +117,10 @@ public class ProceduralUI : MonoBehaviour
 		{
 			ProceduralUIComponent component = components[i];
 			GenerateUIComponent(ref component);
-			/*if (component.IsDropDown)
+			if (component.Type == UIComponentType.dropdown && component.DropdownMenu == null)
 			{
-				if (component.DropdownMenu == null)
-					Debug.LogError($"Dropdown {component.Text} has no required menu component");
-				else
-					component.DropdownMenu.dropdownComponent = component;
-			}*/
+				Debug.LogError($"Dropdown {component.Text} has no required menu component");
+			}
 			component.transform.SetParent(panelTransform);
 
 			components[i] = component;
@@ -127,9 +131,11 @@ public class ProceduralUI : MonoBehaviour
 		float longestTextWidth = Mathf.NegativeInfinity;
 		foreach (ProceduralUIComponent component in components)
 		{
-			if (component.type == UIComponentType.text || component.type == UIComponentType.button)
+			if (component.Type == UIComponentType.text || 
+				component.Type == UIComponentType.button || 
+				component.Type == UIComponentType.dropdown)
 			{
-				float textwidth = TextWidthApproximation(component.mainComponent.Text, Config.UIConfig.FontAsset, Config.UIConfig.FontSize) + 2 * Config.UIConfig.TextPadding;
+				float textwidth = TextWidthApproximation(component.Text, Config.UIConfig.FontAsset, Config.UIConfig.FontSize) + 2 * Config.UIConfig.TextPadding;
 				longestTextWidth = Mathf.Max(longestTextWidth, textwidth);
 			}
 		}
@@ -198,6 +204,7 @@ public class ProceduralUI : MonoBehaviour
 
 		switch (component.Type)
 		{
+			case UIComponentType.dropdown:
 			case UIComponentType.button:
 				image.color = Color.white;
 
@@ -215,8 +222,6 @@ public class ProceduralUI : MonoBehaviour
 				button.onClick = component.OnClick;
 				button.navigation = new() { mode = Navigation.Mode.None };
 
-				//component.Init(this);
-
 				break;
 			case UIComponentType.text:
 				image.color = Config.UIConfig.BackgroundColor;
@@ -228,20 +233,20 @@ public class ProceduralUI : MonoBehaviour
 				Instantiate(Config.UIConfig.DividerPrefab, newObj.transform);
 				break;
 		}
-		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button)
+		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button || component.Type == UIComponentType.dropdown)
 		{ // add text padding
 			text.rectTransform.offsetMin = new(Config.UIConfig.TextPadding, Config.UIConfig.TextPadding);
 			text.rectTransform.offsetMax = new(-Config.UIConfig.TextPadding, -Config.UIConfig.TextPadding);
 		}
 
 		RectTransform rectTransform = newObj.GetComponent<RectTransform>();
-		component.mainComponent = component;
 		component.rectTransform = rectTransform;
 		component.transform = newObj.transform;
 		component.imageComponent = image;
-		component.type = component.Type;
 		component.textmeshproText = text;
 		component.button = button;
+
+		component.main = this;
 
 		//return component.reference;
 	}
@@ -250,7 +255,7 @@ public class ProceduralUI : MonoBehaviour
 	{
 		foreach(ProceduralUIComponent component in components)
 		{
-			if (component.IsDropDown)
+			if (component.Type == UIComponentType.dropdown)
 			{
 				component.HideDropdown();
 			}

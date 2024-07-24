@@ -1599,6 +1599,7 @@ GameObject:
   - component: {fileID: 825463387}
   - component: {fileID: 825463388}
   - component: {fileID: 825463386}
+  - component: {fileID: 825463389}
   m_Layer: 0
   m_Name: UI
   m_TagString: Untagged
@@ -1622,16 +1623,28 @@ MonoBehaviour:
   canvas: {fileID: 916857749}
   components:
   - Type: 0
-    Text: ok what the fuck
-    IsDropDown: 0
+    Text: great
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
+    main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
     imageComponent: {fileID: 0}
-    type: 0
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
+  - Type: 1
+    Text: dropdown??
+    DropdownMenu: {fileID: 825463389}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+    main: {fileID: 0}
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     mouseOver: 0
@@ -1641,6 +1654,20 @@ MonoBehaviour:
   width: 0
   height: 0
   dropdownParent: {fileID: 0}
+  dropdownComponent:
+    Type: 0
+    Text: 
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+    main: {fileID: 0}
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
 --- !u!4 &825463387
 Transform:
   m_ObjectHideFlags: 0
@@ -1669,6 +1696,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testpanel: {fileID: 825463386}
+--- !u!114 &825463389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825463384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d922fbe40c3de6a49b77b646d4270647, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  menuTitle: possibly working dropdown
+  canvas: {fileID: 916857749}
+  components:
+  - Type: 2
+    Text: pelase work i swear to god
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+    main: {fileID: 0}
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
+  mouseOver: 0
+  mouseInRange: 0
+  visible: 0
+  width: 0
+  height: 0
+  dropdownParent: {fileID: 0}
+  dropdownComponent:
+    Type: 0
+    Text: 
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+    main: {fileID: 0}
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
 --- !u!1 &825630083
 GameObject:
   m_ObjectHideFlags: 0

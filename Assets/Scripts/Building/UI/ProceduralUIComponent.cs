@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public enum UIComponentType
 {
 	button,
+	dropdown,
 	text,
 	divider
 }
@@ -17,20 +18,19 @@ public class ProceduralUIComponent // general container for components, doesnt a
 {
 	public UIComponentType Type;
 	public string Text;
-	public bool IsDropDown;
 	public ProceduralUI DropdownMenu;
 	public Button.ButtonClickedEvent OnClick = new();
 
-	public ProceduralUIComponent mainComponent;
-	public Transform transform;
-	public RectTransform rectTransform;
-	public Image imageComponent;
-	public UIComponentType type;
-	public TextMeshProUGUI textmeshproText;
-	public Button button;
-	public bool mouseOver;
+	[HideInInspector] public ProceduralUI main;
+	[HideInInspector] public Transform transform;
+	[HideInInspector] public RectTransform rectTransform;
+	[HideInInspector] public Image imageComponent;
+	[HideInInspector] public TextMeshProUGUI textmeshproText;
+	[HideInInspector] public Button button;
 
-	public void Update(ProceduralUI main)
+	[HideInInspector] public bool mouseOver;
+
+	public void Update()
 	{
 		try
 		{
@@ -38,22 +38,23 @@ public class ProceduralUIComponent // general container for components, doesnt a
 		}
 		catch
 		{
-			Debug.Log($"broken: {Text}");
-			Debug.Log(main);
+			Debug.Log(rectTransform);
+			Debug.Log(Text);
 		}
+
 		if (mouseOver)
 		{
 			// all other dropdowns in the parent should hide
 			main.HideAllDropdowns();
 
-			if (IsDropDown)
+			if (Type == UIComponentType.dropdown)
 				DisplayDropdown(main);
 		}
 	}
 
 	public void DisplayDropdown(ProceduralUI main)
 	{
-		if (Type == UIComponentType.button && DropdownMenu != null)
+		if (Type == UIComponentType.dropdown && DropdownMenu != null)
 		{
 			Vector3[] corners = new Vector3[4];
 			rectTransform.GetWorldCorners(corners);
@@ -74,14 +75,12 @@ public class ProceduralUIComponent // general container for components, doesnt a
 					+ new Vector2(-Config.UIConfig.SidePadding, Config.UIConfig.SidePadding);
 				DropdownMenu.Display(position, false);
 			}
-
-			DropdownMenu.dropdownParent = main;
 		}
 	}
 
 	public void HideDropdown()
 	{
-		if (Type == UIComponentType.button &&
+		if (Type == UIComponentType.dropdown &&
 			DropdownMenu != null)
 		{
 			DropdownMenu.Hide();
