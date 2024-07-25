@@ -1600,6 +1600,7 @@ GameObject:
   - component: {fileID: 825463388}
   - component: {fileID: 825463386}
   - component: {fileID: 825463389}
+  - component: {fileID: 825463390}
   m_Layer: 0
   m_Name: UI
   m_TagString: Untagged
@@ -1635,7 +1636,7 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     mouseOver: 0
-  - Type: 1
+  - Type: 2
     Text: dropdown??
     DropdownMenu: {fileID: 825463389}
     OnClick:
@@ -1653,21 +1654,6 @@ MonoBehaviour:
   visible: 0
   width: 0
   height: 0
-  dropdownParent: {fileID: 0}
-  dropdownComponent:
-    Type: 0
-    Text: 
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
-    main: {fileID: 0}
-    transform: {fileID: 0}
-    rectTransform: {fileID: 0}
-    imageComponent: {fileID: 0}
-    textmeshproText: {fileID: 0}
-    button: {fileID: 0}
-    mouseOver: 0
 --- !u!4 &825463387
 Transform:
   m_ObjectHideFlags: 0
@@ -1711,7 +1697,53 @@ MonoBehaviour:
   menuTitle: possibly working dropdown
   canvas: {fileID: 916857749}
   components:
+  - Type: 0
+    Text: pelase work i swear to god
+    DropdownMenu: {fileID: 0}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+    main: {fileID: 0}
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
   - Type: 2
+    Text: deeper
+    DropdownMenu: {fileID: 825463390}
+    OnClick:
+      m_PersistentCalls:
+        m_Calls: []
+    main: {fileID: 0}
+    transform: {fileID: 0}
+    rectTransform: {fileID: 0}
+    imageComponent: {fileID: 0}
+    textmeshproText: {fileID: 0}
+    button: {fileID: 0}
+    mouseOver: 0
+  mouseOver: 0
+  mouseInRange: 0
+  visible: 0
+  width: 0
+  height: 0
+--- !u!114 &825463390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825463384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d922fbe40c3de6a49b77b646d4270647, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  menuTitle: even deeper
+  canvas: {fileID: 916857749}
+  components:
+  - Type: 0
     Text: pelase work i swear to god
     DropdownMenu: {fileID: 0}
     OnClick:
@@ -1729,21 +1761,6 @@ MonoBehaviour:
   visible: 0
   width: 0
   height: 0
-  dropdownParent: {fileID: 0}
-  dropdownComponent:
-    Type: 0
-    Text: 
-    DropdownMenu: {fileID: 0}
-    OnClick:
-      m_PersistentCalls:
-        m_Calls: []
-    main: {fileID: 0}
-    transform: {fileID: 0}
-    rectTransform: {fileID: 0}
-    imageComponent: {fileID: 0}
-    textmeshproText: {fileID: 0}
-    button: {fileID: 0}
-    mouseOver: 0
 --- !u!1 &825630083
 GameObject:
   m_ObjectHideFlags: 0
@@ -3321,6 +3338,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   UI:
+    _mouseValidityMargin: 50
+    _maxRightClickTime: 0.1
+    _maxMouseMovementToCount: 10
     _backgroundColor: {r: 1, g: 0, b: 0, a: 1}
     _buttonHoverColor: {r: 1, g: 1, b: 0, a: 1}
     _buttonPressedColor: {r: 0, g: 0, b: 1, a: 1}
@@ -3344,8 +3364,7 @@ MonoBehaviour:
       type: 3}
     _dividerPrefab: {fileID: 0}
     _dropDownArrow: {fileID: 0}
-    _mouseValidityMargin: 50
-  _fpsLimit: 0
+  _fpsLimit: 60
 --- !u!1 &1577646644
 GameObject:
   m_ObjectHideFlags: 0

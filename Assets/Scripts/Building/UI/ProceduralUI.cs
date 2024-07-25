@@ -13,11 +13,11 @@ public class ProceduralUI : MonoBehaviour
 
 	[Space]
 	[Header("Debug")]
-	public bool mouseOver;
-	public bool mouseInRange;
-	public bool visible;
-	public float width;
-	public float height;
+	[HideInNormalInspector] public bool mouseOver;
+	[HideInNormalInspector] public bool mouseInRange;
+	[HideInNormalInspector] public bool visible;
+	[HideInNormalInspector] public float width;
+	[HideInNormalInspector] public float height;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;

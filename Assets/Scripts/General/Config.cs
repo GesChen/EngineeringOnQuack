@@ -3,12 +3,20 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using TMPro;
+using UnityEditor.Search;
 
 public class Config : MonoBehaviour
 {
 	[System.Serializable]
 	public struct UIConfig
 	{
+		[Header("Controls")]
+		[Description("How many pixels the mouse can move away form the rect to still be considered as over")]
+		public int _mouseValidityMargin;
+		public float _maxRightClickTime;		// right click
+		public float _maxMouseMovementToCount;  // right click
+		[Space]
+		[Header("Visual")]
 		public Color _backgroundColor;
 		public Color _buttonHoverColor;
 		public Color _buttonPressedColor;
@@ -35,10 +43,6 @@ public class Config : MonoBehaviour
 		public GameObject _dividerPrefab;
 		public GameObject _dropDownArrow;
 
-		[Space]
-		[Description("How many pixels the mouse can move away form the rect to still be considered as over")]
-		public int _mouseValidityMargin;
-
 		#region statics
 		public static Color			BackgroundColor;
 		public static Color			ButtonHoverColor;
@@ -61,6 +65,8 @@ public class Config : MonoBehaviour
 		public static GameObject	DividerPrefab;
 		public static GameObject	DropDownArrow;
 		public static int			MouseValidityMargin;
+		public static float			MaxRightClickTime;
+		public static float			MaxMouseMovementToCount;
 		#endregion
 	}
 	public UIConfig UI;
@@ -92,6 +98,8 @@ public class Config : MonoBehaviour
 		UIConfig.DividerPrefab				= UI._dividerPrefab;
 		UIConfig.DropDownArrow				= UI._dropDownArrow;
 		UIConfig.MouseValidityMargin		= UI._mouseValidityMargin;
+		UIConfig.MaxMouseMovementToCount	= UI._maxMouseMovementToCount;
+		UIConfig.MaxRightClickTime			= UI._maxRightClickTime;
 
 		FpsLimit = _fpsLimit;
 

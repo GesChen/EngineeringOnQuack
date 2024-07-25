@@ -7,9 +7,9 @@ using UnityEngine.UI;
 
 public enum UIComponentType
 {
+	text,
 	button,
 	dropdown,
-	text,
 	divider
 }
 
@@ -21,14 +21,14 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	public ProceduralUI DropdownMenu;
 	public Button.ButtonClickedEvent OnClick = new();
 
-	[HideInInspector] public ProceduralUI main;
-	[HideInInspector] public Transform transform;
-	[HideInInspector] public RectTransform rectTransform;
-	[HideInInspector] public Image imageComponent;
-	[HideInInspector] public TextMeshProUGUI textmeshproText;
-	[HideInInspector] public Button button;
+	[HideInNormalInspector] public ProceduralUI main;
+	[HideInNormalInspector] public Transform transform;
+	[HideInNormalInspector] public RectTransform rectTransform;
+	[HideInNormalInspector] public Image imageComponent;
+	[HideInNormalInspector] public TextMeshProUGUI textmeshproText;
+	[HideInNormalInspector] public Button button;
 
-	[HideInInspector] public bool mouseOver;
+	[HideInNormalInspector] public bool mouseOver;
 
 	public void Update()
 	{
