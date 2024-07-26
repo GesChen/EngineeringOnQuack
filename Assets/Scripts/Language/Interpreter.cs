@@ -24,8 +24,8 @@ public class Error
 }
 public class Output
 {
-	public bool Success  { get; }
-	public Error Error   { get; private set; }
+	public bool Success { get; }
+	public Error Error { get; private set; }
 	public dynamic Value { get; }
 
 	public Output(Error error)
@@ -68,10 +68,10 @@ public class Function
 	public Interpreter UsingInterpreter { get; set; } // TODO: idk what to do here, for constructor to reset interpreter, has to be able to be set, or else big workaround.
 	public Evaluator UsingEvaluator { get; }
 	public Function(
-		string name, 
-		Script script, 
-		List<string> argnames, 
-		Interpreter interpreter, 
+		string name,
+		Script script,
+		List<string> argnames,
+		Interpreter interpreter,
 		Evaluator evaluator)
 	{
 		Name = name;
@@ -95,7 +95,7 @@ public class ClassDefinition
 	public ClassDefinition(
 		string name,
 		Interpreter interpreter,
-		List<dynamic> initializationScript, 
+		List<dynamic> initializationScript,
 		Function constructor,
 		Function tostring)
 	{
@@ -162,9 +162,8 @@ public class ScriptLine
 public class Interpreter : MonoBehaviour
 {
 	public string NAME;
-	public const int MAX_RECURSION_DEPTH = 128;
 	public bool DEBUGMODE = false;
-	
+
 	public bool isClass = false;
 
 	public Evaluator evaluator;
@@ -272,7 +271,8 @@ public class Interpreter : MonoBehaviour
 			if (f.Name == name && f.ArgumentNames.Count == argNames.Count)
 				return Errors.FunctionAlreadyExists(name, argNames.Count, this);
 
-		/*debug*/ if (DEBUGMODE) LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
+		/*debug*/
+		if (DEBUGMODE) LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
 
 		functions[name] = new(name, script, argNames, this, evaluator);
 		return new Output(functions[name]); // return the function on success
@@ -292,7 +292,8 @@ public class Interpreter : MonoBehaviour
 	}
 	public Output RunFunction(Function F, List<dynamic> args, int depth = 0)
 	{
-		/*debug*/ if (DEBUGMODE) LogColor($"Running function {F}", Color.red);
+		/*debug*/
+		if (DEBUGMODE) LogColor($"Running function {F}", Color.red);
 		if (args.Count != F.ArgumentNames.Count)
 			return Errors.NoFunctionExists(F.Name, args.Count, F.UsingInterpreter);
 
@@ -329,7 +330,7 @@ public class Interpreter : MonoBehaviour
 			{
 				if (variablesStateBefore.ContainsKey(varname)) // any new variables will not be contained within 
 				{
-					if (F.ArgumentNames.Contains(varname)) 
+					if (F.ArgumentNames.Contains(varname))
 						temp.Add(varname, variablesStateBefore[varname]); // recall starting
 					else
 						temp.Add(varname, F.UsingInterpreter.variables[varname]); // or keep the changes
@@ -363,7 +364,7 @@ public class Interpreter : MonoBehaviour
 			return new(newClassInstance);
 		}
 	}
-	
+
 	void UpdateCurrentLine(List<dynamic> workingScript, int localLine)
 	{ // assumes nested form is not null
 		dynamic item = workingScript[localLine];
@@ -448,7 +449,7 @@ public class Interpreter : MonoBehaviour
 			else if (c == ')' && !inString) parenthesesDepth--;
 
 			if (parenthesesDepth >= 1 && !(c == '(' && parenthesesDepth == 1)) expression += c; // second check ensures starting parentheses not included
-			
+
 			if (c == ')' && parenthesesDepth == 0) { endPos = i; break; }
 		}
 		if (parenthesesDepth != 0 || endPos == -1)
@@ -544,7 +545,7 @@ public class Interpreter : MonoBehaviour
 
 				if (i < line.Length) // i may be have been modified
 					if (!(inSingleLine || inMultiLine)) newLine += line[i];
-				
+
 				i++;
 			}
 			if (!string.IsNullOrWhiteSpace(line))
@@ -564,11 +565,11 @@ public class Interpreter : MonoBehaviour
 	{
 		LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
 		LogColor("VARIABLES: " + HF.ConvertToString(variables), Color.yellow);
-		LogColor("FUNCTIONS: "+HF.ConvertToString(functions), Color.yellow);
-		LogColor("CLASSES: "+HF.ConvertToString(classes), Color.yellow);
+		LogColor("FUNCTIONS: " + HF.ConvertToString(functions), Color.yellow);
+		LogColor("CLASSES: " + HF.ConvertToString(classes), Color.yellow);
 		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
 	}
-	
+
 	Output ProcessClass(string startLine, List<dynamic> definition)
 	{
 		// get class name
@@ -577,7 +578,8 @@ public class Interpreter : MonoBehaviour
 			return Errors.ExpectedColon(this);
 
 		string name = startLine[5..colonIndex].Trim();
-		/*debug*/ if (DEBUGMODE) LogColor($"Creating new class \"{name}\"", Color.red);
+		/*debug*/
+		if (DEBUGMODE) LogColor($"Creating new class \"{name}\"", Color.red);
 		if (!HF.VariableNameIsValid(name))
 			return Errors.BadClassName(name, this);
 
@@ -632,7 +634,7 @@ public class Interpreter : MonoBehaviour
 						if (functionname == name)
 						{
 							constructor = definition[i + 1];
-							constructorArgNames = argNames;	
+							constructorArgNames = argNames;
 						}
 						else if (functionname == "string")
 						{
@@ -666,7 +668,8 @@ public class Interpreter : MonoBehaviour
 
 		classes.Add(name, newClass);
 
-		/*debug*/ if (DEBUGMODE) { LogColor("Class creation successful", Color.red); DumpState(); }
+		/*debug*/
+		if (DEBUGMODE) { LogColor("Class creation successful", Color.red); DumpState(); }
 		return new(true);
 	}
 	#endregion
@@ -683,7 +686,7 @@ public class Interpreter : MonoBehaviour
 
 	public Output Interpret(List<dynamic> lines, int recursiondepth = 0)
 	{
-		if (recursiondepth > MAX_RECURSION_DEPTH) return Errors.MaxRecursion(MAX_RECURSION_DEPTH, this);
+		if (recursiondepth > Config.MAX_RECURSION_DEPTH) return Errors.MaxRecursion(Config.MAX_RECURSION_DEPTH, this);
 		//evaluator.DEBUGMODE = DEBUGMODE;
 
 		int localLineNum = 0;
@@ -720,7 +723,7 @@ public class Interpreter : MonoBehaviour
 			}
 			if (type != 0)
 			{
-				foreach(string varname in variables.Keys)
+				foreach (string varname in variables.Keys)
 				{
 					if (line.StartsWith(varname))
 					{

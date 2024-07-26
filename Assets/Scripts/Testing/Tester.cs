@@ -12,9 +12,13 @@ public class Tester : MonoBehaviour
 
 	public bool debug;
 	public Interpreter interpreter;
-	public Evaluator evaluator;
+	public Evaluator evaluator; 
 	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
-
+	public TextAsset scriptAsset;
+	void Start()
+	{
+		Test();
+	}
 	void Test()
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();

@@ -12,7 +12,6 @@ public class ProceduralUI : MonoBehaviour
 	public List<ProceduralUIComponent> components = new();
 
 	[Space]
-	[Header("Debug")]
 	[HideInNormalInspector] public bool mouseOver;
 	[HideInNormalInspector] public bool mouseInRange;
 	[HideInNormalInspector] public bool visible;

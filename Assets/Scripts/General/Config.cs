@@ -74,6 +74,9 @@ public class Config : MonoBehaviour
 	[Header("Technical")]
 	public int _fpsLimit;
 	public static int FpsLimit;
+	public int _maxRecursionDepth = 128;
+	public static int MAX_RECURSION_DEPTH;
+
 
 	void Awake()
 	{
@@ -102,6 +105,7 @@ public class Config : MonoBehaviour
 		UIConfig.MaxRightClickTime			= UI._maxRightClickTime;
 
 		FpsLimit = _fpsLimit;
+		MAX_RECURSION_DEPTH = _maxRecursionDepth;
 
 	}
 }
