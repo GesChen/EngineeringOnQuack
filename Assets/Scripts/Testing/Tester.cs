@@ -15,9 +15,22 @@ public class Tester : MonoBehaviour
 	public Evaluator evaluator; 
 	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
 	public TextAsset scriptAsset;
+	public string testexpr;
 	void Start()
 	{
-		Test();
+		//Test();
+		newevaltest();
+	}
+	void tokentest()
+	{
+		Output t = evaluator.Tokenize(testexpr, interpreter);
+
+		UnityEngine.Debug.Log(string.Join('\n', t.Value));
+	}
+	void newevaltest()
+	{
+		Output t = evaluator.Evaluate(testexpr, interpreter);
+		UnityEngine.Debug.Log(t);
 	}
 	void Test()
 	{
@@ -41,6 +54,7 @@ public class Tester : MonoBehaviour
 	private void Update()
 	{
 		//Test();
+		newevaltest();
 	}
 
 	public void TestDebug()

@@ -15,6 +15,13 @@ class dictionary:
     def string():
         return "dictionary with keys " + keys + " and values " + values
 
+    log("indict")
+    dump()
+
+dump()
+
+log(dictionary)
+
 newdict = dictionary()
 
 newdict.newItem("test", 1)

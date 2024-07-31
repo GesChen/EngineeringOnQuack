@@ -141,7 +141,7 @@ public static class HF {
 	public static string ConvertToString(dynamic value, bool stringQuotes)
 	{
 		Type t = value.GetType();
-		if (value == null) return "";
+		if (value is null) return "";
 		else if (value is string) return stringQuotes ? $"\"{value}\"" : value;
 		else if (value is int || value is float) return value.ToString("G10");
 		else if (value is bool) return value ? "true" : "false";

@@ -2882,7 +2882,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7a91e9ffbb7a545bca46e6e1548e28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DEBUGMODE: 0
+  DEBUGMODE: 1
 --- !u!114 &1437857901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2912,10 +2912,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debug: 0
+  debug: 1
   interpreter: {fileID: 1437857901}
   evaluator: {fileID: 1437857900}
   scriptFilePath: Assets\Scripts\Testing\testscript.quack
+  scriptAsset: {fileID: 0}
+  testexpr: 5+(a.foo(x)[1,2][0]).pow(3).add(5)*10
 --- !u!4 &1437857903
 Transform:
   m_ObjectHideFlags: 0
@@ -3366,6 +3368,7 @@ MonoBehaviour:
     _dividerPrefab: {fileID: 0}
     _dropDownArrow: {fileID: 0}
   _fpsLimit: 60
+  _maxRecursionDepth: 128
 --- !u!1 &1577646644
 GameObject:
   m_ObjectHideFlags: 0
