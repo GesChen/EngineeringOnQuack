@@ -151,4 +151,10 @@ public static class Errors
 
 	public static Output TypeHasNoAttributes(string typeName, Interpreter interpreter) =>
 		Error($"A {typeName} has no attributes", interpreter);
+
+	public static Output InvalidUseOfPeriod(Interpreter interpreter) =>
+		Error($"Invalid use of period", interpreter);
+
+	public static Output NoMethodExistsForType(string methodname, string type, Interpreter interpreter) =>
+		Error($"No method \"{methodname}\" exists for type {type}", interpreter);
 }

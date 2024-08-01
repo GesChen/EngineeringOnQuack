@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
 
 public class Evaluator : MonoBehaviour
 {
@@ -463,8 +462,6 @@ public class Evaluator : MonoBehaviour
 		// get rid of whitespace
 		expr = RemoveNonStringSpace(expr);
 
-		
-
 		// pre check(s)
 		Output parityCheck = ParityChecks(expr, interpreter);
 		if (!parityCheck.Success) return parityCheck;
@@ -512,118 +509,158 @@ public class Evaluator : MonoBehaviour
 			}
 			#endregion
 
+			string[] specialOperators = new string[2] { "!", "." };
 			string operation = tokens[opIndex].Text;
-			if (operation == "!")
-			{
-				dynamic rhs = tokens[opIndex + 1].RealValue;
-				string rhsType = HF.DetermineTypeFromVariable(rhs);
-
-				bool boolvalue = false;
-				if (rhsType == "string") boolvalue = rhs == "true";
-				else if (rhsType == "number") boolvalue = rhs > 0;
-				else if (rhsType == "boolean") boolvalue = rhs;
-				else if (rhsType == "list") boolvalue = false;
-
-				tokens.RemoveAt(opIndex);
-				tokens[opIndex] = new() { RealValue = !boolvalue };
-
-				continue;
-			}
-
-			if (opIndex == 0 || opIndex == tokens.Count - 1)
+			if ((opIndex == 0 || opIndex == tokens.Count - 1)
+				&& !specialOperators.Contains(operation))
 				return Errors.OperatorInInvalidPosition(operation, interpreter);
 
-			dynamic left = tokens[opIndex - 1].RealValue;
-			dynamic right = tokens[opIndex + 1].RealValue;
+			Token leftToken = opIndex > 0 ? tokens[opIndex - 1] : null;
+			Token rightToken = opIndex < (tokens.Count - 1) ? tokens[opIndex + 1] : null;
+			dynamic left = leftToken != null ? leftToken.RealValue : 0; // null check is performed on tokens, these will just cause error if nulled
+			dynamic right = rightToken != null ? rightToken.RealValue : 0;
 			string leftType = HF.DetermineTypeFromVariable(left);
 			string rightType = HF.DetermineTypeFromVariable(right);
 			dynamic result = 0;
 
-			try
+			bool normaloperation = true;
+
+			if (operation == "!")
 			{
-				if (leftType == "number")
+				if (rightToken == null) return Errors.OperatorInInvalidPosition("!", interpreter);
+
+				bool boolvalue = false;
+				if (rightType == "string") boolvalue = right == "true";
+				else if (rightType == "number") boolvalue = right > 0;
+				else if (rightType == "boolean") boolvalue = right;
+				else if (rightType == "list") boolvalue = false;
+
+				tokens.RemoveAt(opIndex);
+				tokens[opIndex] = new()
 				{
-					if (rightType != "number")
-					{ // attempt to convert to number
-						if (rightType == "string")
-						{
-							try
+					RealValue = !boolvalue,
+					Text = HF.ConvertToString(!boolvalue)
+				};
+
+				normaloperation = false;
+			}
+			else if (operation == ".")
+			{
+				if (leftType == "number" && rightType == "number") // decimal (will have unintended consequences)
+				{
+					int rightDigits = Mathf.FloorToInt(Math.Log10(right) + 1); // using different math classes, srsly?
+					result = left + right / Math.Pow(10, rightDigits);
+				}
+				else if (rightType == "string") // optimally want to be able to just check for method/variable
+				{
+					switch (leftType)
+					{
+						case "number":
+							
+						case "string":
+						case "boolean":
+						case "list":
+						case "ClassInstance":
+						default:
+							return Errors.NoMethodExistsForType((string)right, leftType, interpreter);
+					}
+				}
+				else
+				{
+					return Errors.InvalidUseOfPeriod(interpreter);
+				}
+
+				normaloperation = false;
+			}
+			
+			
+			if (normaloperation) {
+				try
+				{
+					if (leftType == "number")
+					{
+						if (rightType != "number")
+						{ // attempt to convert to number
+							if (rightType == "string")
 							{
-								right = float.Parse(right.Trim('"'));
+								try
+								{
+									right = float.Parse(right.Trim('"'));
+								}
+								catch
+								{
+									return Errors.UnableToParseStrAsNum(right, interpreter);
+								}
 							}
-							catch
-							{
-								return Errors.UnableToParseStrAsNum(right, interpreter);
-							}
+							else if (rightType == "bool") right = right ? 1 : 0;
+							else if (rightType == "list") right = 0;
 						}
-						else if (rightType == "bool") right = right ? 1 : 0;
-						else if (rightType == "list") right = 0;
-					}
 
-					switch (operation)
-					{
-						case "+": result = left + right; break;
-						case "-": result = left - right; break;
-						case "*": result = left * right; break;
-						case "/":  // check for division by zero
-							if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
-							else result = left / right; break;
-						case "^": result = Mathf.Pow(left, right); break;
-						case "%": result = left % right; break; //
-						case "==": result = left == right; break;
-						case "!=": result = left != right; break;
-						case "<": result = left < right; break;
-						case ">": result = left > right; break;
-						case "<=": result = left <= right; break;
-						case ">=": result = left >= right; break;
-						default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
+						switch (operation)
+						{
+							case "+": result = left + right; break;
+							case "-": result = left - right; break;
+							case "*": result = left * right; break;
+							case "/":  // check for division by zero
+								if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
+								else result = left / right; break;
+							case "^": result = Mathf.Pow(left, right); break;
+							case "%": result = left % right; break; //
+							case "==": result = left == right; break;
+							case "!=": result = left != right; break;
+							case "<": result = left < right; break;
+							case ">": result = left > right; break;
+							case "<=": result = left <= right; break;
+							case ">=": result = left >= right; break;
+							default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
+						}
 					}
-				}
-				else if (leftType == "string")
-				{
-					if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
-					if (rightType != "string") right = HF.ConvertToString(right);
+					else if (leftType == "string")
+					{
+						if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
+						if (rightType != "string") right = HF.ConvertToString(right);
 
-					result = left + right;
-				}
-				else if (leftType == "list")
-				{
-					if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
-					if (rightType == "list")
-						left.AddRange(right);
-					else
-						left.Add(right);
-					result = left;
-				}
-				else if (leftType == "bool")
-				{
-					if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
-					if (rightType != "bool")
-					{
-						if (rightType == "string") right = right == "true";
-						else if (rightType == "number") right = right > 0;
-						else if (rightType == "list") right = false;
+						result = left + right;
 					}
-					switch (operation)
+					else if (leftType == "list")
 					{
-						case "==": result = left == right; break;
-						case "!=": result = left != right; break;
-						case "&&": result = left && right; break;
-						case "||": result = left || right; break;
-						case "!&": result = !(left && right); break;
-						case "!|": result = !(left || right); break;
-						case "!!": result = left ^ right; break;
+						if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
+						if (rightType == "list")
+							left.AddRange(right);
+						else
+							left.Add(right);
+						result = left;
+					}
+					else if (leftType == "bool")
+					{
+						if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
+						if (rightType != "bool")
+						{
+							if (rightType == "string") right = right == "true";
+							else if (rightType == "number") right = right > 0;
+							else if (rightType == "list") right = false;
+						}
+						switch (operation)
+						{
+							case "==": result = left == right; break;
+							case "!=": result = left != right; break;
+							case "&&": result = left && right; break;
+							case "||": result = left || right; break;
+							case "!&": result = !(left && right); break;
+							case "!|": result = !(left || right); break;
+							case "!!": result = left ^ right; break;
+						}
 					}
 				}
+				catch
+				{
+					return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
+				}
+				tokens.RemoveAt(opIndex + 1); // remove right side
+				tokens[opIndex] = new() { RealValue = result }; // replace operator with result
+				tokens.RemoveAt(opIndex - 1); // remove left
 			}
-			catch
-			{
-				return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
-			}
 
-			tokens.RemoveAt(opIndex + 1); // remove right side
-			tokens[opIndex] = new() { RealValue = result }; // replace operator with result
-			tokens.RemoveAt(opIndex - 1); // remove left
 		}
 
 		return new(tokens[0].RealValue);
@@ -694,7 +731,22 @@ public class Evaluator : MonoBehaviour
 			if (c == '"') inString = !inString;
 			if (!inString)
 			{
-				if (char.IsLetterOrDigit(c) || c == '_')
+				// some - are negative signs ugh just stole the old code
+				bool minusIsNegative = false;
+				if (c == '-') // handle - sign, annoying af
+				{
+					minusIsNegative = i == 0; // is first char
+					if (!minusIsNegative)
+						minusIsNegative = // case where previous operator 
+							!(char.IsDigit(expr[i - 1]) ||	// previous char is not a digit (operator)
+							char.IsLetter(expr[i - 1]) ||
+							expr[i - 1] == '_' ||
+							expr[i - 1] == '.');			// and previous char is not .
+				}
+
+
+				if (char.IsLetterOrDigit(c) || c == '_' || minusIsNegative)
+					//|| (c == '.' && ((i > 0 && char.IsDigit(expr[i-1])) || (i < expr.Length - 2 && char.IsDigit(expr[i-1]))))) // there has to be a better way than this
 				{
 					accum += c;
 				}
@@ -791,6 +843,18 @@ public class Evaluator : MonoBehaviour
 			default: return Errors.UnknownType(interpreter);
 		}
 	}
+
+	#region builtin type methods
+	/*public Output NumberMethods(string methodName, Interpreter interpreter)
+	{
+		switch (methodName)
+		{
+			case "pow"
+		}
+	}*/
+	
+
+	#endregion
 
 	public Output _Evaluate(string expr, Interpreter interpreter)
 	{

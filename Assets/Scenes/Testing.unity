@@ -2917,7 +2917,7 @@ MonoBehaviour:
   evaluator: {fileID: 1437857900}
   scriptFilePath: Assets\Scripts\Testing\testscript.quack
   scriptAsset: {fileID: 0}
-  testexpr: 5+(a.foo(x)[1,2][0]).pow(3).add(5)*10
+  testexpr: 1+-3
 --- !u!4 &1437857903
 Transform:
   m_ObjectHideFlags: 0

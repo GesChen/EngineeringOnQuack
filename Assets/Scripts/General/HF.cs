@@ -242,7 +242,7 @@ public static class HF {
 		else if (v is int || v is float || v is long) return "number";
 		else if (v is bool) return "bool";
 		else if (v is List<dynamic>) return "list";
-		return "unknown";
+		return v.GetType().Name;
 	}
 
 	public static bool VariableNameIsValid(string name)
