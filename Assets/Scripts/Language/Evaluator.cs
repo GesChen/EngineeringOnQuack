@@ -103,6 +103,31 @@ public class Evaluator : MonoBehaviour
 		}
 	}
 
+	public class Member
+	{
+		public string For { get; private set; } // might not be used, just metadata
+		public string Name { get; private set; }
+		public bool IsFunction { get; private set; }
+		public Delegate Function { get; private set; }
+		public int ArgumentCount { get; private set; }
+
+		public Member(string @for, string name, bool isFunction, Delegate function)
+		{
+			For = @for;	
+			Name = name;
+			IsFunction = isFunction;
+			Function = function;
+			ArgumentCount = function.Method.GetParameters().Length;
+		}
+		public Output Invoke(List<dynamic> args, Interpreter interpreter)
+		{
+			if (args.Count != ArgumentCount)
+				return Errors.NoFunctionExists(Name, ArgumentCount, interpreter);
+			dynamic output = Function.DynamicInvoke(args);
+			return new(output);
+		}
+	}
+
 	bool ExpressionContains(char symbol, string expr)
 	{
 		bool inString = false;
@@ -127,6 +152,54 @@ public class Evaluator : MonoBehaviour
 	bool ExpressionContainsParentheses(string expr)
 	{
 		return ExpressionContains('(', expr) || ExpressionContains(')', expr);
+	}
+	string RemoveNonStringSpace(string expr)
+	{
+		string tempstring = "";
+		bool inString = false;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (c != ' ' || inString) // anything but space unless in quotes
+				tempstring += c;
+		}
+		return tempstring;
+	}
+	bool CheckListForm(string s) // returns if a list is properly formed, expects single lists, not chained or expressions
+	{
+		string nospaces = s.Replace(" ", "");
+		if (nospaces[0] != '[' || nospaces[^1] != ']') return false;
+
+		int depth = 0;
+		bool instring = false;
+		foreach (char c in s)
+		{
+			if (c == '"') instring = !instring;
+			if (c == '[' && !instring) depth++;
+			else if (c == ']' && !instring) depth--;
+		}
+		bool paritycheck = depth == 0; // well formed lists should have equal [ and ], therefore closed
+		if (!paritycheck) return false;
+
+		// commas should always have something between them
+		nospaces = nospaces[1..^1]; // made sure started and ended with [], now remove them
+		instring = false;
+		bool inlist = false;
+		for (int i = 0; i < nospaces.Length; i++)
+		{
+			char c = nospaces[i];
+			if (c == '"') instring = !instring;
+			if ((c == '[' || c == ']') && !instring) inlist = !inlist;
+			if (nospaces[i] == ',' && !(instring || inlist)) // dont process commas inside of nested list or string
+			{
+				if (i == 0 || i == nospaces.Length - 1) // shouldnt be at start or end
+					return false;
+
+				if (nospaces[i + 1] == ',' || nospaces[i - 1] == ',') // shouldnt be next to each other
+					return false;
+			}
+		}
+		return true; // if paritycheck was false, would have already returned 
 	}
 
 	Output ParseFloatPart(string s, Interpreter interpreter)
@@ -177,45 +250,10 @@ public class Evaluator : MonoBehaviour
 		return new Output(value);
 	}
 
-	bool CheckListForm(string s) // returns if a list is properly formed, expects single lists, not chained or expressions
-	{
-		string nospaces = s.Replace(" ", "");
-		if (nospaces[0] != '[' || nospaces[^1] != ']') return false;
-
-		int depth = 0;
-		bool instring = false;
-		foreach (char c in s)
-		{
-			if (c == '"') instring = !instring;
-			if (c == '[' && !instring) depth++;
-			else if (c == ']' && !instring) depth--;
-		}
-		bool paritycheck = depth == 0; // well formed lists should have equal [ and ], therefore closed
-		if (!paritycheck) return false;
-
-		// commas should always have something between them
-		nospaces = nospaces[1..^1]; // made sure started and ended with [], now remove them
-		instring = false;
-		bool inlist = false;
-		for (int i = 0; i < nospaces.Length; i++)
-		{
-			char c = nospaces[i];
-			if (c == '"') instring = !instring;
-			if ((c == '[' || c == ']') && !instring) inlist = !inlist;
-			if (nospaces[i] == ',' && !(instring || inlist)) // dont process commas inside of nested list or string
-			{
-				if (i == 0 || i == nospaces.Length - 1) // shouldnt be at start or end
-					return false;
-
-				if (nospaces[i + 1] == ',' || nospaces[i - 1] == ',') // shouldnt be next to each other
-					return false;
-			}
-		}
-		return true; // if paritycheck was false, would have already returned 
-	}
-
 	Output DynamicStringParse(string s, Interpreter interpreter)
 	{
+		if (s == "") return new(s);
+
 		string type = HF.DetermineTypeFromString(s);
 
 		if (type == "malformed string") return Errors.MalformedString(s, interpreter);
@@ -251,6 +289,53 @@ public class Evaluator : MonoBehaviour
 		}
 
 		return new Output(value);
+	}
+	 
+	Output ParityChecks(string expr, Interpreter interpreter)
+	{
+		bool inString = false;
+		int parenthesesDepth = 0;
+		int bracketDepth = 0;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (!inString)
+			{
+				if (c == '(') parenthesesDepth++;
+				else if (c == ')') parenthesesDepth--;
+				else if (c == '[') bracketDepth++;
+				else if (c == ']') bracketDepth--;
+
+				if (parenthesesDepth <= -1) return Errors.MismatchedParentheses(interpreter);
+				else if (bracketDepth <= -1) return Errors.MismatchedBrackets(interpreter);
+			}
+		}
+		if (inString) return Errors.MismatchedQuotes(interpreter);
+		return new(true);
+	}
+
+	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
+	{
+		switch($"{typeFrom}-{typeTo}")
+		{
+			case "string-string":return new(value);
+			case "string-number":return new(0f);
+			case "string-bool":return new(false);
+			case "string-list":return new(new List<dynamic> { value });
+			case "number-string":return new(HF.ConvertToString(value));
+			case "number-number":return new(value);
+			case "number-bool":return new(false);
+			case "number-list":return new(new List<dynamic> { value });
+			case "bool-string":return new(HF.ConvertToString(value));
+			case "bool-number":return new((bool)value ? 1f : 0f);
+			case "bool-bool": return new(value);
+			case "bool-list": return new(new List<dynamic> { value });
+			case "list-string": return new(HF.ConvertToString(value));
+			case "list-number": return new(0f);
+			case "list-bool": return new(false);
+			case "list-list": return new(value);
+			default: return Errors.UnknownType(interpreter);
+		}
 	}
 
 	Output EvaluateRangeList(string expr, bool isAlone, int baseListLength, Interpreter interpreter) // isalone determines behavior of range from positive to negative
@@ -319,7 +404,6 @@ public class Evaluator : MonoBehaviour
 
 		return new Output(values);
 	}
-
 	public Output EvaluateSingularList(string expr, Interpreter interpreter)
 	{
 		return EvaluateSingularList(expr, true, 0, interpreter);
@@ -368,7 +452,6 @@ public class Evaluator : MonoBehaviour
 
 		return new Output(items);
 	}
-
 	public Output EvaluateList(string expr, Interpreter interpreter)
 	{
 		#region empty list check
@@ -452,12 +535,152 @@ public class Evaluator : MonoBehaviour
 		}
 	}
 
+	public Output Tokenize(string expr, Interpreter interpreter)
+	{
+		List<Token> tokens = new();
+		string accum = "";
+		int i = 0;
+		while (i < expr.Length) 
+		{ 
+			char c = expr[i];
+			// some - are negative signs ugh just stole the old code
+			bool minusIsNegative = false;
+			if (c == '-') // handle - sign, annoying af
+			{
+				minusIsNegative = i == 0; // is first char
+				if (!minusIsNegative)
+					minusIsNegative = // case where previous operator 
+						!(char.IsDigit(expr[i - 1]) ||	// previous char is not a digit (operator)
+						char.IsLetter(expr[i - 1]) ||
+						expr[i - 1] == '_' ||
+						expr[i - 1] == '.');			// and previous char is not .
+			}
+
+
+			if (char.IsLetterOrDigit(c) || c == '_' || minusIsNegative)
+				//|| (c == '.' && ((i > 0 && char.IsDigit(expr[i-1])) || (i < expr.Length - 2 && char.IsDigit(expr[i-1]))))) // there has to be a better way than this
+			{
+				accum += c;
+			}
+			else if (c == '(' || c == '[') // parentheses and brackets are just their own entire token
+			{ // entire thing is a token 
+				char incChar = c;
+				char decChar = c == '(' ? ')' : ']';
+
+				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				accum = "";
+				int depth = 0;
+				bool deeperInString = false;
+				while (i < expr.Length)
+				{
+					c = expr[i];
+					if (c == '"') deeperInString = !deeperInString;
+					if (!deeperInString)
+					{
+						if (c == incChar) depth++;
+						else if (c == decChar) depth--;
+					}
+					accum += c;
+					if (depth == 0) break;
+					i++;
+				}
+
+				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
+				{
+					if (incChar == '(') return Errors.MismatchedParentheses(interpreter);
+					else return Errors.MismatchedBrackets(interpreter);
+				}
+
+				tokens.Add(new() { Text = accum, Type = TokenType.val });
+				Debug.Log($"list accum {accum}");
+				accum = "";
+			}
+			else if (c == '"') // string special eval lest bullshit
+			{
+				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				int startI = i;
+				accum = "";
+				while (i < expr.Length)
+				{
+					c = expr[i];
+					accum += c;
+					if (c == '"' && i != startI) break;
+					i++;
+				}
+
+				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
+					return Errors.MismatchedQuotes(interpreter);
+
+				tokens.Add(new() { Text = accum, Type = TokenType.val });
+				Debug.Log($"string accum {accum}");
+				accum = "";
+			}
+			else if (operatorFirstChars.Contains(c))
+			{
+				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				accum = "";
+
+				string operation = c.ToString();
+
+				if (i != expr.Length - 1)
+				{
+					char next = expr[i + 1];
+					foreach (string op in operators)
+					{
+						if (new string(c, next) == op)
+						{
+							operation = op;
+							break;
+						}
+					}
+				}
+
+				tokens.Add(new() { Text = operation, Type = TokenType.op });
+			}
+			else
+			{
+				return Errors.UnknownSymbol(c, interpreter);
+			}
+			i++;
+		}
+		if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+
+		return new(tokens);
+	}
+	
+	public Output HandleMembers(string leftType, dynamic left, string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
+	{
+		switch (leftType)
+		{
+			case "number": 
+			case "string":
+			case "boolean":
+			case "list":
+			case "ClassInstance":
+			default:
+				return Errors.NoMethodExistsForType((string)memberName, leftType, interpreter);
+		}
+	}
+	static float Pow(float a, float b) // idk what static is doing in this case...
+	{
+		return 0;
+	}
+	static Dictionary<string, Member> NumberMembers = new()
+	{
+		{"pow", new("number", "pow", true, new Func<float, float, float>(Pow)) }
+	};
+
+	public Output ExecuteNumberMember(string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
+	{
+		return new(0);
+	}
+
 	public Output Evaluate(string expr, Interpreter interpreter)
 	{
 		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
 
 		// can't evaluate nothing
-		if (string.IsNullOrWhiteSpace(expr)) return Errors.EvaluatedNothing(interpreter);
+		if (string.IsNullOrWhiteSpace(expr)) return new(""); // return Errors.EvaluatedNothing(interpreter);
 
 		// get rid of whitespace
 		expr = RemoveNonStringSpace(expr);
@@ -553,17 +776,22 @@ public class Evaluator : MonoBehaviour
 				}
 				else if (rightType == "string") // optimally want to be able to just check for method/variable
 				{
-					switch (leftType)
+					List<dynamic> arguments = null;
+					string argumentType = "none";
+					if (opIndex < tokens.Count - 2 && tokens[opIndex + 2].Type != TokenType.op)
 					{
-						case "number":
-							
-						case "string":
-						case "boolean":
-						case "list":
-						case "ClassInstance":
-						default:
-							return Errors.NoMethodExistsForType((string)right, leftType, interpreter);
+						arguments = tokens[opIndex + 2].RealValue;
+						argumentType = "what the fuck";
 					}
+
+					Output attemptHandleMember = HandleMembers(leftType, left, (string)right, argumentType, arguments, interpreter);
+					if (!attemptHandleMember.Success) return attemptHandleMember;
+
+					if (argumentType != "none")
+						tokens.RemoveAt(opIndex + 2); // remove argument
+					tokens.RemoveAt(opIndex + 1); // remove right side
+					tokens.RemoveAt(opIndex); // remove .
+					tokens[opIndex - 1] = new() { RealValue = result }; // replace original value with result
 				}
 				else
 				{
@@ -598,21 +826,21 @@ public class Evaluator : MonoBehaviour
 
 						switch (operation)
 						{
-							case "+": result = left + right; break;
-							case "-": result = left - right; break;
-							case "*": result = left * right; break;
+							case "+":	result = left + right; break;
+							case "-":	result = left - right; break;
+							case "*":	result = left * right; break;
 							case "/":  // check for division by zero
 								if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
-								else result = left / right; break;
-							case "^": result = Mathf.Pow(left, right); break;
-							case "%": result = left % right; break; //
-							case "==": result = left == right; break;
-							case "!=": result = left != right; break;
-							case "<": result = left < right; break;
-							case ">": result = left > right; break;
-							case "<=": result = left <= right; break;
-							case ">=": result = left >= right; break;
-							default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
+								else	result = left / right; break;
+							case "^":	result = Mathf.Pow(left, right); break;
+							case "%":	result = left % right; break; //
+							case "==":	result = left == right; break;
+							case "!=":	result = left != right; break;
+							case "<":	result = left < right; break;
+							case ">":	result = left > right; break;
+							case "<=":	result = left <= right; break;
+							case ">=":	result = left >= right; break;
+							default:	return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
 						}
 					}
 					else if (leftType == "string")
@@ -666,197 +894,7 @@ public class Evaluator : MonoBehaviour
 		return new(tokens[0].RealValue);
 	}
 
-	// TODO: rearrange these upwards
-
-	string RemoveNonStringSpace(string expr)
-	{
-		string tempstring = "";
-		bool inString = false;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (c != ' ' || inString) // anything but space unless in quotes
-				tempstring += c;
-		}
-		return expr;
-	}
-
-	Output ParityChecks(string expr, Interpreter interpreter)
-	{
-		bool inString = false;
-		int parenthesesDepth = 0;
-		int bracketDepth = 0;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (!inString)
-			{
-				if (c == '(') parenthesesDepth++;
-				else if (c == ')') parenthesesDepth--;
-				else if (c == '[') bracketDepth++;
-				else if (c == ']') bracketDepth--;
-
-				if (parenthesesDepth <= -1) return Errors.MismatchedParentheses(interpreter);
-				else if (bracketDepth <= -1) return Errors.MismatchedBrackets(interpreter);
-			}
-		}
-		if (inString) return Errors.MismatchedQuotes(interpreter);
-		return new(true);
-	}
-
-	bool IsSingularValue(string expr)
-	{
-		bool anyOperators = false;
-		foreach (char c in expr)
-		{
-			if (operatorFirstChars.Contains(c))
-			{
-				anyOperators = true;
-				break;
-			}
-		}
-
-		return !anyOperators;
-	}
-
-	public Output Tokenize(string expr, Interpreter interpreter)
-	{
-		List<Token> tokens = new();
-		string accum = "";
-		bool inString = false;
-		int i = 0;
-		while (i < expr.Length) 
-		{ 
-			char c = expr[i];
-			if (c == '"') inString = !inString;
-			if (!inString)
-			{
-				// some - are negative signs ugh just stole the old code
-				bool minusIsNegative = false;
-				if (c == '-') // handle - sign, annoying af
-				{
-					minusIsNegative = i == 0; // is first char
-					if (!minusIsNegative)
-						minusIsNegative = // case where previous operator 
-							!(char.IsDigit(expr[i - 1]) ||	// previous char is not a digit (operator)
-							char.IsLetter(expr[i - 1]) ||
-							expr[i - 1] == '_' ||
-							expr[i - 1] == '.');			// and previous char is not .
-				}
-
-
-				if (char.IsLetterOrDigit(c) || c == '_' || minusIsNegative)
-					//|| (c == '.' && ((i > 0 && char.IsDigit(expr[i-1])) || (i < expr.Length - 2 && char.IsDigit(expr[i-1]))))) // there has to be a better way than this
-				{
-					accum += c;
-				}
-				else if (c == '(' || c == '[') // parentheses and brackets are just their own entire token
-				{ // entire thing is a token 
-					char incChar = c;
-					char decChar = c == '(' ? ')' : ']';
-
-					if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
-					accum = "";
-					int depth = 0;
-					bool deeperInString = false;
-					while (i < expr.Length)
-					{
-						c = expr[i];
-						if (c == '"') deeperInString = !deeperInString;
-						if (!deeperInString)
-						{
-							if (c == incChar) depth++;
-							else if (c == decChar) depth--;
-						}
-						accum += c;
-						if (depth == 0) break;
-						i++;
-					}
-
-					if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
-					{
-						if (incChar == '(') return Errors.MismatchedParentheses(interpreter);
-						else return Errors.MismatchedBrackets(interpreter);
-					}
-
-					tokens.Add(new() { Text = accum, Type = TokenType.val });
-					accum = "";
-				}
-				else if (operatorFirstChars.Contains(c))
-				{
-					if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
-					accum = "";
-
-					string operation = c.ToString();
-
-					if (i != expr.Length - 1)
-					{
-						char next = expr[i + 1];
-						foreach (string op in operators)
-						{
-							if (new string(c, next) == op)
-							{
-								operation = op;
-								break;
-							}
-						}
-					}
-
-					tokens.Add(new() { Text = operation, Type = TokenType.op });
-				}
-				else
-				{
-					return Errors.UnknownSymbol(c, interpreter);
-				}
-			}
-			else
-			{
-				accum += c;
-			}
-			i++;
-		}
-		if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
-
-		return new(tokens);
-	}
-
-	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
-	{
-		switch($"{typeFrom}-{typeTo}")
-		{
-			case "string-string":return new(value);
-			case "string-number":return new(0f);
-			case "string-bool":return new(false);
-			case "string-list":return new(new List<dynamic> { value });
-			case "number-string":return new(HF.ConvertToString(value));
-			case "number-number":return new(value);
-			case "number-bool":return new(false);
-			case "number-list":return new(new List<dynamic> { value });
-			case "bool-string":return new(HF.ConvertToString(value));
-			case "bool-number":return new((bool)value ? 1f : 0f);
-			case "bool-bool": return new(value);
-			case "bool-list": return new(new List<dynamic> { value });
-			case "list-string": return new(HF.ConvertToString(value));
-			case "list-number": return new(0f);
-			case "list-bool": return new(false);
-			case "list-list": return new(value);
-			default: return Errors.UnknownType(interpreter);
-		}
-	}
-
-	#region builtin type methods
-	/*public Output NumberMethods(string methodName, Interpreter interpreter)
-	{
-		switch (methodName)
-		{
-			case "pow"
-		}
-	}*/
-	
-
-	#endregion
-
-	public Output _Evaluate(string expr, Interpreter interpreter)
+	/*public Output _Evaluate(string expr, Interpreter interpreter)
 	{
 		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
 
@@ -1284,5 +1322,5 @@ public class Evaluator : MonoBehaviour
 		#endregion
 
 		return new Output(tokens[0]);
-	}
+	}*/
 }
