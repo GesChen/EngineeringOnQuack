@@ -128,13 +128,17 @@ public class Evaluator : MonoBehaviour
 		}
 	}
 
-	bool ExpressionContains(char symbol, string expr)
+	bool ExpressionContainsSurfaceLevel(char symbol, string expr)
 	{
 		bool inString = false;
+		int depth = 0;
 		foreach (char c in expr)
 		{
 			if (c == '"') inString = !inString;
-			if (c == symbol && !inString) return true;
+			if (!inString && (c == '(' || c == '[')) depth++;
+			if (!inString && (c == ')' || c == ']')) depth--;
+
+			if (c == symbol && !inString && depth == 0) return true;
 		}
 		return false;
 	}
@@ -148,10 +152,6 @@ public class Evaluator : MonoBehaviour
 			if (c == symbol && !inString) count++;
 		}
 		return count;
-	}
-	bool ExpressionContainsParentheses(string expr)
-	{
-		return ExpressionContains('(', expr) || ExpressionContains(')', expr);
 	}
 	string RemoveNonStringSpace(string expr)
 	{
@@ -543,8 +543,8 @@ public class Evaluator : MonoBehaviour
 		while (i < expr.Length) 
 		{ 
 			char c = expr[i];
-			// some - are negative signs ugh just stole the old code
-			bool minusIsNegative = false;
+			// some - are negative signs ugh just stole the old code jk now its acting up and im gonna fix it in the evaluator
+			/*			bool minusIsNegative = false;
 			if (c == '-') // handle - sign, annoying af
 			{
 				minusIsNegative = i == 0; // is first char
@@ -554,10 +554,10 @@ public class Evaluator : MonoBehaviour
 						char.IsLetter(expr[i - 1]) ||
 						expr[i - 1] == '_' ||
 						expr[i - 1] == '.');			// and previous char is not .
-			}
+			}*/
 
 
-			if (char.IsLetterOrDigit(c) || c == '_' || minusIsNegative)
+			if (char.IsLetterOrDigit(c) || c == '_')// || minusIsNegative)
 				//|| (c == '.' && ((i > 0 && char.IsDigit(expr[i-1])) || (i < expr.Length - 2 && char.IsDigit(expr[i-1]))))) // there has to be a better way than this
 			{
 				accum += c;
@@ -689,6 +689,10 @@ public class Evaluator : MonoBehaviour
 		Output parityCheck = ParityChecks(expr, interpreter);
 		if (!parityCheck.Success) return parityCheck;
 
+		// evaluate straight lists
+		if (ExpressionContainsSurfaceLevel(',', expr)) 
+			return EvaluateList('[' + expr + ']', interpreter);
+
 		// tokenize the expression 
 		Output tokenize = Tokenize(expr, interpreter);
 		if (!tokenize.Success) return tokenize;
@@ -696,7 +700,9 @@ public class Evaluator : MonoBehaviour
 
 		if (tokens.Count == 1)
 		{
-			expr = expr.TrimStart('(').TrimEnd(')');
+			if (expr.StartsWith('(') && expr.EndsWith(')'))
+				return Evaluate(expr[1..^1], interpreter); // single values in parentheses get evaled
+
 			return DynamicStringParse(expr, interpreter);
 		}
 
@@ -711,11 +717,34 @@ public class Evaluator : MonoBehaviour
 			token.RealValue = tryEval.Value;
 		}
 
+		// evaluate all functions before everything else 
+		for (int i = 0; i < tokens.Count; i++)
+			if ( // condition for function (not method)
+				i < tokens.Count - 1 &&
+				tokens[i].Type == TokenType.val && tokens[i + 1].Type == TokenType.val && // two in a row?
+				i > 0 &&
+				tokens[i - 1].Text != "." // prev token isn't . ?  
+				)
+			{
+				Token functionToken = tokens[i];
+				Token argumentToken = tokens[i + 1];
+
+				string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
+				if (functionTokenType == "Function")
+				{
+
+				}
+				else
+				{
+					//return Errors.NoFunctionExists(functionToken.Text)
+				}
+			}
+
 		// evaluate with pemdas
 		while (tokens.Count > 1)
 		{
 			#region find leftmost highest ranking operator
-			int opIndex = tokens.Count;
+			int opIndex = -1;
 			int highestRank = 0;
 			for (int i = 0; i < tokens.Count; i++)
 			{
@@ -731,6 +760,8 @@ public class Evaluator : MonoBehaviour
 				}
 			}
 			#endregion
+
+			if (opIndex == -1) return Errors.NoOperator(interpreter);
 
 			string[] specialOperators = new string[2] { "!", "." };
 			string operation = tokens[opIndex].Text;
@@ -800,7 +831,6 @@ public class Evaluator : MonoBehaviour
 
 				normaloperation = false;
 			}
-			
 			
 			if (normaloperation) {
 				try

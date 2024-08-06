@@ -157,4 +157,8 @@ public static class Errors
 
 	public static Output NoMethodExistsForType(string methodname, string type, Interpreter interpreter) =>
 		Error($"No method \"{methodname}\" exists for type {type}", interpreter);
+
+	public static Output NoOperator(Interpreter interpreter) =>
+		Error($"Expression contains no operators (???)", interpreter);
+
 }
