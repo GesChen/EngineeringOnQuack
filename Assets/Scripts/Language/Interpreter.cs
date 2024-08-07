@@ -31,7 +31,7 @@ public class Output
 
 	public Output(Error error)
 	{
-		this.Error = error;
+		Error = error;
 		Value = "Error";
 		Success = false;
 	}
@@ -146,6 +146,17 @@ public class ClassInstance
 			return HF.ConvertToString(eval.Value, false);
 		}
 		return $"Class instance of {ClassDefinition.Name}";
+	}
+}
+public class Variable
+{
+	public string Name;
+	public dynamic Value;
+
+	public Variable(string name, dynamic value)
+	{
+		Name = name;
+		Value = value;
 	}
 }
 

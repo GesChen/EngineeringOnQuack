@@ -55,7 +55,7 @@ public class Evaluator : MonoBehaviour
 		"!|",
 		//"|!",
 		"!!",
-		"." 
+		"."
 	};
 	readonly char[] operatorFirstChars =
 	{
@@ -91,7 +91,7 @@ public class Evaluator : MonoBehaviour
 	{
 		val, // value
 		op // operator, keyword is not allowed
-		//arg // arguments to a function (not sure if this will work)
+		   //arg // arguments to a function (not sure if this will work)
 	}
 	public class Token
 	{
@@ -122,7 +122,7 @@ public class Evaluator : MonoBehaviour
 
 		public Member(string @for, string name, bool isFunction, Delegate function)
 		{
-			For = @for;	
+			For = @for;
 			Name = name;
 			IsFunction = isFunction;
 			Function = function;
@@ -201,9 +201,9 @@ public class Evaluator : MonoBehaviour
 			if ((c == '[' || c == ']') && !instring) inlist = !inlist;
 			if (nospaces[i] == ',' && !(instring || inlist)) // dont process commas inside of nested list or string
 			{
-				if (i == 0 || i == nospaces.Length - 1) // shouldnt be at start or end
+				if (i == 0 || i == nospaces.Length - 1)// shouldnt be at start or end
 					return false;
-
+				
 				if (nospaces[i + 1] == ',' || nospaces[i - 1] == ',') // shouldnt be next to each other
 					return false;
 			}
@@ -299,7 +299,6 @@ public class Evaluator : MonoBehaviour
 
 		return new Output(value);
 	}
-	 
 	Output ParityChecks(string expr, Interpreter interpreter)
 	{
 		bool inString = false;
@@ -322,7 +321,6 @@ public class Evaluator : MonoBehaviour
 		if (inString) return Errors.MismatchedQuotes(interpreter);
 		return new(true);
 	}
-
 	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
 	{
 		switch($"{typeFrom}-{typeTo}")
@@ -466,7 +464,7 @@ public class Evaluator : MonoBehaviour
 		#region empty list check
 		if (expr.Replace(" ", "") == "[]") return new(new List<dynamic>());
 		#endregion
-		
+
 		#region extract the parts from the expression
 		List<string> parts = new();
 		bool inString = false;
@@ -543,7 +541,6 @@ public class Evaluator : MonoBehaviour
 			return EvaluateSingularList(expr, interpreter);
 		}
 	}
-
 	public Output Tokenize(string expr, Interpreter interpreter)
 	{
 		List<Token> tokens = new();
@@ -713,6 +710,9 @@ public class Evaluator : MonoBehaviour
 			if (expr.StartsWith('(') && expr.EndsWith(')'))
 				return Evaluate(expr[1..^1], interpreter); // single values in parentheses get evaled
 
+			if (HF.DetermineTypeFromString(expr) == "variable")
+				return new(expr); // 
+
 			return DynamicStringParse(expr, interpreter);
 		}
 
@@ -852,12 +852,12 @@ public class Evaluator : MonoBehaviour
 			bool rightWasntValid = false;
 			if (opIndex == 0 || tokens[opIndex - 1].Type == TokenType.op)
 			{ // special case for ., would have been caught normally
-				leftToken = new Token() { RealValue = 0 };
+				leftToken = new Token() { RealValue = 0d };
 				leftWasntValid = true;
 			}
 			if (opIndex == tokens.Count - 1 || tokens[opIndex + 1].Type == TokenType.op)
 			{
-				rightToken = new Token() { RealValue = 0 };
+				rightToken = new Token() { RealValue = 0d };
 				rightWasntValid = true;
 			}
 
