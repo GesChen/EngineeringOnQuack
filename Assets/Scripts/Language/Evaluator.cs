@@ -729,14 +729,30 @@ public class Evaluator : MonoBehaviour
 				Token functionToken = tokens[i];
 				Token argumentToken = tokens[i + 1];
 
+				string functionName = functionToken.Text;
+
+				List<dynamic> args = argumentToken.RealValue is List<dynamic> ? 
+					argumentToken.RealValue : 
+					new List<dynamic>() { argumentToken.RealValue };
+				int numargs = args.Count;
+
 				string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
 				if (functionTokenType == "Function")
 				{
+					Dictionary<string, Function> functions = interpreter.GetFunctions();
+					if (!functions.ContainsKey(functionName))
+						return Errors.NoFunctionExists(name, numargs, interpreter);
+					Function function = functions[functionName];
 
+					Output output = interpreter.RunFunction(function, args);
+					if (!output.Success) return output;
+
+					tokens.RemoveAt(i + 1); // remove arg token
+					tokens[i].RealValue = output.Value; // set the function vallue accordingly
 				}
 				else
 				{
-					//return Errors.NoFunctionExists(functionToken.Text)
+					return Errors.NoFunctionExists(functionToken.Text, numargs, interpreter);
 				}
 			}
 
