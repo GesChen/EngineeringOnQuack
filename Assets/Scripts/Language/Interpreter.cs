@@ -1237,7 +1237,7 @@ public class Interpreter : MonoBehaviour
 						if (!fetch.Success) return fetch;
 
 						// increment/decrement can only be done to existing number variables
-						if (fetch.Value is float v)
+						if (fetch.Value is double v)
 						{
 							if (ao == "++")
 								Store(varName, v + 1);

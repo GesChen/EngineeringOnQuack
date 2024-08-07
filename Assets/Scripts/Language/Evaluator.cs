@@ -211,12 +211,12 @@ public class Evaluator : MonoBehaviour
 		return true; // if paritycheck was false, would have already returned 
 	}
 
-	Output ParseFloatPart(string s, Interpreter interpreter)
+	Output ParseNumberPart(string s, Interpreter interpreter)
 	{
-		float value = 0;
+		double value = 0;
 		try
 		{
-			value = float.Parse(s);
+			value = double.Parse(s);
 		}
 		catch
 		{ // could be a variable
@@ -235,18 +235,18 @@ public class Evaluator : MonoBehaviour
 			else
 			{
 				dynamic variable = result.Value;
-				if (variable is float || variable is int)
+				if (variable is double)
 				{
-					value = (float)variable;
+					value = (double)variable;
 				}
 				else if (variable is string)
 				{
 					try
 					{
-						value = float.Parse(variable);
+						value = double.Parse(variable);
 					}
 					catch
-					{ // not a parseable float string, or a variable
+					{ // not a parseable double string, or a variable
 						return Errors.UnableToParseStrAsNum(value.ToString(), interpreter);
 					}
 				}
@@ -272,7 +272,7 @@ public class Evaluator : MonoBehaviour
 
 		if (type == "number")
 		{
-			Output result = ParseFloatPart(s, interpreter);
+			Output result = ParseNumberPart(s, interpreter);
 			if (!result.Success) return result;
 			value = result.Value;
 		}
@@ -368,23 +368,23 @@ public class Evaluator : MonoBehaviour
 		}
 
 		Output tryEval;
-		float start;
+		double start;
 		if (!string.IsNullOrEmpty(startString))
 		{
 			tryEval = Evaluate(startString, interpreter);
 			if (!tryEval.Success) return tryEval;
-			if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
+			if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(startString, interpreter);
 			start = tryEval.Value;
 		}
 		else
 			start = 0;
 
-		float end;
+		double end;
 		if (!string.IsNullOrEmpty(endString))
 		{
 			tryEval = Evaluate(endString, interpreter);
 			if (!tryEval.Success) return tryEval;
-			if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
+			if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(endString, interpreter);
 			end = tryEval.Value;
 		}
 		else if (!isAlone)
@@ -394,8 +394,8 @@ public class Evaluator : MonoBehaviour
 
 		tryEval = Evaluate(intervalString, interpreter);
 		if (!tryEval.Success) return tryEval;
-		if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
-		float interval = tryEval.Value;
+		if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
+		double interval = tryEval.Value;
 
 		List<dynamic> values = new();
 		if (isAlone)
@@ -405,10 +405,10 @@ public class Evaluator : MonoBehaviour
 		}
 
 		if (start < end)
-			for (float v = start; v <= end; v += interval)
+			for (double v = start; v <= end; v += interval)
 				values.Add(v);
 		else
-			for (float v = start; v >= end; v -= interval)
+			for (double v = start; v >= end; v -= interval)
 				values.Add(v);
 
 		return new Output(values);
@@ -515,9 +515,9 @@ public class Evaluator : MonoBehaviour
 				// only whole numbers allowed in the indexes
 				foreach (dynamic index in dynamicIndexes)
 				{
-					if (index is not float && index is not int)
+					if (index is not double)
 						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
-					if (Mathf.Round(index) != index)
+					if (Math.Round(index) != index)
 						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
 				}
 				List<int> indexes = new();
@@ -531,7 +531,7 @@ public class Evaluator : MonoBehaviour
 				// index the list
 				List<dynamic> temp = new();
 				foreach (int index in indexes)
-					temp.Add(baseList[index < 0 ? ^Mathf.Abs(index) : index]); // handle - indexes
+					temp.Add(baseList[index < 0 ? ^Math.Abs(index) : index]); // handle - indexes
 				baseList = temp;
 			}
 
@@ -671,13 +671,13 @@ public class Evaluator : MonoBehaviour
 				return Errors.NoMethodExistsForType((string)memberName, leftType, interpreter);
 		}
 	}
-	static float Pow(float a, float b) // idk what static is doing in this case...
+	static double Pow(double a, double b) // idk what static is doing in this case...
 	{
 		return 0;
 	}
 	static Dictionary<string, Member> NumberMembers = new()
 	{
-		{"pow", new("number", "pow", true, new Func<float, float, float>(Pow)) }
+		{"pow", new("number", "pow", true, new Func<double, double, double>(Pow)) }
 	};
 
 	public Output ExecuteNumberMember(string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
@@ -768,7 +768,7 @@ public class Evaluator : MonoBehaviour
 					List<dynamic> newList = new();
 					foreach (dynamic index in indexList)
 					{
-						if (index is not float || Math.Round(index) != index)
+						if (index is not double || Math.Round(index) != index)
 							return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
 
 						int intIndex = (int)index;
@@ -947,7 +947,7 @@ public class Evaluator : MonoBehaviour
 							{
 								try
 								{
-									right = float.Parse(right.Trim('"'));
+									right = double.Parse(right.Trim('"'));
 								}
 								catch
 								{
@@ -966,7 +966,7 @@ public class Evaluator : MonoBehaviour
 							case "/":  // check for division by zero
 								if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
 								else	result = left / right; break;
-							case "^":	result = Mathf.Pow(left, right); break;
+							case "^":	result = Math.Pow(left, right); break;
 							case "%":	result = left % right; break; //
 							case "==":	result = left == right; break;
 							case "!=":	result = left != right; break;
