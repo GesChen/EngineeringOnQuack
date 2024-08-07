@@ -11,7 +11,7 @@
 
 # expressions
 **types:** 
- - numbers (always(?) stored as `floats`)
+ - numbers (always(?) stored as `doubles`)
  - strings
  - lists (stored as `List<dynamic>`)
  - bools

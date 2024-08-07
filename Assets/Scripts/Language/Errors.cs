@@ -11,14 +11,17 @@ public static class Errors
 	
 	public static Output MismatchedBrackets(Interpreter interpreter) =>
 		Error("Mismatched brackets", interpreter);
+	
+	public static Output MismatchedQuotes(Interpreter interpreter) =>
+		Error("Mismatched string quotes", interpreter);
 
 	public static Output AttemptedEvalStringAsExpr(Interpreter interpreter) =>
 		Error("Cannot evaluate a string as an expression", interpreter);
 	
-	public static Output OperatorInBadPosition(string op, Interpreter interpreter) =>
-		Error($"Operator {op} in bad position", interpreter);
-	public static Output OperatorInBadPosition(Interpreter interpreter) =>
-		Error($"An operator is in a bad position", interpreter);
+	public static Output OperatorInInvalidPosition(string op, Interpreter interpreter) =>
+		Error($"Operator {op} in invalid position", interpreter);
+	public static Output OperatorInInvalidPosition(Interpreter interpreter) =>
+		Error($"An operator is in an invalid position", interpreter);
 
 	public static Output OperatorDoesntExist(string op, Interpreter interpreter) =>
 		Error($"Operator {op} doesn't exist", interpreter);
@@ -32,7 +35,7 @@ public static class Errors
 	public static Output OperationFailed(string op, Interpreter interpreter) =>
 		Error($"Operation {op} failed unexpectedly", interpreter);
 
-	public static Output InvaidString(string str, Interpreter interpreter) =>
+	public static Output InvalidString(string str, Interpreter interpreter) =>
 		Error($"String \"{str}\" is not a valid string", interpreter);
 
 	public static Output UnsupportedOperation(string op, string type1, string type2, Interpreter interpreter) =>
@@ -53,6 +56,12 @@ public static class Errors
 	public static Output UnknownFunction(string name, Interpreter interpreter) =>
 		Error($"Unknown function \"{name}\"", interpreter);
 
+	public static Output UnknownSymbol(char symbol, Interpreter interpreter) =>
+		Error($"Unknown symbol \"{symbol}\"", interpreter);
+
+	public static Output UnknownType(Interpreter interpreter) =>
+		Error($"Unknown type", interpreter);
+
 	public static Output UnableToParseAsBool(string s, Interpreter interpreter) =>
 		Error($"Unable to parse {s} as bool", interpreter);
 
@@ -65,16 +74,20 @@ public static class Errors
 	public static Output EvaluatedNothing(Interpreter interpreter) =>
 		Error($"Cannot evaluate nothing", interpreter);
 
-	public static Output FunctionAlreadyExists(string name, int numArgs, Interpreter interpreter) =>
-		Error($"Function \"{name}\" with {numArgs} args already exists", interpreter);
 
 	public static Output ClassAlreadyExists(string name, Interpreter interpreter) =>
 		Error($"A class called \"{name}\" already exists", interpreter);
 
+	public static Output FunctionAlreadyExists(string name, int numArgs, Interpreter interpreter) =>
+		Error($"Function \"{name}\" with {numArgs} args already exists", interpreter);
 
 	public static Output NoFunctionExists(string name, int numargs, Interpreter interpreter) =>
 		Error($"No function \"{name}\" exists that takes {numargs} arguments", interpreter);
-	
+
+	public static Output VariableIsNotFunction(string name, Interpreter interpreter) =>
+		Error($"Variable \"{name}\" is not a function", interpreter);
+
+
 	public static Output UnexpectedNumberofArgs(string name, int expected, int got, Interpreter interpreter) =>
 		Error($"Unexpected number of args for method \"{name}\": got {got}, expected {expected}", interpreter);
 
@@ -103,14 +116,14 @@ public static class Errors
 	public static Output UnexpectedElse(Interpreter interpreter) =>
 		Error($"Unexpected else statement", interpreter);
 	
-	public static Output BadVariableName(string badname, Interpreter interpreter) =>
-		Error($"Bad variable name: {badname}", interpreter);
+	public static Output InvalidVariableName(string invalidname, Interpreter interpreter) =>
+		Error($"Invalid variable name: {invalidname}", interpreter);
 
-	public static Output BadFunctionName(string badname, Interpreter interpreter) =>
-		Error($"Bad function name: {badname}", interpreter);
+	public static Output InvalidFunctionName(string invalidname, Interpreter interpreter) =>
+		Error($"Invalid function name: {invalidname}", interpreter);
 	
-	public static Output BadClassName(string badname, Interpreter interpreter) =>
-		Error($"Bad class name: {badname}", interpreter);
+	public static Output InvalidClassName(string invalidname, Interpreter interpreter) =>
+		Error($"Invalid class name: {invalidname}", interpreter);
 
 	public static Output UnexpectedCatch(Interpreter interpreter) =>
 		Error("Unexpected catch statement", interpreter);
@@ -138,4 +151,17 @@ public static class Errors
 
 	public static Output TypeHasNoAttributes(string typeName, Interpreter interpreter) =>
 		Error($"A {typeName} has no attributes", interpreter);
+
+	public static Output InvalidUseOfPeriod(Interpreter interpreter) =>
+		Error($"Invalid use of period", interpreter);
+
+	public static Output NoMethodExistsForType(string methodname, string type, Interpreter interpreter) =>
+		Error($"No method \"{methodname}\" exists for type {type}", interpreter);
+
+	public static Output NoOperator(Interpreter interpreter) =>
+		Error($"Expression contains no operators (???)", interpreter);
+
+	public static Output UnknownError(Interpreter interpreter) =>
+		Error($"Unknown error", interpreter);
+
 }

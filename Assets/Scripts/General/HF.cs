@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
 
@@ -141,7 +142,7 @@ public static class HF {
 	public static string ConvertToString(dynamic value, bool stringQuotes)
 	{
 		Type t = value.GetType();
-		if (value == null) return "";
+		if (value is null) return "";
 		else if (value is string) return stringQuotes ? $"\"{value}\"" : value;
 		else if (value is int || value is float) return value.ToString("G10");
 		else if (value is bool) return value ? "true" : "false";
@@ -239,10 +240,14 @@ public static class HF {
 	public static string DetermineTypeFromVariable(dynamic v)
 	{
 		if (v is string) return "string";
-		else if (v is int || v is float || v is long) return "number";
+		else if (v is double) return "number";
 		else if (v is bool) return "bool";
 		else if (v is List<dynamic>) return "list";
-		return "unknown";
+		
+		Type t = v.GetType();
+		if (t.Name == "ClassInstance") return "Class Instance";
+		else if (t.Name == "ClassDefinition") return "Class Definition";
+		return t.Name; // function and script type are handled by this last return
 	}
 
 	public static bool VariableNameIsValid(string name)

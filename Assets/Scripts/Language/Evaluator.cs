@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 
 public class Evaluator : MonoBehaviour
@@ -27,7 +29,8 @@ public class Evaluator : MonoBehaviour
 		{ "!|", 4 },
 		{ "|!", 4 },
 		{ "!!", 4 },
-		{ "!" , 5 }
+		{ "!" , 5 },
+		{ "." , 6 }
 	};
 
 	readonly string[] operators =
@@ -51,7 +54,24 @@ public class Evaluator : MonoBehaviour
 		//"&!",
 		"!|",
 		//"|!",
-		"!!"
+		"!!",
+		"." 
+	};
+	readonly char[] operatorFirstChars =
+	{
+		'+',
+		'-',
+		'*',
+		'/',
+		'^',
+		'%',
+		'=',
+		'!',
+		'<',
+		'>',
+		'&',
+		'|',
+		'.'
 	};
 	readonly string[] booleanOperators =
 	{
@@ -67,13 +87,67 @@ public class Evaluator : MonoBehaviour
 		"!!"  //xor
 	};
 
-	bool ExpressionContains(char symbol, string expr)
+	public enum TokenType
+	{
+		val, // value
+		op // operator, keyword is not allowed
+		//arg // arguments to a function (not sure if this will work)
+	}
+	public class Token
+	{
+		public string Text;
+		public dynamic RealValue;
+		public TokenType Type;
+
+		public void Set(dynamic realValue, TokenType type)
+		{
+			RealValue = realValue;
+			Text = HF.ConvertToString(realValue);
+			Type = type;
+		}
+
+		public override string ToString()
+		{
+			return $"Token [{Text}] of type {Type}";
+		}
+	}
+
+	public class Member
+	{
+		public string For { get; private set; } // might not be used, just metadata
+		public string Name { get; private set; }
+		public bool IsFunction { get; private set; }
+		public Delegate Function { get; private set; }
+		public int ArgumentCount { get; private set; }
+
+		public Member(string @for, string name, bool isFunction, Delegate function)
+		{
+			For = @for;	
+			Name = name;
+			IsFunction = isFunction;
+			Function = function;
+			ArgumentCount = function.Method.GetParameters().Length;
+		}
+		public Output Invoke(List<dynamic> args, Interpreter interpreter)
+		{
+			if (args.Count != ArgumentCount)
+				return Errors.NoFunctionExists(Name, ArgumentCount, interpreter);
+			dynamic output = Function.DynamicInvoke(args);
+			return new(output);
+		}
+	}
+
+	bool ExpressionContainsSurfaceLevel(char symbol, string expr)
 	{
 		bool inString = false;
+		int depth = 0;
 		foreach (char c in expr)
 		{
 			if (c == '"') inString = !inString;
-			if (c == symbol && !inString) return true;
+			if (!inString && (c == '(' || c == '[')) depth++;
+			if (!inString && (c == ')' || c == ']')) depth--;
+
+			if (c == symbol && !inString && depth == 0) return true;
 		}
 		return false;
 	}
@@ -88,59 +162,18 @@ public class Evaluator : MonoBehaviour
 		}
 		return count;
 	}
-	bool ExpressionContainsParentheses(string expr)
+	string RemoveNonStringSpace(string expr)
 	{
-		return ExpressionContains('(', expr) || ExpressionContains(')', expr);
-	}
-
-	Output ParseFloatPart(string s, Interpreter interpreter)
-	{
-		float value = 0;
-		try
+		string tempstring = "";
+		bool inString = false;
+		foreach (char c in expr)
 		{
-			value = float.Parse(s);
+			if (c == '"') inString = !inString;
+			if (c != ' ' || inString) // anything but space unless in quotes
+				tempstring += c;
 		}
-		catch
-		{ // could be a variable
-			bool negative = s[0] == '-';
-			if (negative) s = s[1..];
-
-			Output result = interpreter.FetchVariable(s);
-			string type = HF.DetermineTypeFromString(s);
-			if (!result.Success)
-			{
-				if (type != "number")
-					return result;
-				else
-					return Errors.UnableToParseStrAsNum(s, interpreter);
-			}
-			else
-			{
-				dynamic variable = result.Value;
-				if (variable is float || variable is int)
-				{
-					value = (float)variable;
-				}
-				else if (variable is string)
-				{
-					try
-					{
-						value = float.Parse(variable);
-					}
-					catch
-					{ // not a parseable float string, or a variable
-						return Errors.UnableToParseStrAsNum(value.ToString(), interpreter);
-					}
-				}
-				if (negative)
-				{
-					value *= -1;
-				}
-			}
-		}
-		return new Output(value);
+		return tempstring;
 	}
-
 	bool CheckListForm(string s) // returns if a list is properly formed, expects single lists, not chained or expressions
 	{
 		string nospaces = s.Replace(" ", "");
@@ -178,8 +211,58 @@ public class Evaluator : MonoBehaviour
 		return true; // if paritycheck was false, would have already returned 
 	}
 
+	Output ParseNumberPart(string s, Interpreter interpreter)
+	{
+		double value = 0;
+		try
+		{
+			value = double.Parse(s);
+		}
+		catch
+		{ // could be a variable
+			bool negative = s[0] == '-';
+			if (negative) s = s[1..];
+
+			Output result = interpreter.Fetch(s);
+			string type = HF.DetermineTypeFromString(s);
+			if (!result.Success)
+			{
+				if (type != "number")
+					return result;
+				else
+					return Errors.UnableToParseStrAsNum(s, interpreter);
+			}
+			else
+			{
+				dynamic variable = result.Value;
+				if (variable is double)
+				{
+					value = (double)variable;
+				}
+				else if (variable is string)
+				{
+					try
+					{
+						value = double.Parse(variable);
+					}
+					catch
+					{ // not a parseable double string, or a variable
+						return Errors.UnableToParseStrAsNum(value.ToString(), interpreter);
+					}
+				}
+				if (negative)
+				{
+					value *= -1;
+				}
+			}
+		}
+		return new Output(value);
+	}
+
 	Output DynamicStringParse(string s, Interpreter interpreter)
 	{
+		if (s == "") return new(s);
+
 		string type = HF.DetermineTypeFromString(s);
 
 		if (type == "malformed string") return Errors.MalformedString(s, interpreter);
@@ -189,7 +272,7 @@ public class Evaluator : MonoBehaviour
 
 		if (type == "number")
 		{
-			Output result = ParseFloatPart(s, interpreter);
+			Output result = ParseNumberPart(s, interpreter);
 			if (!result.Success) return result;
 			value = result.Value;
 		}
@@ -209,12 +292,59 @@ public class Evaluator : MonoBehaviour
 		}
 		else if (type == "variable")
 		{
-			Output result = interpreter.FetchVariable(s);
+			Output result = interpreter.Fetch(s);
 			if (!result.Success) return result;
 			value = result.Value;
 		}
 
 		return new Output(value);
+	}
+	 
+	Output ParityChecks(string expr, Interpreter interpreter)
+	{
+		bool inString = false;
+		int parenthesesDepth = 0;
+		int bracketDepth = 0;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (!inString)
+			{
+				if (c == '(') parenthesesDepth++;
+				else if (c == ')') parenthesesDepth--;
+				else if (c == '[') bracketDepth++;
+				else if (c == ']') bracketDepth--;
+
+				if (parenthesesDepth <= -1) return Errors.MismatchedParentheses(interpreter);
+				else if (bracketDepth <= -1) return Errors.MismatchedBrackets(interpreter);
+			}
+		}
+		if (inString) return Errors.MismatchedQuotes(interpreter);
+		return new(true);
+	}
+
+	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
+	{
+		switch($"{typeFrom}-{typeTo}")
+		{
+			case "string-string":return new(value);
+			case "string-number":return new(0f);
+			case "string-bool":return new(false);
+			case "string-list":return new(new List<dynamic> { value });
+			case "number-string":return new(HF.ConvertToString(value));
+			case "number-number":return new(value);
+			case "number-bool":return new(false);
+			case "number-list":return new(new List<dynamic> { value });
+			case "bool-string":return new(HF.ConvertToString(value));
+			case "bool-number":return new((bool)value ? 1f : 0f);
+			case "bool-bool": return new(value);
+			case "bool-list": return new(new List<dynamic> { value });
+			case "list-string": return new(HF.ConvertToString(value));
+			case "list-number": return new(0f);
+			case "list-bool": return new(false);
+			case "list-list": return new(value);
+			default: return Errors.UnknownType(interpreter);
+		}
 	}
 
 	Output EvaluateRangeList(string expr, bool isAlone, int baseListLength, Interpreter interpreter) // isalone determines behavior of range from positive to negative
@@ -238,23 +368,23 @@ public class Evaluator : MonoBehaviour
 		}
 
 		Output tryEval;
-		float start;
+		double start;
 		if (!string.IsNullOrEmpty(startString))
 		{
 			tryEval = Evaluate(startString, interpreter);
 			if (!tryEval.Success) return tryEval;
-			if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(startString, interpreter);
+			if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(startString, interpreter);
 			start = tryEval.Value;
 		}
 		else
 			start = 0;
 
-		float end;
+		double end;
 		if (!string.IsNullOrEmpty(endString))
 		{
 			tryEval = Evaluate(endString, interpreter);
 			if (!tryEval.Success) return tryEval;
-			if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(endString, interpreter);
+			if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(endString, interpreter);
 			end = tryEval.Value;
 		}
 		else if (!isAlone)
@@ -264,8 +394,8 @@ public class Evaluator : MonoBehaviour
 
 		tryEval = Evaluate(intervalString, interpreter);
 		if (!tryEval.Success) return tryEval;
-		if (tryEval.Value is not float && tryEval.Value is not int) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
-		float interval = tryEval.Value;
+		if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
+		double interval = tryEval.Value;
 
 		List<dynamic> values = new();
 		if (isAlone)
@@ -275,15 +405,14 @@ public class Evaluator : MonoBehaviour
 		}
 
 		if (start < end)
-			for (float v = start; v <= end; v += interval)
+			for (double v = start; v <= end; v += interval)
 				values.Add(v);
 		else
-			for (float v = start; v >= end; v -= interval)
+			for (double v = start; v >= end; v -= interval)
 				values.Add(v);
 
 		return new Output(values);
 	}
-
 	public Output EvaluateSingularList(string expr, Interpreter interpreter)
 	{
 		return EvaluateSingularList(expr, true, 0, interpreter);
@@ -332,7 +461,6 @@ public class Evaluator : MonoBehaviour
 
 		return new Output(items);
 	}
-
 	public Output EvaluateList(string expr, Interpreter interpreter)
 	{
 		#region empty list check
@@ -387,9 +515,9 @@ public class Evaluator : MonoBehaviour
 				// only whole numbers allowed in the indexes
 				foreach (dynamic index in dynamicIndexes)
 				{
-					if (index is not float && index is not int)
+					if (index is not double)
 						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
-					if (Mathf.Round(index) != index)
+					if (Math.Round(index) != index)
 						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
 				}
 				List<int> indexes = new();
@@ -403,7 +531,7 @@ public class Evaluator : MonoBehaviour
 				// index the list
 				List<dynamic> temp = new();
 				foreach (int index in indexes)
-					temp.Add(baseList[index < 0 ? ^Mathf.Abs(index) : index]); // handle - indexes
+					temp.Add(baseList[index < 0 ? ^Math.Abs(index) : index]); // handle - indexes
 				baseList = temp;
 			}
 
@@ -416,7 +544,491 @@ public class Evaluator : MonoBehaviour
 		}
 	}
 
+	public Output Tokenize(string expr, Interpreter interpreter)
+	{
+		List<Token> tokens = new();
+		string accum = "";
+		int i = 0;
+		while (i < expr.Length) 
+		{ 
+			char c = expr[i];
+			// some - are negative signs ugh just stole the old code jk now its acting up and im gonna fix it in the evaluator
+			/*			bool minusIsNegative = false;
+			if (c == '-') // handle - sign, annoying af
+			{
+				minusIsNegative = i == 0; // is first char
+				if (!minusIsNegative)
+					minusIsNegative = // case where previous operator 
+						!(char.IsDigit(expr[i - 1]) ||	// previous char is not a digit (operator)
+						char.IsLetter(expr[i - 1]) ||
+						expr[i - 1] == '_' ||
+						expr[i - 1] == '.');			// and previous char is not .
+			}*/
+
+
+			if (char.IsLetterOrDigit(c) || c == '_')// || minusIsNegative)
+				//|| (c == '.' && ((i > 0 && char.IsDigit(expr[i-1])) || (i < expr.Length - 2 && char.IsDigit(expr[i-1]))))) // there has to be a better way than this
+			{
+				accum += c;
+			}
+			else if (c == '(' || c == '[') // parentheses and brackets are just their own entire token
+			{ // entire thing is a token 
+				char incChar = c;
+				char decChar = c == '(' ? ')' : ']';
+
+				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				accum = "";
+				int depth = 0;
+				bool deeperInString = false;
+				while (i < expr.Length)
+				{
+					c = expr[i];
+					if (c == '"') deeperInString = !deeperInString;
+					if (!deeperInString)
+					{
+						if (c == incChar) depth++;
+						else if (c == decChar) depth--;
+					}
+					accum += c;
+					if (depth == 0) break;
+					i++;
+				}
+
+				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
+				{
+					if (incChar == '(') return Errors.MismatchedParentheses(interpreter);
+					else return Errors.MismatchedBrackets(interpreter);
+				}
+
+				tokens.Add(new() { Text = accum, Type = TokenType.val });
+				accum = "";
+			}
+			else if (c == '"') // string special eval lest bullshit
+			{
+				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				int startI = i;
+				accum = "";
+				while (i < expr.Length)
+				{
+					c = expr[i];
+					accum += c;
+					if (c == '"' && i != startI) break;
+					i++;
+				}
+
+				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
+					return Errors.MismatchedQuotes(interpreter);
+
+				tokens.Add(new() { Text = accum, Type = TokenType.val });
+				accum = "";
+			}
+			else if (operatorFirstChars.Contains(c))
+			{
+				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				accum = "";
+
+				string operation = c.ToString();
+
+				if (i != expr.Length - 1)
+				{
+					char next = expr[i + 1];
+					foreach (string op in operators)
+					{
+						if (new string(c, next) == op)
+						{
+							operation = op;
+							break;
+						}
+					}
+				}
+
+				if (!operators.Contains(operation))
+					return Errors.OperatorDoesntExist(operation, interpreter);
+
+				tokens.Add(new() { Text = operation, Type = TokenType.op });
+			}
+			else
+			{
+				return Errors.UnknownSymbol(c, interpreter);
+			}
+			i++;
+		}
+		if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+
+		return new(tokens);
+	}
+	
+	public Output HandleMembers(string leftType, dynamic left, string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
+	{
+		switch (leftType)
+		{
+			case "number": 
+			case "string":
+			case "boolean":
+			case "list":
+			case "ClassInstance":
+			default:
+				return Errors.NoMethodExistsForType((string)memberName, leftType, interpreter);
+		}
+	}
+	static double Pow(double a, double b) // idk what static is doing in this case...
+	{
+		return 0;
+	}
+	static Dictionary<string, Member> NumberMembers = new()
+	{
+		{"pow", new("number", "pow", true, new Func<double, double, double>(Pow)) }
+	};
+
+	public Output ExecuteNumberMember(string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
+	{
+		return new(0);
+	}
+
 	public Output Evaluate(string expr, Interpreter interpreter)
+	{
+		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
+
+		// can't evaluate nothing
+		if (string.IsNullOrWhiteSpace(expr)) return new(""); // return Errors.EvaluatedNothing(interpreter);
+
+		// get rid of whitespace
+		expr = RemoveNonStringSpace(expr);
+
+		// pre check(s)
+		Output parityCheck = ParityChecks(expr, interpreter);
+		if (!parityCheck.Success) return parityCheck;
+
+		// evaluate straight lists
+		if (ExpressionContainsSurfaceLevel(',', expr))
+			return EvaluateList('[' + expr + ']', interpreter);
+
+		// tokenize the expression 
+		Output tokenize = Tokenize(expr, interpreter);
+		if (!tokenize.Success) return tokenize;
+		List<Token> tokens = tokenize.Value;
+
+		if (tokens.Count == 1)
+		{
+			if (expr.StartsWith('(') && expr.EndsWith(')'))
+				return Evaluate(expr[1..^1], interpreter); // single values in parentheses get evaled
+
+			return DynamicStringParse(expr, interpreter);
+		}
+
+		// get the actual value of each value token (not operation, they don't need to be evaluated)
+		foreach (Token token in tokens) if (token.Type == TokenType.val)
+			{
+				if (token.Text.StartsWith('(')) token.Text = token.Text[1..];
+				if (token.Text.EndsWith(')')) token.Text = token.Text[..^1];
+
+				Output tryEval = Evaluate(token.Text, interpreter); // TODO: this is not gonna end well
+				if (!tryEval.Success) return tryEval;
+				token.Set(tryEval.Value, TokenType.val);
+			}
+
+		// evaluate all functions and list indexing before everything else 
+		bool doublesExist = true; // side by side values
+		while (doublesExist)
+		{
+			// find doubles location
+			int doubleStartIndex = -1;
+			doublesExist = false;
+			for (int i = 0; i < tokens.Count; i++)
+			{
+				if ( // condition for function or list indexing (not method)
+					i < tokens.Count - 1 &&
+					tokens[i].Type == TokenType.val && tokens[i + 1].Type == TokenType.val && // value followed by argument?
+					((i > 0 && tokens[i - 1].Text != ".") || i == 0) // prev token isn't . ?  
+					)
+				{
+					doublesExist = true;
+					doubleStartIndex = i;
+					break;
+				}
+			}
+
+			if (doublesExist)
+			{
+				int nextIndex = doubleStartIndex + 1;
+				// differentiate between list indexing and arguments
+				if (tokens[nextIndex].Text.StartsWith('[') && tokens[nextIndex].Text.EndsWith(']'))
+				{
+					// chained indexing should hopefully be handled implicitly as the first instance is always processed first
+					// only need to handle two together
+
+					if (tokens[nextIndex].RealValue is not List<dynamic>) // how would this happen?
+						return Errors.UnknownError(interpreter);
+
+					List<dynamic> listToIndex = tokens[doubleStartIndex].RealValue is List<dynamic> ?
+						tokens[doubleStartIndex].RealValue :
+						new List<dynamic>() { tokens[doubleStartIndex].RealValue };
+					List<dynamic> indexList = tokens[nextIndex].RealValue;
+
+					List<dynamic> newList = new();
+					foreach (dynamic index in indexList)
+					{
+						if (index is not double || Math.Round(index) != index)
+							return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
+
+						int intIndex = (int)index;
+						if (intIndex >= listToIndex.Count)
+							return Errors.IndexOutOfRange(intIndex, interpreter);
+
+						newList.Add(listToIndex[intIndex]);
+					}
+
+					tokens.RemoveAt(nextIndex); // remove index list
+					tokens[doubleStartIndex].Set(newList, TokenType.val); // update list
+				}
+				else
+				{
+					Token functionToken = tokens[doubleStartIndex];
+					Token argumentToken = tokens[nextIndex];
+
+					string functionName = functionToken.Text;
+
+					List<dynamic> args = argumentToken.RealValue is List<dynamic> ?
+						argumentToken.RealValue :
+						new List<dynamic>() { argumentToken.RealValue };
+					int numargs = args.Count;
+
+					string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
+					if (functionTokenType == "Function")
+					{
+						Dictionary<string, Function> functions = interpreter.GetFunctions();
+						if (!functions.ContainsKey(functionName))
+							return Errors.NoFunctionExists(name, numargs, interpreter);
+						Function function = functions[functionName];
+
+						Output output = interpreter.RunFunction(function, args);
+						if (!output.Success) return output;
+
+						tokens.RemoveAt(nextIndex); // remove arg token
+						tokens[doubleStartIndex].Set(output.Value, TokenType.val); // set the function vallue accordingly
+					}
+					else
+					{
+						return Errors.NoFunctionExists(functionToken.Text, numargs, interpreter);
+					}
+				}
+			}
+		}
+
+		// evaluate with pemdas
+		while (tokens.Count > 1)
+		{
+			#region find leftmost highest ranking operator
+			int opIndex = -1;
+			int highestRank = -1;
+			for (int i = 0; i < tokens.Count; i++)
+			{
+				Token token = tokens[i];
+				if (token.Type == TokenType.op)
+				{
+					int rank = operatorRanks[token.Text];
+					if (rank > highestRank)
+					{
+						opIndex = i;
+						highestRank = rank;
+					}
+				}
+			}
+			#endregion
+
+			if (opIndex == -1) return Errors.NoOperator(interpreter);
+
+			string[] specialOperators = new string[2] { "!", "." };
+			string operation = tokens[opIndex].Text;
+			if ((opIndex == 0 || opIndex == tokens.Count - 1 || // not outside range
+				tokens[opIndex - 1].Type == TokenType.op || tokens[opIndex + 1].Type == TokenType.op) && // left or right aren't operators
+				!specialOperators.Contains(operation)) // special operators get exception
+				return Errors.OperatorInInvalidPosition(operation, interpreter);
+
+			Token leftToken = opIndex > 0 ? tokens[opIndex - 1] : new Token() { RealValue = 0 };
+			Token rightToken = opIndex < (tokens.Count - 1) ? tokens[opIndex + 1] : new Token() { RealValue = 0 };
+
+			bool leftWasntValid = false; // for future reference for . to know how to handle left and right side
+			bool rightWasntValid = false;
+			if (opIndex == 0 || tokens[opIndex - 1].Type == TokenType.op)
+			{ // special case for ., would have been caught normally
+				leftToken = new Token() { RealValue = 0 };
+				leftWasntValid = true;
+			}
+			if (opIndex == tokens.Count - 1 || tokens[opIndex + 1].Type == TokenType.op)
+			{
+				rightToken = new Token() { RealValue = 0 };
+				rightWasntValid = true;
+			}
+
+			dynamic left = leftToken.RealValue;
+			dynamic right = rightToken.RealValue;
+			string leftType = HF.DetermineTypeFromVariable(left);
+			string rightType = HF.DetermineTypeFromVariable(right);
+			dynamic result = 0;
+
+			bool normaloperation = true;
+
+			if (operation == "!")
+			{
+				if (rightToken == null) return Errors.OperatorInInvalidPosition("!", interpreter);
+
+				bool boolvalue = false;
+				if (rightType == "string") boolvalue = right == "true";
+				else if (rightType == "number") boolvalue = right > 0;
+				else if (rightType == "boolean") boolvalue = right;
+				else if (rightType == "list") boolvalue = false;
+
+				tokens.RemoveAt(opIndex);
+				tokens[opIndex].Set(!boolvalue, TokenType.val);
+
+				normaloperation = false;
+			}
+			else if (operation == ".")
+			{
+				if (leftType == "number" && rightType == "number") // decimal (will have unintended consequences)
+				{
+					double rightDigits = right != 0 ? Math.Floor(Math.Log10(right) + 1) : 1;
+					result = left + right / Math.Pow(10, rightDigits);
+
+					if (leftWasntValid)
+					{
+						tokens[opIndex + 1].Set(result, TokenType.val); // replace original value with result
+						tokens.RemoveAt(opIndex); // remove .
+					}
+					else if (rightWasntValid)
+					{
+						tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
+						tokens.RemoveAt(opIndex); // remove .
+					}
+					else 
+					{
+						tokens.RemoveAt(opIndex + 1); // remove right side
+						tokens.RemoveAt(opIndex); // remove .
+						tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
+					}
+				}
+				else if (rightType == "string") // optimally want to be able to just check for method/variable
+				{
+					List<dynamic> arguments = null;
+					string argumentType = "none";
+					if (opIndex < tokens.Count - 2 && tokens[opIndex + 2].Type != TokenType.op)
+					{
+						arguments = tokens[opIndex + 2].RealValue;
+						argumentType = "what the fuck";
+					}
+
+					Output attemptHandleMember = HandleMembers(leftType, left, (string)right, argumentType, arguments, interpreter);
+					if (!attemptHandleMember.Success) return attemptHandleMember;
+
+					if (argumentType != "none")
+						tokens.RemoveAt(opIndex + 2); // remove argument
+
+					tokens.RemoveAt(opIndex + 1); // remove right side
+					tokens.RemoveAt(opIndex); // remove .
+					tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
+				}
+				else
+				{
+					return Errors.InvalidUseOfPeriod(interpreter);
+				}
+
+				normaloperation = false;
+			}
+			
+			if (normaloperation) {
+				try
+				{
+					if (leftType == "number")
+					{
+						if (rightType != "number")
+						{ // attempt to convert to number
+							if (rightType == "string")
+							{
+								try
+								{
+									right = double.Parse(right.Trim('"'));
+								}
+								catch
+								{
+									return Errors.UnableToParseStrAsNum(right, interpreter);
+								}
+							}
+							else if (rightType == "bool") right = right ? 1 : 0;
+							else if (rightType == "list") right = 0;
+						}
+
+						switch (operation)
+						{
+							case "+":	result = left + right; break;
+							case "-":	result = left - right; break;
+							case "*":	result = left * right; break;
+							case "/":  // check for division by zero
+								if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
+								else	result = left / right; break;
+							case "^":	result = Math.Pow(left, right); break;
+							case "%":	result = left % right; break; //
+							case "==":	result = left == right; break;
+							case "!=":	result = left != right; break;
+							case "<":	result = left < right; break;
+							case ">":	result = left > right; break;
+							case "<=":	result = left <= right; break;
+							case ">=":	result = left >= right; break;
+							default:	return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
+						}
+					}
+					else if (leftType == "string")
+					{
+						if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
+						if (rightType != "string") right = HF.ConvertToString(right);
+
+						result = left + right;
+					}
+					else if (leftType == "list")
+					{
+						if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
+						if (rightType == "list")
+							left.AddRange(right);
+						else
+							left.Add(right);
+						result = left;
+					}
+					else if (leftType == "bool")
+					{
+						if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
+						if (rightType != "bool")
+						{
+							if (rightType == "string") right = right == "true";
+							else if (rightType == "number") right = right > 0;
+							else if (rightType == "list") right = false;
+						}
+						switch (operation)
+						{
+							case "==": result = left == right; break;
+							case "!=": result = left != right; break;
+							case "&&": result = left && right; break;
+							case "||": result = left || right; break;
+							case "!&": result = !(left && right); break;
+							case "!|": result = !(left || right); break;
+							case "!!": result = left ^ right; break;
+						}
+					}
+				}
+				catch
+				{
+					return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
+				}
+				tokens.RemoveAt(opIndex + 1); // remove right side
+				tokens[opIndex] = new() { RealValue = result }; // replace operator with result
+				tokens.RemoveAt(opIndex - 1); // remove left
+			}
+
+		}
+
+		return new(tokens[0].RealValue);
+	}
+
+	/*public Output _Evaluate(string expr, Interpreter interpreter)
 	{
 		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
 
@@ -502,14 +1114,16 @@ public class Evaluator : MonoBehaviour
 			{
 				functionName = expr[checkingIndex..startIndex];
 
-				if (!interpreter.functions.ContainsKey(functionName))
+				Dictionary<string, Function> functions = interpreter.GetFunctions();
+
+				if (!functions.ContainsKey(functionName))
 					return Errors.UnknownFunction(functionName, interpreter);
 
-				Output tryEval = interpreter.ExtractArgs(expr[checkingIndex..(endIndex+1)], functionName, interpreter.functions[functionName].ArgumentNames.Count);
+				Output tryEval = interpreter.ExtractArgs(expr[checkingIndex..(endIndex+1)], functionName, functions[functionName].ArgumentNames.Count);
 				if (!tryEval.Success) return tryEval;
 				List<dynamic> args = tryEval.Value;
 
-				tryEval = interpreter.RunFunction(interpreter.functions[functionName], args);
+				tryEval = interpreter.RunFunction(functions[functionName], args);
 				if (!tryEval.Success) return tryEval;
 				if (tryEval.Value is ClassInstance) return new(tryEval.Value); // classes are immediately returned
 
@@ -627,7 +1241,7 @@ public class Evaluator : MonoBehaviour
 						}
 					}
 					else // additional check can be added, operators shouldnt be at end
-						return Errors.OperatorInBadPosition(op, interpreter);
+						return Errors.OperatorInInvalidPosition(op, interpreter);
 
 					if (operators.Contains(op))
 					{ // valid operator
@@ -659,7 +1273,7 @@ public class Evaluator : MonoBehaviour
 					i++;
 				}
 				else // shouldnt be at end
-					return Errors.OperatorInBadPosition("!", interpreter);
+					return Errors.OperatorInInvalidPosition("!", interpreter);
 			}
 			else
 			{
@@ -674,11 +1288,11 @@ public class Evaluator : MonoBehaviour
 		{
 			if (t % 2 == 0)
 			{
-				if (operators.Contains(tokenStrings[t])) return Errors.OperatorInBadPosition(tokenStrings[t], interpreter);
+				if (operators.Contains(tokenStrings[t])) return Errors.OperatorInInvalidPosition(tokenStrings[t], interpreter);
 			}
 			else
 			{
-				if (!operators.Contains(tokenStrings[t])) return Errors.OperatorInBadPosition(interpreter);
+				if (!operators.Contains(tokenStrings[t])) return Errors.OperatorInInvalidPosition(interpreter);
 			}
 		}
 		#endregion
@@ -726,7 +1340,7 @@ public class Evaluator : MonoBehaviour
 			}
 
 			if (lmhrIndex == -1) return Errors.Error("how.", interpreter); // code should have found at least one op
-			if (lmhrIndex == tokens.Count - 1 || lmhrIndex == 0) return Errors.OperatorInBadPosition(tokens[^1], interpreter); // operators shouldnt be at end
+			if (lmhrIndex == tokens.Count - 1 || lmhrIndex == 0) return Errors.OperatorInInvalidPosition(tokens[^1], interpreter); // operators shouldnt be at end
 			#endregion
 
 			// operator definitely has items on both sides
@@ -842,5 +1456,5 @@ public class Evaluator : MonoBehaviour
 		#endregion
 
 		return new Output(tokens[0]);
-	}
+	}*/
 }
