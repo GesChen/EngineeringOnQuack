@@ -223,7 +223,7 @@ public class Evaluator : MonoBehaviour
 			bool negative = s[0] == '-';
 			if (negative) s = s[1..];
 
-			Output result = interpreter.Fetch(s);
+			Output result = interpreter.memory.Fetch(s);
 			string type = HF.DetermineTypeFromString(s);
 			if (!result.Success)
 			{
@@ -235,9 +235,9 @@ public class Evaluator : MonoBehaviour
 			else
 			{
 				dynamic variable = result.Value;
-				if (variable is double)
+				if (variable is double v)
 				{
-					value = (double)variable;
+					value = v;
 				}
 				else if (variable is string)
 				{
@@ -292,7 +292,7 @@ public class Evaluator : MonoBehaviour
 		}
 		else if (type == "variable")
 		{
-			Output result = interpreter.Fetch(s);
+			Output result = interpreter.memory.Fetch(s);
 			if (!result.Success) return result;
 			value = result.Value;
 		}
@@ -710,9 +710,6 @@ public class Evaluator : MonoBehaviour
 			if (expr.StartsWith('(') && expr.EndsWith(')'))
 				return Evaluate(expr[1..^1], interpreter); // single values in parentheses get evaled
 
-			if (HF.DetermineTypeFromString(expr) == "variable")
-				return new(expr); // 
-
 			return DynamicStringParse(expr, interpreter);
 		}
 
@@ -796,7 +793,7 @@ public class Evaluator : MonoBehaviour
 					string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
 					if (functionTokenType == "Function")
 					{
-						Dictionary<string, Function> functions = interpreter.GetFunctions();
+						Dictionary<string, Function> functions = interpreter.memory.GetFunctions();
 						if (!functions.ContainsKey(functionName))
 							return Errors.NoFunctionExists(name, numargs, interpreter);
 						Function function = functions[functionName];
