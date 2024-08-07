@@ -820,7 +820,7 @@ public class Evaluator : MonoBehaviour
 		{
 			#region find leftmost highest ranking operator
 			int opIndex = -1;
-			int highestRank = 0;
+			int highestRank = -1;
 			for (int i = 0; i < tokens.Count; i++)
 			{
 				Token token = tokens[i];
