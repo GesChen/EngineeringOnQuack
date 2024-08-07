@@ -11,6 +11,7 @@ public class Tester : MonoBehaviour
 	//public List<string> testCases = new();
 
 	public bool debug;
+	public bool testTime;
 	public Interpreter interpreter;
 	public Evaluator evaluator; 
 	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
@@ -18,8 +19,8 @@ public class Tester : MonoBehaviour
 	public string testexpr;
 	void Start()
 	{
-		//Test();
-		newevaltest();
+
+		Test();
 	}
 	void tokentest()
 	{
@@ -35,26 +36,30 @@ public class Tester : MonoBehaviour
 	void Test()
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
-		
+
+		newevaltest();
+
+		stopwatch.Stop();
+		if(testTime) UnityEngine.Debug.Log($"ms: {stopwatch.ElapsedMilliseconds}");
+	}
+	void scripttest()
+	{
 		string[] contents = File.ReadAllLines(scriptFilePath);
-		
-		Script script = new (contents.ToList());
+
+		Script script = new(contents.ToList());
 
 
 		interpreter.DEBUGMODE = debug;
 		Output output = interpreter.Run(script, evaluator);
-		
-		UnityEngine.Debug.Log(output);
-		if(debug) interpreter.DumpState();
 
-		stopwatch.Stop();
-		UnityEngine.Debug.Log(stopwatch.ElapsedMilliseconds);
+		UnityEngine.Debug.Log(output);
+		if (debug) interpreter.DumpState();
+
 	}
 
 	private void Update()
 	{
-		//Test();
-		newevaltest();
+		Test();
 	}
 
 	public void TestDebug()

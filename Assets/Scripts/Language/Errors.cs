@@ -161,4 +161,7 @@ public static class Errors
 	public static Output NoOperator(Interpreter interpreter) =>
 		Error($"Expression contains no operators (???)", interpreter);
 
+	public static Output UnknownError(Interpreter interpreter) =>
+		Error($"Unknown error", interpreter);
+
 }
