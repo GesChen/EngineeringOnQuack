@@ -171,9 +171,9 @@ public class Evaluator : MonoBehaviour
 		static Output Pow(List<dynamic> args, Interpreter interpreter)
 		{
 			// argument checks
-			if (args.Count != 2) return Errors.TypeHasNoMethod("Pow", "number", args.Count - 1, interpreter);
+			if (args.Count != 2) return Errors.TypeHasNoMethod("pow", "number", args.Count - 1, interpreter);
 			string arg0type = HF.DetermineTypeFromVariable(args[0]); if (arg0type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
-			string arg1type = HF.DetermineTypeFromVariable(args[1]); if (arg1type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
+			string arg1type = HF.DetermineTypeFromVariable(args[1]); if (arg1type != "number") return Errors.MethodExpectedType("Pow", "number", arg1type, interpreter);
 
 			double a = args[0];
 			double b = args[1];
