@@ -976,6 +976,9 @@ public class Evaluator : MonoBehaviour
 				}
 				else if (rightType == "variable") // optimally want to be able to just check for method/variable
 				{
+					if (leftWasntValid)
+						return Errors.ExpectedExpression(interpreter);
+
 					Variable rightVar = (Variable)right;
 					Output attemptHandleMember = HandleMembers(leftType, left, rightVar.Name, interpreter);
 					if (!attemptHandleMember.Success) return attemptHandleMember;

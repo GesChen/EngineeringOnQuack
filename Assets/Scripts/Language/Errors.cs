@@ -173,4 +173,7 @@ public static class Errors
 	public static Output UnknownError(Interpreter interpreter) =>
 		Error($"Unknown error", interpreter);
 
+	public static Output ExpectedExpression(Interpreter interpreter) =>
+		Error($"Expected expression", interpreter);
+
 }
