@@ -39,7 +39,8 @@ public class Tester : MonoBehaviour
 		scripttest();
 
 		stopwatch.Stop();
-		if(testTime) UnityEngine.Debug.Log($"ms: {stopwatch.Elapsed.TotalMilliseconds}");
+		double time = stopwatch.Elapsed.TotalMilliseconds;
+		if(testTime) UnityEngine.Debug.Log($"ms: {time} ({1 / stopwatch.Elapsed.TotalSeconds} fps)");
 	}
 	void scripttest()
 	{

@@ -262,23 +262,22 @@ public class ClassInstance
 
 public class Memory
 {
-	public List<Variable> Everything { get; private set; } // terible name
+	public Dictionary<string, Variable> Everything { get; private set; } // terible name
 
 	public Memory()
 	{
 		Everything = new();
 	}
-
 	
 	public Dictionary<string, ClassDefinition> GetClasses()
 	{
-		return Everything
+		return Everything.Values
 			.Where(kvp => kvp.Value is ClassDefinition)
 			.ToDictionary(kvp => kvp.Name, kvp => (ClassDefinition)kvp.Value);
 	}
 	public Dictionary<string, Function> GetFunctions()
 	{
-		return Everything
+		return Everything.Values
 			.Where(kvp => kvp.Value is Function)
 			.ToDictionary(kvp => kvp.Name, kvp => (Function)kvp.Value);
 	}
@@ -288,29 +287,20 @@ public class Memory
 		if (Interpreter.keywords.Contains(name))
 			return Errors.CannotSetKeyword(name, interpreter);
 
-		Variable variable = new(name, value);
-
-		// overwrite old value if exists
-		int oldIndex = Everything.FindIndex(item => item.Name == name);
-		if (oldIndex == -1)
-			Everything.Add(variable);
-		else
-			Everything[oldIndex] = variable; // overwrite
+		Everything[name] = new(name, value); // overwrite
 
 		return new Output(value);
 	}
 	public Output Fetch(string name, Interpreter interpreter) // retrieve a variable from memory 
 	{
-		Variable fetch = Everything.FirstOrDefault(item => item.Name == name);
-
-		if (fetch == null)
+		if (!Everything.ContainsKey(name))
 			return Errors.UnknownVariable(name, interpreter);
 
-		return new Output(fetch.Value);
+		return new Output(Everything[name].Value);
 	}
 	public bool VariableExists(string name)
 	{
-		return Everything.Any(item => item.Name == name);
+		return Everything.ContainsKey(name);
 	}
 	public void Reset()
 	{
@@ -318,17 +308,16 @@ public class Memory
 	}
 	public Output Delete(string name, Interpreter interpreter)
 	{
-		int index = Everything.FindIndex(item => item.Name == name);
-		if (index == -1)
+		if (!Everything.ContainsKey(name))
 			return Errors.UnknownVariable(name, interpreter);
 
-		Everything.RemoveAt(index);
+		Everything.Remove(name);
 		return new Output(true); // returns true if successful
 	}
 
 	public List<string> GetAllNames()
 	{
-		return Everything.Select(item => item.Name).ToList();
+		return Everything.Keys.ToList();
 	}
 
 	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Interpreter interpreter)
