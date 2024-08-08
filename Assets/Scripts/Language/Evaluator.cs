@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 
 public class Evaluator : MonoBehaviour
@@ -385,6 +386,29 @@ public class Evaluator : MonoBehaviour
 			case "list-number": return new(0f);
 			case "list-bool": return new(false);
 			case "list-list": return new(value);
+			default: return Errors.UnknownType(interpreter);
+		}
+	}
+	public static Output SoftCast(string typeA, ref dynamic A, string typeB, ref dynamic B, Interpreter interpreter)
+	{
+		switch ($"{typeA}-{typeB}")
+		{
+			case "number-number":	return new(true);
+			case "number-string":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
+			case "number-bool":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "number-list":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
+			case "string-number":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "string-string":	return new(true);
+			case "string-bool":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "string-list":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "bool-number":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
+			case "bool-string":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
+			case "bool-bool":		return new(true);
+			case "bool-list":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
+			case "list-number":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "list-string":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "list-bool":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
+			case "list-list":		return new(true);
 			default: return Errors.UnknownType(interpreter);
 		}
 	}
@@ -976,82 +1000,63 @@ public class Evaluator : MonoBehaviour
 				normaloperation = false;
 			}
 			
-			if (normaloperation) {
+			if (normaloperation) 
+			{
+				SoftCast(leftType, ref left, rightType, ref right, interpreter);
+
+				string opType = HF.DetermineTypeFromVariable(left);
+
 				try
 				{
-					if (leftType == "number")
-					{
-						if (rightType != "number")
-						{ // attempt to convert to number
-							if (rightType == "string")
+					switch (opType) {
+						case "number":
+							switch (operation)
 							{
-								try
-								{
-									right = double.Parse(right.Trim('"'));
-								}
-								catch
-								{
-									return Errors.UnableToParseStrAsNum(right, interpreter);
-								}
+								case "+":	result = left + right; break;
+								case "-":	result = left - right; break;
+								case "*":	result = left * right; break;
+								case "/":  // check for division by zero
+									if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
+									else	result = left / right; break;
+								case "^":	result = Math.Pow(left, right); break;
+								case "%":	result = left % right; break; //
+								case "==":	result = left == right; break;
+								case "!=":	result = left != right; break;
+								case "<":	result = left < right; break;
+								case ">":	result = left > right; break;
+								case "<=":	result = left <= right; break;
+								case ">=":	result = left >= right; break;
+								default:	return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
 							}
-							else if (rightType == "bool") right = right ? 1 : 0;
-							else if (rightType == "list") right = 0;
-						}
+							break;
+						case "string":
+							if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
 
-						switch (operation)
-						{
-							case "+":	result = left + right; break;
-							case "-":	result = left - right; break;
-							case "*":	result = left * right; break;
-							case "/":  // check for division by zero
-								if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
-								else	result = left / right; break;
-							case "^":	result = Math.Pow(left, right); break;
-							case "%":	result = left % right; break; //
-							case "==":	result = left == right; break;
-							case "!=":	result = left != right; break;
-							case "<":	result = left < right; break;
-							case ">":	result = left > right; break;
-							case "<=":	result = left <= right; break;
-							case ">=":	result = left >= right; break;
-							default:	return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
-						}
-					}
-					else if (leftType == "string")
-					{
-						if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
-						if (rightType != "string") right = HF.ConvertToString(right);
-
-						result = left + right;
-					}
-					else if (leftType == "list")
-					{
-						if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
-						if (rightType == "list")
+							result = left + right;
+							break;
+					
+						case "list":
+							if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
 							left.AddRange(right);
-						else
-							left.Add(right);
-						result = left;
-					}
-					else if (leftType == "bool")
-					{
-						if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
-						if (rightType != "bool")
-						{
-							if (rightType == "string") right = right == "true";
-							else if (rightType == "number") right = right > 0;
-							else if (rightType == "list") right = false;
-						}
-						switch (operation)
-						{
-							case "==": result = left == right; break;
-							case "!=": result = left != right; break;
-							case "&&": result = left && right; break;
-							case "||": result = left || right; break;
-							case "!&": result = !(left && right); break;
-							case "!|": result = !(left || right); break;
-							case "!!": result = left ^ right; break;
-						}
+							result = left;
+							break;
+					
+						case "bool":
+							if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
+						
+							switch (operation)
+							{
+								case "==": result = left == right; break;
+								case "!=": result = left != right; break;
+								case "&&": result = left && right; break;
+								case "||": result = left || right; break;
+								case "!&": result = !(left && right); break;
+								case "!|": result = !(left || right); break;
+								case "!!": result = left ^ right; break;
+							}
+							break;
+						default:
+							return Errors.UnsupportedOperation(operation, leftType, rightType, interpreter);
 					}
 				}
 				catch

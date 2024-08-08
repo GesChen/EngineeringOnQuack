@@ -77,12 +77,7 @@ public class Function
 	public Interpreter UsingInterpreter { get; set; } // TODO: idk what to do here, for constructor to reset interpreter, has to be able to be set, or else big workaround.
 	public Evaluator UsingEvaluator { get; private set; }
 
-	public Function(
-		string name,
-		Script script,
-		List<string> argnames,
-		Interpreter interpreter,
-		Evaluator evaluator)
+	public Function(string name, Script script, List<string> argnames, Interpreter interpreter, Evaluator evaluator)
 	{
 		Name = name;
 		Type = FunctionType.scriptFunc;
@@ -92,11 +87,8 @@ public class Function
 		UsingEvaluator = evaluator;
 	}
 
-	public Function(
-		string name,
-		InternalFunctionType internalFunction,
-		Interpreter interpreter
-		) // internal functions should be tested to be bug free, doesnt need eval since uses native, interpreter for error reporting
+	// internal functions should be tested to be bug free, doesnt need eval since uses native, interpreter for error reporting
+	public Function(string name, InternalFunctionType internalFunction, Interpreter interpreter)
 	{
 		Name = name;
 		Type = FunctionType.internalFunc;
