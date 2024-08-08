@@ -63,11 +63,20 @@ public class Script
 }
 public class Function
 {
-	public string Name { get; }
-	public List<string> ArgumentNames { get; }
-	public Script Script { get; }
+	public enum FunctionType
+	{
+		scriptFunc,
+		internalFunc
+	}
+	public delegate Output InternalFunctionType(List<dynamic> arguments);
+	public string Name { get; private set; } // todo: fix getter and setters properly
+	public FunctionType Type { get; private set; }
+	public List<string> ArgumentNames { get; private set; }
+	public Script Script { get; private set; }
+	public InternalFunctionType InternalFunction { get; private set; }
 	public Interpreter UsingInterpreter { get; set; } // TODO: idk what to do here, for constructor to reset interpreter, has to be able to be set, or else big workaround.
-	public Evaluator UsingEvaluator { get; }
+	public Evaluator UsingEvaluator { get; private set; }
+
 	public Function(
 		string name,
 		Script script,
@@ -76,17 +85,39 @@ public class Function
 		Evaluator evaluator)
 	{
 		Name = name;
+		Type = FunctionType.scriptFunc;
 		ArgumentNames = argnames;
 		Script = script;
 		UsingInterpreter = interpreter;
 		UsingEvaluator = evaluator;
 	}
+
+	public Function(
+		string name,
+		InternalFunctionType internalFunction,
+		Interpreter interpreter,
+		Evaluator evaluator)
+	{
+		Name = name;
+		Type = FunctionType.internalFunc;
+		InternalFunction = internalFunction;
+		UsingInterpreter = interpreter;
+		UsingEvaluator = evaluator;
+	}
+
 	public override string ToString()
 	{
 		return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
 	}
 
 	public Output Run(List<dynamic> args, Interpreter interpreter, int depth = 0)
+	{
+		if (Type == FunctionType.scriptFunc)
+			return RunScript(args, interpreter, depth);
+		else
+			return RunInternal(args);
+	}
+	private Output RunScript(List<dynamic> args, Interpreter interpreter, int depth = 0)
 	{
 		/*debug*/
 		if (interpreter.DEBUGMODE) interpreter.LogColor($"Running function {this}", Color.red);
@@ -160,7 +191,12 @@ public class Function
 			return new(newClassInstance);
 		}
 	}
-
+	
+	private Output RunInternal(List<dynamic> args)
+	{
+		Output output = InternalFunction.Invoke(args);
+		return output;
+	}
 }
 public class ClassDefinition
 {

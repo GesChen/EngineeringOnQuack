@@ -116,15 +116,14 @@ public class Evaluator : MonoBehaviour
 	public class Member
 	{
 		public delegate dynamic AttributeFunctionType(dynamic value); // assuming everything is done right, there should be no type issues
-		public delegate dynamic MethodType(dynamic value, List<dynamic> arguments);
 		public string For { get; private set; } // might not be used, just metadata
 		public string Name { get; private set; }
 		public bool IsFunction { get; private set; }
 		public AttributeFunctionType AttributeFunction { get; private set; }
-		public MethodType Function { get; private set; }
+		public Function Function { get; private set; }
 		public int ArgumentCount { get; private set; }
 
-		public Member(string @for, string name, MethodType function = null, AttributeFunctionType attributeFunction = null, int numArgs = 1)
+		public Member(string @for, string name, Function function = null, AttributeFunctionType attributeFunction = null, int numArgs = 1)
 		{
 			For = @for;
 			Name = name;
