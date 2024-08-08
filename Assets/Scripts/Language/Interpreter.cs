@@ -68,7 +68,7 @@ public class Function
 		scriptFunc,
 		internalFunc
 	}
-	public delegate Output InternalFunctionType(List<dynamic> arguments);
+	public delegate Output InternalFunctionType(List<dynamic> arguments, Interpreter interpreter);
 	public string Name { get; private set; } // todo: fix getter and setters properly
 	public FunctionType Type { get; private set; }
 	public List<string> ArgumentNames { get; private set; }
@@ -95,22 +95,24 @@ public class Function
 	public Function(
 		string name,
 		InternalFunctionType internalFunction,
-		Interpreter interpreter,
-		Evaluator evaluator)
+		Interpreter interpreter
+		) // internal functions should be tested to be bug free, doesnt need eval since uses native, interpreter for error reporting
 	{
 		Name = name;
 		Type = FunctionType.internalFunc;
 		InternalFunction = internalFunction;
 		UsingInterpreter = interpreter;
-		UsingEvaluator = evaluator;
 	}
 
 	public override string ToString()
 	{
-		return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
+		if (Type == FunctionType.scriptFunc)
+			return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
+		else
+			return $"Internal function \"{Name}\"";
 	}
 
-	public Output Run(List<dynamic> args, Interpreter interpreter, int depth = 0)
+	public Output Run(List<dynamic> args, Interpreter interpreter = null, int depth = 0)
 	{
 		if (Type == FunctionType.scriptFunc)
 			return RunScript(args, interpreter, depth);
@@ -194,7 +196,7 @@ public class Function
 	
 	private Output RunInternal(List<dynamic> args)
 	{
-		Output output = InternalFunction.Invoke(args);
+		Output output = InternalFunction.Invoke(args, UsingInterpreter);
 		return output;
 	}
 }

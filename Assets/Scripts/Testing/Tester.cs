@@ -19,6 +19,7 @@ public class Tester : MonoBehaviour
 	public string testexpr;
 	void Start()
 	{
+		interpreter.Initialize();
 		Test();
 	}
 	void tokentest()

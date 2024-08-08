@@ -159,7 +159,7 @@ public static class Errors
 		Error($"Type {type} has no method \"{methodname}\"", interpreter);
 
 	public static Output TypeHasNoMethod(string methodname, string type, int numArgs, Interpreter interpreter) =>
-		Error($"TType {type} has no method \"{methodname}\" that takes {numArgs} arguments", interpreter);
+		Error($"Type {type} has no method \"{methodname}\" that takes {numArgs} arguments", interpreter);
 	
 	public static Output TypeHasNoAttribute(string attributename, string type, Interpreter interpreter) =>
 		Error($"Type {type} has no attribute \"{attributename}\"", interpreter);

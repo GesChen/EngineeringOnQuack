@@ -137,9 +137,7 @@ public static class HF {
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static string ConvertToString(dynamic value)
-		=> ConvertToString(value, true);
-	public static string ConvertToString(dynamic value, bool stringQuotes)
+	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true)
 	{
 		Type t = value.GetType();
 		if (value is null) return "";
@@ -148,13 +146,14 @@ public static class HF {
 		else if (value is bool) return value ? "true" : "false";
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
 		{
-			string builtString = "[";
+			string builtString = "";
+			if (listBrackets) builtString = "[";
 			for (int i = 0; i < value.Count; i++)
 			{
 				builtString += ConvertToString(value[i], stringQuotes);
 				if (i < value.Count - 1) builtString += ", ";
 			}
-			builtString += "]";
+			if (listBrackets) builtString += "]";
 			return builtString;
 		}
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
@@ -219,6 +218,22 @@ public static class HF {
 		return false;
 	}
 
+	public static bool ExpressionContainsSurfaceLevel(char symbol, string expr)
+	{
+		bool inString = false;
+		int depth = 0;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (!inString && (c == '(' || c == '[')) depth++;
+			if (!inString && (c == ')' || c == ']')) depth--;
+
+			if (c == symbol && !inString && depth == 0) return true;
+		}
+		return false;
+	}
+
+
 	public static string DetermineTypeFromString(string s)
 	{
 		if (s.Length == 0) return null;
@@ -226,7 +241,7 @@ public static class HF {
 		if (s[0] == '"' && s[^1] == '"') return "string";
 		else if (s[0] == '"' && s[^1] != '"' || s[0] != '"' && s[^1] == '"') return "malformed string"; // start is " but not end, or end is " but not start
 
-		if (s[0] == '[' && s[^1] == ']') return "list";
+		if ((s[0] == '[' && s[^1] == ']') || ExpressionContainsSurfaceLevel(',', s)) return "list";
 		else if (s[0] == '[' && s[^1] != ']' || s[0] != '[' && s[^1] == ']') return "malformed list"; // start is " but not end, or end is " but not start
 
 		bool isnumber = true;

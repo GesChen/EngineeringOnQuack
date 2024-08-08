@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 
 public class Evaluator : MonoBehaviour
@@ -100,10 +98,10 @@ public class Evaluator : MonoBehaviour
 		public dynamic RealValue;
 		public TokenType Type;
 
-		public void Set(dynamic realValue, TokenType type)
+		public void Set(dynamic realValue, TokenType type, bool updateText = true)
 		{
 			RealValue = realValue;
-			Text = HF.ConvertToString(realValue);
+			if (updateText) Text = HF.ConvertToString(realValue);
 			Type = type;
 		}
 
@@ -143,7 +141,7 @@ public class Evaluator : MonoBehaviour
 		{
 			if (args.Count != ArgumentCount)
 				return Errors.NoFunctionExists(Name, ArgumentCount, interpreter);
-			dynamic output = Function.DynamicInvoke(args);
+			dynamic output = Function.Run(args);
 			return new(output);
 		}
 	}
@@ -159,25 +157,34 @@ public class Evaluator : MonoBehaviour
 
 			Member member = Members[membername];
 			if (member.IsFunction)
-				return new(member.Function);
-			else // you have to actually run the attribute function on the value to get the attribute result
 			{
+				Function function = member.Function;
+				function.UsingInterpreter = interpreter;
+				return new(function);
+			}
+			else // attribute
+			{ // you have to actually run the attribute function on the value to get the attribute result
 				dynamic output = member.AttributeFunction.Invoke(value);
 				return new(output);
 			}
 		}
 
-		static Dictionary<string, Member> Members = new()
+		static readonly Dictionary<string, Member> Members = new()
 		{
-			{"pow", new("number", "pow", Pow, null, 1) },
+			{"pow", new("number", "pow", new("pow", Pow, null), null, 1) },
 			{"toString", new("number", "toString", null, StringFunction)}
 		};
 
-		static dynamic Pow(dynamic value, List<dynamic> args) // idk what static is doing in this case...
+		static Output Pow(List<dynamic> args, Interpreter interpreter) // idk what static is doing in this case...
 		{
-			double a = value;
-			double b = args[0];
-			return Math.Pow(a, b);
+			// argument checks
+			if (args.Count != 2) return Errors.TypeHasNoMethod("Pow", "number", args.Count, interpreter);
+			string arg0type = HF.DetermineTypeFromVariable(args[0]); if (arg0type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
+			string arg1type = HF.DetermineTypeFromVariable(args[1]); if (arg1type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
+
+			double a = args[0];
+			double b = args[1];
+			return new(Math.Pow(a, b));
 		}
 		static dynamic StringFunction(dynamic value) 
 		{
@@ -188,20 +195,6 @@ public class Evaluator : MonoBehaviour
 
 	#endregion
 
-	bool ExpressionContainsSurfaceLevel(char symbol, string expr)
-	{
-		bool inString = false;
-		int depth = 0;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (!inString && (c == '(' || c == '[')) depth++;
-			if (!inString && (c == ')' || c == ']')) depth--;
-
-			if (c == symbol && !inString && depth == 0) return true;
-		}
-		return false;
-	}
 	int ExpressionCountSymbol(char symbol, string expr)
 	{
 		int count = 0;
@@ -741,7 +734,7 @@ public class Evaluator : MonoBehaviour
 		if (!parityCheck.Success) return parityCheck;
 
 		// evaluate straight lists
-		if (ExpressionContainsSurfaceLevel(',', expr))
+		if (HF.ExpressionContainsSurfaceLevel(',', expr))
 			return EvaluateList('[' + expr + ']', interpreter);
 
 		// tokenize the expression 
@@ -767,13 +760,13 @@ public class Evaluator : MonoBehaviour
 				if (HF.DetermineTypeFromString(token.Text) == "variable")
 				{
 					Variable variable = new(token.Text, null);
-					token.Set(variable, TokenType.val);
+					token.Set(variable, TokenType.val, false);
 				}
 				else
 				{
 					Output tryEval = Evaluate(token.Text, interpreter); // TODO: this is not gonna end well
 					if (!tryEval.Success) return tryEval;
-					token.Set(tryEval.Value, TokenType.val);
+					token.Set(tryEval.Value, TokenType.val, false);
 				}
 			}
 
@@ -850,10 +843,14 @@ public class Evaluator : MonoBehaviour
 						string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
 						if (functionTokenType == "function")
 						{
-							Dictionary<string, Function> functions = interpreter.memory.GetFunctions();
-							if (!functions.ContainsKey(functionName))
-								return Errors.NoFunctionExists(name, numargs, interpreter);
-							Function function = functions[functionName];
+							Function function = functionToken.RealValue;
+							if (function != null && function.Type != Function.FunctionType.internalFunc) // internal functions already exist statically
+							{
+								Dictionary<string, Function> functions = interpreter.memory.GetFunctions();
+								if (!functions.ContainsKey(functionName))
+									return Errors.NoFunctionExists(name, numargs, interpreter);
+								function = functions[functionName];
+							}
 
 							Output output = function.Run(args, interpreter);
 							if (!output.Success) return output;
@@ -869,6 +866,7 @@ public class Evaluator : MonoBehaviour
 				}
 			}
 
+			if (tokens.Count == 1) break;
 
 			#region find leftmost highest ranking operator
 			int opIndex = -1;
