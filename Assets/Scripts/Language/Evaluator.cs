@@ -260,7 +260,7 @@ public class Evaluator : MonoBehaviour
 			bool negative = s[0] == '-';
 			if (negative) s = s[1..];
 
-			Output result = interpreter.memory.Fetch(s);
+			Output result = interpreter.memory.Fetch(s, interpreter);
 			string type = HF.DetermineTypeFromString(s);
 			if (!result.Success)
 			{
@@ -329,7 +329,7 @@ public class Evaluator : MonoBehaviour
 		}
 		else if (type == "variable")
 		{
-			Output result = interpreter.memory.Fetch(s);
+			Output result = interpreter.memory.Fetch(s, interpreter);
 			if (!result.Success) return result;
 			value = result.Value;
 		}
@@ -721,7 +721,7 @@ public class Evaluator : MonoBehaviour
 		{
 			ClassInstance classInstance = (ClassInstance)left;
 
-			return classInstance.OwnInterpreter.memory.Fetch(memberName);
+			return classInstance.OwnInterpreter.memory.Fetch(memberName, interpreter);
 		}
 
 		switch (type)

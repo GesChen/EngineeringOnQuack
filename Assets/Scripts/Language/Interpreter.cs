@@ -140,22 +140,22 @@ public class Function
 			Memory variablesStateBefore = UsingInterpreter.memory; // keep copy before running
 			for (int i = 0; i < args.Count; i++)
 			{
-				Output tryStore =UsingInterpreter.memory.Store(ArgumentNames[i], args[i]);
+				Output tryStore =UsingInterpreter.memory.Store(ArgumentNames[i], args[i], interpreter);
 				if (!tryStore.Success) { interpreter.script = before; return tryStore; }
 			}
 
 			Output result =	UsingInterpreter.Interpret(interpreter.ConvertToNested(Script), depth + 1); // run it;
 
 			// handle variables afterwards
-			Memory temp = new(interpreter);
+			Memory temp = new();
 			foreach (string varname in UsingInterpreter.memory.GetAllNames())
 			{
 				if (variablesStateBefore.VariableExists(varname)) // any new variables will not be contained within 
 				{
 					if (ArgumentNames.Contains(varname))
-						temp.Store(varname, variablesStateBefore.Fetch(varname).Value); // recall starting
+						temp.Store(varname, variablesStateBefore.Fetch(varname, interpreter).Value, interpreter); // recall starting
 					else
-						temp.Store(varname, UsingInterpreter.memory.Fetch(varname)); // or keep the changes
+						temp.Store(varname, UsingInterpreter.memory.Fetch(varname, interpreter), interpreter); // or keep the changes
 				}
 			}
 			UsingInterpreter.memory.Reset(); // restore 
@@ -263,12 +263,10 @@ public class ClassInstance
 public class Memory
 {
 	public List<Variable> Everything { get; private set; } // terible name
-	public Interpreter Interpreter { get; private set; }
 
-	public Memory(Interpreter interpreter)
+	public Memory()
 	{
 		Everything = new();
-		Interpreter = interpreter;
 	}
 
 	
@@ -285,10 +283,10 @@ public class Memory
 			.ToDictionary(kvp => kvp.Name, kvp => (Function)kvp.Value);
 	}
 
-	public Output Store(string name, dynamic value)
+	public Output Store(string name, dynamic value, Interpreter interpreter)
 	{
 		if (Interpreter.keywords.Contains(name))
-			return Errors.CannotSetKeyword(name, Interpreter);
+			return Errors.CannotSetKeyword(name, interpreter);
 
 		Variable variable = new(name, value);
 
@@ -301,10 +299,10 @@ public class Memory
 
 		return new Output(value);
 	}
-	public Output Fetch(string name) // retrieve a variable from memory 
+	public Output Fetch(string name, Interpreter interpreter) // retrieve a variable from memory 
 	{
 		if (!Everything.Any(item => item.Value == name))
-			return Errors.UnknownVariable(name, Interpreter);
+			return Errors.UnknownVariable(name, interpreter);
 
 		return new Output(Everything.FirstOrDefault(item => item.Value == name)); // fetch
 	}
@@ -316,11 +314,11 @@ public class Memory
 	{
 		Everything = new();
 	}
-	public Output Delete(string name)
+	public Output Delete(string name, Interpreter interpreter)
 	{
 		int index = Everything.FindIndex(item => item.Name == name);
 		if (index == -1)
-			return Errors.UnknownVariable(name, Interpreter);
+			return Errors.UnknownVariable(name, interpreter);
 
 		Everything.RemoveAt(index);
 		return new Output(true); // returns true if successful
@@ -331,23 +329,23 @@ public class Memory
 		return Everything.Select(item => item.Name).ToList();
 	}
 
-	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script)
+	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Interpreter interpreter)
 	{
-		return StoreFunction(name, argNames, new Script(Interpreter.ConvertToList(script, 1, 0)));
+		return StoreFunction(name, argNames, new Script(interpreter.ConvertToList(script, 1, 0)), interpreter);
 	}
-	public Output StoreFunction(string name, List<string> argNames, Script script)
+	public Output StoreFunction(string name, List<string> argNames, Script script, Interpreter interpreter)
 	{
 		Dictionary<string, Function> functions = GetFunctions();
 
 		// make sure function with this name and argnames doesnt already exist 
 		foreach (Function f in functions.Values)
 			if (f.Name == name && f.ArgumentNames.Count == argNames.Count)
-				return Errors.FunctionAlreadyExists(name, argNames.Count, Interpreter);
+				return Errors.FunctionAlreadyExists(name, argNames.Count, interpreter);
 
 		/*debug*/
-		if (Interpreter.DEBUGMODE) Interpreter.LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
+		if (interpreter.DEBUGMODE) interpreter.LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
 
-		return Store(name, new Function(name, script, argNames, Interpreter, Interpreter.evaluator));
+		return Store(name, new Function(name, script, argNames, interpreter, interpreter.evaluator), interpreter);
 	}
 }
 public class Variable
@@ -383,7 +381,7 @@ public class Interpreter : MonoBehaviour
 	public Evaluator evaluator;
 	public int currentLine;
 	public Script script;
-	public Memory memory = null;
+	public Memory memory = new();
 	public static readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
 	public static readonly string[] keywords = new string[]
 	{
@@ -402,11 +400,6 @@ public class Interpreter : MonoBehaviour
 	};
 
 	#region internal methods
-	public void Initialize() // MUST be done before running anything
-	{
-		memory = new Memory(this);
-	}
-
 	public void LogColor(string str, Color color)
 	{
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
@@ -727,7 +720,7 @@ public class Interpreter : MonoBehaviour
 		Function constructorFunction = null;
 		if (constructor is not null)
 		{
-			Output tryStore = memory.StoreFunction(name, constructorArgNames, constructor);
+			Output tryStore = memory.StoreFunction(name, constructorArgNames, constructor, this);
 			if (!tryStore.Success) return tryStore;
 			constructorFunction = tryStore.Value;
 		}
@@ -735,7 +728,7 @@ public class Interpreter : MonoBehaviour
 		Function actualStringFunction = null;
 		if (stringFunction is not null)
 		{
-			Output tryStore = memory.StoreFunction("string", stringFunctionArgNames, stringFunction);
+			Output tryStore = memory.StoreFunction("string", stringFunctionArgNames, stringFunction, this);
 			if (!tryStore.Success) return tryStore;
 			actualStringFunction = tryStore.Value;
 		}
@@ -743,7 +736,7 @@ public class Interpreter : MonoBehaviour
 		// create the new class, constructor is the new constructor function (returned from storefunction)
 		ClassDefinition newClass = new(name, this, definition, constructorFunction, actualStringFunction);
 
-		return memory.Store(name, newClass);
+		return memory.Store(name, newClass, this);
 	}
 	#endregion
 
@@ -1039,7 +1032,7 @@ public class Interpreter : MonoBehaviour
 
 						Output result = null;
 
-						result = memory.Store(iterator, item); // store iterator
+						result = memory.Store(iterator, item, this); // store iterator
 						if (!result.Success) return result;
 
 						/*
@@ -1144,7 +1137,7 @@ public class Interpreter : MonoBehaviour
 									if (!HF.VariableNameIsValid(errorVarName))
 										return Errors.InvalidVariableName(errorVarName, this);
 
-									Output trystore = memory.Store(errorVarName, output.Error.ToString());
+									Output trystore = memory.Store(errorVarName, output.Error.ToString(), this);
 									if (!trystore.Success) return trystore;
 								}
 								#endregion
@@ -1226,7 +1219,7 @@ public class Interpreter : MonoBehaviour
 						return Errors.EmptyFunction(this);
 					#endregion
 
-					Output tryStore = memory.StoreFunction(name, argnames, function);
+					Output tryStore = memory.StoreFunction(name, argnames, function, this);
 
 					if (!tryStore.Success) return tryStore;
 				}
@@ -1300,16 +1293,16 @@ public class Interpreter : MonoBehaviour
 
 					if (ao == "++" || ao == "--")
 					{ // all they do is + or - 1, no need to eval
-						Output fetch = memory.Fetch(varName);
+						Output fetch = memory.Fetch(varName, this);
 						if (!fetch.Success) return fetch;
 
 						// increment/decrement can only be done to existing number variables
 						if (fetch.Value is double v)
 						{
 							if (ao == "++")
-								memory.Store(varName, v + 1);
+								memory.Store(varName, v + 1, this);
 							else
-								memory.Store(varName, v - 1);
+								memory.Store(varName, v - 1, this);
 						}
 						else
 						{
@@ -1325,7 +1318,7 @@ public class Interpreter : MonoBehaviour
 						dynamic variableValue = 0;
 						if (ao != "=")
 						{
-							Output fetch = memory.Fetch(varName);
+							Output fetch = memory.Fetch(varName, this);
 							if (!fetch.Success) return fetch;
 							variableValue = fetch.Value;
 						}
@@ -1334,7 +1327,7 @@ public class Interpreter : MonoBehaviour
 						switch (ao)
 						{
 							case "=":
-								tryEval = memory.Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "+=":
@@ -1345,7 +1338,7 @@ public class Interpreter : MonoBehaviour
 									$"({HF.ConvertToString(tryEval.Value)})", this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = memory.Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "-=":
@@ -1356,7 +1349,7 @@ public class Interpreter : MonoBehaviour
 									$"({HF.ConvertToString(tryEval.Value)})", this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = memory.Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "*=":
@@ -1368,7 +1361,7 @@ public class Interpreter : MonoBehaviour
 								if (!tryEval.Success)
 									return tryEval;
 
-								tryEval = memory.Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "/=":
@@ -1379,7 +1372,7 @@ public class Interpreter : MonoBehaviour
 									$"({HF.ConvertToString(tryEval.Value)})", this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = memory.Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "^=":
@@ -1390,7 +1383,7 @@ public class Interpreter : MonoBehaviour
 									$"({HF.ConvertToString(tryEval.Value)})", this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = memory.Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 
 								break;
@@ -1405,7 +1398,7 @@ public class Interpreter : MonoBehaviour
 						string name = line[..periodIndex].Trim();
 						if (!memory.VariableExists(name)) return Errors.UnknownVariable(name, this);
 
-						dynamic item = memory.Fetch(name).Value;
+						dynamic item = memory.Fetch(name, this).Value;
 						if (item is ClassInstance)
 						{
 							ClassInstance instance = item;
@@ -1418,7 +1411,7 @@ public class Interpreter : MonoBehaviour
 			}
 			else if (type == 2)
 			{   // function should be defined hopefully no exceptions??
-				Output fetchFunc = memory.Fetch(keyword);
+				Output fetchFunc = memory.Fetch(keyword, this);
 				if (!fetchFunc.Success) return fetchFunc;
 
 				if (fetchFunc.Value is not Function)
