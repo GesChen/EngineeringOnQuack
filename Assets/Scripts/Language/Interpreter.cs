@@ -85,6 +85,82 @@ public class Function
 	{
 		return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
 	}
+
+	public Output Run(List<dynamic> args, Interpreter interpreter, int depth = 0)
+	{
+		/*debug*/
+		if (interpreter.DEBUGMODE) interpreter.LogColor($"Running function {this}", Color.red);
+		if (args.Count != ArgumentNames.Count)
+			return Errors.NoFunctionExists(Name, args.Count, UsingInterpreter);
+
+		Script before = interpreter.script;
+		interpreter.script = Script;
+
+		// determine if this function is a constructor for a class or not, they are treated differently
+		bool isConstructor = false;
+		ClassDefinition constructorClass = null;
+		foreach (ClassDefinition c in interpreter.memory.GetClasses().Values)
+		{
+			if (c.FunctionIsConstructor(this))
+			{
+				isConstructor = true;
+				constructorClass = c;
+				break;
+			}
+		}
+
+		if (!isConstructor) // normal case
+		{
+			Memory variablesStateBefore = UsingInterpreter.memory; // keep copy before running
+			for (int i = 0; i < args.Count; i++)
+			{
+				Output tryStore =UsingInterpreter.memory.Store(ArgumentNames[i], args[i]);
+				if (!tryStore.Success) { interpreter.script = before; return tryStore; }
+			}
+
+			Output result =	UsingInterpreter.Interpret(interpreter.ConvertToNested(Script), depth + 1); // run it;
+
+			// handle variables afterwards
+			Memory temp = new(interpreter);
+			foreach (string varname in UsingInterpreter.memory.GetAllNames())
+			{
+				if (variablesStateBefore.VariableExists(varname)) // any new variables will not be contained within 
+				{
+					if (ArgumentNames.Contains(varname))
+						temp.Store(varname, variablesStateBefore.Fetch(varname).Value); // recall starting
+					else
+						temp.Store(varname, UsingInterpreter.memory.Fetch(varname)); // or keep the changes
+				}
+			}
+			UsingInterpreter.memory.Reset(); // restore 
+			UsingInterpreter.memory = temp;
+
+			interpreter.script = before;
+			return result;
+		}
+		else // constructor case
+		{
+			Interpreter newInterpreter = interpreter.gameObject.AddComponent<Interpreter>();
+			newInterpreter.DEBUGMODE = interpreter.DEBUGMODE;
+			newInterpreter.NAME = "CLASSINSTANCE";
+
+			ClassInstance newClassInstance = new(constructorClass, newInterpreter, interpreter.evaluator);
+
+
+			// let the new instance run it's definition
+			Output result = newClassInstance.Initialize();
+			if (!result.Success) { interpreter.script = before; return result; }
+
+			// construct it with the constructor function, should be defined in the definition, if no constructor, then do nothing
+			result = newClassInstance.Construct(args);
+			if (!result.Success) { interpreter.script = before; return result; }
+
+			interpreter.script = before;
+
+			return new(newClassInstance);
+		}
+	}
+
 }
 public class ClassDefinition
 {
@@ -134,7 +210,7 @@ public class ClassInstance
 	public Output Construct(List<dynamic> args)
 	{
 		ClassDefinition.Constructor.UsingInterpreter = OwnInterpreter;
-		return OwnInterpreter.RunFunction(ClassDefinition.Constructor, args);
+		return ClassDefinition.Constructor.Run(args, OwnInterpreter);
 	}
 	public override string ToString()
 	{
@@ -330,81 +406,7 @@ public class Interpreter : MonoBehaviour
 
 		return true;
 	}
-	public Output RunFunction(Function F, List<dynamic> args, int depth = 0)
-	{
-		/*debug*/
-		if (DEBUGMODE) LogColor($"Running function {F}", Color.red);
-		if (args.Count != F.ArgumentNames.Count)
-			return Errors.NoFunctionExists(F.Name, args.Count, F.UsingInterpreter);
-
-		Script before = script;
-		script = F.Script;
-
-		// determine if this function is a constructor for a class or not, they are treated differently
-		bool isConstructor = false;
-		ClassDefinition constructorClass = null;
-		foreach (ClassDefinition c in memory.GetClasses().Values)
-		{
-			if (c.FunctionIsConstructor(F))
-			{
-				isConstructor = true;
-				constructorClass = c;
-				break;
-			}
-		}
-
-		if (!isConstructor) // normal case
-		{
-			Memory variablesStateBefore = F.UsingInterpreter.memory; // keep copy before running
-			for (int i = 0; i < args.Count; i++)
-			{
-				Output tryStore = F.UsingInterpreter.memory.Store(F.ArgumentNames[i], args[i]);
-				if (!tryStore.Success) { script = before; return tryStore; }
-			}
-
-			Output result = F.UsingInterpreter.Interpret(ConvertToNested(F.Script), depth + 1); // run it;
-
-			// handle variables afterwards
-			Memory temp = new (this);
-			foreach (string varname in F.UsingInterpreter.memory.GetAllNames())
-			{
-				if (variablesStateBefore.VariableExists(varname)) // any new variables will not be contained within 
-				{
-					if (F.ArgumentNames.Contains(varname))
-						temp.Store(varname, variablesStateBefore.Fetch(varname).Value); // recall starting
-					else
-						temp.Store(varname, F.UsingInterpreter.memory.Fetch(varname)); // or keep the changes
-				}
-			}
-			F.UsingInterpreter.memory.Reset(); // restore 
-			F.UsingInterpreter.memory = temp;
-
-			script = before;
-			return result;
-		}
-		else // constructor case
-		{
-			Interpreter newInterpreter = gameObject.AddComponent<Interpreter>();
-			newInterpreter.DEBUGMODE = DEBUGMODE;
-			newInterpreter.NAME = "CLASSINSTANCE";
-
-			ClassInstance newClassInstance = new(constructorClass, newInterpreter, evaluator);
-
-
-			// let the new instance run it's definition
-			Output result = newClassInstance.Initialize();
-			if (!result.Success) { script = before; return result; }
-
-			// construct it with the constructor function, should be defined in the definition, if no constructor, then do nothing
-			result = newClassInstance.Construct(args);
-			if (!result.Success) { script = before; return result; }
-
-			script = before;
-
-			return new(newClassInstance);
-		}
-	}
-
+	
 	void UpdateCurrentLine(List<dynamic> workingScript, int localLine)
 	{ // assumes nested form is not null
 		dynamic item = workingScript[localLine];
@@ -1389,7 +1391,8 @@ public class Interpreter : MonoBehaviour
 				Output tryArgs = ExtractArgs(line, keyword, fetchFunc.Value.ArgumentNames.Count);
 				if (!tryArgs.Success) return tryArgs;
 
-				Output result = RunFunction(fetchFunc.Value, tryArgs.Value, recursiondepth);
+				Function function = (Function)fetchFunc.Value;
+				Output result = function.Run(tryArgs.Value, this, recursiondepth);
 
 				if (!result.Success) return result;
 			}

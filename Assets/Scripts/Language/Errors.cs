@@ -155,8 +155,17 @@ public static class Errors
 	public static Output InvalidUseOfPeriod(Interpreter interpreter) =>
 		Error($"Invalid use of period", interpreter);
 
-	public static Output NoMethodExistsForType(string methodname, string type, Interpreter interpreter) =>
-		Error($"No method \"{methodname}\" exists for type {type}", interpreter);
+	public static Output TypeHasNoMethod(string methodname, string type, Interpreter interpreter) =>
+		Error($"Type {type} has no method \"{methodname}\"", interpreter);
+
+	public static Output TypeHasNoMethod(string methodname, string type, int numArgs, Interpreter interpreter) =>
+		Error($"TType {type} has no method \"{methodname}\" that takes {numArgs} arguments", interpreter);
+	
+	public static Output TypeHasNoAttribute(string attributename, string type, Interpreter interpreter) =>
+		Error($"Type {type} has no attribute \"{attributename}\"", interpreter);
+
+	public static Output MethodExpectedType(string methodname, string expected, string given, Interpreter interpreter) =>
+		Error($"Method {methodname} expected an argument of type {expected}, given {given}", interpreter);
 
 	public static Output NoOperator(Interpreter interpreter) =>
 		Error($"Expression contains no operators (???)", interpreter);

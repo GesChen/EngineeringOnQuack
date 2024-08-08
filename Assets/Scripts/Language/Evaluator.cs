@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 
@@ -114,19 +115,30 @@ public class Evaluator : MonoBehaviour
 
 	public class Member
 	{
+		public delegate dynamic AttributeFunctionType(dynamic value); // assuming everything is done right, there should be no type issues
+		public delegate dynamic MethodType(dynamic value, List<dynamic> arguments);
 		public string For { get; private set; } // might not be used, just metadata
 		public string Name { get; private set; }
 		public bool IsFunction { get; private set; }
-		public Delegate Function { get; private set; }
+		public AttributeFunctionType AttributeFunction { get; private set; }
+		public MethodType Function { get; private set; }
 		public int ArgumentCount { get; private set; }
 
-		public Member(string @for, string name, bool isFunction, Delegate function)
+		public Member(string @for, string name, MethodType function = null, AttributeFunctionType attributeFunction = null, int numArgs = 1)
 		{
 			For = @for;
 			Name = name;
-			IsFunction = isFunction;
-			Function = function;
-			ArgumentCount = function.Method.GetParameters().Length;
+			ArgumentCount = numArgs;
+			if (attributeFunction == null) 
+			{
+				IsFunction = true;
+				Function = function;
+			}
+			else
+			{
+				IsFunction = false;
+				AttributeFunction = attributeFunction;
+			}
 		}
 		public Output Invoke(List<dynamic> args, Interpreter interpreter)
 		{
@@ -136,6 +148,46 @@ public class Evaluator : MonoBehaviour
 			return new(output);
 		}
 	}
+
+	#region builtin type classes
+
+	public class Number
+	{
+		public static Output GetMember(double value, string membername, Interpreter interpreter)
+		{
+			if (!Members.ContainsKey(membername))
+				return Errors.TypeHasNoAttribute(membername, "number", interpreter);
+
+			Member member = Members[membername];
+			if (member.IsFunction)
+				return new(member.Function);
+			else // you have to actually run the attribute function on the value to get the attribute result
+			{
+				dynamic output = member.AttributeFunction.Invoke(value);
+				return new(output);
+			}
+		}
+
+		static Dictionary<string, Member> Members = new()
+		{
+			{"pow", new("number", "pow", Pow, null, 1) },
+			{"toString", new("number", "toString", null, StringFunction)}
+		};
+
+		static dynamic Pow(dynamic value, List<dynamic> args) // idk what static is doing in this case...
+		{
+			double a = value;
+			double b = args[0];
+			return Math.Pow(a, b);
+		}
+		static dynamic StringFunction(dynamic value) 
+		{
+			double doublevalue = (double)value;
+			return doublevalue.ToString();
+		}
+	}
+
+	#endregion
 
 	bool ExpressionContainsSurfaceLevel(char symbol, string expr)
 	{
@@ -654,32 +706,25 @@ public class Evaluator : MonoBehaviour
 
 		return new(tokens);
 	}
-	
-	public Output HandleMembers(string leftType, dynamic left, string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
+
+	public Output HandleMembers(string type, dynamic left, string memberName, Interpreter interpreter)
 	{
-		switch (leftType)
+		if (type == "ClassInstance")
 		{
-			case "number": 
+			ClassInstance classInstance = (ClassInstance)left;
+
+			return classInstance.OwnInterpreter.memory.Fetch(memberName);
+		}
+
+		switch (type)
+		{
+			case "number": return Number.GetMember(left, memberName, interpreter);
 			case "string":
 			case "boolean":
 			case "list":
-			case "ClassInstance":
 			default:
-				return Errors.NoMethodExistsForType((string)memberName, leftType, interpreter);
+				return Errors.TypeHasNoMethod(memberName, type, interpreter);
 		}
-	}
-	static double Pow(double a, double b) // idk what static is doing in this case...
-	{
-		return 0;
-	}
-	static Dictionary<string, Member> NumberMembers = new()
-	{
-		{"pow", new("number", "pow", true, new Func<double, double, double>(Pow)) }
-	};
-
-	public Output ExecuteNumberMember(string memberName, string argumentType, List<dynamic> arguments, Interpreter interpreter)
-	{
-		return new(0);
 	}
 
 	public Output Evaluate(string expr, Interpreter interpreter)
@@ -719,105 +764,116 @@ public class Evaluator : MonoBehaviour
 				if (token.Text.StartsWith('(')) token.Text = token.Text[1..];
 				if (token.Text.EndsWith(')')) token.Text = token.Text[..^1];
 
-				Output tryEval = Evaluate(token.Text, interpreter); // TODO: this is not gonna end well
-				if (!tryEval.Success) return tryEval;
-				token.Set(tryEval.Value, TokenType.val);
-			}
-
-		// evaluate all functions and list indexing before everything else 
-		bool doublesExist = true; // side by side values
-		while (doublesExist)
-		{
-			// find doubles location
-			int doubleStartIndex = -1;
-			doublesExist = false;
-			for (int i = 0; i < tokens.Count; i++)
-			{
-				if ( // condition for function or list indexing (not method)
-					i < tokens.Count - 1 &&
-					tokens[i].Type == TokenType.val && tokens[i + 1].Type == TokenType.val && // value followed by argument?
-					((i > 0 && tokens[i - 1].Text != ".") || i == 0) // prev token isn't . ?  
-					)
+				// variables are treated differently
+				if (HF.DetermineTypeFromString(token.Text) == "variable")
 				{
-					doublesExist = true;
-					doubleStartIndex = i;
-					break;
-				}
-			}
-
-			if (doublesExist)
-			{
-				int nextIndex = doubleStartIndex + 1;
-				// differentiate between list indexing and arguments
-				if (tokens[nextIndex].Text.StartsWith('[') && tokens[nextIndex].Text.EndsWith(']'))
-				{
-					// chained indexing should hopefully be handled implicitly as the first instance is always processed first
-					// only need to handle two together
-
-					if (tokens[nextIndex].RealValue is not List<dynamic>) // how would this happen?
-						return Errors.UnknownError(interpreter);
-
-					List<dynamic> listToIndex = tokens[doubleStartIndex].RealValue is List<dynamic> ?
-						tokens[doubleStartIndex].RealValue :
-						new List<dynamic>() { tokens[doubleStartIndex].RealValue };
-					List<dynamic> indexList = tokens[nextIndex].RealValue;
-
-					List<dynamic> newList = new();
-					foreach (dynamic index in indexList)
-					{
-						if (index is not double || Math.Round(index) != index)
-							return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
-
-						int intIndex = (int)index;
-						if (intIndex >= listToIndex.Count)
-							return Errors.IndexOutOfRange(intIndex, interpreter);
-
-						newList.Add(listToIndex[intIndex]);
-					}
-
-					tokens.RemoveAt(nextIndex); // remove index list
-					tokens[doubleStartIndex].Set(newList, TokenType.val); // update list
+					Variable variable = new(token.Text, null);
+					token.Set(variable, TokenType.val);
 				}
 				else
 				{
-					Token functionToken = tokens[doubleStartIndex];
-					Token argumentToken = tokens[nextIndex];
-
-					string functionName = functionToken.Text;
-
-					List<dynamic> args = argumentToken.RealValue is List<dynamic> ?
-						argumentToken.RealValue :
-						new List<dynamic>() { argumentToken.RealValue };
-					int numargs = args.Count;
-
-					string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
-					if (functionTokenType == "Function")
-					{
-						Dictionary<string, Function> functions = interpreter.memory.GetFunctions();
-						if (!functions.ContainsKey(functionName))
-							return Errors.NoFunctionExists(name, numargs, interpreter);
-						Function function = functions[functionName];
-
-						Output output = interpreter.RunFunction(function, args);
-						if (!output.Success) return output;
-
-						tokens.RemoveAt(nextIndex); // remove arg token
-						tokens[doubleStartIndex].Set(output.Value, TokenType.val); // set the function vallue accordingly
-					}
-					else
-					{
-						return Errors.NoFunctionExists(functionToken.Text, numargs, interpreter);
-					}
+					Output tryEval = Evaluate(token.Text, interpreter); // TODO: this is not gonna end well
+					if (!tryEval.Success) return tryEval;
+					token.Set(tryEval.Value, TokenType.val);
 				}
 			}
-		}
 
+		
 		// evaluate with pemdas
 		while (tokens.Count > 1)
 		{
+			// evaluate all functions and list indexing before everything else 
+			bool doublesExist = true; // side by side values
+			while (doublesExist)
+			{
+				// find doubles location
+				int doubleStartIndex = -1;
+				doublesExist = false;
+				for (int i = 0; i < tokens.Count; i++)
+				{
+					if ( // condition for function or list indexing (not method)
+						i < tokens.Count - 1 &&
+						tokens[i].Type == TokenType.val && tokens[i + 1].Type == TokenType.val && // value followed by argument?
+						((i > 0 && tokens[i - 1].Text != ".") || i == 0) // prev token isn't . ?  
+						)
+					{
+						doublesExist = true;
+						doubleStartIndex = i;
+						break;
+					}
+				}
+
+				if (doublesExist)
+				{
+					int nextIndex = doubleStartIndex + 1;
+					// differentiate between list indexing and arguments
+					if (tokens[nextIndex].Text.StartsWith('[') && tokens[nextIndex].Text.EndsWith(']')) // indexing
+					{
+						// chained indexing should hopefully be handled implicitly as the first instance is always processed first
+						// only need to handle two together
+
+						if (tokens[nextIndex].RealValue is not List<dynamic>) // how would this happen?
+							return Errors.UnknownError(interpreter);
+
+						List<dynamic> listToIndex = tokens[doubleStartIndex].RealValue is List<dynamic> ?
+							tokens[doubleStartIndex].RealValue :
+							new List<dynamic>() { tokens[doubleStartIndex].RealValue };
+						List<dynamic> indexList = tokens[nextIndex].RealValue;
+
+						List<dynamic> newList = new();
+						foreach (dynamic index in indexList)
+						{
+							if (index is not double || Math.Round(index) != index)
+								return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
+
+							int intIndex = (int)index;
+							if (intIndex >= listToIndex.Count)
+								return Errors.IndexOutOfRange(intIndex, interpreter);
+
+							newList.Add(listToIndex[intIndex]);
+						}
+
+						tokens.RemoveAt(nextIndex); // remove index list
+						tokens[doubleStartIndex].Set(newList, TokenType.val); // update list
+					}
+					else
+					{
+						Token functionToken = tokens[doubleStartIndex];
+						Token argumentToken = tokens[nextIndex];
+
+						string functionName = functionToken.Text;
+
+						List<dynamic> args = argumentToken.RealValue is List<dynamic> ?
+							argumentToken.RealValue :
+							new List<dynamic>() { argumentToken.RealValue };
+						int numargs = args.Count;
+
+						string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
+						if (functionTokenType == "function")
+						{
+							Dictionary<string, Function> functions = interpreter.memory.GetFunctions();
+							if (!functions.ContainsKey(functionName))
+								return Errors.NoFunctionExists(name, numargs, interpreter);
+							Function function = functions[functionName];
+
+							Output output = function.Run(args, interpreter);
+							if (!output.Success) return output;
+
+							tokens.RemoveAt(nextIndex); // remove arg token
+							tokens[doubleStartIndex].Set(output.Value, TokenType.val); // set the function vallue accordingly
+						}
+						else
+						{
+							return Errors.NoFunctionExists(functionToken.Text, numargs, interpreter);
+						}
+					}
+				}
+			}
+
+
 			#region find leftmost highest ranking operator
 			int opIndex = -1;
-			int highestRank = -1;
+			int highestRank = int.MinValue;
 			for (int i = 0; i < tokens.Count; i++)
 			{
 				Token token = tokens[i];
@@ -905,25 +961,15 @@ public class Evaluator : MonoBehaviour
 						tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
 					}
 				}
-				else if (rightType == "string") // optimally want to be able to just check for method/variable
+				else if (rightType == "variable") // optimally want to be able to just check for method/variable
 				{
-					List<dynamic> arguments = null;
-					string argumentType = "none";
-					if (opIndex < tokens.Count - 2 && tokens[opIndex + 2].Type != TokenType.op)
-					{
-						arguments = tokens[opIndex + 2].RealValue;
-						argumentType = "what the fuck";
-					}
-
-					Output attemptHandleMember = HandleMembers(leftType, left, (string)right, argumentType, arguments, interpreter);
+					Variable rightVar = (Variable)right;
+					Output attemptHandleMember = HandleMembers(leftType, left, rightVar.Name, interpreter);
 					if (!attemptHandleMember.Success) return attemptHandleMember;
-
-					if (argumentType != "none")
-						tokens.RemoveAt(opIndex + 2); // remove argument
 
 					tokens.RemoveAt(opIndex + 1); // remove right side
 					tokens.RemoveAt(opIndex); // remove .
-					tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
+					tokens[opIndex - 1].Set(attemptHandleMember.Value, TokenType.val); // replace original value with result
 				}
 				else
 				{

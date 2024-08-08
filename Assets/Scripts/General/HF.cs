@@ -247,7 +247,7 @@ public static class HF {
 		Type t = v.GetType();
 		if (t.Name == "ClassInstance") return "Class Instance";
 		else if (t.Name == "ClassDefinition") return "Class Definition";
-		return t.Name; // function and script type are handled by this last return
+		return t.Name.ToLower(); // function and script type are handled by this last return
 	}
 
 	public static bool VariableNameIsValid(string name)
