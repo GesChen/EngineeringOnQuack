@@ -301,14 +301,16 @@ public class Memory
 	}
 	public Output Fetch(string name, Interpreter interpreter) // retrieve a variable from memory 
 	{
-		if (!Everything.Any(item => item.Value == name))
+		Variable fetch = Everything.FirstOrDefault(item => item.Name == name);
+
+		if (fetch == null)
 			return Errors.UnknownVariable(name, interpreter);
 
-		return new Output(Everything.FirstOrDefault(item => item.Value == name)); // fetch
+		return new Output(fetch.Value);
 	}
 	public bool VariableExists(string name)
 	{
-		return Everything.Any(item => item.Value == name);
+		return Everything.Any(item => item.Name == name);
 	}
 	public void Reset()
 	{
@@ -357,6 +359,10 @@ public class Variable
 	{
 		Name = name;
 		Value = value;
+	}
+	public override string ToString()
+	{
+		return $"Variable \"{Name}\" = {HF.ConvertToString(Value)}";
 	}
 }
 
@@ -634,7 +640,7 @@ public class Interpreter : MonoBehaviour
 	public void DumpState()
 	{
 		LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
-		LogColor("VARIABLES: " + HF.ConvertToString(memory), Color.yellow);
+		LogColor("Memory: " + HF.ConvertToString(memory.Everything), Color.yellow);
 		LogColor("FUNCTIONS: " + HF.ConvertToString(memory.GetFunctions()), Color.yellow);
 		LogColor("CLASSES: " + HF.ConvertToString(memory.GetClasses()), Color.yellow);
 		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
@@ -779,7 +785,7 @@ public class Interpreter : MonoBehaviour
 			int position = 0;
 			foreach (string kw in keywords)
 			{
-				if (line.StartsWith(kw))
+				if (HF.FasterStartsWith(line, kw))
 				{
 					type = 0;
 					keyword = kw;
@@ -791,7 +797,7 @@ public class Interpreter : MonoBehaviour
 			{
 				foreach (string varname in memory.GetAllNames())
 				{
-					if (line.StartsWith(varname))
+					if (HF.FasterStartsWith(line, varname))
 					{
 						type = 1;
 						keyword = varname;
@@ -1281,7 +1287,7 @@ public class Interpreter : MonoBehaviour
 					string ao = "";
 					foreach (string op in assignmentOperators)
 					{
-						if (remaining.StartsWith(op))
+						if (HF.FasterStartsWith(remaining, op))
 						{
 							ao = op;
 							break;

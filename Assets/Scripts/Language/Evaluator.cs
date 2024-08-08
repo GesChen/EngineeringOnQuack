@@ -731,7 +731,7 @@ public class Evaluator : MonoBehaviour
 			case "boolean":
 			case "list":
 			default:
-				return Errors.TypeHasNoMethod(memberName, type, interpreter);
+				return Errors.TypeHasNoAttribute(memberName, type, interpreter);
 		}
 	}
 
@@ -855,6 +855,9 @@ public class Evaluator : MonoBehaviour
 							argumentToken.RealValue :
 							new List<dynamic>() { argumentToken.RealValue };
 						int numargs = args.Count;
+
+						if (numargs > 0 && args[0] is string && args[0] == "")
+							numargs = 0;
 
 						string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
 						if (functionTokenType == "function")

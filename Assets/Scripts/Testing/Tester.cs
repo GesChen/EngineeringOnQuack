@@ -36,10 +36,10 @@ public class Tester : MonoBehaviour
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 
-		newevaltest();
+		scripttest();
 
 		stopwatch.Stop();
-		if(testTime) UnityEngine.Debug.Log($"ms: {stopwatch.ElapsedMilliseconds}");
+		if(testTime) UnityEngine.Debug.Log($"ms: {stopwatch.Elapsed.TotalMilliseconds}");
 	}
 	void scripttest()
 	{
@@ -49,6 +49,7 @@ public class Tester : MonoBehaviour
 
 
 		interpreter.DEBUGMODE = debug;
+		interpreter.memory.Reset();
 		Output output = interpreter.Run(script, evaluator);
 
 		UnityEngine.Debug.Log(output);

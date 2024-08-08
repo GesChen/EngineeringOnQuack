@@ -281,4 +281,15 @@ public static class HF {
 
 		return true;
 	}
+
+	public static bool FasterStartsWith(string target, string prefix)
+	{
+		if (target == null || prefix == null) return false;
+		if (prefix.Length > target.Length) return false;
+
+		for (int i = 0; i < prefix.Length; i++)
+			if (target[i] != prefix[i])
+				return false;
+		return true;
+	}
 }
