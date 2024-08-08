@@ -74,6 +74,7 @@ public class Function
 	public List<string> ArgumentNames { get; private set; }
 	public Script Script { get; private set; }
 	public InternalFunctionType InternalFunction { get; private set; }
+	private dynamic InternalSelf { get; set; } // always appended to the front of internal function calls arguments
 	public Interpreter UsingInterpreter { get; set; } // TODO: idk what to do here, for constructor to reset interpreter, has to be able to be set, or else big workaround.
 	public Evaluator UsingEvaluator { get; private set; }
 
@@ -185,11 +186,15 @@ public class Function
 			return new(newClassInstance);
 		}
 	}
-	
 	private Output RunInternal(List<dynamic> args)
 	{
+		args.Insert(0, InternalSelf); // like self in python, sends itself 
 		Output output = InternalFunction.Invoke(args, UsingInterpreter);
 		return output;
+	}
+	public void SetSelf(dynamic self)
+	{
+		InternalSelf = self;
 	}
 }
 public class ClassDefinition

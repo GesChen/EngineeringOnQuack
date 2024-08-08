@@ -254,7 +254,8 @@ public static class HF {
 
 	public static string DetermineTypeFromVariable(dynamic v)
 	{
-		if (v is string) return "string";
+		if (v is null) return "null";
+		else if (v is string) return "string";
 		else if (v is double) return "number";
 		else if (v is bool) return "bool";
 		else if (v is List<dynamic>) return "list";

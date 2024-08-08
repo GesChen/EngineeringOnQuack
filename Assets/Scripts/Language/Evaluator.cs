@@ -120,13 +120,11 @@ public class Evaluator : MonoBehaviour
 		public bool IsFunction { get; private set; }
 		public AttributeFunctionType AttributeFunction { get; private set; }
 		public Function Function { get; private set; }
-		public int ArgumentCount { get; private set; }
 
-		public Member(string @for, string name, Function function = null, AttributeFunctionType attributeFunction = null, int numArgs = 1)
+		public Member(string @for, string name, Function function = null, AttributeFunctionType attributeFunction = null)
 		{
 			For = @for;
 			Name = name;
-			ArgumentCount = numArgs;
 			if (attributeFunction == null) 
 			{
 				IsFunction = true;
@@ -137,13 +135,6 @@ public class Evaluator : MonoBehaviour
 				IsFunction = false;
 				AttributeFunction = attributeFunction;
 			}
-		}
-		public Output Invoke(List<dynamic> args, Interpreter interpreter)
-		{
-			if (args.Count != ArgumentCount)
-				return Errors.NoFunctionExists(Name, ArgumentCount, interpreter);
-			dynamic output = Function.Run(args);
-			return new(output);
 		}
 	}
 
@@ -161,6 +152,7 @@ public class Evaluator : MonoBehaviour
 			{
 				Function function = member.Function;
 				function.UsingInterpreter = interpreter;
+				function.SetSelf(value);
 				return new(function);
 			}
 			else // attribute
@@ -172,14 +164,14 @@ public class Evaluator : MonoBehaviour
 
 		static readonly Dictionary<string, Member> Members = new()
 		{
-			{"pow", new("number", "pow", new("pow", Pow, null), null, 1) },
+			{"pow", new("number", "pow", new("pow", Pow, null), null) },
 			{"toString", new("number", "toString", null, StringFunction)}
 		};
 
-		static Output Pow(List<dynamic> args, Interpreter interpreter) // idk what static is doing in this case...
+		static Output Pow(List<dynamic> args, Interpreter interpreter)
 		{
 			// argument checks
-			if (args.Count != 2) return Errors.TypeHasNoMethod("Pow", "number", args.Count, interpreter);
+			if (args.Count != 2) return Errors.TypeHasNoMethod("Pow", "number", args.Count - 1, interpreter);
 			string arg0type = HF.DetermineTypeFromVariable(args[0]); if (arg0type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
 			string arg1type = HF.DetermineTypeFromVariable(args[1]); if (arg1type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
 
