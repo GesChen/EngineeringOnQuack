@@ -262,8 +262,7 @@ public class ClassInstance
 
 public class Memory
 {
-	public List<Variable> Everything { get; private set; } // terible name
-	public Dictionary<string, int> Lookup { get; private set; }
+	public Dictionary<string, Variable> Everything { get; private set; } // terible name
 
 	public Memory()
 	{
@@ -272,13 +271,13 @@ public class Memory
 
 	public Dictionary<string, ClassDefinition> GetClasses()
 	{
-		return Everything
+		return Everything.Values
 			.Where(kvp => kvp.Value is ClassDefinition)
 			.ToDictionary(kvp => kvp.Name, kvp => (ClassDefinition)kvp.Value);
 	}
 	public Dictionary<string, Function> GetFunctions()
 	{
-		return Everything
+		return Everything.Values
 			.Where(kvp => kvp.Value is Function)
 			.ToDictionary(kvp => kvp.Name, kvp => (Function)kvp.Value);
 	}
@@ -288,45 +287,37 @@ public class Memory
 		if (Interpreter.keywords.Contains(name))
 			return Errors.CannotSetKeyword(name, interpreter);
 
-		// overwrite old value if exists
-		if (!Lookup.ContainsKey(name))
-		{
-			Everything.Add(new(name, value));
-			Lookup[name] = Everything.Count - 1;
-		}
-		else
-			Everything[Lookup[name]].Value = value; // overwrite
+		Everything[name] = new(name, value); // overwrite
 
 		return new Output(value);
 	}
 	public Output Fetch(string name, Interpreter interpreter) // retrieve a variable from memory 
 	{
-		if (!Lookup.ContainsKey(name))
+		if (!Everything.ContainsKey(name))
 			return Errors.UnknownVariable(name, interpreter);
 
-		return new Output(Everything[Lookup[name]].Value);
+		return new Output(Everything[name].Value);
 	}
 	public bool VariableExists(string name)
 	{
-		return Lookup.ContainsKey(name);
+		return Everything.ContainsKey(name);
 	}
 	public void Reset()
 	{
 		Everything = new();
-		Lookup = new();
 	}
 	public Output Delete(string name, Interpreter interpreter)
 	{
-		if (!Lookup.ContainsKey(name))
+		if (!Everything.ContainsKey(name))
 			return Errors.UnknownVariable(name, interpreter);
 
-		Everything.RemoveAt(Lookup[name]);
+		Everything.Remove(name);
 		return new Output(true); // returns true if successful
 	}
 
 	public List<string> GetAllNames()
 	{
-		return Lookup.Keys.ToList();
+		return Everything.Keys.ToList();
 	}
 
 	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Interpreter interpreter)
