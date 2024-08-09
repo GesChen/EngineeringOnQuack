@@ -199,18 +199,6 @@ public class Evaluator : MonoBehaviour
 		}
 		return count;
 	}
-	string RemoveNonStringSpace(string expr)
-	{
-		string tempstring = "";
-		bool inString = false;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (c != ' ' || inString) // anything but space unless in quotes
-				tempstring += c;
-		}
-		return tempstring;
-	}
 	bool CheckListForm(string s) // returns if a list is properly formed, expects single lists, not chained or expressions
 	{
 		string nospaces = s.Replace(" ", "");
@@ -743,7 +731,7 @@ public class Evaluator : MonoBehaviour
 		if (string.IsNullOrWhiteSpace(expr)) return new(""); // return Errors.EvaluatedNothing(interpreter);
 
 		// get rid of whitespace
-		expr = RemoveNonStringSpace(expr);
+		expr = HF.RemoveNonStringSpace(expr);
 
 		// pre check(s)
 		Output parityCheck = ParityChecks(expr, interpreter);

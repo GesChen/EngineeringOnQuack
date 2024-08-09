@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
@@ -175,6 +176,22 @@ public static class HF {
 		return value.ToString();
 	}
 
+	public static string RemoveNonStringSpace(string expr)
+	{
+		StringBuilder tempString = new();
+		bool inString = false;
+
+		foreach (char c in expr)
+		{
+			if (c == '"')
+				inString = !inString;
+
+			if (c != ' ' || inString) // Add character if it's not a space or if it's inside quotes
+				tempString.Append(c);
+		}
+
+		return tempString.ToString();
+	}
 
 	public static bool ContainsSubstringOutsideQuotes(string text, string substring)
 	{
@@ -232,7 +249,6 @@ public static class HF {
 		}
 		return false;
 	}
-
 
 	public static string DetermineTypeFromString(string s)
 	{

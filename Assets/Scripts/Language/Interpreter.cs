@@ -262,22 +262,22 @@ public class ClassInstance
 
 public class Memory
 {
-	public Dictionary<string, Variable> Everything { get; private set; } // terible name
+	public Variable[] Everything { get; private set; } // terible name
 
 	public Memory()
 	{
-		Everything = new();
+		Everything = new Variable[0];
 	}
 	
 	public Dictionary<string, ClassDefinition> GetClasses()
 	{
-		return Everything.Values
+		return Everything
 			.Where(kvp => kvp.Value is ClassDefinition)
 			.ToDictionary(kvp => kvp.Name, kvp => (ClassDefinition)kvp.Value);
 	}
 	public Dictionary<string, Function> GetFunctions()
 	{
-		return Everything.Values
+		return Everything
 			.Where(kvp => kvp.Value is Function)
 			.ToDictionary(kvp => kvp.Name, kvp => (Function)kvp.Value);
 	}
@@ -287,37 +287,64 @@ public class Memory
 		if (Interpreter.keywords.Contains(name))
 			return Errors.CannotSetKeyword(name, interpreter);
 
-		Everything[name] = new(name, value); // overwrite
+		Variable variable = new(name, value);
 
+		// overwrite old value if exists
+		int oldIndex = Array.FindIndex(Everything, item => item.Name == name);
+		if (oldIndex == -1)
+		{
+			Variable[] temp = Everything;
+			Array.Resize(ref temp, Everything.Length + 1);
+			temp[temp.Length - 1] = variable;
+			Everything = temp;
+		}
+		else
+			Everything[oldIndex] = variable; // overwrite
 		return new Output(value);
 	}
 	public Output Fetch(string name, Interpreter interpreter) // retrieve a variable from memory 
 	{
-		if (!Everything.ContainsKey(name))
+		Variable fetch = Everything.FirstOrDefault(item => item.Name == name);
+
+		if (fetch == null)
 			return Errors.UnknownVariable(name, interpreter);
 
-		return new Output(Everything[name].Value);
+		return new Output(fetch.Value);
 	}
+
 	public bool VariableExists(string name)
 	{
-		return Everything.ContainsKey(name);
+		return Everything.Any(item => item.Name == name);
 	}
 	public void Reset()
 	{
-		Everything = new();
+		Everything = new Variable[0];
 	}
+	
 	public Output Delete(string name, Interpreter interpreter)
 	{
-		if (!Everything.ContainsKey(name))
+		int index = Array.FindIndex(Everything, item => item.Name == name);
+		if (index == -1)
 			return Errors.UnknownVariable(name, interpreter);
 
-		Everything.Remove(name);
+		if (index < 0 || index >= Everything.Length)
+		{
+			throw new ArgumentOutOfRangeException(nameof(index), "Index is out of range.");
+		}
+
+		Variable[] result = new Variable[Everything.Length - 1];
+		for (int i = 0, j = 0; i < Everything.Length; i++)
+		{
+			if (i == index) continue;
+			result[j++] = Everything[i];
+		}
+
 		return new Output(true); // returns true if successful
 	}
 
 	public List<string> GetAllNames()
 	{
-		return Everything.Keys.ToList();
+		return Everything.Select(item => item.Name).ToList();
 	}
 
 	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Interpreter interpreter)
