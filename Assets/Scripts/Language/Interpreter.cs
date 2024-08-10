@@ -755,7 +755,6 @@ public class Interpreter : MonoBehaviour
 
 	public Output Interpret(List<dynamic> lines, int recursiondepth = 0)
 	{
-		Debug.Log(Config.MAX_RECURSION_DEPTH);
 		if (recursiondepth > Config.MAX_RECURSION_DEPTH) return Errors.MaxRecursion(Config.MAX_RECURSION_DEPTH, this);
 		//evaluator.DEBUGMODE = DEBUGMODE;
 

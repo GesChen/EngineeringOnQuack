@@ -274,7 +274,7 @@ public class Evaluator : MonoBehaviour
 				{
 					try
 					{
-						value = double.Parse(variable);
+						double.TryParse(variable, out value); // extremely slow fsr, especially when called 1000 times, might use a custom class
 					}
 					catch
 					{ // not a parseable double string, or a variable
@@ -713,7 +713,7 @@ public class Evaluator : MonoBehaviour
 
 	public Output HandleMembers(string type, dynamic left, string memberName, Interpreter interpreter)
 	{
-		if (type == "ClassInstance")
+		if (type == "Class Instance")
 		{
 			ClassInstance classInstance = (ClassInstance)left;
 
@@ -946,12 +946,24 @@ public class Evaluator : MonoBehaviour
 
 				left = fetch.Value;
 			}
-			if (right is Variable rv)
+			if (operation != ".") // there may be members which the main interpreter does not know
 			{
-				Output fetch = interpreter.memory.Fetch(rv.Name, interpreter);
-				if (!fetch.Success) return fetch;
+				if (right is Variable rv)
+				{
+					Output fetch = interpreter.memory.Fetch(rv.Name, interpreter);
+					if (!fetch.Success) return fetch;
 
-				right = fetch.Value;
+					right = fetch.Value;
+				}
+
+				if (!(left is double || left is string || left is bool || left is List<dynamic>))
+				{
+					left = left.ToString();
+				}
+				if (!(right is double || right is string || right is bool || right is List<dynamic>))
+				{
+					right = right.ToString();
+				}
 			}
 			#endregion
 
