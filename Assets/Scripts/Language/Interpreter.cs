@@ -196,6 +196,10 @@ public class Function
 	{
 		InternalSelf = self;
 	}
+	public void Rename(string newName)
+	{
+		Name = newName;
+	}
 }
 public class ClassDefinition
 {
@@ -721,17 +725,21 @@ public class Interpreter : MonoBehaviour
 		}
 
 		Function actualStringFunction = null;
+		string stringFuncName = $"string_{name}";
 		if (stringFunction is not null)
 		{
-			Output tryStore = memory.StoreFunction("string", stringFunctionArgNames, stringFunction, this);
+			Output tryStore = memory.StoreFunction(stringFuncName, stringFunctionArgNames, stringFunction, this);
 			if (!tryStore.Success) return tryStore;
 			actualStringFunction = tryStore.Value;
+			actualStringFunction.Rename("string");
 		}
 
 		// create the new class, constructor is the new constructor function (returned from storefunction)
 		ClassDefinition newClass = new(name, this, definition, constructorFunction, actualStringFunction);
 
-		return memory.Store(name, newClass, this);
+		memory.Delete(stringFuncName, this);
+
+		return memory.Store($"class_{name}", newClass, this);
 	}
 	#endregion
 
@@ -747,6 +755,7 @@ public class Interpreter : MonoBehaviour
 
 	public Output Interpret(List<dynamic> lines, int recursiondepth = 0)
 	{
+		Debug.Log(Config.MAX_RECURSION_DEPTH);
 		if (recursiondepth > Config.MAX_RECURSION_DEPTH) return Errors.MaxRecursion(Config.MAX_RECURSION_DEPTH, this);
 		//evaluator.DEBUGMODE = DEBUGMODE;
 
@@ -1309,6 +1318,12 @@ public class Interpreter : MonoBehaviour
 						Output tryEval = evaluator.Evaluate(remaining, this);
 						if (!tryEval.Success) return tryEval;
 
+						dynamic rhsValue = 0;
+						if (tryEval.Value is Variable v)
+							rhsValue = v.Value;
+						else
+							rhsValue = tryEval.Value;
+
 						// all other aos modify original, variable has to already exist
 						dynamic variableValue = 0;
 						if (ao != "=")
@@ -1327,10 +1342,12 @@ public class Interpreter : MonoBehaviour
 								break;
 							case "+=":
 								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"+" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("+", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success) return tryEval;
 
 								tryEval = memory.Store(varName, tryEval.Value, this);
@@ -1338,10 +1355,12 @@ public class Interpreter : MonoBehaviour
 								break;
 							case "-=":
 								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"-" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("-", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success) return tryEval;
 
 								tryEval = memory.Store(varName, tryEval.Value, this);
@@ -1349,10 +1368,12 @@ public class Interpreter : MonoBehaviour
 								break;
 							case "*=":
 								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"*" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("*", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success)
 									return tryEval;
 
@@ -1360,11 +1381,12 @@ public class Interpreter : MonoBehaviour
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "/=":
-								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"/" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("/", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success) return tryEval;
 
 								tryEval = memory.Store(varName, tryEval.Value, this);
@@ -1375,7 +1397,7 @@ public class Interpreter : MonoBehaviour
 								tryEval = evaluator.Evaluate(
 									$"({HF.ConvertToString(variableValue)})" +
 									$"^" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+									$"({HF.ConvertToString(rhsValue)})", this);
 								if (!tryEval.Success) return tryEval;
 
 								tryEval = memory.Store(varName, tryEval.Value, this);
@@ -1409,8 +1431,14 @@ public class Interpreter : MonoBehaviour
 				Output fetchFunc = memory.Fetch(keyword, this);
 				if (!fetchFunc.Success) return fetchFunc;
 
-				if (fetchFunc.Value is not Function)
+				if (fetchFunc.Value is ClassDefinition)
+				{
+					ClassDefinition classDef = fetchFunc.Value;
+					fetchFunc = new(classDef.Constructor);
+				}
+				else if (fetchFunc.Value is not Function)
 					return Errors.VariableIsNotFunction(keyword, this);
+				
 				Output tryArgs = ExtractArgs(line, keyword, fetchFunc.Value.ArgumentNames.Count);
 				if (!tryArgs.Success) return tryArgs;
 

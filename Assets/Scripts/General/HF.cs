@@ -142,9 +142,9 @@ public static class HF {
 	{
 		Type t = value.GetType();
 		if (value is null) return "";
-		else if (value is string) return stringQuotes ? $"\"{value}\"" : value;
-		else if (value is int || value is float) return value.ToString("G10");
-		else if (value is bool) return value ? "true" : "false";
+		else if (value is string s) return stringQuotes ? $"\"{s}\"" : s;
+		else if (value is double d) return d.ToString("0." + new string('#', 339)); // d.ToString("G10");
+		else if (value is bool b) return b ? "true" : "false";
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
 		{
 			string builtString = "";
@@ -252,6 +252,8 @@ public static class HF {
 
 	public static string DetermineTypeFromString(string s)
 	{
+		s = s.TrimStart('(').TrimEnd(')'); // remove parentheses
+
 		if (s.Length == 0) return null;
 
 		if (s[0] == '"' && s[^1] == '"') return "string";

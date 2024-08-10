@@ -77,8 +77,10 @@ public class Config : MonoBehaviour
 	public int _maxRecursionDepth = 128;
 	public static int MAX_RECURSION_DEPTH;
 
+	void Awake() { UpdateStatics(); }
+	void OnEnable() { UpdateStatics(); }
 
-	void Awake()
+	void UpdateStatics()
 	{
 		UIConfig.BackgroundColor			= UI._backgroundColor;
 		UIConfig.ButtonHoverColor			= UI._buttonHoverColor;

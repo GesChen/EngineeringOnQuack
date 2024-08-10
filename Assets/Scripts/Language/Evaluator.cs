@@ -98,8 +98,14 @@ public class Evaluator : MonoBehaviour
 		public string Text;
 		public dynamic RealValue;
 		public TokenType Type;
+		public Token(string text, TokenType type, dynamic realValue = null)
+		{
+			Text = text;
+			RealValue = realValue;
+			Type = type;
+		}
 
-		public void Set(dynamic realValue, TokenType type, bool updateText = true)
+		public void Set(dynamic realValue, TokenType type, bool updateText = false)
 		{
 			RealValue = realValue;
 			if (updateText) Text = HF.ConvertToString(realValue);
@@ -324,6 +330,7 @@ public class Evaluator : MonoBehaviour
 
 		return new Output(value);
 	}
+	
 	Output ParityChecks(string expr, Interpreter interpreter)
 	{
 		bool inString = false;
@@ -346,6 +353,7 @@ public class Evaluator : MonoBehaviour
 		if (inString) return Errors.MismatchedQuotes(interpreter);
 		return new(true);
 	}
+	
 	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
 	{
 		switch($"{typeFrom}-{typeTo}")
@@ -369,30 +377,30 @@ public class Evaluator : MonoBehaviour
 			default: return Errors.UnknownType(interpreter);
 		}
 	}
+	
 	public static Output SoftCast(string typeA, ref dynamic A, string typeB, ref dynamic B, Interpreter interpreter)
 	{
-		switch ($"{typeA}-{typeB}")
+		switch (new string(typeA[0], typeB[0]))
 		{
-			case "number-number":	return new(true);
-			case "number-string":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
-			case "number-bool":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "number-list":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
-			case "string-number":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "string-string":	return new(true);
-			case "string-bool":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "string-list":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "bool-number":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
-			case "bool-string":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
-			case "bool-bool":		return new(true);
-			case "bool-list":		A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);
-			case "list-number":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "list-string":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "list-bool":		B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);
-			case "list-list":		return new(true);
+			case "nn":	return new(true);														// number - number
+			case "ns":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// number - string
+			case "nb":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// number - bool
+			case "nl":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// number - list
+			case "sn":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// string - number
+			case "ss":	return new(true);														// string - string
+			case "sb":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// string - bool
+			case "sl":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// string - list
+			case "bn":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// bool - number
+			case "bs":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// bool - string
+			case "bb":	return new(true);														// bool - bool
+			case "bl":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// bool - list
+			case "ln":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// list - number
+			case "ls":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// list - string
+			case "lb":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// list - bool
+			case "ll":	return new(true);														// list - list
 			default: return Errors.UnknownType(interpreter);
 		}
 	}
-
 	Output EvaluateRangeList(string expr, bool isAlone, int baseListLength, Interpreter interpreter) // isalone determines behavior of range from positive to negative
 	{ // expects well formed list (not checking again)
 		string[] parts = expr.Split("..."); // there should only be one ... therefore two sides
@@ -451,10 +459,10 @@ public class Evaluator : MonoBehaviour
 		}
 
 		if (start < end)
-			for (double v = start; v <= end; v += interval)
+			for (double v = start; v < end; v += interval)
 				values.Add(v);
 		else
-			for (double v = start; v >= end; v -= interval)
+			for (double v = start; v > end; v -= interval)
 				values.Add(v);
 
 		return new Output(values);
@@ -621,7 +629,7 @@ public class Evaluator : MonoBehaviour
 				char incChar = c;
 				char decChar = c == '(' ? ')' : ']';
 
-				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
 				accum = "";
 				int depth = 0;
 				bool deeperInString = false;
@@ -645,12 +653,12 @@ public class Evaluator : MonoBehaviour
 					else return Errors.MismatchedBrackets(interpreter);
 				}
 
-				tokens.Add(new() { Text = accum, Type = TokenType.val });
+				tokens.Add(new(accum, TokenType.val));
 				accum = "";
 			}
 			else if (c == '"') // string special eval lest bullshit
 			{
-				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
 				int startI = i;
 				accum = "";
 				while (i < expr.Length)
@@ -664,12 +672,12 @@ public class Evaluator : MonoBehaviour
 				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
 					return Errors.MismatchedQuotes(interpreter);
 
-				tokens.Add(new() { Text = accum, Type = TokenType.val });
+				tokens.Add(new(accum, TokenType.val));
 				accum = "";
 			}
 			else if (operatorFirstChars.Contains(c))
 			{
-				if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+				if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
 				accum = "";
 
 				string operation = c.ToString();
@@ -690,7 +698,7 @@ public class Evaluator : MonoBehaviour
 				if (!operators.Contains(operation))
 					return Errors.OperatorDoesntExist(operation, interpreter);
 
-				tokens.Add(new() { Text = operation, Type = TokenType.op });
+				tokens.Add(new(operation, TokenType.op));
 			}
 			else
 			{
@@ -698,7 +706,7 @@ public class Evaluator : MonoBehaviour
 			}
 			i++;
 		}
-		if (accum != "") tokens.Add(new() { Text = accum, Type = TokenType.val }); // not sure what was before this, but add it to not lose it
+		if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
 
 		return new(tokens);
 	}
@@ -730,19 +738,15 @@ public class Evaluator : MonoBehaviour
 		// can't evaluate nothing
 		if (string.IsNullOrWhiteSpace(expr)) return new(""); // return Errors.EvaluatedNothing(interpreter);
 
-		// get rid of whitespace
-		expr = HF.RemoveNonStringSpace(expr);
+		expr = HF.RemoveNonStringSpace(expr); // get rid of whitespace
 
-		// pre check(s)
-		Output parityCheck = ParityChecks(expr, interpreter);
+		Output parityCheck = ParityChecks(expr, interpreter); // pre check(s)
 		if (!parityCheck.Success) return parityCheck;
-
-		// evaluate straight lists
-		if (HF.ExpressionContainsSurfaceLevel(',', expr))
+		
+		if (HF.ExpressionContainsSurfaceLevel(',', expr)) // evaluate straight lists
 			return EvaluateList('[' + expr + ']', interpreter);
 
-		// tokenize the expression 
-		Output tokenize = Tokenize(expr, interpreter);
+		Output tokenize = Tokenize(expr, interpreter); // tokenize the expression
 		if (!tokenize.Success) return tokenize;
 		List<Token> tokens = tokenize.Value;
 
@@ -763,7 +767,7 @@ public class Evaluator : MonoBehaviour
 				// variables are treated differently
 				if (HF.DetermineTypeFromString(token.Text) == "variable")
 				{
-					Variable variable = new(token.Text, null);
+					Variable variable = new(token.Text, null); // bad idea
 					token.Set(variable, TokenType.val, false);
 				}
 				else
@@ -774,7 +778,11 @@ public class Evaluator : MonoBehaviour
 				}
 			}
 
-		
+		return EvaluateTokens(tokens, interpreter);
+	}
+
+	public Output EvaluateTokens(List<Token> tokens, Interpreter interpreter)
+	{
 		// evaluate with pemdas
 		while (tokens.Count > 1)
 		{
@@ -790,7 +798,7 @@ public class Evaluator : MonoBehaviour
 					if ( // condition for function or list indexing (not method)
 						i < tokens.Count - 1 &&
 						tokens[i].Type == TokenType.val && tokens[i + 1].Type == TokenType.val && // value followed by argument?
-						((i > 0 && tokens[i - 1].Text != ".") || i == 0) // prev token isn't . ?  
+						(i == 0 || tokens[i - 1].Text != ".") // prev token isn't . ?  
 						)
 					{
 						doublesExist = true;
@@ -839,13 +847,20 @@ public class Evaluator : MonoBehaviour
 
 						string functionName = functionToken.Text;
 
-						List<dynamic> args = argumentToken.RealValue is List<dynamic> ?
-							argumentToken.RealValue :
-							new List<dynamic>() { argumentToken.RealValue };
+						List<dynamic> args = argumentToken.RealValue is List<dynamic> ? argumentToken.RealValue :
+							(argumentToken.RealValue == "" ? new List<dynamic>() : new List<dynamic>() { argumentToken.RealValue }); // null check
 						int numargs = args.Count;
 
 						if (numargs > 0 && args[0] is string && args[0] == "")
 							numargs = 0;
+
+						if (functionToken.RealValue is Variable v)
+						{
+							Output fetch = interpreter.memory.Fetch(v.Name, interpreter);
+							if (!fetch.Success) return fetch;
+
+							functionToken.Set(fetch.Value, TokenType.val);
+						}
 
 						string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
 						if (functionTokenType == "function")
@@ -902,24 +917,44 @@ public class Evaluator : MonoBehaviour
 				!specialOperators.Contains(operation)) // special operators get exception
 				return Errors.OperatorInInvalidPosition(operation, interpreter);
 
-			Token leftToken = opIndex > 0 ? tokens[opIndex - 1] : new Token() { RealValue = 0 };
-			Token rightToken = opIndex < (tokens.Count - 1) ? tokens[opIndex + 1] : new Token() { RealValue = 0 };
+			Token leftToken = opIndex > 0d ? tokens[opIndex - 1] : new Token(null, 0d);
+			Token rightToken = opIndex < (tokens.Count - 1) ? tokens[opIndex + 1] : new Token(null, 0d);
 
+			#region special checks
 			bool leftWasntValid = false; // for future reference for . to know how to handle left and right side
 			bool rightWasntValid = false;
 			if (opIndex == 0 || tokens[opIndex - 1].Type == TokenType.op)
 			{ // special case for ., would have been caught normally
-				leftToken = new Token() { RealValue = 0d };
+				leftToken = new Token(null, 0d);
 				leftWasntValid = true;
 			}
 			if (opIndex == tokens.Count - 1 || tokens[opIndex + 1].Type == TokenType.op)
 			{
-				rightToken = new Token() { RealValue = 0d };
+				rightToken = new Token(null, 0d);
 				rightWasntValid = true;
 			}
+			#endregion
 
 			dynamic left = leftToken.RealValue;
 			dynamic right = rightToken.RealValue;
+
+			#region handle variables
+			if (left is Variable lv)
+			{
+				Output fetch = interpreter.memory.Fetch(lv.Name, interpreter);
+				if (!fetch.Success) return fetch;
+
+				left = fetch.Value;
+			}
+			if (right is Variable rv)
+			{
+				Output fetch = interpreter.memory.Fetch(rv.Name, interpreter);
+				if (!fetch.Success) return fetch;
+
+				right = fetch.Value;
+			}
+			#endregion
+
 			string leftType = HF.DetermineTypeFromVariable(left);
 			string rightType = HF.DetermineTypeFromVariable(right);
 			dynamic result = 0;
@@ -946,7 +981,7 @@ public class Evaluator : MonoBehaviour
 				if (leftType == "number" && rightType == "number") // decimal (will have unintended consequences)
 				{
 					double rightDigits = right != 0 ? Math.Floor(Math.Log10(right) + 1) : 1;
-					result = left + right / Math.Pow(10, rightDigits);
+					result = left + right / Math.Pow(10d, rightDigits);
 
 					if (leftWasntValid)
 					{
@@ -958,7 +993,7 @@ public class Evaluator : MonoBehaviour
 						tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
 						tokens.RemoveAt(opIndex); // remove .
 					}
-					else 
+					else
 					{
 						tokens.RemoveAt(opIndex + 1); // remove right side
 						tokens.RemoveAt(opIndex); // remove .
@@ -985,8 +1020,8 @@ public class Evaluator : MonoBehaviour
 
 				normaloperation = false;
 			}
-			
-			if (normaloperation) 
+
+			if (normaloperation)
 			{
 				SoftCast(leftType, ref left, rightType, ref right, interpreter);
 
@@ -994,25 +1029,26 @@ public class Evaluator : MonoBehaviour
 
 				try
 				{
-					switch (opType) {
+					switch (opType)
+					{
 						case "number":
 							switch (operation)
 							{
-								case "+":	result = left + right; break;
-								case "-":	result = left - right; break;
-								case "*":	result = left * right; break;
+								case "+": result = left + right; break;
+								case "-": result = left - right; break;
+								case "*": result = left * right; break;
 								case "/":  // check for division by zero
 									if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
-									else	result = left / right; break;
-								case "^":	result = Math.Pow(left, right); break;
-								case "%":	result = left % right; break; //
-								case "==":	result = left == right; break;
-								case "!=":	result = left != right; break;
-								case "<":	result = left < right; break;
-								case ">":	result = left > right; break;
-								case "<=":	result = left <= right; break;
-								case ">=":	result = left >= right; break;
-								default:	return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
+									else result = left / right; break;
+								case "^": result = Math.Pow(left, right); break;
+								case "%": result = left % right; break; //
+								case "==": result = left == right; break;
+								case "!=": result = left != right; break;
+								case "<": result = left < right; break;
+								case ">": result = left > right; break;
+								case "<=": result = left <= right; break;
+								case ">=": result = left >= right; break;
+								default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
 							}
 							break;
 						case "string":
@@ -1020,16 +1056,14 @@ public class Evaluator : MonoBehaviour
 
 							result = left + right;
 							break;
-					
 						case "list":
 							if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
 							left.AddRange(right);
 							result = left;
 							break;
-					
 						case "bool":
 							if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
-						
+
 							switch (operation)
 							{
 								case "==": result = left == right; break;
@@ -1050,13 +1084,14 @@ public class Evaluator : MonoBehaviour
 					return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
 				}
 				tokens.RemoveAt(opIndex + 1); // remove right side
-				tokens[opIndex] = new() { RealValue = result }; // replace operator with result
+				tokens[opIndex].Set(result, TokenType.val); // replace operator with result
 				tokens.RemoveAt(opIndex - 1); // remove left
 			}
 
 		}
 
 		return new(tokens[0].RealValue);
+
 	}
 
 	/*public Output _Evaluate(string expr, Interpreter interpreter)
