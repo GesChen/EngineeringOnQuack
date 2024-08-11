@@ -1624,12 +1624,13 @@ MonoBehaviour:
   menuTitle: title
   canvas: {fileID: 916857749}
   components:
-  - Type: 0
+  - Type: 1
     Text: great
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
+    icon: {fileID: 21300000, guid: 78eef94bc9af5c145bc48763559ae17d, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1643,6 +1644,7 @@ MonoBehaviour:
     OnClick:
       m_PersistentCalls:
         m_Calls: []
+    icon: {fileID: 21300000, guid: c373459b158347f4397a910420385b7e, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1655,6 +1657,7 @@ MonoBehaviour:
   visible: 0
   width: 0
   height: 0
+  dropdownOverride: 0
 --- !u!4 &825463387
 Transform:
   m_ObjectHideFlags: 0
@@ -1704,6 +1707,7 @@ MonoBehaviour:
     OnClick:
       m_PersistentCalls:
         m_Calls: []
+    icon: {fileID: 0}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1717,6 +1721,7 @@ MonoBehaviour:
     OnClick:
       m_PersistentCalls:
         m_Calls: []
+    icon: {fileID: 0}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1729,6 +1734,7 @@ MonoBehaviour:
   visible: 0
   width: 0
   height: 0
+  dropdownOverride: 0
 --- !u!114 &825463390
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1750,6 +1756,7 @@ MonoBehaviour:
     OnClick:
       m_PersistentCalls:
         m_Calls: []
+    icon: {fileID: 0}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1762,6 +1769,7 @@ MonoBehaviour:
   visible: 0
   width: 0
   height: 0
+  dropdownOverride: 0
 --- !u!1 &825630083
 GameObject:
   m_ObjectHideFlags: 0
@@ -2869,7 +2877,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1437857900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2913,6 +2921,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debug: 1
+  testTime: 0
   interpreter: {fileID: 1437857901}
   evaluator: {fileID: 1437857900}
   scriptFilePath: Assets\Scripts\Testing
@@ -3344,14 +3353,15 @@ MonoBehaviour:
     _mouseValidityMargin: 50
     _maxRightClickTime: 0.1
     _maxMouseMovementToCount: 10
-    _backgroundColor: {r: 1, g: 0, b: 0, a: 1}
-    _buttonHoverColor: {r: 1, g: 1, b: 0, a: 1}
-    _buttonPressedColor: {r: 0, g: 0, b: 1, a: 1}
+    _backgroundColor: {r: 0.20754719, g: 0.20754719, b: 0.20754719, a: 1}
+    _buttonHoverColor: {r: 0.3962264, g: 0.3962264, b: 0.3962264, a: 1}
+    _buttonPressedColor: {r: 0.3490566, g: 0.3490566, b: 0.3490566, a: 1}
     _textColor: {r: 1, g: 1, b: 1, a: 1}
     _itemHeight: 30
     _verticalSpacing: 2
     _sidePadding: 2
-    _textPadding: 3
+    _insidePadding: 3
+    _iconSize: 25
     _fontSize: 22
     _fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     _displayTopLeftCornerOffset: {x: 10, y: 10}
@@ -3367,6 +3377,8 @@ MonoBehaviour:
       type: 3}
     _dividerPrefab: {fileID: 0}
     _dropDownArrow: {fileID: 0}
+    _iconPrefab: {fileID: 5288230183721291851, guid: 23697e87cf514cf4e828355579399b7a,
+      type: 3}
   _fpsLimit: 60
   _maxRecursionDepth: 128
 --- !u!1 &1577646644

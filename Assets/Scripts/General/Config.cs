@@ -25,7 +25,8 @@ public class Config : MonoBehaviour
 		public int _itemHeight;
 		public int _verticalSpacing;
 		public int _sidePadding;
-		public int _textPadding;
+		public int _insidePadding;
+		public int _iconSize;
 		[Space]
 		public int _fontSize;
 		public TMP_FontAsset _fontAsset;
@@ -42,6 +43,7 @@ public class Config : MonoBehaviour
 		public GameObject _textPrefab;
 		public GameObject _dividerPrefab;
 		public GameObject _dropDownArrow;
+		public GameObject _iconPrefab;
 
 		#region statics
 		public static Color			BackgroundColor;
@@ -51,8 +53,9 @@ public class Config : MonoBehaviour
 		public static int			ItemHeight;
 		public static int			VerticalSpacing;
 		public static int			SidePadding;
-		public static int			TextPadding;
+		public static int			InsidePadding;
 		public static int			FontSize;
+		public static int			IconSize;
 		public static TMP_FontAsset FontAsset;
 		public static Vector2		DisplayTopLeftCornerOffset;
 		public static float			MinDistFromSides;
@@ -64,6 +67,7 @@ public class Config : MonoBehaviour
 		public static GameObject	TextPrefab;
 		public static GameObject	DividerPrefab;
 		public static GameObject	DropDownArrow;
+		public static GameObject	IconPrefab;
 		public static int			MouseValidityMargin;
 		public static float			MaxRightClickTime;
 		public static float			MaxMouseMovementToCount;
@@ -89,8 +93,9 @@ public class Config : MonoBehaviour
 		UIConfig.ItemHeight					= UI._itemHeight;
 		UIConfig.VerticalSpacing			= UI._verticalSpacing;
 		UIConfig.SidePadding				= UI._sidePadding;
-		UIConfig.TextPadding				= UI._textPadding;
+		UIConfig.InsidePadding				= UI._insidePadding;
 		UIConfig.FontSize					= UI._fontSize;
+		UIConfig.IconSize					= UI._iconSize;
 		UIConfig.FontAsset					= UI._fontAsset;
 		UIConfig.DisplayTopLeftCornerOffset	= UI._displayTopLeftCornerOffset;
 		UIConfig.MinDistFromSides			= UI._minDistFromSides;
@@ -102,6 +107,7 @@ public class Config : MonoBehaviour
 		UIConfig.TextPrefab					= UI._textPrefab;
 		UIConfig.DividerPrefab				= UI._dividerPrefab;
 		UIConfig.DropDownArrow				= UI._dropDownArrow;
+		UIConfig.IconPrefab					= UI._iconPrefab;
 		UIConfig.MouseValidityMargin		= UI._mouseValidityMargin;
 		UIConfig.MaxMouseMovementToCount	= UI._maxMouseMovementToCount;
 		UIConfig.MaxRightClickTime			= UI._maxRightClickTime;

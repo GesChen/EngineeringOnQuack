@@ -20,6 +20,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	public string Text;
 	public ProceduralUI DropdownMenu;
 	public Button.ButtonClickedEvent OnClick = new();
+	public Sprite icon;
 
 	[HideInNormalInspector] public ProceduralUI main;
 	[HideInNormalInspector] public Transform transform;
@@ -50,6 +51,9 @@ public class ProceduralUIComponent // general container for components, doesnt a
 			if (Type == UIComponentType.dropdown)
 				DisplayDropdown(main);
 		}
+
+		if (Type == UIComponentType.dropdown)
+			DropdownMenu.dropdownOverride = mouseOver;
 	}
 
 	public void DisplayDropdown(ProceduralUI main)

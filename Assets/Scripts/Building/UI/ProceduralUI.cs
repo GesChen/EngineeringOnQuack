@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class ProceduralUI : MonoBehaviour
@@ -17,10 +18,11 @@ public class ProceduralUI : MonoBehaviour
 	[HideInNormalInspector] public bool visible;
 	[HideInNormalInspector] public float width;
 	[HideInNormalInspector] public float height;
+	[HideInNormalInspector] public bool dropdownOverride;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
-
+	
 	void Start()
 	{
 		// generate everything and then hide it
@@ -30,7 +32,7 @@ public class ProceduralUI : MonoBehaviour
 
 	void Update()
 	{
-		if (Controls.mousePos != Controls.lastMousePos)
+		if (Controls.mousePos != Controls.lastMousePos || Mouse.current.rightButton.isPressed)
 		{
 			MouseUpdate();
 
@@ -51,7 +53,7 @@ public class ProceduralUI : MonoBehaviour
 			bool anyDropDownsInRange = false;
 			CheckComponentsForInRange(this, ref anyDropDownsInRange);
 
-			if (!anyDropDownsInRange)
+			if (!anyDropDownsInRange && !dropdownOverride)
 			{
 				Hide();
 			}
@@ -65,7 +67,7 @@ public class ProceduralUI : MonoBehaviour
 
 		foreach (ProceduralUIComponent component in procedural.components)
 		{
-			if (component.Type == UIComponentType.dropdown)
+			if (component.Type == UIComponentType.dropdown && component.DropdownMenu.visible)
 			{
 				if (component.DropdownMenu.mouseInRange)
 				{
@@ -134,18 +136,18 @@ public class ProceduralUI : MonoBehaviour
 				component.Type == UIComponentType.button || 
 				component.Type == UIComponentType.dropdown)
 			{
-				float textwidth = TextWidthApproximation(component.Text, Config.UIConfig.FontAsset, Config.UIConfig.FontSize) + 2 * Config.UIConfig.TextPadding;
+				float textwidth = TextWidthApproximation(component.Text, Config.UIConfig.FontAsset, Config.UIConfig.FontSize) + 20;
 				longestTextWidth = Mathf.Max(longestTextWidth, textwidth);
 			}
 		}
 
-		width = longestTextWidth + Config.UIConfig.SidePadding * 2;
+		width = longestTextWidth + Config.UIConfig.SidePadding * 4 + Config.UIConfig.IconSize;
 		height = Config.UIConfig.ItemHeight * components.Count + Config.UIConfig.VerticalSpacing * (components.Count - 1) + Config.UIConfig.SidePadding * 2;
 
 		panelTransform.sizeDelta = new(width, height);
 
 		grid = panel.GetComponent<GridLayoutGroup>();
-		grid.cellSize = new(longestTextWidth, Config.UIConfig.ItemHeight);
+		grid.cellSize = new(longestTextWidth + Config.UIConfig.IconSize, Config.UIConfig.ItemHeight);
 		grid.spacing = new(0, Config.UIConfig.VerticalSpacing);
 	}
 
@@ -234,8 +236,20 @@ public class ProceduralUI : MonoBehaviour
 		}
 		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button || component.Type == UIComponentType.dropdown)
 		{ // add text padding
-			text.rectTransform.offsetMin = new(Config.UIConfig.TextPadding, Config.UIConfig.TextPadding);
-			text.rectTransform.offsetMax = new(-Config.UIConfig.TextPadding, -Config.UIConfig.TextPadding);
+			float leftOffset = Config.UIConfig.InsidePadding * 3 + Config.UIConfig.IconSize;
+			text.rectTransform.offsetMin = new(leftOffset, Config.UIConfig.InsidePadding);
+			text.rectTransform.offsetMax = new(-Config.UIConfig.InsidePadding, -Config.UIConfig.InsidePadding);
+		}
+
+		if (component.icon != null)
+		{
+			GameObject iconObj = Instantiate(Config.UIConfig.IconPrefab, newObj.transform);
+			Image iconComponent = iconObj.GetComponent<Image>();
+			iconComponent.sprite = component.icon;
+
+			RectTransform iconRect = iconObj.GetComponent<RectTransform>();
+			iconRect.localPosition = new(Config.UIConfig.InsidePadding + Config.UIConfig.IconSize / 2, Config.UIConfig.ItemHeight / 2);
+			iconRect.sizeDelta = Config.UIConfig.IconSize * Vector2.one;
 		}
 
 		RectTransform rectTransform = newObj.GetComponent<RectTransform>();
