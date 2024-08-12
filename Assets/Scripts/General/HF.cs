@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
@@ -32,6 +33,10 @@ public static class HF {
 		=> new (Mathf.Abs(v.x), Mathf.Abs(v.y));
 	#endregion
 
+	public static void LogColor(string str, Color color)
+	{
+		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
+	}
 
 	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
 	{
@@ -137,24 +142,23 @@ public static class HF {
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static string ConvertToString(dynamic value)
-		=> ConvertToString(value, true);
-	public static string ConvertToString(dynamic value, bool stringQuotes)
+	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true)
 	{
 		Type t = value.GetType();
 		if (value is null) return "";
-		else if (value is string) return stringQuotes ? $"\"{value}\"" : value;
-		else if (value is int || value is float) return value.ToString("G10");
-		else if (value is bool) return value ? "true" : "false";
+		else if (value is string s) return stringQuotes ? $"\"{s}\"" : s;
+		else if (value is double d) return d.ToString("0." + new string('#', 339)); // d.ToString("G10");
+		else if (value is bool b) return b ? "true" : "false";
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
 		{
-			string builtString = "[";
+			string builtString = "";
+			if (listBrackets) builtString = "[";
 			for (int i = 0; i < value.Count; i++)
 			{
 				builtString += ConvertToString(value[i], stringQuotes);
 				if (i < value.Count - 1) builtString += ", ";
 			}
-			builtString += "]";
+			if (listBrackets) builtString += "]";
 			return builtString;
 		}
 		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
@@ -176,6 +180,22 @@ public static class HF {
 		return value.ToString();
 	}
 
+	public static string RemoveNonStringSpace(string expr)
+	{
+		StringBuilder tempString = new();
+		bool inString = false;
+
+		foreach (char c in expr)
+		{
+			if (c == '"')
+				inString = !inString;
+
+			if (c != ' ' || inString) // Add character if it's not a space or if it's inside quotes
+				tempString.Append(c);
+		}
+
+		return tempString.ToString();
+	}
 
 	public static bool ContainsSubstringOutsideQuotes(string text, string substring)
 	{
@@ -219,14 +239,31 @@ public static class HF {
 		return false;
 	}
 
+	public static bool ExpressionContainsSurfaceLevel(char symbol, string expr)
+	{
+		bool inString = false;
+		int depth = 0;
+		foreach (char c in expr)
+		{
+			if (c == '"') inString = !inString;
+			if (!inString && (c == '(' || c == '[')) depth++;
+			if (!inString && (c == ')' || c == ']')) depth--;
+
+			if (c == symbol && !inString && depth == 0) return true;
+		}
+		return false;
+	}
+
 	public static string DetermineTypeFromString(string s)
 	{
+		s = s.TrimStart('(').TrimEnd(')'); // remove parentheses
+
 		if (s.Length == 0) return null;
 
 		if (s[0] == '"' && s[^1] == '"') return "string";
 		else if (s[0] == '"' && s[^1] != '"' || s[0] != '"' && s[^1] == '"') return "malformed string"; // start is " but not end, or end is " but not start
 
-		if (s[0] == '[' && s[^1] == ']') return "list";
+		if ((s[0] == '[' && s[^1] == ']') || ExpressionContainsSurfaceLevel(',', s)) return "list";
 		else if (s[0] == '[' && s[^1] != ']' || s[0] != '[' && s[^1] == ']') return "malformed list"; // start is " but not end, or end is " but not start
 
 		bool isnumber = true;
@@ -239,7 +276,8 @@ public static class HF {
 
 	public static string DetermineTypeFromVariable(dynamic v)
 	{
-		if (v is string) return "string";
+		if (v is null || (v is string && v == "")) return "null";
+		else if (v is string) return "string";
 		else if (v is double) return "number";
 		else if (v is bool) return "bool";
 		else if (v is List<dynamic>) return "list";
@@ -247,7 +285,7 @@ public static class HF {
 		Type t = v.GetType();
 		if (t.Name == "ClassInstance") return "Class Instance";
 		else if (t.Name == "ClassDefinition") return "Class Definition";
-		return t.Name; // function and script type are handled by this last return
+		return t.Name.ToLower(); // function and script type are handled by this last return
 	}
 
 	public static bool VariableNameIsValid(string name)
@@ -263,6 +301,17 @@ public static class HF {
 		foreach (char c in name)
 			if (!(char.IsLetter(c) || char.IsDigit(c) || c == '_')) return false;
 
+		return true;
+	}
+
+	public static bool FasterStartsWith(string target, string prefix)
+	{
+		if (target == null || prefix == null) return false;
+		if (prefix.Length > target.Length) return false;
+
+		for (int i = 0; i < prefix.Length; i++)
+			if (target[i] != prefix[i])
+				return false;
 		return true;
 	}
 }

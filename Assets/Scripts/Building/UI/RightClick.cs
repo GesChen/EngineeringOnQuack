@@ -11,17 +11,16 @@ public class RightClick : MonoBehaviour
 	Vector2 posAtDown;
 	void Update()
 	{
-		if (Mouse.current.rightButton.wasPressedThisFrame) 
+		Vector2 mousePos = Mouse.current.position.value;
+		if (Mouse.current.rightButton.wasPressedThisFrame)
 		{
-			timeAtDown = Time.time;
-			posAtDown = Mouse.current.position.value;
-		}
-		if (Mouse.current.rightButton.wasReleasedThisFrame && 
-			Time.time - timeAtDown < Config.UIConfig.MaxRightClickTime &&
-			(posAtDown - Mouse.current.position.value).magnitude < Config.UIConfig.MaxMouseMovementToCount)
-		{
-			Vector2 mousePos = Controls.inputMaster.UI.Point.ReadValue<Vector2>();
+			posAtDown = mousePos;
 			testpanel.Display(mousePos);
+		}
+		if (((posAtDown - mousePos).magnitude > Config.UI.MaxMouseMovementToCount && Mouse.current.rightButton.isPressed) ||
+			Mouse.current.leftButton.isPressed || Mouse.current.middleButton.isPressed)
+		{
+			testpanel.Hide();
 		}
 	}
 }

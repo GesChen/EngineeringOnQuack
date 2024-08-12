@@ -31,7 +31,7 @@ public class Output
 
 	public Output(Error error)
 	{
-		this.Error = error;
+		Error = error;
 		Value = "Error";
 		Success = false;
 	}
@@ -63,27 +63,142 @@ public class Script
 }
 public class Function
 {
-	public string Name { get; }
-	public List<string> ArgumentNames { get; }
-	public Script Script { get; }
+	public enum FunctionType
+	{
+		scriptFunc,
+		internalFunc
+	}
+	public delegate Output InternalFunctionType(List<dynamic> arguments, Interpreter interpreter);
+	public string Name { get; private set; } // todo: fix getter and setters properly
+	public FunctionType Type { get; private set; }
+	public List<string> ArgumentNames { get; private set; }
+	public Script Script { get; private set; }
+	public InternalFunctionType InternalFunction { get; private set; }
+	private dynamic InternalSelf { get; set; } // always appended to the front of internal function calls arguments
 	public Interpreter UsingInterpreter { get; set; } // TODO: idk what to do here, for constructor to reset interpreter, has to be able to be set, or else big workaround.
-	public Evaluator UsingEvaluator { get; }
-	public Function(
-		string name,
-		Script script,
-		List<string> argnames,
-		Interpreter interpreter,
-		Evaluator evaluator)
+	public Evaluator UsingEvaluator { get; private set; }
+
+	public Function(string name, Script script, List<string> argnames, Interpreter interpreter, Evaluator evaluator)
 	{
 		Name = name;
+		Type = FunctionType.scriptFunc;
 		ArgumentNames = argnames;
 		Script = script;
 		UsingInterpreter = interpreter;
 		UsingEvaluator = evaluator;
 	}
+
+	// internal functions should be tested to be bug free, doesnt need eval since uses native, interpreter for error reporting
+	public Function(string name, InternalFunctionType internalFunction, Interpreter interpreter)
+	{
+		Name = name;
+		Type = FunctionType.internalFunc;
+		InternalFunction = internalFunction;
+		UsingInterpreter = interpreter;
+	}
+
 	public override string ToString()
 	{
-		return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
+		if (Type == FunctionType.scriptFunc)
+			return $"{Name}: takes arguments {HF.ConvertToString(ArgumentNames)}";
+		else
+			return $"Internal function \"{Name}\"";
+	}
+
+	public Output Run(List<dynamic> args, Interpreter interpreter = null, int depth = 0)
+	{
+		if (Type == FunctionType.scriptFunc)
+			return RunScript(args, interpreter, depth);
+		else
+			return RunInternal(args);
+	}
+	private Output RunScript(List<dynamic> args, Interpreter interpreter, int depth = 0)
+	{
+		/*debug*/
+		if (interpreter.DEBUGMODE) HF.LogColor($"Running function {this}", Color.red);
+		if (args.Count != ArgumentNames.Count)
+			return Errors.NoFunctionExists(Name, args.Count, UsingInterpreter);
+
+		Script before = interpreter.script;
+		interpreter.script = Script;
+
+		// determine if this function is a constructor for a class or not, they are treated differently
+		bool isConstructor = false;
+		ClassDefinition constructorClass = null;
+		foreach (ClassDefinition c in interpreter.memory.GetClasses().Values)
+		{
+			if (c.FunctionIsConstructor(this))
+			{
+				isConstructor = true;
+				constructorClass = c;
+				break;
+			}
+		}
+
+		if (!isConstructor) // normal case
+		{
+			Memory variablesStateBefore = UsingInterpreter.memory; // keep copy before running
+			for (int i = 0; i < args.Count; i++)
+			{
+				Output tryStore =UsingInterpreter.memory.Store(ArgumentNames[i], args[i], interpreter);
+				if (!tryStore.Success) { interpreter.script = before; return tryStore; }
+			}
+
+			Output result =	UsingInterpreter.Interpret(interpreter.ConvertToNested(Script), depth + 1); // run it;
+
+			// handle variables afterwards
+			Memory temp = new();
+			foreach (string varname in UsingInterpreter.memory.GetAllNames())
+			{
+				if (variablesStateBefore.VariableExists(varname)) // any new variables will not be contained within 
+				{
+					if (ArgumentNames.Contains(varname))
+						temp.Store(varname, variablesStateBefore.Fetch(varname, interpreter).Value, interpreter); // recall starting
+					else
+						temp.Store(varname, UsingInterpreter.memory.Fetch(varname, interpreter), interpreter); // or keep the changes
+				}
+			}
+			UsingInterpreter.memory.Reset(); // restore 
+			UsingInterpreter.memory = temp;
+
+			interpreter.script = before;
+			return result;
+		}
+		else // constructor case
+		{
+			Interpreter newInterpreter = interpreter.gameObject.AddComponent<Interpreter>();
+			newInterpreter.DEBUGMODE = interpreter.DEBUGMODE;
+			newInterpreter.NAME = "CLASSINSTANCE";
+
+			ClassInstance newClassInstance = new(constructorClass, newInterpreter, interpreter.evaluator);
+
+
+			// let the new instance run it's definition
+			Output result = newClassInstance.Initialize();
+			if (!result.Success) { interpreter.script = before; return result; }
+
+			// construct it with the constructor function, should be defined in the definition, if no constructor, then do nothing
+			result = newClassInstance.Construct(args);
+			if (!result.Success) { interpreter.script = before; return result; }
+
+			interpreter.script = before;
+
+			return new(newClassInstance);
+		}
+	}
+	private Output RunInternal(List<dynamic> args)
+	{
+		args.Insert(0, InternalSelf); // like self in python, sends itself 
+		Output output = InternalFunction.Invoke(args, UsingInterpreter);
+		return output;
+	}
+	public void SetSelf(dynamic self)
+	{
+		InternalSelf = self;
+	}
+	public void Rename(string newName)
+	{
+		Name = newName;
 	}
 }
 public class ClassDefinition
@@ -134,7 +249,7 @@ public class ClassInstance
 	public Output Construct(List<dynamic> args)
 	{
 		ClassDefinition.Constructor.UsingInterpreter = OwnInterpreter;
-		return OwnInterpreter.RunFunction(ClassDefinition.Constructor, args);
+		return ClassDefinition.Constructor.Run(args, OwnInterpreter);
 	}
 	public override string ToString()
 	{
@@ -146,6 +261,101 @@ public class ClassInstance
 			return HF.ConvertToString(eval.Value, false);
 		}
 		return $"Class instance of {ClassDefinition.Name}";
+	}
+}
+
+public class Memory
+{
+	public Dictionary<string, Variable> Everything { get; private set; } // terible name
+
+	public Memory()
+	{
+		Everything = new();
+	}
+
+	public Dictionary<string, ClassDefinition> GetClasses()
+	{
+		return Everything.Values
+			.Where(kvp => kvp.Value is ClassDefinition)
+			.ToDictionary(kvp => kvp.Name, kvp => (ClassDefinition)kvp.Value);
+	}
+	public Dictionary<string, Function> GetFunctions()
+	{
+		return Everything.Values
+			.Where(kvp => kvp.Value is Function)
+			.ToDictionary(kvp => kvp.Name, kvp => (Function)kvp.Value);
+	}
+
+	public Output Store(string name, dynamic value, Interpreter interpreter)
+	{
+		if (Interpreter.keywords.Contains(name))
+			return Errors.CannotSetKeyword(name, interpreter);
+
+		Everything[name] = new(name, value); // overwrite
+
+		return new Output(value);
+	}
+	public Output Fetch(string name, Interpreter interpreter) // retrieve a variable from memory 
+	{
+		if (!Everything.ContainsKey(name))
+			return Errors.UnknownVariable(name, interpreter);
+
+		return new Output(Everything[name].Value);
+	}
+	public bool VariableExists(string name)
+	{
+		return Everything.ContainsKey(name);
+	}
+	public void Reset()
+	{
+		Everything = new();
+	}
+	public Output Delete(string name, Interpreter interpreter)
+	{
+		if (!Everything.ContainsKey(name))
+			return Errors.UnknownVariable(name, interpreter);
+
+		Everything.Remove(name);
+		return new Output(true); // returns true if successful
+	}
+
+	public List<string> GetAllNames()
+	{
+		return Everything.Keys.ToList();
+	}
+
+	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script, Interpreter interpreter)
+	{
+		return StoreFunction(name, argNames, new Script(interpreter.ConvertToList(script, 1, 0)), interpreter);
+	}
+	public Output StoreFunction(string name, List<string> argNames, Script script, Interpreter interpreter)
+	{
+		Dictionary<string, Function> functions = GetFunctions();
+
+		// make sure function with this name and argnames doesnt already exist 
+		foreach (Function f in functions.Values)
+			if (f.Name == name && f.ArgumentNames.Count == argNames.Count)
+				return Errors.FunctionAlreadyExists(name, argNames.Count, interpreter);
+
+		/*debug*/
+		if (interpreter.DEBUGMODE) HF.LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
+
+		return Store(name, new Function(name, script, argNames, interpreter, interpreter.evaluator), interpreter);
+	}
+}
+public class Variable
+{
+	public string Name;
+	public dynamic Value;
+
+	public Variable(string name, dynamic value)
+	{
+		Name = name;
+		Value = value;
+	}
+	public override string ToString()
+	{
+		return $"Variable \"{Name}\" = {HF.ConvertToString(Value)}";
 	}
 }
 
@@ -170,9 +380,9 @@ public class Interpreter : MonoBehaviour
 	public Evaluator evaluator;
 	public int currentLine;
 	public Script script;
-	public Dictionary<string, dynamic> memory = new();
-	static readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
-	static readonly string[] keywords = new string[]
+	public Memory memory = new();
+	public static readonly string[] assignmentOperators = new string[] { "=", "+=", "-=", "*=", "/=", "^=", "++", "--" };
+	public static readonly string[] keywords = new string[]
 	{
 		"if",	// done -- !todo - remake the code, have else handling with the if, no weird logic needed
 		"else",	// done
@@ -189,10 +399,6 @@ public class Interpreter : MonoBehaviour
 	};
 
 	#region internal methods
-	public void LogColor(string str, Color color)
-	{
-		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
-	}
 	public Output Run(Script targetScript)
 	{
 		if (evaluator == null) return Errors.InterpreterDoesntHaveEval(this);
@@ -210,83 +416,6 @@ public class Interpreter : MonoBehaviour
 		return result;
 	}
 
-	public Dictionary<string, ClassDefinition> GetClasses()
-	{
-		return memory
-			.Where(kvp => kvp.Value is ClassDefinition)
-			.ToDictionary(kvp => kvp.Key, kvp => (ClassDefinition)kvp.Value);
-	}
-	public Dictionary<string, Function> GetFunctions()
-	{
-		return memory
-			.Where(kvp => kvp.Value is Function)
-			.ToDictionary(kvp => kvp.Key, kvp => (Function)kvp.Value);
-	}
-
-	public Output Store(string name, dynamic value)
-	{
-		if (keywords.Contains(name))
-			return Errors.CannotSetKeyword(name, this);
-
-		memory[name] = value;
-		return new Output(value);
-	}
-	public Output Fetch(string name)
-	{
-		// handle class variables
-		int periodIndex = name.IndexOf('.');
-		if (periodIndex != -1)
-		{
-			if (periodIndex == name.Length - 1)
-				return Errors.EvaluatedNothing(this);
-
-			string instancename = name[..periodIndex];
-			if (!memory.ContainsKey(instancename))
-				return Errors.UnknownVariable(name, this);
-
-			if (memory[instancename] is not ClassInstance)
-				return Errors.TypeHasNoAttributes(HF.DetermineTypeFromVariable(memory[instancename]), this);
-
-			ClassInstance instance = memory[instancename];
-
-			return evaluator.Evaluate(name[(periodIndex + 1)..], instance.OwnInterpreter);
-		}
-
-		if (!memory.ContainsKey(name))
-			return Errors.UnknownVariable(name, this);
-		return new Output(memory[name]);
-	}
-	public void ResetMemory()
-	{
-		memory = new();
-	}
-	public Output Delete(string name)
-	{
-		if (!memory.ContainsKey(name))
-			return Errors.UnknownVariable(name, this);
-
-		memory.Remove(name);
-		return new Output(true); // returns true if successful
-	}
-
-	public Output StoreFunction(string name, List<string> argNames, List<dynamic> script)
-	{
-		return StoreFunction(name, argNames, new Script(ConvertToList(script, 1, 0)));
-	}
-	public Output StoreFunction(string name, List<string> argNames, Script script)
-	{
-		Dictionary<string, Function> functions = GetFunctions();
-
-		// make sure function with this name and argnames doesnt already exist 
-		foreach (Function f in functions.Values)
-			if (f.Name == name && f.ArgumentNames.Count == argNames.Count)
-				return Errors.FunctionAlreadyExists(name, argNames.Count, this);
-
-		/*debug*/
-		if (DEBUGMODE) LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
-
-		return Store(name, new Function(name, script, argNames, this, evaluator));
-	}
 	bool FunctionIsEmpty(List<dynamic> function)
 	{
 		// checks if the function is empty or only contains empty strings 
@@ -300,81 +429,7 @@ public class Interpreter : MonoBehaviour
 
 		return true;
 	}
-	public Output RunFunction(Function F, List<dynamic> args, int depth = 0)
-	{
-		/*debug*/
-		if (DEBUGMODE) LogColor($"Running function {F}", Color.red);
-		if (args.Count != F.ArgumentNames.Count)
-			return Errors.NoFunctionExists(F.Name, args.Count, F.UsingInterpreter);
-
-		Script before = script;
-		script = F.Script;
-
-		// determine if this function is a constructor for a class or not, they are treated differently
-		bool isConstructor = false;
-		ClassDefinition constructorClass = null;
-		foreach (ClassDefinition c in GetClasses().Values)
-		{
-			if (c.FunctionIsConstructor(F))
-			{
-				isConstructor = true;
-				constructorClass = c;
-				break;
-			}
-		}
-
-		if (!isConstructor) // normal case
-		{
-			Dictionary<string, dynamic> variablesStateBefore = F.UsingInterpreter.memory; // keep copy before running
-			for (int i = 0; i < args.Count; i++)
-			{
-				Output tryStore = F.UsingInterpreter.Store(F.ArgumentNames[i], args[i]);
-				if (!tryStore.Success) { script = before; return tryStore; }
-			}
-
-			Output result = F.UsingInterpreter.Interpret(ConvertToNested(F.Script), depth + 1); // run it;
-
-			// handle variables afterwards
-			Dictionary<string, dynamic> temp = new();
-			foreach (string varname in F.UsingInterpreter.memory.Keys)
-			{
-				if (variablesStateBefore.ContainsKey(varname)) // any new variables will not be contained within 
-				{
-					if (F.ArgumentNames.Contains(varname))
-						temp.Add(varname, variablesStateBefore[varname]); // recall starting
-					else
-						temp.Add(varname, F.UsingInterpreter.memory[varname]); // or keep the changes
-				}
-			}
-			F.UsingInterpreter.ResetMemory(); // restore 
-			F.UsingInterpreter.memory = temp;
-
-			script = before;
-			return result;
-		}
-		else // constructor case
-		{
-			Interpreter newInterpreter = gameObject.AddComponent<Interpreter>();
-			newInterpreter.DEBUGMODE = DEBUGMODE;
-			newInterpreter.NAME = "CLASSINSTANCE";
-
-			ClassInstance newClassInstance = new(constructorClass, newInterpreter, evaluator);
-
-
-			// let the new instance run it's definition
-			Output result = newClassInstance.Initialize();
-			if (!result.Success) { script = before; return result; }
-
-			// construct it with the constructor function, should be defined in the definition, if no constructor, then do nothing
-			result = newClassInstance.Construct(args);
-			if (!result.Success) { script = before; return result; }
-
-			script = before;
-
-			return new(newClassInstance);
-		}
-	}
-
+	
 	void UpdateCurrentLine(List<dynamic> workingScript, int localLine)
 	{ // assumes nested form is not null
 		dynamic item = workingScript[localLine];
@@ -573,11 +628,11 @@ public class Interpreter : MonoBehaviour
 	}
 	public void DumpState()
 	{
-		LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
-		LogColor("VARIABLES: " + HF.ConvertToString(memory), Color.yellow);
-		LogColor("FUNCTIONS: " + HF.ConvertToString(GetFunctions()), Color.yellow);
-		LogColor("CLASSES: " + HF.ConvertToString(GetClasses()), Color.yellow);
-		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
+		HF.LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
+		HF.LogColor("Memory: " + HF.ConvertToString(memory.Everything), Color.yellow);
+		HF.LogColor("FUNCTIONS: " + HF.ConvertToString(memory.GetFunctions()), Color.yellow);
+		HF.LogColor("CLASSES: " + HF.ConvertToString(memory.GetClasses()), Color.yellow);
+		HF.LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
 	}
 
 	Output ProcessClass(string startLine, List<dynamic> definition)
@@ -589,11 +644,11 @@ public class Interpreter : MonoBehaviour
 
 		string name = startLine[5..colonIndex].Trim();
 		/*debug*/
-		if (DEBUGMODE) LogColor($"Creating new class \"{name}\"", Color.red);
+		if (DEBUGMODE) HF.LogColor($"Creating new class \"{name}\"", Color.red);
 		if (!HF.VariableNameIsValid(name))
 			return Errors.InvalidClassName(name, this);
 
-		if (GetClasses().ContainsKey(name))
+		if (memory.GetClasses().ContainsKey(name))
 			return Errors.ClassAlreadyExists(name, this);
 
 		// find the constructor
@@ -660,23 +715,27 @@ public class Interpreter : MonoBehaviour
 		Function constructorFunction = null;
 		if (constructor is not null)
 		{
-			Output tryStore = StoreFunction(name, constructorArgNames, constructor);
+			Output tryStore = memory.StoreFunction(name, constructorArgNames, constructor, this);
 			if (!tryStore.Success) return tryStore;
 			constructorFunction = tryStore.Value;
 		}
 
 		Function actualStringFunction = null;
+		string stringFuncName = $"string_{name}";
 		if (stringFunction is not null)
 		{
-			Output tryStore = StoreFunction("string", stringFunctionArgNames, stringFunction);
+			Output tryStore = memory.StoreFunction(stringFuncName, stringFunctionArgNames, stringFunction, this);
 			if (!tryStore.Success) return tryStore;
 			actualStringFunction = tryStore.Value;
+			actualStringFunction.Rename("string");
 		}
 
 		// create the new class, constructor is the new constructor function (returned from storefunction)
 		ClassDefinition newClass = new(name, this, definition, constructorFunction, actualStringFunction);
 
-		return Store(name, newClass);
+		memory.Delete(stringFuncName, this);
+
+		return memory.Store($"class_{name}", newClass, this);
 	}
 	#endregion
 
@@ -685,7 +744,7 @@ public class Interpreter : MonoBehaviour
 	{
 		if (str is Output) str = str.Value; // output the value if its an output
 
-		LogColor(HF.ConvertToString(str, false), Color.green);
+		HF.LogColor(HF.ConvertToString(str, false), Color.green);
 	}
 
 	#endregion
@@ -719,7 +778,7 @@ public class Interpreter : MonoBehaviour
 			int position = 0;
 			foreach (string kw in keywords)
 			{
-				if (line.StartsWith(kw))
+				if (HF.FasterStartsWith(line, kw))
 				{
 					type = 0;
 					keyword = kw;
@@ -729,9 +788,9 @@ public class Interpreter : MonoBehaviour
 			}
 			if (type != 0)
 			{
-				foreach (string varname in memory.Keys)
+				foreach (string varname in memory.GetAllNames())
 				{
-					if (line.StartsWith(varname))
+					if (HF.FasterStartsWith(line, varname))
 					{
 						type = 1;
 						keyword = varname;
@@ -744,7 +803,7 @@ public class Interpreter : MonoBehaviour
 					int parenthesesStart = line.IndexOf('(');
 					if (parenthesesStart != -1)
 					{
-						foreach (string fn in GetFunctions().Keys)
+						foreach (string fn in memory.GetFunctions().Keys)
 						{
 							if (line[..parenthesesStart] == fn)
 							{
@@ -762,8 +821,8 @@ public class Interpreter : MonoBehaviour
 			#region debug
 			if (DEBUGMODE)
 			{
-				if (lines[localLineNum] is ScriptLine) LogColor($"Running line {lines[localLineNum].LineNumber}: {lines[localLineNum].Line}, type: {type}", Color.cyan);
-				else LogColor("Current line is indented list", Color.cyan);
+				if (lines[localLineNum] is ScriptLine) HF.LogColor($"Running line {lines[localLineNum].LineNumber}: {lines[localLineNum].Line}, type: {type}", Color.cyan);
+				else HF.LogColor("Current line is indented list", Color.cyan);
 			}
 			#endregion
 
@@ -972,7 +1031,7 @@ public class Interpreter : MonoBehaviour
 
 						Output result = null;
 
-						result = Store(iterator, item); // store iterator
+						result = memory.Store(iterator, item, this); // store iterator
 						if (!result.Success) return result;
 
 						/*
@@ -1077,7 +1136,7 @@ public class Interpreter : MonoBehaviour
 									if (!HF.VariableNameIsValid(errorVarName))
 										return Errors.InvalidVariableName(errorVarName, this);
 
-									Output trystore = Store(errorVarName, output.Error.ToString());
+									Output trystore = memory.Store(errorVarName, output.Error.ToString(), this);
 									if (!trystore.Success) return trystore;
 								}
 								#endregion
@@ -1159,7 +1218,7 @@ public class Interpreter : MonoBehaviour
 						return Errors.EmptyFunction(this);
 					#endregion
 
-					Output tryStore = StoreFunction(name, argnames, function);
+					Output tryStore = memory.StoreFunction(name, argnames, function, this);
 
 					if (!tryStore.Success) return tryStore;
 				}
@@ -1221,7 +1280,7 @@ public class Interpreter : MonoBehaviour
 					string ao = "";
 					foreach (string op in assignmentOperators)
 					{
-						if (remaining.StartsWith(op))
+						if (HF.FasterStartsWith(remaining, op))
 						{
 							ao = op;
 							break;
@@ -1233,16 +1292,16 @@ public class Interpreter : MonoBehaviour
 
 					if (ao == "++" || ao == "--")
 					{ // all they do is + or - 1, no need to eval
-						Output fetch = Fetch(varName);
+						Output fetch = memory.Fetch(varName, this);
 						if (!fetch.Success) return fetch;
 
 						// increment/decrement can only be done to existing number variables
 						if (fetch.Value is double v)
 						{
 							if (ao == "++")
-								Store(varName, v + 1);
+								memory.Store(varName, v + 1, this);
 							else
-								Store(varName, v - 1);
+								memory.Store(varName, v - 1, this);
 						}
 						else
 						{
@@ -1254,11 +1313,17 @@ public class Interpreter : MonoBehaviour
 						Output tryEval = evaluator.Evaluate(remaining, this);
 						if (!tryEval.Success) return tryEval;
 
+						dynamic rhsValue = 0;
+						if (tryEval.Value is Variable v)
+							rhsValue = v.Value;
+						else
+							rhsValue = tryEval.Value;
+
 						// all other aos modify original, variable has to already exist
 						dynamic variableValue = 0;
 						if (ao != "=")
 						{
-							Output fetch = Fetch(varName);
+							Output fetch = memory.Fetch(varName, this);
 							if (!fetch.Success) return fetch;
 							variableValue = fetch.Value;
 						}
@@ -1267,52 +1332,59 @@ public class Interpreter : MonoBehaviour
 						switch (ao)
 						{
 							case "=":
-								tryEval = Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "+=":
 								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"+" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("+", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "-=":
 								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"-" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("-", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "*=":
 								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"*" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("*", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success)
 									return tryEval;
 
-								tryEval = Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "/=":
-								// try to add onto existing variable
-								tryEval = evaluator.Evaluate(
-									$"({HF.ConvertToString(variableValue)})" +
-									$"/" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+								tryEval = evaluator.EvaluateTokens(new()
+								{
+									new("", Evaluator.TokenType.val, variableValue),
+									new("/", Evaluator.TokenType.op),
+									new("", Evaluator.TokenType.val, rhsValue)
+								}, this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 								break;
 							case "^=":
@@ -1320,10 +1392,10 @@ public class Interpreter : MonoBehaviour
 								tryEval = evaluator.Evaluate(
 									$"({HF.ConvertToString(variableValue)})" +
 									$"^" +
-									$"({HF.ConvertToString(tryEval.Value)})", this);
+									$"({HF.ConvertToString(rhsValue)})", this);
 								if (!tryEval.Success) return tryEval;
 
-								tryEval = Store(varName, tryEval.Value);
+								tryEval = memory.Store(varName, tryEval.Value, this);
 								if (!tryEval.Success) return tryEval;
 
 								break;
@@ -1336,9 +1408,9 @@ public class Interpreter : MonoBehaviour
 					if (periodIndex != -1) // if no . found, just ignore as it is probably just an expression and won't do anything
 					{
 						string name = line[..periodIndex].Trim();
-						if (!memory.ContainsKey(name)) return Errors.UnknownVariable(name, this);
+						if (!memory.VariableExists(name)) return Errors.UnknownVariable(name, this);
 
-						dynamic item = memory[name];
+						dynamic item = memory.Fetch(name, this).Value;
 						if (item is ClassInstance)
 						{
 							ClassInstance instance = item;
@@ -1351,12 +1423,22 @@ public class Interpreter : MonoBehaviour
 			}
 			else if (type == 2)
 			{   // function should be defined hopefully no exceptions??
-				if (memory[keyword] is not Function)
+				Output fetchFunc = memory.Fetch(keyword, this);
+				if (!fetchFunc.Success) return fetchFunc;
+
+				if (fetchFunc.Value is ClassDefinition)
+				{
+					ClassDefinition classDef = fetchFunc.Value;
+					fetchFunc = new(classDef.Constructor);
+				}
+				else if (fetchFunc.Value is not Function)
 					return Errors.VariableIsNotFunction(keyword, this);
-				Output tryArgs = ExtractArgs(line, keyword, memory[keyword].ArgumentNames.Count);
+				
+				Output tryArgs = ExtractArgs(line, keyword, fetchFunc.Value.ArgumentNames.Count);
 				if (!tryArgs.Success) return tryArgs;
 
-				Output result = RunFunction(memory[keyword], tryArgs.Value, recursiondepth);
+				Function function = (Function)fetchFunc.Value;
+				Output result = function.Run(tryArgs.Value, this, recursiondepth);
 
 				if (!result.Success) return result;
 			}

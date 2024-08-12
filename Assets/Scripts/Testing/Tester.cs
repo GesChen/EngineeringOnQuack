@@ -19,7 +19,6 @@ public class Tester : MonoBehaviour
 	public string testexpr;
 	void Start()
 	{
-
 		Test();
 	}
 	void tokentest()
@@ -37,10 +36,11 @@ public class Tester : MonoBehaviour
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 
-		newevaltest();
+		scripttest();
 
 		stopwatch.Stop();
-		if(testTime) UnityEngine.Debug.Log($"ms: {stopwatch.ElapsedMilliseconds}");
+		double time = stopwatch.Elapsed.TotalMilliseconds;
+		if(testTime) UnityEngine.Debug.Log($"ms: {time} ({1 / stopwatch.Elapsed.TotalSeconds} fps)");
 	}
 	void scripttest()
 	{
@@ -50,6 +50,7 @@ public class Tester : MonoBehaviour
 
 
 		interpreter.DEBUGMODE = debug;
+		interpreter.memory.Reset();
 		Output output = interpreter.Run(script, evaluator);
 
 		UnityEngine.Debug.Log(output);

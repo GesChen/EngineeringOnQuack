@@ -16,9 +16,6 @@ class dictionary:
         return "dictionary with keys " + keys + " and values " + values
 
     log("indict")
-    dump()
-
-dump()
 
 log(dictionary)
 
@@ -30,7 +27,7 @@ newdict.test(1)
 log(newdict + "test")
 log (newdict.keys)
 
-log(newdict.keys.join("test"))
+--log(newdict.keys.join("test"))
 
 
 log(4*2*(3-1))
