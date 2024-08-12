@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public class ProceduralUI : MonoBehaviour
 {
 	public string menuTitle;
+	public bool addTitle = true;
 
 	public Canvas canvas;
 	public List<ProceduralUIComponent> components = new();
@@ -47,7 +48,7 @@ public class ProceduralUI : MonoBehaviour
 	{
 		// hide this menu if the mouse is outside the range and the mouse is not in range of any active dropdowns
 		// + is not dropdown and button which shows it is hovered
-		mouseInRange = CheckMouseValidity(Config.UIConfig.MouseValidityMargin);
+		mouseInRange = CheckMouseValidity(Config.UI.MouseValidityMargin);
 		if (!mouseInRange) 
 		{ 
 			bool anyDropDownsInRange = false;
@@ -100,18 +101,26 @@ public class ProceduralUI : MonoBehaviour
 	void Generate()
 	{
 		// create the panel
-		GameObject panel = Instantiate(Config.UIConfig.PanelPrefab, canvas.transform);
+		GameObject panel = Instantiate(Config.UI.PanelPrefab, canvas.transform);
 		panel.name = $"Panel ({menuTitle})";
 		panelTransform = panel.GetComponent<RectTransform>();
-		panel.GetComponent<Image>().color = Config.UIConfig.BackgroundColor;
+		panel.GetComponent<Image>().color = Config.UI.BackgroundColor;
+
+		// outline
+		Outline outline = panel.GetComponent<Outline>();
+		outline.effectColor = Config.UI.OutlineColor;
+		outline.effectDistance = Config.UI.OutlineThickness * Vector2.one;
 
 		// add title
-		ProceduralUIComponent titleComponent = new()
+		if (addTitle)
 		{
-			Text = menuTitle,
-			Type = UIComponentType.text
-		};
-		components.Insert(0, titleComponent);
+			ProceduralUIComponent titleComponent = new()
+			{
+				Text = menuTitle,
+				Type = UIComponentType.text
+			};
+			components.Insert(0, titleComponent);
+		}
 
 		// create all the items
 		for (int i = 0; i < components.Count; i++)
@@ -136,19 +145,20 @@ public class ProceduralUI : MonoBehaviour
 				component.Type == UIComponentType.button || 
 				component.Type == UIComponentType.dropdown)
 			{
-				float textwidth = TextWidthApproximation(component.Text, Config.UIConfig.FontAsset, Config.UIConfig.FontSize) + 20;
+				float textwidth = TextWidthApproximation(component.Text, Config.UI.FontAsset, Config.UI.FontSize) + 20;
 				longestTextWidth = Mathf.Max(longestTextWidth, textwidth);
 			}
 		}
 
-		width = longestTextWidth + Config.UIConfig.SidePadding * 4 + Config.UIConfig.IconSize;
-		height = Config.UIConfig.ItemHeight * components.Count + Config.UIConfig.VerticalSpacing * (components.Count - 1) + Config.UIConfig.SidePadding * 2;
+		width = longestTextWidth + Config.UI.SidePadding * 6 + Config.UI.IconSize + Config.UI.DropDownArrowSize;
+		height = Config.UI.ItemHeight * components.Count + Config.UI.VerticalSpacing * (components.Count - 1) + Config.UI.SidePadding * 2;
 
 		panelTransform.sizeDelta = new(width, height);
 
 		grid = panel.GetComponent<GridLayoutGroup>();
-		grid.cellSize = new(longestTextWidth + Config.UIConfig.IconSize, Config.UIConfig.ItemHeight);
-		grid.spacing = new(0, Config.UIConfig.VerticalSpacing);
+		float cellWidth = longestTextWidth + Config.UI.InsidePadding * 2 + Config.UI.IconSize + Config.UI.DropDownArrowSize;
+		grid.cellSize = new(cellWidth, Config.UI.ItemHeight);
+		grid.spacing = new(0, Config.UI.VerticalSpacing);
 	}
 
 	public void Display(Vector2 position, bool doOffset = true)
@@ -157,12 +167,12 @@ public class ProceduralUI : MonoBehaviour
 		panelTransform.gameObject.SetActive(true);
 
 		position += new Vector2(width, -height) / 2f; // place at top left corner
-		if (doOffset) position += new Vector2(-Config.UIConfig.DisplayTopLeftCornerOffset.x, Config.UIConfig.DisplayTopLeftCornerOffset.y); // add offset
+		if (doOffset) position += new Vector2(-Config.UI.DisplayTopLeftCornerOffset.x, Config.UI.DisplayTopLeftCornerOffset.y); // add offset
 
 		// make sure it wont go out of the screen
 		Vector2 screenSize = canvas.renderingDisplaySize;
-		position.x = Mathf.Clamp(position.x, width / 2f + Config.UIConfig.MinDistFromSides, screenSize.x - width / 2f - Config.UIConfig.MinDistFromSides);
-		position.y = Mathf.Clamp(position.y, height / 2f + Config.UIConfig.MinDistFromSides, screenSize.y - height / 2f - Config.UIConfig.MinDistFromSides);
+		position.x = Mathf.Clamp(position.x, width / 2f + Config.UI.MinDistFromSides, screenSize.x - width / 2f - Config.UI.MinDistFromSides);
+		position.y = Mathf.Clamp(position.y, height / 2f + Config.UI.MinDistFromSides, screenSize.y - height / 2f - Config.UI.MinDistFromSides);
 
 		panelTransform.position = position;
 	}
@@ -197,7 +207,7 @@ public class ProceduralUI : MonoBehaviour
 
 	public void GenerateUIComponent(ref ProceduralUIComponent component)
 	{
-		GameObject newObj = Instantiate(Config.UIConfig.ComponentPrefab);
+		GameObject newObj = Instantiate(Config.UI.ComponentPrefab);
 		newObj.name = $"Item ({component.Text})";
 		Image image = newObj.GetComponent<Image>();
 		TextMeshProUGUI text = null;
@@ -209,15 +219,15 @@ public class ProceduralUI : MonoBehaviour
 			case UIComponentType.button:
 				image.color = Color.white;
 
-				text = Instantiate(Config.UIConfig.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
+				text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 				text.text = component.Text;
 
 				button = newObj.AddComponent<Button>();
 				button.colors = new()
 				{
-					normalColor = Config.UIConfig.BackgroundColor,
-					highlightedColor = Config.UIConfig.ButtonHoverColor,
-					pressedColor = Config.UIConfig.ButtonPressedColor,
+					normalColor = Config.UI.BackgroundColor,
+					highlightedColor = Config.UI.ButtonHoverColor,
+					pressedColor = Config.UI.ButtonPressedColor,
 					colorMultiplier = 1f
 				};
 				button.onClick = component.OnClick;
@@ -225,31 +235,45 @@ public class ProceduralUI : MonoBehaviour
 
 				break;
 			case UIComponentType.text:
-				image.color = Config.UIConfig.BackgroundColor;
-				text = Instantiate(Config.UIConfig.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
+				image.color = Config.UI.BackgroundColor;
+				text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 				text.text = component.Text;
 				break;
 			case UIComponentType.divider:
-				image.color = Config.UIConfig.BackgroundColor;
-				Instantiate(Config.UIConfig.DividerPrefab, newObj.transform);
+				image.color = Config.UI.BackgroundColor;
+				Instantiate(Config.UI.DividerPrefab, newObj.transform);
 				break;
 		}
 		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button || component.Type == UIComponentType.dropdown)
 		{ // add text padding
-			float leftOffset = Config.UIConfig.InsidePadding * 3 + Config.UIConfig.IconSize;
-			text.rectTransform.offsetMin = new(leftOffset, Config.UIConfig.InsidePadding);
-			text.rectTransform.offsetMax = new(-Config.UIConfig.InsidePadding, -Config.UIConfig.InsidePadding);
+			float leftOffset = Config.UI.InsidePadding * 3 + Config.UI.IconSize;
+			float rightOffset = Config.UI.InsidePadding * 3 + Config.UI.DropDownArrowSize;
+			text.rectTransform.offsetMin = new(leftOffset, Config.UI.InsidePadding);
+			text.rectTransform.offsetMax = new(-rightOffset, -Config.UI.InsidePadding);
 		}
 
 		if (component.icon != null)
 		{
-			GameObject iconObj = Instantiate(Config.UIConfig.IconPrefab, newObj.transform);
+			GameObject iconObj = Instantiate(Config.UI.IconPrefab, newObj.transform);
 			Image iconComponent = iconObj.GetComponent<Image>();
 			iconComponent.sprite = component.icon;
 
 			RectTransform iconRect = iconObj.GetComponent<RectTransform>();
-			iconRect.localPosition = new(Config.UIConfig.InsidePadding + Config.UIConfig.IconSize / 2, Config.UIConfig.ItemHeight / 2);
-			iconRect.sizeDelta = Config.UIConfig.IconSize * Vector2.one;
+			iconRect.localPosition = new(Config.UI.InsidePadding + Config.UI.IconSize / 2, Config.UI.ItemHeight / 2);
+			iconRect.sizeDelta = Config.UI.IconSize * Vector2.one;
+		}
+
+		if (component.Type == UIComponentType.dropdown)
+		{
+			GameObject dropdownIconObj = Instantiate(Config.UI.DropDownArrow, newObj.transform);
+			Image iconComponent = dropdownIconObj.GetComponent<Image>();
+			iconComponent.sprite = Config.UI.DropDownClosedSprite;
+
+			RectTransform iconRect = dropdownIconObj.GetComponent<RectTransform>();
+			iconRect.localPosition = new(-(Config.UI.InsidePadding + Config.UI.DropDownArrowSize / 2), Config.UI.ItemHeight / 2);
+			iconRect.sizeDelta = Config.UI.DropDownArrowSize * Vector2.one;
+
+			component.dropdownArrowImage = iconComponent;
 		}
 
 		RectTransform rectTransform = newObj.GetComponent<RectTransform>();

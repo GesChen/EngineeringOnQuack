@@ -17,7 +17,7 @@ public class RightClick : MonoBehaviour
 			posAtDown = mousePos;
 			testpanel.Display(mousePos);
 		}
-		if ((posAtDown - mousePos).magnitude > Config.UIConfig.MaxMouseMovementToCount
+		if ((posAtDown - mousePos).magnitude > Config.UI.MaxMouseMovementToCount
 			&& Mouse.current.rightButton.isPressed)
 		{
 			testpanel.Hide();

@@ -28,6 +28,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	[HideInNormalInspector] public Image imageComponent;
 	[HideInNormalInspector] public TextMeshProUGUI textmeshproText;
 	[HideInNormalInspector] public Button button;
+	[HideInNormalInspector] public Image dropdownArrowImage;
 
 	[HideInNormalInspector] public bool mouseOver;
 
@@ -53,7 +54,14 @@ public class ProceduralUIComponent // general container for components, doesnt a
 		}
 
 		if (Type == UIComponentType.dropdown)
+		{
 			DropdownMenu.dropdownOverride = mouseOver;
+		
+			if (mouseOver)
+				dropdownArrowImage.sprite = Config.UI.DropDownOpenedSprite;
+			else
+				dropdownArrowImage.sprite = Config.UI.DropDownClosedSprite;
+		}
 	}
 
 	public void DisplayDropdown(ProceduralUI main)
@@ -64,10 +72,10 @@ public class ProceduralUIComponent // general container for components, doesnt a
 			rectTransform.GetWorldCorners(corners);
 
 			// check if would fit at right
-			bool wouldFit = corners[2].x + DropdownMenu.width + Config.UIConfig.DropDownDisplayOffset + Config.UIConfig.SidePadding < main.canvas.renderingDisplaySize.x;
+			bool wouldFit = corners[2].x + DropdownMenu.width + Config.UI.DropDownDisplayOffset + Config.UI.SidePadding < main.canvas.renderingDisplaySize.x;
 			if (wouldFit)
 			{ // place top left at top right (3)
-				Vector2 position = (Vector2)corners[2] + Config.UIConfig.DropDownDisplayOffset * Vector2.right + Config.UIConfig.SidePadding * Vector2.one;
+				Vector2 position = (Vector2)corners[2] + Config.UI.DropDownDisplayOffset * Vector2.right + Config.UI.SidePadding * Vector2.one;
 				DropdownMenu.Display(position, false);
 			}
 			else
@@ -75,8 +83,8 @@ public class ProceduralUIComponent // general container for components, doesnt a
 				// place top right corner of dropdown at top left (2)
 				Vector2 position = 
 					(Vector2)corners[1] + 
-					(DropdownMenu.width + Config.UIConfig.DropDownDisplayOffset) * Vector2.left 
-					+ new Vector2(-Config.UIConfig.SidePadding, Config.UIConfig.SidePadding);
+					(DropdownMenu.width + Config.UI.DropDownDisplayOffset) * Vector2.left 
+					+ new Vector2(-Config.UI.SidePadding, Config.UI.SidePadding);
 				DropdownMenu.Display(position, false);
 			}
 		}
