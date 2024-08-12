@@ -36,7 +36,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	{
 		try
 		{
-			mouseOver = HF.Vector2InRectTransform(Controls.mousePos, rectTransform) && main.visible;
+			mouseOver = HF.Vector2InRectTransform(Controls.mousePos, rectTransform) && main.visible && !main.anyDropDownsInRange;
 		}
 		catch
 		{
@@ -57,7 +57,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 		{
 			DropdownMenu.dropdownOverride = mouseOver;
 		
-			if (mouseOver)
+			if (mouseOver || (DropdownMenu.mouseInRange && DropdownMenu.visible))
 				dropdownArrowImage.sprite = Config.UI.DropDownOpenedSprite;
 			else
 				dropdownArrowImage.sprite = Config.UI.DropDownClosedSprite;

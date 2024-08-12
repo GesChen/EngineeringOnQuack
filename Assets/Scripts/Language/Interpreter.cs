@@ -115,7 +115,7 @@ public class Function
 	private Output RunScript(List<dynamic> args, Interpreter interpreter, int depth = 0)
 	{
 		/*debug*/
-		if (interpreter.DEBUGMODE) interpreter.LogColor($"Running function {this}", Color.red);
+		if (interpreter.DEBUGMODE) HF.LogColor($"Running function {this}", Color.red);
 		if (args.Count != ArgumentNames.Count)
 			return Errors.NoFunctionExists(Name, args.Count, UsingInterpreter);
 
@@ -338,7 +338,7 @@ public class Memory
 				return Errors.FunctionAlreadyExists(name, argNames.Count, interpreter);
 
 		/*debug*/
-		if (interpreter.DEBUGMODE) interpreter.LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
+		if (interpreter.DEBUGMODE) HF.LogColor($"Storing new function \"{name}\" with arguments {HF.ConvertToString(argNames)}", Color.red);
 
 		return Store(name, new Function(name, script, argNames, interpreter, interpreter.evaluator), interpreter);
 	}
@@ -399,10 +399,6 @@ public class Interpreter : MonoBehaviour
 	};
 
 	#region internal methods
-	public void LogColor(string str, Color color)
-	{
-		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
-	}
 	public Output Run(Script targetScript)
 	{
 		if (evaluator == null) return Errors.InterpreterDoesntHaveEval(this);
@@ -632,11 +628,11 @@ public class Interpreter : MonoBehaviour
 	}
 	public void DumpState()
 	{
-		LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
-		LogColor("Memory: " + HF.ConvertToString(memory.Everything), Color.yellow);
-		LogColor("FUNCTIONS: " + HF.ConvertToString(memory.GetFunctions()), Color.yellow);
-		LogColor("CLASSES: " + HF.ConvertToString(memory.GetClasses()), Color.yellow);
-		LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
+		HF.LogColor($"**STATE DUMP** [Current line: ({currentLine})] ({NAME})", Color.yellow);
+		HF.LogColor("Memory: " + HF.ConvertToString(memory.Everything), Color.yellow);
+		HF.LogColor("FUNCTIONS: " + HF.ConvertToString(memory.GetFunctions()), Color.yellow);
+		HF.LogColor("CLASSES: " + HF.ConvertToString(memory.GetClasses()), Color.yellow);
+		HF.LogColor("SCRIPT LINES " + HF.ConvertToString(script.Lines), Color.yellow);
 	}
 
 	Output ProcessClass(string startLine, List<dynamic> definition)
@@ -648,7 +644,7 @@ public class Interpreter : MonoBehaviour
 
 		string name = startLine[5..colonIndex].Trim();
 		/*debug*/
-		if (DEBUGMODE) LogColor($"Creating new class \"{name}\"", Color.red);
+		if (DEBUGMODE) HF.LogColor($"Creating new class \"{name}\"", Color.red);
 		if (!HF.VariableNameIsValid(name))
 			return Errors.InvalidClassName(name, this);
 
@@ -748,7 +744,7 @@ public class Interpreter : MonoBehaviour
 	{
 		if (str is Output) str = str.Value; // output the value if its an output
 
-		LogColor(HF.ConvertToString(str, false), Color.green);
+		HF.LogColor(HF.ConvertToString(str, false), Color.green);
 	}
 
 	#endregion
@@ -825,8 +821,8 @@ public class Interpreter : MonoBehaviour
 			#region debug
 			if (DEBUGMODE)
 			{
-				if (lines[localLineNum] is ScriptLine) LogColor($"Running line {lines[localLineNum].LineNumber}: {lines[localLineNum].Line}, type: {type}", Color.cyan);
-				else LogColor("Current line is indented list", Color.cyan);
+				if (lines[localLineNum] is ScriptLine) HF.LogColor($"Running line {lines[localLineNum].LineNumber}: {lines[localLineNum].Line}, type: {type}", Color.cyan);
+				else HF.LogColor("Current line is indented list", Color.cyan);
 			}
 			#endregion
 

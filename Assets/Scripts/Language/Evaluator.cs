@@ -733,7 +733,7 @@ public class Evaluator : MonoBehaviour
 
 	public Output Evaluate(string expr, Interpreter interpreter)
 	{
-		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
+		if (DEBUGMODE) HF.LogColor($"Evaluating {expr}", Color.blue);
 
 		// can't evaluate nothing
 		if (string.IsNullOrWhiteSpace(expr)) return new(""); // return Errors.EvaluatedNothing(interpreter);

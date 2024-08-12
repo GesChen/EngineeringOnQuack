@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -20,6 +22,7 @@ public class ProceduralUI : MonoBehaviour
 	[HideInNormalInspector] public float width;
 	[HideInNormalInspector] public float height;
 	[HideInNormalInspector] public bool dropdownOverride;
+	[HideInNormalInspector] public bool anyDropDownsInRange;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
@@ -49,15 +52,17 @@ public class ProceduralUI : MonoBehaviour
 		// hide this menu if the mouse is outside the range and the mouse is not in range of any active dropdowns
 		// + is not dropdown and button which shows it is hovered
 		mouseInRange = CheckMouseValidity(Config.UI.MouseValidityMargin);
-		if (!mouseInRange) 
-		{ 
-			bool anyDropDownsInRange = false;
-			CheckComponentsForInRange(this, ref anyDropDownsInRange);
 
-			if (!anyDropDownsInRange && !dropdownOverride)
-			{
-				Hide();
-			}
+		anyDropDownsInRange = false;
+		CheckComponentsForInRange(this, ref anyDropDownsInRange);
+
+#if DEBUGMODE
+		HF.LogColor($"{menuTitle}: inrange {mouseInRange}", Color.cyan); 
+		Debug.Log($"{menuTitle}: any {anyDropDownsInRange}");
+#endif
+		if (!mouseInRange && !anyDropDownsInRange && !dropdownOverride)
+		{
+			Hide();
 		}
 	}
 
@@ -163,6 +168,10 @@ public class ProceduralUI : MonoBehaviour
 
 	public void Display(Vector2 position, bool doOffset = true)
 	{ // automatically tries to position the top left corner at position, adjust with offset
+#if DEBUGMODE
+		HF.LogColor($"{menuTitle} displaying", Color.green);
+#endif
+
 		visible = true;
 		panelTransform.gameObject.SetActive(true);
 
@@ -179,6 +188,9 @@ public class ProceduralUI : MonoBehaviour
 
 	public void Hide()
 	{
+#if DEBUGMODE
+		HF.LogColor($"{menuTitle} hiding", Color.red);
+#endif
 		visible = false;
 		panelTransform.gameObject.SetActive(false);
 	}

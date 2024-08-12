@@ -3667,12 +3667,12 @@ MonoBehaviour:
     _buttonPressedColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
     _textColor: {r: 1, g: 1, b: 1, a: 0}
     _outlineThickness: 2
-    _outlineColor: {r: 0.4716981, g: 0.4716981, b: 0.4716981, a: 1}
+    _outlineColor: {r: 0.433, g: 0.433, b: 0.433, a: 1}
     _itemHeight: 30
     _verticalSpacing: 2
     _sidePadding: 2
     _insidePadding: 3
-    _iconSize: 25
+    _iconSize: 30
     _dropDownArrowSize: 20
     _fontSize: 22
     _fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

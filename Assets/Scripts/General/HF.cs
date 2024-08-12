@@ -33,6 +33,10 @@ public static class HF {
 		=> new (Mathf.Abs(v.x), Mathf.Abs(v.y));
 	#endregion
 
+	public static void LogColor(string str, Color color)
+	{
+		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
+	}
 
 	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
 	{
