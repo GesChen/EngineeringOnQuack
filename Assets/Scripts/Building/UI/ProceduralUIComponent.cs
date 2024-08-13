@@ -57,7 +57,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 		{
 			DropdownMenu.dropdownOverride = mouseOver;
 		
-			if (mouseOver || (DropdownMenu.mouseInRange && DropdownMenu.visible))
+			if (mouseOver || ((DropdownMenu.mouseInRange || DropdownMenu.anyDropDownsInRange) && DropdownMenu.visible))
 				dropdownArrowImage.sprite = Config.UI.DropDownOpenedSprite;
 			else
 				dropdownArrowImage.sprite = Config.UI.DropDownClosedSprite;

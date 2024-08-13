@@ -30,6 +30,7 @@ public class SelectionManager : MonoBehaviour
 	{
 		HandleInput();
 		HandleContainer();
+		UpdateContext();
 	}
 
 	void HandleInput()
@@ -374,5 +375,13 @@ public class SelectionManager : MonoBehaviour
 		{
 			t.SetParent(selectionContainer, true);
 		}
+	}
+
+	public void UpdateContext()
+	{
+		if (selection.Count > 0)
+			Context.SetCurrent(Context.ContextType.EditingPart);
+		else
+			Context.SetCurrent(Context.ContextType.EditingNormal);
 	}
 }

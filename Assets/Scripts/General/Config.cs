@@ -12,7 +12,8 @@ public class Config : MonoBehaviour
 		[Header("Controls")]
 		[Description("How many pixels the mouse can move away form the rect to still be considered as over")]
 		public int _mouseValidityMargin;
-		public float _maxRightClickTime;		// right click
+		public float _maxRightClickTime;        // right click
+		public float _maxMovementAfterClick;
 		public float _maxMouseMovementToCount;  // right click
 		[Space]
 		[Header("Visual")]
@@ -73,6 +74,7 @@ public class Config : MonoBehaviour
 		public static int			MouseValidityMargin;
 		public static float			MaxRightClickTime;
 		public static float			MaxMouseMovementToCount;
+		public static float			MaxMovementAfterClick;
 		public static Sprite		DropDownClosedSprite;
 		public static Sprite		DropDownOpenedSprite;
 		#endregion
@@ -115,6 +117,7 @@ public class Config : MonoBehaviour
 		UI.IconPrefab					= UIConfig._iconPrefab;
 		UI.MouseValidityMargin			= UIConfig._mouseValidityMargin;
 		UI.MaxMouseMovementToCount		= UIConfig._maxMouseMovementToCount;
+		UI.MaxMovementAfterClick		= UIConfig._maxMovementAfterClick;
 		UI.MaxRightClickTime			= UIConfig._maxRightClickTime;
 		UI.DropDownClosedSprite			= UIConfig._dropDownClosedSprite;
 		UI.DropDownOpenedSprite			= UIConfig._dropDownOpenedSprite;

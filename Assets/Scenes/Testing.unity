@@ -550,6 +550,54 @@ Transform:
   m_Father: {fileID: 1958016875}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &286754159
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 286754161}
+  - component: {fileID: 286754160}
+  m_Layer: 0
+  m_Name: UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &286754160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286754159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdb3822dc37cf854fa25f8af8847dd29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  heads:
+  - panel: {fileID: 825463386}
+    context: 0
+--- !u!4 &286754161
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286754159}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 825463387}
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &318096259
 GameObject:
   m_ObjectHideFlags: 0
@@ -1598,14 +1646,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 825463387}
-  - component: {fileID: 825463388}
   - component: {fileID: 825463386}
   - component: {fileID: 825463389}
   - component: {fileID: 825463392}
   - component: {fileID: 825463391}
   - component: {fileID: 825463390}
   m_Layer: 0
-  m_Name: UI
+  m_Name: Editing Normal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1624,7 +1671,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuTitle: editing
-  addTitle: 0
+  addTitle: 1
   canvas: {fileID: 916857749}
   components:
   - Type: 2
@@ -1693,6 +1740,7 @@ MonoBehaviour:
   width: 0
   height: 0
   dropdownOverride: 0
+  anyDropDownsInRange: 0
 --- !u!4 &825463387
 Transform:
   m_ObjectHideFlags: 0
@@ -1705,22 +1753,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_Father: {fileID: 286754161}
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &825463388
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 825463384}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdb3822dc37cf854fa25f8af8847dd29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  testpanel: {fileID: 825463386}
 --- !u!114 &825463389
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1803,6 +1838,7 @@ MonoBehaviour:
   width: 0
   height: 0
   dropdownOverride: 0
+  anyDropDownsInRange: 0
 --- !u!114 &825463390
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1885,6 +1921,7 @@ MonoBehaviour:
   width: 0
   height: 0
   dropdownOverride: 0
+  anyDropDownsInRange: 0
 --- !u!114 &825463391
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1997,6 +2034,7 @@ MonoBehaviour:
   width: 0
   height: 0
   dropdownOverride: 0
+  anyDropDownsInRange: 0
 --- !u!114 &825463392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2079,6 +2117,7 @@ MonoBehaviour:
   width: 0
   height: 0
   dropdownOverride: 0
+  anyDropDownsInRange: 0
 --- !u!1 &825630083
 GameObject:
   m_ObjectHideFlags: 0
@@ -3661,7 +3700,8 @@ MonoBehaviour:
   UIConfig:
     _mouseValidityMargin: 50
     _maxRightClickTime: 0.1
-    _maxMouseMovementToCount: 30
+    _maxMovementAfterClick: 30
+    _maxMouseMovementToCount: 10
     _backgroundColor: {r: 0.21, g: 0.21, b: 0.21, a: 1}
     _buttonHoverColor: {r: 0.39, g: 0.39, b: 0.39, a: 1}
     _buttonPressedColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
