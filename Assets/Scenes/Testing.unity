@@ -3715,7 +3715,7 @@ MonoBehaviour:
     _iconSize: 30
     _dropDownArrowSize: 20
     _fontSize: 22
-    _fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    _fontAsset: {fileID: 11400000, guid: b22d18c777f70164b9b7143c786ed6bb, type: 2}
     _displayTopLeftCornerOffset: {x: 10, y: 10}
     _minDistFromSides: 5
     _dropDownDisplayOffset: 6

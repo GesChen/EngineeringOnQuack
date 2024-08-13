@@ -233,6 +233,7 @@ public class ProceduralUI : MonoBehaviour
 
 				text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 				text.text = component.Text;
+				text.font = Config.UI.FontAsset;
 
 				button = newObj.AddComponent<Button>();
 				button.colors = new()
@@ -250,10 +251,13 @@ public class ProceduralUI : MonoBehaviour
 				image.color = Config.UI.BackgroundColor;
 				text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 				text.text = component.Text;
+				text.font = Config.UI.FontAsset;
+
 				break;
 			case UIComponentType.divider:
 				image.color = Config.UI.BackgroundColor;
 				Instantiate(Config.UI.DividerPrefab, newObj.transform);
+
 				break;
 		}
 		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button || component.Type == UIComponentType.dropdown)
