@@ -31,6 +31,34 @@ public class RightClick : MonoBehaviour
 		if (Context.Current != lastContext)
 			UpdatePanel();
 
+		if (currentPanel != null)
+			HandleInput();
+	}
+
+	public void UpdatePanel()
+	{
+		if (currentPanel != null)
+			currentPanel.Hide();
+
+		ProceduralUI panel = null;
+		foreach (Head head in heads)
+		{
+			if (head.context == Context.Current)
+			{
+				panel = head.panel;
+				break;
+			}
+		}
+
+		if (panel == null)
+			Debug.LogWarning($"no panel defined for context {Context.Current}");
+		
+		// contexts without panels will not show anything
+		currentPanel = panel;
+	}
+	
+	void HandleInput()
+	{
 
 		Vector2 mousePos = Mouse.current.position.value;
 
@@ -53,26 +81,5 @@ public class RightClick : MonoBehaviour
 
 		lastContext = Context.Current;
 		lastPos = mousePos;
-	}
-
-	public void UpdatePanel()
-	{
-		if (currentPanel != null)
-			currentPanel.Hide();
-
-		ProceduralUI panel = null;
-		foreach (Head head in heads)
-		{
-			if (head.context == Context.Current)
-			{
-				panel = head.panel;
-				break;
-			}
-		}
-
-		if (panel == null)
-			Debug.LogError($"no panel defined for context {Context.Current}");
-
-		currentPanel = panel;
 	}
 }

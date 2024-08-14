@@ -9,7 +9,8 @@ public static class Context
 	public enum ContextType
 	{
 		EditingNormal,
-		EditingPart
+		EditingPart,
+		EditingMultiple
 	}
 
 	public static ContextType Current { get; private set; }

@@ -30,7 +30,7 @@ public class SelectionManager : MonoBehaviour
 	{
 		HandleInput();
 		HandleContainer();
-		UpdateContext();
+		UpdateContextManager();
 	}
 
 	void HandleInput()
@@ -377,11 +377,13 @@ public class SelectionManager : MonoBehaviour
 		}
 	}
 
-	public void UpdateContext()
+	public void UpdateContextManager()
 	{
-		if (selection.Count > 0)
-			Context.SetCurrent(Context.ContextType.EditingPart);
+		if (selection.Count == 0)
+			ContextManager.Instance.selectionStatus = ContextManager.SelectionStatus.NoSelection;
+		else if (selection.Count == 1)
+			ContextManager.Instance.selectionStatus = ContextManager.SelectionStatus.SingleSelection;
 		else
-			Context.SetCurrent(Context.ContextType.EditingNormal);
+			ContextManager.Instance.selectionStatus = ContextManager.SelectionStatus.MultipleSelections;
 	}
 }
