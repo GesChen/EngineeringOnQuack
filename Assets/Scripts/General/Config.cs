@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using TMPro;
+using UnityEngine.TextCore.Text;
 
 public class Config : MonoBehaviour
 {
@@ -15,9 +16,11 @@ public class Config : MonoBehaviour
 		public float _maxRightClickTime;        // right click
 		public float _maxMovementAfterClick;
 		public float _maxMouseMovementToCount;  // right click
+		public float _hoverTimeUntilDescription;
 		[Space]
 		[Header("Visual")]
 		public Color _backgroundColor;
+		public Color _descriptionBackgroundColor;
 		public Color _buttonHoverColor;
 		public Color _buttonPressedColor;
 		public Color _textColor;
@@ -36,11 +39,15 @@ public class Config : MonoBehaviour
 		public Vector2 _displayTopLeftCornerOffset;
 		public float _minDistFromSides;
 		public float _dropDownDisplayOffset;
+		[Space]
+		public int _descriptionFontSize;
+		public int _descriptionHeight;
 
 		[Header("Technical")]
 		public GameObject _panelPrefab;
 		public GameObject _componentPrefab;
 		public GameObject _textPrefab;
+		public GameObject _descriptionPrefab;
 		public GameObject _dividerPrefab;
 		public GameObject _dropDownArrow;
 		public GameObject _iconPrefab;
@@ -48,35 +55,40 @@ public class Config : MonoBehaviour
 		public Sprite _dropDownOpenedSprite;
 
 		#region statics
-		public static Color			BackgroundColor;
-		public static Color			ButtonHoverColor;
-		public static Color			ButtonPressedColor;
-		public static Color			TextColor;
-		public static int			OutlineThickness;
-		public static Color			OutlineColor;
-		public static int			ItemHeight;
-		public static int			VerticalSpacing;
-		public static int			SidePadding;
-		public static int			InsidePadding;
-		public static int			FontSize;
-		public static int			IconSize;
+		public static int MouseValidityMargin;
+		public static float MaxRightClickTime;
+		public static float MaxMovementAfterClick;
+		public static float MaxMouseMovementToCount;
+		public static float HoverTimeUntilDescription;
+		public static Color BackgroundColor;
+		public static Color DescriptionBackgroundColor;
+		public static Color ButtonHoverColor;
+		public static Color ButtonPressedColor;
+		public static Color TextColor;
+		public static int OutlineThickness;
+		public static Color OutlineColor;
+		public static int ItemHeight;
+		public static int VerticalSpacing;
+		public static int SidePadding;
+		public static int InsidePadding;
+		public static int IconSize;
+		public static float DropDownArrowSize;
+		public static int FontSize;
 		public static TMP_FontAsset FontAsset;
-		public static Vector2		DisplayTopLeftCornerOffset;
-		public static float			MinDistFromSides;
-		public static float			DropDownDisplayOffset;
-		public static float			DropDownArrowSize;
-		public static GameObject	PanelPrefab;
-		public static GameObject	ComponentPrefab;
-		public static GameObject	TextPrefab;
-		public static GameObject	DividerPrefab;
-		public static GameObject	DropDownArrow;
-		public static GameObject	IconPrefab;
-		public static int			MouseValidityMargin;
-		public static float			MaxRightClickTime;
-		public static float			MaxMouseMovementToCount;
-		public static float			MaxMovementAfterClick;
-		public static Sprite		DropDownClosedSprite;
-		public static Sprite		DropDownOpenedSprite;
+		public static Vector2 DisplayTopLeftCornerOffset;
+		public static float MinDistFromSides;
+		public static float DropDownDisplayOffset;
+		public static int DescriptionFontSize;
+		public static int DescriptionHeight;
+		public static GameObject PanelPrefab;
+		public static GameObject ComponentPrefab;
+		public static GameObject TextPrefab;
+		public static GameObject DescriptionPrefab;
+		public static GameObject DividerPrefab;
+		public static GameObject DropDownArrow;
+		public static GameObject IconPrefab;
+		public static Sprite DropDownClosedSprite;
+		public static Sprite DropDownOpenedSprite;
 		#endregion
 	}
 	public UI UIConfig;
@@ -92,7 +104,13 @@ public class Config : MonoBehaviour
 
 	void UpdateStatics()
 	{
+		UI.MouseValidityMargin			= UIConfig._mouseValidityMargin;
+		UI.MaxRightClickTime			= UIConfig._maxRightClickTime;
+		UI.MaxMovementAfterClick		= UIConfig._maxMovementAfterClick;
+		UI.MaxMouseMovementToCount		= UIConfig._maxMouseMovementToCount;
+		UI.HoverTimeUntilDescription	= UIConfig._hoverTimeUntilDescription;
 		UI.BackgroundColor				= UIConfig._backgroundColor;
+		UI.DescriptionBackgroundColor	= UIConfig._descriptionBackgroundColor;
 		UI.ButtonHoverColor				= UIConfig._buttonHoverColor;
 		UI.ButtonPressedColor			= UIConfig._buttonPressedColor;
 		UI.TextColor					= UIConfig._textColor;
@@ -102,23 +120,22 @@ public class Config : MonoBehaviour
 		UI.VerticalSpacing				= UIConfig._verticalSpacing;
 		UI.SidePadding					= UIConfig._sidePadding;
 		UI.InsidePadding				= UIConfig._insidePadding;
-		UI.FontSize						= UIConfig._fontSize;
 		UI.IconSize						= UIConfig._iconSize;
+		UI.DropDownArrowSize			= UIConfig._dropDownArrowSize;
+		UI.FontSize						= UIConfig._fontSize;
 		UI.FontAsset					= UIConfig._fontAsset;
 		UI.DisplayTopLeftCornerOffset	= UIConfig._displayTopLeftCornerOffset;
 		UI.MinDistFromSides				= UIConfig._minDistFromSides;
 		UI.DropDownDisplayOffset		= UIConfig._dropDownDisplayOffset;
-		UI.DropDownArrowSize			= UIConfig._dropDownArrowSize;
+		UI.DescriptionFontSize			= UIConfig._descriptionFontSize;
+		UI.DescriptionHeight			= UIConfig._descriptionHeight;
 		UI.PanelPrefab					= UIConfig._panelPrefab;
 		UI.ComponentPrefab				= UIConfig._componentPrefab;
 		UI.TextPrefab					= UIConfig._textPrefab;
+		UI.DescriptionPrefab			= UIConfig._descriptionPrefab;
 		UI.DividerPrefab				= UIConfig._dividerPrefab;
 		UI.DropDownArrow				= UIConfig._dropDownArrow;
 		UI.IconPrefab					= UIConfig._iconPrefab;
-		UI.MouseValidityMargin			= UIConfig._mouseValidityMargin;
-		UI.MaxMouseMovementToCount		= UIConfig._maxMouseMovementToCount;
-		UI.MaxMovementAfterClick		= UIConfig._maxMovementAfterClick;
-		UI.MaxRightClickTime			= UIConfig._maxRightClickTime;
 		UI.DropDownClosedSprite			= UIConfig._dropDownClosedSprite;
 		UI.DropDownOpenedSprite			= UIConfig._dropDownOpenedSprite;
 

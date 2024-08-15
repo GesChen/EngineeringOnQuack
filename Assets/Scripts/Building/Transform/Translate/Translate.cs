@@ -344,18 +344,18 @@ public class Translate : MonoBehaviour
 										/*1,0,1*/	new Vector3(1, 0, 0));
 				Vector3 axis1 = axes - axis0;
 
-				axis0 = main.transform.rotation * axis0;
-				axis1 = main.transform.rotation * axis1;
+				Vector3 rotatedAxis0 = main.transform.rotation * axis0;
+				Vector3 rotatedAxis1 = main.transform.rotation * axis1;
 
 				axisIndicator.UpdateIndicator(
 					dragStartPos,
-					main.selectionContainer.rotation * Quaternion.LookRotation(axis0, transform.up),
+					main.selectionContainer.rotation * Quaternion.LookRotation(rotatedAxis0, transform.up),
 					parentMain.colorOfAxes[axis0],
 					(transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
 
 				otherAxisIndicator.UpdateIndicator(
 					dragStartPos,
-					main.selectionContainer.rotation * Quaternion.LookRotation(axis1, transform.up),
+					main.selectionContainer.rotation * Quaternion.LookRotation(rotatedAxis1, transform.up),
 					parentMain.colorOfAxes[axis1],
 					(transform.position - dragStartPos).magnitude * 2f + main.axisIndicatorLengthOffset);
 

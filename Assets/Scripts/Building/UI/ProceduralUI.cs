@@ -36,14 +36,16 @@ public class ProceduralUI : MonoBehaviour
 
 	void Update()
 	{
-		if (Controls.mousePos != Controls.lastMousePos || Mouse.current.rightButton.isPressed)
+		if (visible)
 		{
+			//if (Controls.mousePos != Controls.lastMousePos || Mouse.current.rightButton.isPressed) {
 			MouseUpdate();
 
 			foreach (ProceduralUIComponent component in components)
 			{
 				component.Update();
 			}
+			//}
 		}
 	}
 
@@ -225,15 +227,20 @@ public class ProceduralUI : MonoBehaviour
 		TextMeshProUGUI text = null;
 		Button button = null;
 
+		if (component.Type == UIComponentType.dropdown || component.Type == UIComponentType.button ||  component.Type == UIComponentType.text)
+		{
+			text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
+			text.text = component.Text;
+			text.font = Config.UI.FontAsset;
+			text.fontSize = Config.UI.FontSize;
+			text.color = Config.UI.TextColor;
+		}
+
 		switch (component.Type)
 		{
 			case UIComponentType.dropdown:
 			case UIComponentType.button:
-				image.color = Color.white;
-
-				text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
-				text.text = component.Text;
-				text.font = Config.UI.FontAsset;
+				image.color = Color.white; // button colors control it, white so they display correctly
 
 				button = newObj.AddComponent<Button>();
 				button.colors = new()
@@ -249,9 +256,6 @@ public class ProceduralUI : MonoBehaviour
 				break;
 			case UIComponentType.text:
 				image.color = Config.UI.BackgroundColor;
-				text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
-				text.text = component.Text;
-				text.font = Config.UI.FontAsset;
 
 				break;
 			case UIComponentType.divider:
@@ -292,6 +296,31 @@ public class ProceduralUI : MonoBehaviour
 			component.dropdownArrowImage = iconComponent;
 		}
 
+		if (!string.IsNullOrWhiteSpace(component.Description))
+		{
+			// generate description object
+			GameObject descriptionObject = Instantiate(Config.UI.DescriptionPrefab, newObj.transform);
+			Image descriptionBackground = descriptionObject.GetComponent<Image>();
+			descriptionBackground.color = Config.UI.DescriptionBackgroundColor;
+
+			RectTransform descriptionRect = descriptionObject.GetComponent<RectTransform>();
+			float width = TextWidthApproximation(component.Description, Config.UI.FontAsset, Config.UI.DescriptionFontSize) + Config.UI.InsidePadding * 2;
+			descriptionRect.sizeDelta = new(width, Config.UI.DescriptionHeight);
+
+			TextMeshProUGUI descriptionText = descriptionObject.GetComponentInChildren<TextMeshProUGUI>();
+			descriptionText.text = component.Description;
+			descriptionText.font = Config.UI.FontAsset;
+			descriptionText.fontSize = Config.UI.DescriptionFontSize;
+			descriptionText.color = Config.UI.TextColor;
+
+			descriptionText.rectTransform.offsetMin = Config.UI.InsidePadding * Vector2.one;
+			descriptionText.rectTransform.offsetMax = -Config.UI.InsidePadding * Vector2.one;
+			
+			descriptionObject.SetActive(false);
+			component.descriptionTransform = descriptionObject.transform;
+		}
+
+
 		RectTransform rectTransform = newObj.GetComponent<RectTransform>();
 		component.rectTransform = rectTransform;
 		component.transform = newObj.transform;
@@ -314,5 +343,4 @@ public class ProceduralUI : MonoBehaviour
 			}
 		}
 	}
-	
 }

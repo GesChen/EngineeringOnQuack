@@ -1912,11 +1912,12 @@ MonoBehaviour:
   components:
   - Type: 2
     Text: new part
+    Description: makes a new part
+    icon: {fileID: 21300000, guid: 78eef94bc9af5c145bc48763559ae17d, type: 3}
     DropdownMenu: {fileID: 825463389}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 78eef94bc9af5c145bc48763559ae17d, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1924,14 +1925,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: clean up
+    Description: 
+    icon: {fileID: 21300000, guid: c308dc4599399a6449841cf8e07e1910, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: c308dc4599399a6449841cf8e07e1910, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1939,14 +1942,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: undo
+    Description: 
+    icon: {fileID: 21300000, guid: 875e723923880a0469398366c812ef19, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 875e723923880a0469398366c812ef19, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1954,14 +1959,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: redo
+    Description: 
+    icon: {fileID: 21300000, guid: bd6f66b60da6c3640b2269ee97393238, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: bd6f66b60da6c3640b2269ee97393238, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -1969,6 +1976,7 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   mouseOver: 0
   mouseInRange: 0
@@ -2010,11 +2018,12 @@ MonoBehaviour:
   components:
   - Type: 2
     Text: structural
+    Description: 
+    icon: {fileID: 21300000, guid: 485f5d5b5bbd9d542849a818f898a736, type: 3}
     DropdownMenu: {fileID: 825463392}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 485f5d5b5bbd9d542849a818f898a736, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2022,14 +2031,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 2
     Text: mechanical
+    Description: 
+    icon: {fileID: 21300000, guid: 72e962f7e9655ee4c98a83c45d8e27e9, type: 3}
     DropdownMenu: {fileID: 825463391}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 72e962f7e9655ee4c98a83c45d8e27e9, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2037,14 +2048,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 2
     Text: digital
+    Description: 
+    icon: {fileID: 21300000, guid: d178f5a0d51ea854bbe5f44870a8f157, type: 3}
     DropdownMenu: {fileID: 825463390}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: d178f5a0d51ea854bbe5f44870a8f157, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2052,14 +2065,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: cable
+    Description: 
+    icon: {fileID: 21300000, guid: 6138240bdaca76040a961dbf1b34fe1a, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 6138240bdaca76040a961dbf1b34fe1a, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2067,6 +2082,7 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   mouseOver: 0
   mouseInRange: 0
@@ -2093,11 +2109,12 @@ MonoBehaviour:
   components:
   - Type: 1
     Text: cpu
+    Description: 
+    icon: {fileID: 21300000, guid: 79cc401dcf614d849a7c43870ff76d08, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 79cc401dcf614d849a7c43870ff76d08, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2105,14 +2122,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: ram 8kb
+    Description: 
+    icon: {fileID: 21300000, guid: a720fb71f83b1774faf59eecb3b770b7, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: a720fb71f83b1774faf59eecb3b770b7, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2120,14 +2139,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: display
+    Description: 
+    icon: {fileID: 21300000, guid: 0b907303fefa154479359e2071a14cb0, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 0b907303fefa154479359e2071a14cb0, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2135,14 +2156,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: script
+    Description: 
+    icon: {fileID: 21300000, guid: c3a45fc742bd47e43b5aced7e7df9cd4, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: c3a45fc742bd47e43b5aced7e7df9cd4, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2150,6 +2173,7 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   mouseOver: 0
   mouseInRange: 0
@@ -2176,11 +2200,12 @@ MonoBehaviour:
   components:
   - Type: 1
     Text: motor 1
+    Description: 
+    icon: {fileID: 21300000, guid: 280f2e8455dd0de4a97b83b5269eb9db, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 280f2e8455dd0de4a97b83b5269eb9db, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2188,14 +2213,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: motor 2
+    Description: 
+    icon: {fileID: 21300000, guid: f53ff0598df76f3428011583bfdcb5fd, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: f53ff0598df76f3428011583bfdcb5fd, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2203,14 +2230,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: piston 1
+    Description: 
+    icon: {fileID: 21300000, guid: 32a2e66b88a5c33439dfd643e2dbc742, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 32a2e66b88a5c33439dfd643e2dbc742, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2218,14 +2247,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: piston 2
+    Description: 
+    icon: {fileID: 21300000, guid: 74ed1d3a28e4dac42b320cddf177a6c5, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 74ed1d3a28e4dac42b320cddf177a6c5, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2233,14 +2264,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: servo 2
+    Description: 
+    icon: {fileID: 21300000, guid: 1ab64469783fc69478632099f7551b63, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 1ab64469783fc69478632099f7551b63, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2248,14 +2281,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: servo 1
+    Description: 
+    icon: {fileID: 21300000, guid: b1cc2307262dafb44882a0409bc1b6ad, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: b1cc2307262dafb44882a0409bc1b6ad, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2263,6 +2298,7 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   mouseOver: 0
   mouseInRange: 0
@@ -2289,11 +2325,12 @@ MonoBehaviour:
   components:
   - Type: 1
     Text: cube
+    Description: 
+    icon: {fileID: 21300000, guid: 3a86210c41c5a174fbecebd1706acfa9, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 3a86210c41c5a174fbecebd1706acfa9, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2301,14 +2338,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: sphere
+    Description: 
+    icon: {fileID: 21300000, guid: b44c626446a7cb44196d7c6713b98822, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: b44c626446a7cb44196d7c6713b98822, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2316,14 +2355,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: cylinder
+    Description: 
+    icon: {fileID: 21300000, guid: 2d68e2770f6bc1a4b9a4ae5201d47544, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: 2d68e2770f6bc1a4b9a4ae5201d47544, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2331,14 +2372,16 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   - Type: 1
     Text: wedge
+    Description: 
+    icon: {fileID: 21300000, guid: e70375d150a8f8a44bccf2a5de84defc, type: 3}
     DropdownMenu: {fileID: 0}
     OnClick:
       m_PersistentCalls:
         m_Calls: []
-    icon: {fileID: 21300000, guid: e70375d150a8f8a44bccf2a5de84defc, type: 3}
     main: {fileID: 0}
     transform: {fileID: 0}
     rectTransform: {fileID: 0}
@@ -2346,6 +2389,7 @@ MonoBehaviour:
     textmeshproText: {fileID: 0}
     button: {fileID: 0}
     dropdownArrowImage: {fileID: 0}
+    descriptionTransform: {fileID: 0}
     mouseOver: 0
   mouseOver: 0
   mouseInRange: 0
@@ -3874,6 +3918,7 @@ GameObject:
   - component: {fileID: 1569215799}
   - component: {fileID: 1569215800}
   - component: {fileID: 1569215801}
+  - component: {fileID: 1569215803}
   - component: {fileID: 1569215802}
   m_Layer: 0
   m_Name: GameManager
@@ -3938,10 +3983,12 @@ MonoBehaviour:
     _maxRightClickTime: 0.1
     _maxMovementAfterClick: 30
     _maxMouseMovementToCount: 10
+    _hoverTimeUntilDescription: 0.5
     _backgroundColor: {r: 0.21, g: 0.21, b: 0.21, a: 1}
+    _descriptionBackgroundColor: {r: 0.156, g: 0.156, b: 0.156, a: 1}
     _buttonHoverColor: {r: 0.39, g: 0.39, b: 0.39, a: 1}
     _buttonPressedColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
-    _textColor: {r: 1, g: 1, b: 1, a: 0}
+    _textColor: {r: 1, g: 1, b: 1, a: 1}
     _outlineThickness: 2
     _outlineColor: {r: 0.433, g: 0.433, b: 0.433, a: 1}
     _itemHeight: 30
@@ -3955,11 +4002,15 @@ MonoBehaviour:
     _displayTopLeftCornerOffset: {x: 10, y: 10}
     _minDistFromSides: 5
     _dropDownDisplayOffset: 6
+    _descriptionFontSize: 20
+    _descriptionHeight: 25
     _panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
       type: 3}
     _componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
       type: 3}
     _textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
+      type: 3}
+    _descriptionPrefab: {fileID: 5288230183721291851, guid: 262f437d7949d1b439e26820825c71d1,
       type: 3}
     _dividerPrefab: {fileID: 0}
     _dropDownArrow: {fileID: 5288230183721291851, guid: e8a7ff04c26cda94ab93fc650eb5da0a,
@@ -3972,6 +4023,20 @@ MonoBehaviour:
       type: 3}
   _fpsLimit: 60
   _maxRecursionDepth: 128
+--- !u!114 &1569215803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569215798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 154fc94c9b4ac0b43b21b3ae67c927ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mouseOverWindow: 0
+  selectionStatus: 0
 --- !u!1 &1577646644
 GameObject:
   m_ObjectHideFlags: 0

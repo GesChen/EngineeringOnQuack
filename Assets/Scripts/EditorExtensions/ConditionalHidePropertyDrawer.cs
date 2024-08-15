@@ -43,18 +43,8 @@ public class ConditionalHidePropertyDrawer : PropertyDrawer
 
 		if (sourcePropertyValue != null)
 		{
-			dynamic objectReferece = sourcePropertyValue.type;
-			Debug.Log(objectReferece);
-			enabled = false;
-			foreach (object obj in condHAtt.ConditionalTargets)
-			{
-				Debug.Log($"checking against {obj}");
-				if (objectReferece == obj)
-				{
-					enabled = true;
-					break;
-				}
-			}
+			object objectReferece = sourcePropertyValue.type;
+			enabled = objectReferece == condHAtt.ConditionalTarget;
 		}
 		else
 		{
