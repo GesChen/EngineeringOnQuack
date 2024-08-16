@@ -331,11 +331,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   from: {fileID: 1865892313}
   to: {fileID: 500701787}
-  segments: 10
-  segmentRadius: 0.1
+  segments: 3
+  extensionSegments: 1
   segmentMass: 0.1
+  segmentDrag: 0.1
   spanningObject: {fileID: 2998913632226005992, guid: e82e403657f3f2946831abd20294ceea,
     type: 3}
+  radius: 0.05
+  cableMaterial: {fileID: 2100000, guid: 46f0626f03d8bc840bdea339cc1995cd, type: 2}
+  attemptStability: 1
+  spazWarning: 0
+  maxVelocity: 15
+  dragExponent: 5
+  returnSpeed: 0.8
+  breakable: 0
+  breakingForce: 100
   fromObject: {fileID: 0}
   toObject: {fileID: 0}
 --- !u!4 &715649352
@@ -718,6 +728,7 @@ GameObject:
   - component: {fileID: 1681030640}
   - component: {fileID: 1681030644}
   - component: {fileID: 1681030643}
+  - component: {fileID: 1681030645}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -951,6 +962,21 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
+--- !u!114 &1681030645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1681030639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edee07f6bb84efd45836436218731b81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toThrow: {fileID: 5529173206008472493, guid: c71358ea28aba254398c23d99ef6e541, type: 3}
+  force: 10
+  lifetime: 10
 --- !u!1 &1865892312
 GameObject:
   m_ObjectHideFlags: 0

@@ -9,11 +9,30 @@ public class Cable : MonoBehaviour
 	public Transform from;
 	public Transform to;
 	public int segments;
-	public float segmentRadius;
+	public int extensionSegments;
 	public float segmentMass;
+	public float segmentDrag;
 	public GameObject spanningObject;
 
 	private List<Rigidbody> interRbs;
+
+	[Header("Rendering")]
+	public float radius;
+	//public int resolution;
+	public Material cableMaterial;
+	private LineRenderer lineRenderer;
+	//private Mesh mesh;
+
+	[Header("Stability")]
+	public bool attemptStability;
+	public bool spazWarning;
+	public float maxVelocity;
+	public float dragExponent;
+	public float returnSpeed;
+
+	[Header("Fun")] // may be removed
+	public bool breakable;
+	public float breakingForce;
 
 	[Space]
 	public Transform fromObject;
@@ -24,6 +43,11 @@ public class Cable : MonoBehaviour
 		SetupCable();
 	}
 
+	void Update()
+	{
+		RenderCable();
+		if(attemptStability) PreventSpazzing();
+	}
 	void SetupCable()
 	{
 		ResetCable();
@@ -39,12 +63,11 @@ public class Cable : MonoBehaviour
 		firstrb.isKinematic = true;
 		interRbs.Add(firstrb);
 
-		for (int i = 0; i < segments + 1; i++)
+		for (int i = 0; i < segments + 1 + extensionSegments; i++)
 		{
 			GameObject inter = Instantiate(spanningObject, transform);
 			float phase = (i + 1f) / (segments + 1f);
-			Debug.Log(phase);
-			inter.transform.position = Vector3.Lerp(from.position, to.position, phase);
+			inter.transform.position = Vector3.LerpUnclamped(from.position, to.position, phase);
 
 			interRbs.Add(inter.GetComponent<Rigidbody>());
 		}
@@ -68,6 +91,8 @@ public class Cable : MonoBehaviour
 			joint.connectedBody = next;
 			joint.anchor = Vector3.zero;
 			joint.connectedAnchor = next.transform.position - cur.transform.position;
+			if (breakable)
+				joint.breakForce = breakingForce;
 		}
 
 		// final acts really weird
@@ -76,14 +101,18 @@ public class Cable : MonoBehaviour
 		finalJoint.autoConfigureConnectedAnchor = false;
 		finalJoint.connectedAnchor = Vector3.zero;
 		
-
-
-
 		foreach (Rigidbody rb in interRbs)
 		{
 			rb.mass = segmentMass;
-			rb.GetComponent<SphereCollider>().radius = segmentRadius;
+			rb.drag = segmentDrag;
+			rb.GetComponent<SphereCollider>().radius = radius;
 		}
+
+		lineRenderer = gameObject.AddComponent<LineRenderer>();
+		lineRenderer.startWidth = radius * 2;
+		lineRenderer.endWidth = radius * 2;
+		lineRenderer.material = cableMaterial;
+		lineRenderer.positionCount = interRbs.Count;
 	}
 
 	void ResetCable()
@@ -96,5 +125,54 @@ public class Cable : MonoBehaviour
 		}
 
 		Destroy(from.gameObject.GetComponent<ConfigurableJoint>());
+	}
+
+	void PreventSpazzing()
+	{
+		for (int i = 0; i < interRbs.Count; i++)
+		{
+			Rigidbody rb = interRbs[i];
+			if (rb.velocity.sqrMagnitude > maxVelocity * maxVelocity)
+			{
+				float newDrag = Mathf.Pow(rb.velocity.magnitude - maxVelocity, dragExponent) + segmentDrag;
+				if (spazWarning) Debug.LogWarning($"spazzing detected, applying {newDrag} drag");
+				rb.drag = newDrag;
+			}
+			else
+			{
+				rb.drag = Mathf.Lerp(rb.drag, segmentDrag, returnSpeed);
+			}
+		}
+	}
+
+	/*
+	void SetupMesh()
+	{
+		Mesh mesh = gameObject.AddComponent<MeshFilter>().mesh;
+		MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
+		renderer.material = cableMaterial;
+	}
+
+	void RenderCable()
+	{
+		mesh.Clear();
+
+		List<Vector3> vertices = new();
+		List<int> tris = new();
+
+
+	}
+	*/
+
+	void RenderCable()
+	{
+		Vector3[] positions = new Vector3[interRbs.Count];
+
+		for (int i = 0; i < interRbs.Count; i++)
+		{
+			positions[i] = interRbs[i].transform.position;
+		}
+
+		lineRenderer.SetPositions(positions);
 	}
 }
