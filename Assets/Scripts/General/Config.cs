@@ -47,7 +47,7 @@ public class Config : MonoBehaviour
 		public GameObject _panelPrefab;
 		public GameObject _componentPrefab;
 		public GameObject _textPrefab;
-		public GameObject _descriptionPrefab;
+		public GameObject _descriptionObject;
 		public GameObject _dividerPrefab;
 		public GameObject _dropDownArrow;
 		public GameObject _iconPrefab;
@@ -83,7 +83,7 @@ public class Config : MonoBehaviour
 		public static GameObject PanelPrefab;
 		public static GameObject ComponentPrefab;
 		public static GameObject TextPrefab;
-		public static GameObject DescriptionPrefab;
+		public static GameObject DescriptionObject;
 		public static GameObject DividerPrefab;
 		public static GameObject DropDownArrow;
 		public static GameObject IconPrefab;
@@ -132,7 +132,7 @@ public class Config : MonoBehaviour
 		UI.PanelPrefab					= UIConfig._panelPrefab;
 		UI.ComponentPrefab				= UIConfig._componentPrefab;
 		UI.TextPrefab					= UIConfig._textPrefab;
-		UI.DescriptionPrefab			= UIConfig._descriptionPrefab;
+		UI.DescriptionObject			= UIConfig._descriptionObject;
 		UI.DividerPrefab				= UIConfig._dividerPrefab;
 		UI.DropDownArrow				= UIConfig._dropDownArrow;
 		UI.IconPrefab					= UIConfig._iconPrefab;

@@ -24,6 +24,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	public ProceduralUI DropdownMenu;
 	public Button.ButtonClickedEvent OnClick = new();
 
+	[HideInNormalInspector] public bool mouseOver;
 	[HideInNormalInspector] public ProceduralUI main;
 	[HideInNormalInspector] public Transform transform;
 	[HideInNormalInspector] public RectTransform rectTransform;
@@ -31,9 +32,9 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	[HideInNormalInspector] public TextMeshProUGUI textmeshproText;
 	[HideInNormalInspector] public Button button;
 	[HideInNormalInspector] public Image dropdownArrowImage;
-	[HideInNormalInspector] public Transform descriptionTransform;
 
-	[HideInNormalInspector] public bool mouseOver;
+	[HideInNormalInspector] public ComponentDescription description;
+	[HideInNormalInspector] public int descriptionBoollistIndex;
 
 	bool lastMouseOver;
 	float startOverTime;
@@ -62,8 +63,11 @@ public class ProceduralUIComponent // general container for components, doesnt a
 		}
 		if (!string.IsNullOrWhiteSpace(Description))
 		{
-			if (mouseOver && Time.time - startOverTime > Config.UI.HoverTimeUntilDescription)
-				ShowDescription();
+			if (mouseOver)
+			{
+				if (Time.time - startOverTime > Config.UI.HoverTimeUntilDescription)
+					ShowDescription();
+			}
 			else
 				HideDescription();
 		}
@@ -118,20 +122,19 @@ public class ProceduralUIComponent // general container for components, doesnt a
 
 	public void ShowDescription()
 	{
-		descriptionTransform.gameObject.SetActive(true);
+		main.PrimeDescription(this);
+		description.any[descriptionBoollistIndex] = true;
 
-		Vector2 newLocal = descriptionTransform.localPosition;
-		newLocal.y = -Config.UI.ItemHeight / 2 - Config.UI.DescriptionHeight / 2;
-		descriptionTransform.localPosition = newLocal;
+		float yOffset = Config.UI.ItemHeight / 2 + Config.UI.DescriptionHeight / 2;
+		Vector2 newGlobal = new (
+			(transform.position.x + Mouse.current.position.value.x) / 2,
+			transform.position.y - yOffset);
 
-		Vector3 newGlobal = descriptionTransform.position;
-		newGlobal.x = (transform.position.x + Mouse.current.position.value.x) / 2;
-		newGlobal.z = 10;
-		descriptionTransform.position = newGlobal;
+		description.mainObject.transform.position = newGlobal;
 	}
 
 	public void HideDescription()
 	{
-		descriptionTransform.gameObject.SetActive(false);
+		description.any[descriptionBoollistIndex] = false;
 	}
 }

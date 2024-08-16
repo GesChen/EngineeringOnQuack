@@ -23,6 +23,7 @@ public class ProceduralUI : MonoBehaviour
 	[HideInNormalInspector] public float height;
 	[HideInNormalInspector] public bool dropdownOverride;
 	[HideInNormalInspector] public bool anyDropDownsInRange;
+	[HideInNormalInspector] public ComponentDescription description;
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
@@ -30,6 +31,7 @@ public class ProceduralUI : MonoBehaviour
 	void Start()
 	{
 		// generate everything and then hide it
+		description = Config.UI.DescriptionObject.GetComponent<ComponentDescription>();
 		Generate();
 		Hide();
 	}
@@ -296,37 +298,17 @@ public class ProceduralUI : MonoBehaviour
 			component.dropdownArrowImage = iconComponent;
 		}
 
-		if (!string.IsNullOrWhiteSpace(component.Description))
-		{
-			// generate description object
-			GameObject descriptionObject = Instantiate(Config.UI.DescriptionPrefab, newObj.transform);
-			Image descriptionBackground = descriptionObject.GetComponent<Image>();
-			descriptionBackground.color = Config.UI.DescriptionBackgroundColor;
-
-			RectTransform descriptionRect = descriptionObject.GetComponent<RectTransform>();
-			float width = TextWidthApproximation(component.Description, Config.UI.FontAsset, Config.UI.DescriptionFontSize) + Config.UI.InsidePadding * 2;
-			descriptionRect.sizeDelta = new(width, Config.UI.DescriptionHeight);
-
-			TextMeshProUGUI descriptionText = descriptionObject.GetComponentInChildren<TextMeshProUGUI>();
-			descriptionText.text = component.Description;
-			descriptionText.font = Config.UI.FontAsset;
-			descriptionText.fontSize = Config.UI.DescriptionFontSize;
-			descriptionText.color = Config.UI.TextColor;
-
-			descriptionText.rectTransform.offsetMin = Config.UI.InsidePadding * Vector2.one;
-			descriptionText.rectTransform.offsetMax = -Config.UI.InsidePadding * Vector2.one;
-			
-			descriptionObject.SetActive(false);
-			component.descriptionTransform = descriptionObject.transform;
-		}
-
-
 		RectTransform rectTransform = newObj.GetComponent<RectTransform>();
 		component.rectTransform = rectTransform;
 		component.transform = newObj.transform;
 		component.imageComponent = image;
 		component.textmeshproText = text;
 		component.button = button;
+
+		component.description = description;
+		int index = component.description.any.Count;
+		component.description.any.Add(false);
+		component.descriptionBoollistIndex = index;
 
 		component.main = this;
 
@@ -342,5 +324,25 @@ public class ProceduralUI : MonoBehaviour
 				component.HideDropdown();
 			}
 		}
+	}
+
+	public void PrimeDescription(ProceduralUIComponent component)
+	{
+		// generate description object
+		Image descriptionBackground = description.mainObject.GetComponent<Image>();
+		descriptionBackground.color = Config.UI.DescriptionBackgroundColor;
+
+		RectTransform descriptionRect = description.mainObject.GetComponent<RectTransform>();
+		float width = TextWidthApproximation(component.Description, Config.UI.FontAsset, Config.UI.DescriptionFontSize) + Config.UI.InsidePadding * 2;
+		descriptionRect.sizeDelta = new(width, Config.UI.DescriptionHeight);
+
+		TextMeshProUGUI descriptionText = description.mainObject.GetComponentInChildren<TextMeshProUGUI>();
+		descriptionText.text = component.Description;
+		descriptionText.font = Config.UI.FontAsset;
+		descriptionText.fontSize = Config.UI.DescriptionFontSize;
+		descriptionText.color = Config.UI.TextColor;
+
+		descriptionText.rectTransform.offsetMin = Config.UI.InsidePadding * Vector2.one;
+		descriptionText.rectTransform.offsetMax = -Config.UI.InsidePadding * Vector2.one;
 	}
 }
