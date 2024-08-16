@@ -5,17 +5,23 @@ using UnityEngine;
 
 public class Cable : MonoBehaviour
 {
+	[Header("Config")]
 	public Transform from;
 	public Transform to;
 	public int segments;
+	public float segmentRadius;
+	public float segmentMass;
 	public GameObject spanningObject;
 
 	private List<Rigidbody> interRbs;
 
+	[Space]
+	public Transform fromObject;
+	public Transform toObject;
+
 	void Start()
 	{
 		SetupCable();
-		Debug.Break();
 	}
 
 	void SetupCable()
@@ -25,13 +31,15 @@ public class Cable : MonoBehaviour
 		interRbs = new();
 
 		// extra first as child of the start
-		GameObject first = Instantiate(spanningObject, from);
-		first.transform.localPosition = Vector3.zero;
+		GameObject first = Instantiate(spanningObject, transform);
+		first.name = "firstobj";
+		fromObject = first.transform;
+		first.transform.position = from.position;
 		Rigidbody firstrb = first.GetComponent<Rigidbody>();
 		firstrb.isKinematic = true;
 		interRbs.Add(firstrb);
 
-		for (int i = 0; i < segments; i++)
+		for (int i = 0; i < segments + 1; i++)
 		{
 			GameObject inter = Instantiate(spanningObject, transform);
 			float phase = (i + 1f) / (segments + 1f);
@@ -40,7 +48,17 @@ public class Cable : MonoBehaviour
 
 			interRbs.Add(inter.GetComponent<Rigidbody>());
 		}
-		
+
+		// last segment 
+		GameObject last = Instantiate(spanningObject, transform);
+		Destroy(last.GetComponent<ConfigurableJoint>());
+		last.name = "lastobj";
+		toObject = last.transform;
+		last.transform.position = to.position;
+		Rigidbody lastrb = last.GetComponent<Rigidbody>();
+		lastrb.isKinematic = true;
+		interRbs.Add(lastrb);
+
 		for (int i = 0; i < interRbs.Count - 1; i++)
 		{
 			Rigidbody cur = interRbs[i];
@@ -52,13 +70,20 @@ public class Cable : MonoBehaviour
 			joint.connectedAnchor = next.transform.position - cur.transform.position;
 		}
 
-		// first and last special cases
-		Transform end = interRbs[^1].transform;
-		ConfigurableJoint endJoint = end.gameObject.AddComponent<ConfigurableJoint>();
-		endJoint.connectedBody = to.GetComponent<Rigidbody>();
-		endJoint.anchor = Vector3.zero;
-		endJoint.connectedAnchor = end.transform.position - to.position;
+		// final acts really weird
+		ConfigurableJoint finalJoint = interRbs[^2].GetComponent<ConfigurableJoint>();
+		//finalJoint.anchor = interRbs[^1].transform.position - interRbs[^2].transform.position;
+		finalJoint.autoConfigureConnectedAnchor = false;
+		finalJoint.connectedAnchor = Vector3.zero;
 		
+
+
+
+		foreach (Rigidbody rb in interRbs)
+		{
+			rb.mass = segmentMass;
+			rb.GetComponent<SphereCollider>().radius = segmentRadius;
+		}
 	}
 
 	void ResetCable()
