@@ -7,6 +7,7 @@ public class ContextManager : MonoBehaviour
 	#region singleton
 	private static ContextManager _instance;
 	public static ContextManager Instance { get { return _instance; } }
+	public Context.ContextType contextPreview;
 	void Awake() { UpdateSingleton(); }
 	private void OnEnable() { UpdateSingleton(); }
 	void UpdateSingleton()
@@ -46,6 +47,8 @@ public class ContextManager : MonoBehaviour
 				WorkplaceContexts();
 				break;
 		}
+
+		contextPreview = Context.Current;
 	}
 
 	void DetermineMouseOverWindow()

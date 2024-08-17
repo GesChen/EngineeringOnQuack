@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor.Rendering;
 using UnityEngine;
 
-public class Test : MonoBehaviour
+public class snapTest : MonoBehaviour
 {
 	public float step;
 

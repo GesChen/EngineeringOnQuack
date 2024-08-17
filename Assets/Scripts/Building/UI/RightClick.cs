@@ -33,6 +33,8 @@ public class RightClick : MonoBehaviour
 
 		if (currentPanel != null)
 			HandleInput();
+
+		lastContext = Context.Current;
 	}
 
 	public void UpdatePanel()
@@ -79,7 +81,6 @@ public class RightClick : MonoBehaviour
 			currentPanel.Hide();
 		}
 
-		lastContext = Context.Current;
 		lastPos = mousePos;
 	}
 }
