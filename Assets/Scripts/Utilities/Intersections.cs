@@ -101,8 +101,75 @@ public class Intersections
 
 		return false;
 	}
-// expects world space verts, determines if bounds collide
-public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2)
+
+	public static bool OptimizedMeshesIntersect(
+		Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris,
+		Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2)
+	{
+		if (!BoundsIntersectWorldSpace(min1, max1, min2, max2)) return false;
+
+		int numtris1 = mesh1tris.Length / 3;
+		int numtris2 = mesh2tris.Length / 3;
+		int combinations = numtris1 * numtris2;
+
+		int[] indices = new int[combinations];
+		float[] distances = new float[combinations];
+		int[] triindex1 = new int[combinations];
+		int[] triindex2 = new int[combinations];
+		int count = 0;
+		for (int i = 0; i < numtris1; i++)
+		{
+			for (int j = 0; j < numtris2; j++)
+			{
+				indices[count] = count;
+				triindex1[count] = i;
+				triindex2[count] = j;
+				/*
+				Vector3 avg1 = (
+					mesh1verts[mesh1tris[i * 3]] +
+					mesh1verts[mesh1tris[i * 3 + 1]] +
+					mesh1verts[mesh1tris[i * 3 + 2]]) / 3f;
+
+				Vector3 avg2 =
+					(mesh2verts[mesh2tris[j * 3]] +
+					mesh2verts[mesh2tris[j * 3 + 1]] +
+					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
+
+				float dist = (avg1 - avg2).sqrMagnitude;
+				distances[count] = dist;
+				*/
+				count++;
+			}
+		}
+
+		//indices = SortIndicesByDistance(indices, distances);
+
+		float t = 0;
+		foreach (int index in indices)
+		{
+			t++;
+			int i = triindex1[index];
+			int j = triindex2[index];
+
+			if (TrianglesIntersect(
+				mesh1verts[mesh1tris[i * 3]],
+				mesh1verts[mesh1tris[i * 3 + 1]],
+				mesh1verts[mesh1tris[i * 3 + 2]],
+				mesh2verts[mesh2tris[j * 3]],
+				mesh2verts[mesh2tris[j * 3 + 1]],
+				mesh2verts[mesh2tris[j * 3 + 2]]
+				))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+
+	// expects world space verts, determines if bounds collide
+	public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2)
 	{
 		Vector3 min1 = Vector3.positiveInfinity;
 		Vector3 max1 = Vector3.negativeInfinity;
@@ -131,6 +198,17 @@ public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2)
 			min1.z <= max2.z &&
 			max1.z >= min2.z;
 
+	}
+
+	public static bool BoundsIntersectWorldSpace(Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2)
+	{
+		return
+			min1.x <= max2.x &&
+			max1.x >= min2.x &&
+			min1.y <= max2.y &&
+			max1.y >= min2.y &&
+			min1.z <= max2.z &&
+			max1.z >= min2.z;
 	}
 
 	// quicksort, sorts indicies based on distance at that index in indices list
