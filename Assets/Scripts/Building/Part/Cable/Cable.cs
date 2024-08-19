@@ -18,7 +18,7 @@ public class Cable : MonoBehaviour
 
 	[Header("Rendering")]
 	public float radius;
-	//public int resolution;
+	public float resolution;
 	public Material cableMaterial;
 	private LineRenderer lineRenderer;
 	//private Mesh mesh;
@@ -112,7 +112,6 @@ public class Cable : MonoBehaviour
 		lineRenderer.startWidth = radius * 2;
 		lineRenderer.endWidth = radius * 2;
 		lineRenderer.material = cableMaterial;
-		lineRenderer.positionCount = interRbs.Count;
 	}
 
 	void ResetCable()
@@ -166,13 +165,14 @@ public class Cable : MonoBehaviour
 
 	void RenderCable()
 	{
-		Vector3[] positions = new Vector3[interRbs.Count];
+		List<Vector3> positions = new();
 
-		for (int i = 0; i < interRbs.Count; i++)
-		{
-			positions[i] = interRbs[i].transform.position;
-		}
+		foreach (Rigidbody rb in interRbs)
+			positions.Add(rb.transform.position);
 
-		lineRenderer.SetPositions(positions);
+		List<Vector3> spline = Splines.CatmullRom(positions, resolution);
+
+		lineRenderer.positionCount = spline.Count;
+		lineRenderer.SetPositions(spline.ToArray());
 	}
 }

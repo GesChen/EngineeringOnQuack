@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,8 +8,22 @@ public class Splines : MonoBehaviour
 {
 	public static List<Vector3> CatmullRom(List<Vector3> points, float resolution)
 	{
+		if (resolution <= 0)
+		{
+			Debug.LogError("Resolution cannot be zero");
+			return null;
+		} 
+#if DEBUGMODE
+		Debug.Log("generating catmull rom spline");
+#endif
+
 		points.Insert(0, points[0]); // duplicate first point
 		points.Add(points[^1]); // duplicate last point
+
+#if DEBUGMODE
+		foreach (Vector3 point in points)
+			DebugExtra.DrawPoint(point, .1f);
+#endif
 
 		List<Vector3> curve = new();
 

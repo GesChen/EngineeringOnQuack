@@ -338,6 +338,7 @@ MonoBehaviour:
   spanningObject: {fileID: 2998913632226005992, guid: e82e403657f3f2946831abd20294ceea,
     type: 3}
   radius: 0.05
+  resolution: 0.1
   cableMaterial: {fileID: 2100000, guid: 46f0626f03d8bc840bdea339cc1995cd, type: 2}
   attemptStability: 1
   spazWarning: 0
