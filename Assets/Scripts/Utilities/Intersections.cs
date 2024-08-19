@@ -20,14 +20,18 @@ public class Intersections
 		for (int i = 0; i < m2v.Length; i++)
 			m2v[i] = obj2.TransformPoint(m2v[i]);
 
-		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
-		if (!BoundsIntersectWorldSpace(m1v, m2v)) return false;
-
 		int[] m1t = mesh1.triangles;
 		int[] m2t = mesh2.triangles;
 
-		int numtris1 = m1t.Length / 3;
-		int numtris2 = m2t.Length / 3;
+		return MeshesIntersect(m1v, m2v, m1t, m2t);
+	}
+	public static bool MeshesIntersect(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris)
+	{
+		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
+		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
+
+		int numtris1 = mesh1tris.Length / 3;
+		int numtris2 = mesh2tris.Length / 3;
 		int combinations = numtris1 * numtris2;
 
 		int[] indices = new int[combinations];
@@ -43,15 +47,15 @@ public class Intersections
 				triindex1[count] = i;
 				triindex2[count] = j;
 
-				Vector3 avg1 =
-					(m1v[m1t[i * 3]] +
-					m1v[m1t[i * 3 + 1]] +
-					m1v[m1t[i * 3 + 2]]) / 3f;
+				Vector3 avg1 =(
+					mesh1verts[mesh1tris[i * 3]] +
+					mesh1verts[mesh1tris[i * 3 + 1]] +
+					mesh1verts[mesh1tris[i * 3 + 2]]) / 3f;
 
 				Vector3 avg2 =
-					(m2v[m2t[j * 3]] +
-					m2v[m2t[j * 3 + 1]] +
-					m2v[m2t[j * 3 + 2]]) / 3f;
+					(mesh2verts[mesh2tris[j * 3]] +
+					mesh2verts[mesh2tris[j * 3 + 1]] +
+					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
 
 				float dist = (avg1 - avg2).sqrMagnitude;
 				distances[count] = dist;
@@ -69,13 +73,13 @@ public class Intersections
 			int i = triindex1[index];
 			int j = triindex2[index];
 
-			
-			Vector3 p1 = m1v[m1t[i * 3]];
-			Vector3 p2 = m1v[m1t[i * 3 + 1]];
-			Vector3 p3 = m1v[m1t[i * 3 + 2]];
-			Vector3 q1 = m2v[m2t[j * 3]];
-			Vector3 q2 = m2v[m2t[j * 3 + 1]];
-			Vector3 q3 = m2v[m2t[j * 3 + 2]];
+
+			Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
+			Vector3 p2 = mesh1verts[mesh1tris[i * 3 + 1]];
+			Vector3 p3 = mesh1verts[mesh1tris[i * 3 + 2]];
+			Vector3 q1 = mesh2verts[mesh2tris[j * 3]];
+			Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
+			Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
 
 #if DEBUGMODE
 			DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
@@ -83,12 +87,12 @@ public class Intersections
 #endif
 
 			if (TrianglesIntersect(
-				m1v[m1t[i * 3]],
-				m1v[m1t[i * 3 + 1]],
-				m1v[m1t[i * 3 + 2]],
-				m2v[m2t[j * 3]],
-				m2v[m2t[j * 3 + 1]],
-				m2v[m2t[j * 3 + 2]]
+				mesh1verts[mesh1tris[i * 3]],
+				mesh1verts[mesh1tris[i * 3 + 1]],
+				mesh1verts[mesh1tris[i * 3 + 2]],
+				mesh2verts[mesh2tris[j * 3]],
+				mesh2verts[mesh2tris[j * 3 + 1]],
+				mesh2verts[mesh2tris[j * 3 + 2]]
 				))
 			{
 				return true;
@@ -97,8 +101,8 @@ public class Intersections
 
 		return false;
 	}
-	// expects world space verts, determines if bounds collide
-	public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2)
+// expects world space verts, determines if bounds collide
+public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2)
 	{
 		Vector3 min1 = Vector3.positiveInfinity;
 		Vector3 max1 = Vector3.negativeInfinity;
