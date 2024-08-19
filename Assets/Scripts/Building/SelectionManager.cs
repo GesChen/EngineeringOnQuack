@@ -118,7 +118,7 @@ public class SelectionManager : MonoBehaviour
 		if (!PartWorldBoundsRectangleIntersect(part, corner1, corner2, maincamera))
 			return false;
 
-		Vector3[] tris = (Vector3[])part.allTris.Clone();
+		Vector3[] tris = (Vector3[])part.allTriPositions.Clone();
 
 		part.transform.TransformPoints(tris);
 

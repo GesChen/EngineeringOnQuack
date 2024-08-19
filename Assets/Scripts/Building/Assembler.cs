@@ -112,8 +112,9 @@ public class Assembler : MonoBehaviour
 		PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
 		for (int i = 0; i < bm.Parts.Count; i++)
 		{
-			Transform obj = bm.Parts[i].transform;
-			Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
+			Part part = bm.Parts[i];
+			Transform obj = part.transform;
+			Mesh mesh = part.processingMesh;
 			Vector3[] verts = mesh.vertices;
 			for (int v = 0; v < verts.Length; v++)
 				verts[v] = obj.TransformPoint(verts[v]);
