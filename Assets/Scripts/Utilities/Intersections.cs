@@ -280,7 +280,7 @@ public class Intersections
 		}
 
 		// convert intersection points into distances
-		Vector3 planeIntersectionVector = (AIntersects[0] - BIntersects[0]).normalized; // 1 from each guarunteed
+		Vector3 planeIntersectionVector = (AIntersects[0] - BIntersects[0]).normalized; // 1 from each guaranteed
 		Vector3 measurementPoint = midPoint + planeIntersectionVector * maxDistSquared * 2; // arbitrary point guarunteed not in 
 
 		float[] aDists = new float[AIntersects.Count];
