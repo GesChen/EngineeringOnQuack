@@ -35,18 +35,24 @@ public class Assembler : MonoBehaviour
 		public int index;
 	}
 
-	struct Assembly
+	public struct Subassembly
 	{
 		public List<Part> parts;
 	}
 
 	public void Assemble(BuildingManager bm)
 	{
+		List<Subassembly> subassemblies = ComputeAssemblies(bm);
+	}
+
+	public List<Subassembly> ComputeAssemblies(BuildingManager bm)
+	{
 		Debug.Log("assembling");
 		List<Connection> allConnections = FindConnections(bm);
-		List<Assembly> assemblies = ConnectionsToAssemblies(allConnections, bm.Parts);
+		List<Subassembly> assemblies = ConnectionsToAssemblies(allConnections, bm.Parts);
 
-		foreach (Assembly a in assemblies)
+		/*
+		foreach (Subassembly a in assemblies)
 		{
 			Debug.Log("assembly: ");
 			foreach (Part p in a.parts)
@@ -54,6 +60,8 @@ public class Assembler : MonoBehaviour
 				Debug.Log(p);
 			}
 		}
+		*/
+		return assemblies;
 	}
 
 	List<Connection> FindConnections(BuildingManager bm)
@@ -71,7 +79,7 @@ public class Assembler : MonoBehaviour
 		{
 			Part part = bm.Parts[i];
 			Transform obj = part.transform;
-			Mesh mesh = part.processingMesh;
+			Mesh mesh = part.basePart.processingMesh;
 			Vector3[] verts = mesh.vertices;
 			for (int v = 0; v < verts.Length; v++)
 				verts[v] = obj.TransformPoint(verts[v]);
@@ -128,10 +136,10 @@ public class Assembler : MonoBehaviour
 		return connections;
 	}
 
-	List<Assembly> ConnectionsToAssemblies(List<Connection> connections, List<Part> allParts)
+	List<Subassembly> ConnectionsToAssemblies(List<Connection> connections, List<Part> allParts)
 	{
 		Dictionary<Part, bool> partsInAssemblies = allParts.ToDictionary(part => part, value => false);
-		List<Assembly> assemblies = new();
+		List<Subassembly> assemblies = new();
 
 		foreach (Connection connection in connections)
 		{
@@ -146,7 +154,7 @@ public class Assembler : MonoBehaviour
 			bool containsB = assemblies.Any(a => a.parts.Contains(B));
 			if (!(containsA || containsB))
 			{
-				Assembly newAssembly = new() { parts = new() { A, B } };
+				Subassembly newAssembly = new() { parts = new() { A, B } };
 				assemblies.Add(newAssembly);
 			}
 			else

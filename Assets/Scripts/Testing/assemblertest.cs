@@ -5,11 +5,13 @@ using UnityEngine;
 public class assemblertest : MonoBehaviour
 {
 	public Assembler assembler;
+	public Saver saver;
 	void Update()
 	{
 		if (Input.GetKeyDown("e"))
 		{
-			assembler.Assemble(BuildingManager.Instance);
+			saver.SaveCurrentBuild("test", true);
+			//assembler.Assemble(BuildingManager.Instance);
 		}
 	}
 }

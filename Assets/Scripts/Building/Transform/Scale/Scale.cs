@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
@@ -129,7 +131,9 @@ public class Scale : MonoBehaviour
 		for (int i = 0; i < meshFilter.sharedMesh.vertexCount; i++)
 		{
 			Vector3 vertexPos = transform.position + (Vector3)(transform.localToWorldMatrix * meshFilter.sharedMesh.vertices[i]);
+#if DEBUGMODE
 			DebugExtra.DrawPoint(vertexPos, .1f);
+#endif
 			Vector2 ssPos = Camera.main.WorldToScreenPoint(vertexPos);
 			minScreen = Vector2.Min(minScreen, ssPos);
 			maxScreen = Vector2.Max(maxScreen, ssPos);

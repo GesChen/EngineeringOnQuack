@@ -3,6 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+struct Assembly
+{
+	public string name;
+	public List<PartInfo> parts;
+	public bool didPrecomputations;
+	public List<SerializableSubassembly> precomputedSubassemblies;
+	// to add onto
+}
+struct PureVector3
+{
+	public float x, y, z;
+}
+struct PureQuaternion
+{
+	public float x, y, z, w;
+}
+struct PartInfo
+{
+	public string basePartName;
+	public int id;
+	public PureVector3 position;
+	public PureQuaternion rotation;
+	public PureVector3 scale;
+}
+struct SerializableSubassembly
+{
+	public List<int> partIds;
+}
+
 public class BuildingManager : MonoBehaviour
 {
 	#region singleton
@@ -23,19 +52,19 @@ public class BuildingManager : MonoBehaviour
 	}
 	#endregion
 
-
 	public Transform mainPartsContainer;
 	public List<Part> Parts;
+	List<Part> lastParts;
 	public SelectionManager SelectionManager;
-	public TransformTools transformTools;
+	public TransformTools TransformTools;
+	public Assembler Assembler;
+	public static Dictionary<string, BasePart> AllParts = new();
 
-	// Start is called before the first frame update
 	void Start()
 	{
 
 	}
 
-	// Update is called once per frame
 	void Update()
 	{
 		Parts = FindObjectsOfType<Part>().ToList();
@@ -43,6 +72,26 @@ public class BuildingManager : MonoBehaviour
 		foreach(Part part in Parts)
 		{
 			part.Selected = SelectionManager.selection.Contains(part.transform);
+		}
+
+		if (lastParts != Parts)
+		{
+			PartsUpdated();
+		}
+		lastParts = Parts;
+	}
+
+	public void PartsUpdated()
+	{
+		UpdateIds();
+	}
+
+	void UpdateIds()
+	{
+		int id = 0;
+		foreach (Part part in Parts)
+		{
+			part.ID = id++;
 		}
 	}
 }

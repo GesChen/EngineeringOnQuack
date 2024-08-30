@@ -1,4 +1,3 @@
-using Codice.Client.BaseCommands;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -50,7 +49,7 @@ public class SelectionManager : MonoBehaviour
 		// detect drag start
 
 		// detect mouse up
-		if (!mouseDown && mouseDown != lastMouseDown && !main.transformTools.hovering)
+		if (!mouseDown && mouseDown != lastMouseDown && !main.TransformTools.hovering)
 		{
 			if (Time.time - mouseDownStartTime < Controls.clickMaxTime &&
 				Vector2.Distance(mousePos, mouseDownStartPos) < Controls.clickMaxDist)
@@ -61,7 +60,7 @@ public class SelectionManager : MonoBehaviour
 				FindObjectsInsideBounds();
 		}
 
-		dragging = mouseDown && !(main.transformTools.dragging || main.transformTools.hovering);
+		dragging = mouseDown && !(main.TransformTools.dragging || main.TransformTools.hovering);
 		selectionBoxDragging = dragging;
 		UIBox.gameObject.SetActive(dragging);
 
@@ -118,7 +117,7 @@ public class SelectionManager : MonoBehaviour
 		if (!PartWorldBoundsRectangleIntersect(part, corner1, corner2, maincamera))
 			return false;
 
-		Vector3[] tris = (Vector3[])part.allTriPositions.Clone();
+		Vector3[] tris = (Vector3[])part.basePart.allTriPositions.Clone();
 
 		part.transform.TransformPoints(tris);
 
@@ -343,7 +342,7 @@ public class SelectionManager : MonoBehaviour
 		// then break if the selection is empty
 		if (selection.Count == 0)
 		{
-			main.transformTools.active = false;
+			main.TransformTools.active = false;
 			selectionContainer.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 			selectionContainer.transform.localScale = Vector3.one;
 
@@ -351,7 +350,7 @@ public class SelectionManager : MonoBehaviour
 		}
 		else
 		{
-			main.transformTools.active = true;
+			main.TransformTools.active = true;
 		}
 
 		// handle position
@@ -363,10 +362,10 @@ public class SelectionManager : MonoBehaviour
 		}
 
 		selectionContainer.position = totalPosition / selection.Count;
-		main.transformTools.UpdatePosition();
+		main.TransformTools.UpdatePosition();
 
 		// handle rotation (local, single selection, otherwise will act globally)
-		if (selection.Count == 1 && main.transformTools.local)
+		if (selection.Count == 1 && main.TransformTools.local)
 			selectionContainer.rotation = selection[0].transform.rotation;
 		else
 			selectionContainer.rotation = Quaternion.identity;

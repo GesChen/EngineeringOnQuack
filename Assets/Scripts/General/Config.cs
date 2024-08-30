@@ -98,6 +98,8 @@ public class Config : MonoBehaviour
 	public static int FpsLimit;
 	public int _maxRecursionDepth = 128;
 	public static int MAX_RECURSION_DEPTH;
+	public string _fileSaveLocation;
+	public static string FileSaveLocation;
 
 	void Awake() { UpdateStatics(); }
 	void OnEnable() { UpdateStatics(); }
@@ -141,6 +143,6 @@ public class Config : MonoBehaviour
 
 		FpsLimit = _fpsLimit;
 		MAX_RECURSION_DEPTH = _maxRecursionDepth;
-
+		FileSaveLocation = _fileSaveLocation;
 	}
 }
