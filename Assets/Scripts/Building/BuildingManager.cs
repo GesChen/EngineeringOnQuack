@@ -53,12 +53,14 @@ public class BuildingManager : MonoBehaviour
 	#endregion
 
 	public Transform mainPartsContainer;
+	public List<BasePart> BaseParts;
 	public List<Part> Parts;
 	List<Part> lastParts;
 	public SelectionManager SelectionManager;
 	public TransformTools TransformTools;
 	public Assembler Assembler;
 	public static Dictionary<string, BasePart> AllParts = new();
+	public GameObject templatePart;
 
 	void Start()
 	{
@@ -67,7 +69,7 @@ public class BuildingManager : MonoBehaviour
 
 	void Update()
 	{
-		Parts = FindObjectsOfType<Part>().ToList();
+		Parts = FindObjectsOfType<Part>().OrderBy(part => part.ID).ToList(); // sort by id to make sure current stays in the same order
 
 		foreach(Part part in Parts)
 		{
@@ -93,5 +95,28 @@ public class BuildingManager : MonoBehaviour
 		{
 			part.ID = id++;
 		}
+	}
+
+	public void ResetParts()
+	{
+		foreach (Part part in Parts)
+		{
+			Destroy(part.gameObject);
+		}
+		Parts.Clear();
+	}
+
+	public Part newPart(string basePartName)
+	{
+		int bpIndex = BaseParts.FindIndex(bp => bp.partName == basePartName);
+		if (bpIndex == -1)
+			throw new($"basepart \"{basePartName}\" doesn't exist");
+
+		BasePart bp = BaseParts[bpIndex];
+		GameObject newPart = Instantiate(bp.prefab, mainPartsContainer);
+		Part part = newPart.GetComponent<Part>();
+		part.basePart = bp;
+
+		return part;
 	}
 }

@@ -7,6 +7,7 @@ public class BasePart : MonoBehaviour
 	public string partName;
 	public Mesh basemesh;
 	public Mesh processingMesh;
+	public GameObject prefab;
 	public Collider processingCollider;
 	public Vector3[] allVerts;
 	public int[] allTris;
