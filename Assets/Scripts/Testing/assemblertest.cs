@@ -5,15 +5,14 @@ using UnityEngine;
 public class assemblertest : MonoBehaviour
 {
 	public Assembler assembler;
-	public Saver saver;
-	public Loader loader;
+	public SaveLoad saveload;
 	void Update()
 	{
 		if (Input.GetKeyDown("e"))
 		{
-			saver.SaveCurrentBuild("test", true);
-			saver.BuildingManager.ResetParts();
-			loader.LoadFromFile("test");
+			saveload.SaveCurrentBuild("test", true);
+			saveload.BuildingManager.ResetParts();
+			saveload.LoadFromFile("test");
 
 			//assembler.Assemble(BuildingManager.Instance);
 		}

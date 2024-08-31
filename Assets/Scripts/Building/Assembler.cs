@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,6 +7,8 @@ using UnityEngine;
 
 public class Assembler : MonoBehaviour
 {
+	public BuildingManager bm;
+
 	struct Connection
 	{
 		public Transform objA;
@@ -40,18 +44,33 @@ public class Assembler : MonoBehaviour
 		public List<Part> parts;
 	}
 
-	public void Assemble(BuildingManager bm)
+	public struct AssembledSubassembly
 	{
-		List<Subassembly> subassemblies = ComputeAssemblies(bm);
+		public Transform parentContainer;
+		public List<Transform> parts;
 	}
+
+	public void Assemble()
+	{
+		GameManager.Instance.currentPlayMode = PlayingMode.Simulating;
+
+		bm.ReturnAllPartsToMain();
+		List<Subassembly> subassemblies = ComputeAssemblies(bm);
+		bm.HideAllPartsForSimulation();
+		List<AssembledSubassembly> assembledSubs = CopyToSimulation(subassemblies);
+		ReleaseRigidbodies(assembledSubs);
+	}
+
 
 	public List<Subassembly> ComputeAssemblies(BuildingManager bm)
 	{
+#if DEBUGMODE
 		Debug.Log("assembling");
+#endif
 		List<Connection> allConnections = FindConnections(bm);
 		List<Subassembly> assemblies = ConnectionsToAssemblies(allConnections, bm.Parts);
 
-		/*
+#if DEBUGMODE
 		foreach (Subassembly a in assemblies)
 		{
 			Debug.Log("assembly: ");
@@ -60,7 +79,8 @@ public class Assembler : MonoBehaviour
 				Debug.Log(p);
 			}
 		}
-		*/
+#endif
+
 		return assemblies;
 	}
 
@@ -176,125 +196,168 @@ public class Assembler : MonoBehaviour
 
 		return assemblies;
 	}
-}
-	/* old inefficient attempts, might delete
-	IEnumerator AssembleCoroutine(BuildingManager bm)
+
+	public List<AssembledSubassembly> CopyToSimulation(List<Subassembly> subs)
 	{
-		UnityEngine.Debug.Log("coroutine assembling");
-		if (bm == null) yield break;
-
-		List<Connection> connections = new();
-
-		int parts = bm.Parts.Count;
-		int toTest = bm.Parts.Count * (bm.Parts.Count - 1) / 2;
-		int tested = 0;
-
-		float start = Time.time;
-		for (int i = 0; i < parts; i++)
+		List<AssembledSubassembly> assembleds = new();
+		foreach (Subassembly sub in subs)
 		{
-			for (int j = i + 1; j < parts; j++)
+			Transform subParent = new GameObject("subassembly").transform;
+			subParent.parent = bm.SimulationContainer;
+			List<Transform> parts = new();
+			Vector3 accumPos = Vector3.zero;
+			foreach (Part part in sub.parts)
 			{
-				Part partA = bm.Parts[i];
-				Part partB = bm.Parts[j];
+				Transform newObject = Instantiate(part.gameObject).transform;
+				newObject.gameObject.SetActive(true);
+				bm.Parts.Remove(newObject.GetComponent<Part>());
 
-				if (partA == partB) continue;
+				parts.Add(newObject);
 
-				bool anyConnection = connections.Any(c =>
-					(c.objA == partA.transform && c.objB == partB.transform) ||
-					(c.objA == partB.transform && c.objB == partA.transform));
-				if (anyConnection) continue;
-
-				if (partA.transform.position == partB.transform.position || // extremely strange edge case that causes 700 ms spikes
-					Intersections.MeshesIntersect(partA.transform, partB.transform))
-					connections.Add(new() { objA = partA.transform, objB = partB.transform });
-
-				tested++;
-				//UnityEngine.Debug.Log($"Progress: {(float)tested / toTest * 100}% dt {Time.deltaTime} fps {1/Time.deltaTime}");
-
-				if (1 / Time.deltaTime < Config.FpsLimit - 10) // arbitrary slowdown limit
-				{
-					//UnityEngine.Debug.Log("too slow, waiting a frame");
-					yield return null;
-				}
+				accumPos += newObject.transform.position;
 			}
-			yield return null;
-		}
-
-		UnityEngine.Debug.Log($"coroutine took {Time.time - start} seconds");
-
-		foreach (Connection connection in connections)
-		{
-			UnityEngine.Debug.Log($"connection between {connection.objA.name} and {connection.objB.name} ");
+			subParent.position = accumPos / sub.parts.Count;
+			foreach (Transform part in parts)
+				part.parent = subParent;
 
 
-		}
-	}
-	IEnumerator AssembleCoroutineParallel(BuildingManager bm)
-	{
-		UnityEngine.Debug.Log("coroutine parallel assembling");
-		if (bm == null) yield break;
-		Stopwatch sw = Stopwatch.StartNew();
-
-		int parts = bm.Parts.Count;
-		int numToTest = parts * (parts - 1) / 2;
-		ConcurrentBag<Connection> connections = new();
-		Pair[] pairsTotest = new Pair[numToTest];
-
-		// precompute tri and vert lists
-		PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
-		for (int i = 0; i < bm.Parts.Count; i++)
-		{
-			Transform obj = bm.Parts[i].transform;
-			Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
-			Vector3[] verts = mesh.vertices;
-			for (int v = 0; v < verts.Length; v++)
-				verts[v] = obj.TransformPoint(verts[v]);
-			int[] tris = mesh.triangles;
-
-			precomputed[i] = new() { tris = tris, verts = verts };
-		}
-
-		// create tests
-		int total = 0;
-		for (int i = 0; i < parts; i++)
-		{
-			Pair[] localLoopPairsToTest = new Pair[parts - i - 1];
-			int localLoopIndex = 0;
-			for (int j = i + 1; j < parts; j++)
+			assembleds.Add(new()
 			{
-				localLoopPairsToTest[localLoopIndex] = new()
-				{
-					Averts = precomputed[i].verts,
-					Atris = precomputed[i].tris,
-					Bverts = precomputed[j].verts,
-					Btris = precomputed[j].tris,
-					A = bm.Parts[i].transform,
-					B = bm.Parts[j].transform,
-					index = total
-				};
-				total++;
-				localLoopIndex++;
-			}
-
-			Parallel.ForEach(localLoopPairsToTest, pair =>
-			{
-				if (Intersections.MeshesIntersect(pair.Averts, pair.Bverts, pair.Atris, pair.Btris))
-				{
-					connections.Add(new() { objA = pair.A, objB = pair.B });
-				}
+				parentContainer = subParent,
+				parts = parts
 			});
-			yield return null;
 		}
 
-		sw.Stop();
-		UnityEngine.Debug.Log($"coroutine parallel took {sw.ElapsedMilliseconds} ms");
+		return assembleds;
+	}
 
-		foreach (Connection connection in connections)
+	public void ReleaseRigidbodies(List<AssembledSubassembly> assembledSubs)
+	{
+		foreach (AssembledSubassembly sub in assembledSubs)
 		{
-			UnityEngine.Debug.Log($"connection between {connection.objA.name} and {connection.objB.name} ");
-
-
+			Rigidbody rb = sub.parentContainer.gameObject.AddComponent<Rigidbody>();
+			rb.velocity = Vector3.zero;
 		}
 	}
 }
-	*/
+/* old inefficient attempts, might delete
+IEnumerator AssembleCoroutine(BuildingManager bm)
+{
+	UnityEngine.Debug.Log("coroutine assembling");
+	if (bm == null) yield break;
+
+	List<Connection> connections = new();
+
+	int parts = bm.Parts.Count;
+	int toTest = bm.Parts.Count * (bm.Parts.Count - 1) / 2;
+	int tested = 0;
+
+	float start = Time.time;
+	for (int i = 0; i < parts; i++)
+	{
+		for (int j = i + 1; j < parts; j++)
+		{
+			Part partA = bm.Parts[i];
+			Part partB = bm.Parts[j];
+
+			if (partA == partB) continue;
+
+			bool anyConnection = connections.Any(c =>
+				(c.objA == partA.transform && c.objB == partB.transform) ||
+				(c.objA == partB.transform && c.objB == partA.transform));
+			if (anyConnection) continue;
+
+			if (partA.transform.position == partB.transform.position || // extremely strange edge case that causes 700 ms spikes
+				Intersections.MeshesIntersect(partA.transform, partB.transform))
+				connections.Add(new() { objA = partA.transform, objB = partB.transform });
+
+			tested++;
+			//UnityEngine.Debug.Log($"Progress: {(float)tested / toTest * 100}% dt {Time.deltaTime} fps {1/Time.deltaTime}");
+
+			if (1 / Time.deltaTime < Config.FpsLimit - 10) // arbitrary slowdown limit
+			{
+				//UnityEngine.Debug.Log("too slow, waiting a frame");
+				yield return null;
+			}
+		}
+		yield return null;
+	}
+
+	UnityEngine.Debug.Log($"coroutine took {Time.time - start} seconds");
+
+	foreach (Connection connection in connections)
+	{
+		UnityEngine.Debug.Log($"connection between {connection.objA.name} and {connection.objB.name} ");
+
+
+	}
+}
+IEnumerator AssembleCoroutineParallel(BuildingManager bm)
+{
+	UnityEngine.Debug.Log("coroutine parallel assembling");
+	if (bm == null) yield break;
+	Stopwatch sw = Stopwatch.StartNew();
+
+	int parts = bm.Parts.Count;
+	int numToTest = parts * (parts - 1) / 2;
+	ConcurrentBag<Connection> connections = new();
+	Pair[] pairsTotest = new Pair[numToTest];
+
+	// precompute tri and vert lists
+	PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
+	for (int i = 0; i < bm.Parts.Count; i++)
+	{
+		Transform obj = bm.Parts[i].transform;
+		Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
+		Vector3[] verts = mesh.vertices;
+		for (int v = 0; v < verts.Length; v++)
+			verts[v] = obj.TransformPoint(verts[v]);
+		int[] tris = mesh.triangles;
+
+		precomputed[i] = new() { tris = tris, verts = verts };
+	}
+
+	// create tests
+	int total = 0;
+	for (int i = 0; i < parts; i++)
+	{
+		Pair[] localLoopPairsToTest = new Pair[parts - i - 1];
+		int localLoopIndex = 0;
+		for (int j = i + 1; j < parts; j++)
+		{
+			localLoopPairsToTest[localLoopIndex] = new()
+			{
+				Averts = precomputed[i].verts,
+				Atris = precomputed[i].tris,
+				Bverts = precomputed[j].verts,
+				Btris = precomputed[j].tris,
+				A = bm.Parts[i].transform,
+				B = bm.Parts[j].transform,
+				index = total
+			};
+			total++;
+			localLoopIndex++;
+		}
+
+		Parallel.ForEach(localLoopPairsToTest, pair =>
+		{
+			if (Intersections.MeshesIntersect(pair.Averts, pair.Bverts, pair.Atris, pair.Btris))
+			{
+				connections.Add(new() { objA = pair.A, objB = pair.B });
+			}
+		});
+		yield return null;
+	}
+
+	sw.Stop();
+	UnityEngine.Debug.Log($"coroutine parallel took {sw.ElapsedMilliseconds} ms");
+
+	foreach (Connection connection in connections)
+	{
+		UnityEngine.Debug.Log($"connection between {connection.objA.name} and {connection.objB.name} ");
+
+
+	}
+}
+}
+*/

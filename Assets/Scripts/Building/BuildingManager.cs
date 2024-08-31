@@ -59,6 +59,7 @@ public class BuildingManager : MonoBehaviour
 	public SelectionManager SelectionManager;
 	public TransformTools TransformTools;
 	public Assembler Assembler;
+	public Transform SimulationContainer;
 	public static Dictionary<string, BasePart> AllParts = new();
 	public GameObject templatePart;
 
@@ -81,6 +82,10 @@ public class BuildingManager : MonoBehaviour
 			PartsUpdated();
 		}
 		lastParts = Parts;
+
+		bool building = GameManager.Instance.currentPlayMode == PlayingMode.Building;
+		SelectionManager.enabled = building;
+		TransformTools.enabled = building;
 	}
 
 	public void PartsUpdated()
@@ -118,5 +123,21 @@ public class BuildingManager : MonoBehaviour
 		part.basePart = bp;
 
 		return part;
+	}
+
+	public void ReturnAllPartsToMain()
+	{
+		foreach (Part part in Parts)
+		{
+			part.transform.parent = mainPartsContainer;
+		}
+	}
+
+	public void HideAllPartsForSimulation()
+	{
+		foreach (Part part in Parts)
+		{
+			part.gameObject.SetActive(false);
+		}
 	}
 }

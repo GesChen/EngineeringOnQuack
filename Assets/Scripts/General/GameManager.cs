@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum PlayingMode
+{
+	Building,
+	Simulating
+}
+
 public class GameManager : MonoBehaviour
 {
 	#region singleton
@@ -21,6 +27,8 @@ public class GameManager : MonoBehaviour
 		}
 	}
 	#endregion
+
+	public PlayingMode currentPlayMode = PlayingMode.Building;
 
 	void Update()
 	{
