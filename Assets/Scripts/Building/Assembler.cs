@@ -68,7 +68,7 @@ public class Assembler : MonoBehaviour
 		public List<Transform> parts;
 	}
 
-	public void Assemble()
+	public void Assemble(out List<Subassembly> computedSubassemblies)
 	{
 		bm.ReturnAllPartsToMain();
 		List<Subassembly> subassemblies = ComputeAssemblies(bm);
@@ -76,6 +76,8 @@ public class Assembler : MonoBehaviour
 		ReleaseRigidbodies(assembledSubs);
 
 		SimulationManager.Instance.assembledSubassemblies = assembledSubs;
+
+		computedSubassemblies = subassemblies;
 	}
 
 

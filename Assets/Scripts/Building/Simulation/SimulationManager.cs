@@ -23,18 +23,15 @@ public class SimulationManager : MonoBehaviour
 	#endregion
 
 	public List<Assembler.AssembledSubassembly> assembledSubassemblies = new();
-	[HideInNormalInspector] public List<Part> partsBeforeStart;
 
 	public void StartSimulating()
 	{
-		partsBeforeStart = BuildingManager.Instance.Parts;
-		Assembler.Instance.Assemble();
+		Assembler.Instance.Assemble(out List<Assembler.Subassembly>  computed);
+		CalculateTotalMasses(computed);
 	}
 
 	public void StopSimulating()
 	{
-		BuildingManager.Instance.Parts = partsBeforeStart;
-
 		foreach (var asm in assembledSubassemblies)
 		{
 			foreach (Transform obj in asm.parts)
@@ -44,5 +41,39 @@ public class SimulationManager : MonoBehaviour
 
 			Destroy(asm.parentContainer.gameObject);
 		}
+	}
+	
+	void CalculateTotalMasses(List<Assembler.Subassembly> subassemblies)
+	{
+		for (int i = 0; i < subassemblies.Count; i++)
+		{
+			assembledSubassemblies[i].parentContainer.GetComponent<Rigidbody>().mass = totalMass(subassemblies[i]);
+		}
+	}
+
+	float totalMass(Assembler.Subassembly asm)
+	{
+		float total = 0;
+		foreach (Part part in asm.parts)
+		{
+			total += massOfObject(part);
+		}
+		return total;
+	}
+
+	float massOfObject(Part part)
+	{
+		float total = 0;
+		// iterate through tris
+		for (int i = 0; i < part.basePart.allTriPositions.Length; i += 3)
+		{
+			Vector3 p1 = part.basePart.allTriPositions[i + 0];
+			Vector3 p2 = part.basePart.allTriPositions[i + 1];
+			Vector3 p3 = part.basePart.allTriPositions[i + 2];
+
+			total += Vector3.Dot(p1, Vector3.Cross(p2, p3)) / 6f;
+		}
+
+		return total;
 	}
 }

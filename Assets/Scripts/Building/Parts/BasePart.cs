@@ -21,7 +21,7 @@ public class BasePart : MonoBehaviour
 
 		List<int> allIndexes = new();
 		GetAllTris(transform, ref allIndexes);
-		allTriPositions = all.ToArray();
+		allTris = allIndexes.ToArray();
 
 		all = new();
 		GetMeshVertices(transform, ref all);
