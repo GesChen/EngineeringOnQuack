@@ -78,11 +78,11 @@ public class RotateView : MonoBehaviour
 	}
 	void ResetTransform()
 	{
-		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		foreach (Transform t in SelectionManager.Instance.selection)
 		{
 			t.rotation = Quaternion.identity;
 		}
-		main.buildingManager.SelectionManager.UpdateContainer();
+		SelectionManager.Instance.UpdateContainer();
 	}
 	bool MouseOver()
 	{

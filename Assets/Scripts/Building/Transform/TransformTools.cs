@@ -76,7 +76,7 @@ public class TransformTools : MonoBehaviour
 	void Update()
 	{
 		// dont display while selecting, issues pop up with interference in hovering and stuff
-		currentSize = (active && !buildingManager.SelectionManager.selectionBoxDragging)? size : 0;
+		currentSize = (active && !SelectionManager.Instance.selectionBoxDragging)? size : 0;
 
 		if (!dragging)
 			transform.localScale = Vector3.Distance(Camera.main.transform.position, selectionContainer.position) * currentSize * Vector3.one;

@@ -5,8 +5,26 @@ using UnityEngine;
 
 public class SelectionManager : MonoBehaviour
 {
+	#region singleton
+	private static SelectionManager _instance;
+	public static SelectionManager Instance { get { return _instance; } }
+	void Awake() { UpdateSingleton(); }
+	private void OnEnable() { UpdateSingleton(); }
+	void UpdateSingleton()
+	{
+		if (_instance != null && _instance != this)
+		{
+			Destroy(this);
+		}
+		else
+		{
+			_instance = this;
+		}
+	}
+	#endregion
+
+
 	public bool selectionBoxDragging;
-	public BuildingManager main;
 
 	public int testInterval;
 	public int minPixelsMovedForRetest;
@@ -49,7 +67,7 @@ public class SelectionManager : MonoBehaviour
 		// detect drag start
 
 		// detect mouse up
-		if (!mouseDown && mouseDown != lastMouseDown && !main.TransformTools.hovering)
+		if (!mouseDown && mouseDown != lastMouseDown && !BuildingManager.Instance.TransformTools.hovering)
 		{
 			if (Time.time - mouseDownStartTime < Controls.clickMaxTime &&
 				Vector2.Distance(mousePos, mouseDownStartPos) < Controls.clickMaxDist)
@@ -60,7 +78,7 @@ public class SelectionManager : MonoBehaviour
 				FindObjectsInsideBounds();
 		}
 
-		dragging = mouseDown && !(main.TransformTools.dragging || main.TransformTools.hovering);
+		dragging = mouseDown && !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
 		selectionBoxDragging = dragging;
 		UIBox.gameObject.SetActive(dragging);
 
@@ -97,7 +115,7 @@ public class SelectionManager : MonoBehaviour
 			selection = new();
 
 		Camera maincamera = Camera.main;
-		foreach (Part part in main.Parts)
+		foreach (Part part in BuildingManager.Instance.Parts)
 		{
 			if (part == null) continue;
 
@@ -286,7 +304,7 @@ public class SelectionManager : MonoBehaviour
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit))
 		{
 			Part component = hit.transform.GetComponent<Part>();
-			if (component && main.Parts.Contains(component))
+			if (component && BuildingManager.Instance.Parts.Contains(component))
 				selected = hit.transform;
 		}
 
@@ -330,19 +348,19 @@ public class SelectionManager : MonoBehaviour
 	{
 		// remove objects from the container that are no longer in selection 
 		// (this is put before return, in case selection is empty then this will not happen
-		foreach (Part p in main.Parts)
+		foreach (Part p in BuildingManager.Instance.Parts)
 		{
 			Transform t = p.transform;
 			if (!selection.Contains(t))
 			{
-				t.SetParent(main.mainPartsContainer, true);
+				t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
 			}
 		}
 		
 		// then break if the selection is empty
 		if (selection.Count == 0)
 		{
-			main.TransformTools.active = false;
+			BuildingManager.Instance.TransformTools.active = false;
 			selectionContainer.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 			selectionContainer.transform.localScale = Vector3.one;
 
@@ -350,22 +368,22 @@ public class SelectionManager : MonoBehaviour
 		}
 		else
 		{
-			main.TransformTools.active = true;
+			BuildingManager.Instance.TransformTools.active = true;
 		}
 
 		// handle position
 		Vector3 totalPosition = Vector3.zero;
 		foreach (Transform t in selection)
 		{
-			t.SetParent(main.mainPartsContainer, true);
+			t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
 			totalPosition += t.position;
 		}
 
 		selectionContainer.position = totalPosition / selection.Count;
-		main.TransformTools.UpdatePosition();
+		BuildingManager.Instance.TransformTools.UpdatePosition();
 
 		// handle rotation (local, single selection, otherwise will act globally)
-		if (selection.Count == 1 && main.TransformTools.local)
+		if (selection.Count == 1 && BuildingManager.Instance.TransformTools.local)
 			selectionContainer.rotation = selection[0].transform.rotation;
 		else
 			selectionContainer.rotation = Quaternion.identity;

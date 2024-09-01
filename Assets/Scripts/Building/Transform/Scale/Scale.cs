@@ -96,7 +96,7 @@ public class Scale : MonoBehaviour
 	void ResetTransform()
 	{
 		resetting = true;
-		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		foreach (Transform t in SelectionManager.Instance.selection)
 		{
 			Vector3 scaling = t.localScale;
 			scaling.Scale(Vector3.one - axis);
@@ -104,7 +104,7 @@ public class Scale : MonoBehaviour
 			if (full) scaling = Vector3.one;
 			t.localScale = scaling;
 		}
-		main.buildingManager.SelectionManager.UpdateContainer();
+		SelectionManager.Instance.UpdateContainer();
 	}
 	bool MouseOver()
 	{
@@ -189,7 +189,7 @@ public class Scale : MonoBehaviour
 			dragStartPos = main.transform.position;
 
 			startScales = new();
-			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			foreach (Transform t in SelectionManager.Instance.selection)
 			{
 				startScales[t] = t.localScale;
 			}
@@ -266,13 +266,13 @@ public class Scale : MonoBehaviour
 		{
 			Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
 
-			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			foreach (Transform t in SelectionManager.Instance.selection)
 			{
 				t.localScale = HF.MV3(startScales[t], newScale);
 			}
 		}
 		else
-		{	foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		{	foreach (Transform t in SelectionManager.Instance.selection)
 			{
 				float currentScaleInAxis = HF.MV3(startScales[t], axis).magnitude;
 
@@ -300,21 +300,21 @@ public class Scale : MonoBehaviour
 		if (main.snapping)
 			scale = Mathf.Round(scale / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
 
-		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		foreach (Transform t in SelectionManager.Instance.selection)
 		{
 			t.localScale = startScales[t] * scale;
 		}
 	}
 	void UseAxisIndicator()
 	{
-		if (lastSelection != main.buildingManager.SelectionManager.selection) // selection changed, update axis indicator list
+		if (lastSelection != SelectionManager.Instance.selection) // selection changed, update axis indicator list
 		{
 			UpdateAxisIndicators();
 		}
 
 		if (dragging && !full)
 		{
-			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			foreach (Transform t in SelectionManager.Instance.selection)
 			{
 				objectAxisIndicators[t].UpdateIndicator(
 					t.position,
@@ -324,7 +324,7 @@ public class Scale : MonoBehaviour
 			}
 		}
 
-		lastSelection = main.buildingManager.SelectionManager.selection;
+		lastSelection = SelectionManager.Instance.selection;
 	}
 	void UpdateAxisIndicators()
 	{
@@ -334,7 +334,7 @@ public class Scale : MonoBehaviour
 
 			axisIndicators = new();
 			objectAxisIndicators = new();
-			foreach (Transform t in main.buildingManager.SelectionManager.selection)
+			foreach (Transform t in SelectionManager.Instance.selection)
 			{
 				AxisIndicator axisIndicator = main.axisIndicatorManager.NewIndicator();
 				axisIndicators.Add(axisIndicator);

@@ -34,4 +34,14 @@ public class GameManager : MonoBehaviour
 	{
 		Application.targetFrameRate = Config.FpsLimit;
 	}
+
+	public void StartSimulating()
+	{
+		currentPlayMode = PlayingMode.Simulating;
+	}
+
+	public void StopSimulating()
+	{
+		currentPlayMode = PlayingMode.Building;
+	}
 }

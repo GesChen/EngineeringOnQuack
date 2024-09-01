@@ -82,13 +82,13 @@ public class RotateAxis : MonoBehaviour
 	}
 	void ResetTransform()
 	{
-		foreach (Transform t in main.buildingManager.SelectionManager.selection)
+		foreach (Transform t in SelectionManager.Instance.selection)
 		{
 			Vector3 rotation = t.rotation.eulerAngles;
 			rotation.Scale(Vector3.one - axis);
 			t.rotation = Quaternion.Euler(rotation);
 		}
-		main.buildingManager.SelectionManager.UpdateContainer();
+		SelectionManager.Instance.UpdateContainer();
 	}
 	bool MouseOver()
 	{

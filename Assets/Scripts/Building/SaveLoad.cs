@@ -34,7 +34,7 @@ public class SaveLoad : MonoBehaviour
 
 		foreach (PartInfo part in assembly.parts)
 		{
-			Part newPart = BuildingManager.newPart(part.basePartName);
+			Part newPart = BuildingManager.GeneratePart(part.basePartName);
 			newPart.transform.localPosition = new(part.position.x, part.position.y, part.position.z);
 			newPart.transform.rotation = new(part.rotation.x, part.rotation.y, part.rotation.z, part.rotation.w);
 			newPart.transform.localScale = new(part.scale.x, part.scale.y, part.scale.z);
@@ -77,7 +77,7 @@ public class SaveLoad : MonoBehaviour
 
 		List<Assembler.Subassembly> precomputedSubassemblies = new();
 		if (precompute)
-			precomputedSubassemblies = bm.Assembler.ComputeAssemblies(bm);
+			precomputedSubassemblies = Assembler.Instance.ComputeAssemblies(bm);
 		
 		List<SerializableSubassembly> serializableSubassemblies = new();
 		foreach (Assembler.Subassembly subassembly in precomputedSubassemblies)

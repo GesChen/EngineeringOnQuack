@@ -8,17 +8,18 @@ using UnityEngine.InputSystem;
 public class EditingCameraMovement : MonoBehaviour
 {
 	[Header("Customization")]
-	public float orbitSensitivity = .4f;
-	public float zoomSensitivity  = .001f;
-	public float moveSensitivity  = .00015f;
-	public float precisionCoef    = .2f;
+	public float orbitSensitivity	= .4f;
+	public float zoomSensitivity	= .001f;
+	public float moveSensitivity	= .00015f;
+	public float keyboardmoveSpeed	= .1f;
+	public float precisionCoef		= .2f;
 	[Space]
-	public float orbitDrift       = .8f;
-	public float zoomDrift        = .1f;
-	public float moveDrift        = .8f;
+	public float orbitDrift			= .8f;
+	public float zoomDrift			= .1f;
+	public float moveDrift			= .8f;
 	float moveSmoothness;
 	[Space]
-	public float initDist         = -5f;
+	public float initDist			= -5f;
 	
 	[Header("Focusing")]
 	public Vector3 focus;
@@ -67,7 +68,10 @@ public class EditingCameraMovement : MonoBehaviour
 		// orbit
 		vel *= orbitDrift;
 		if (controls.Camera.PerfOrbit.IsPressed())
+		{
 			Orbit();
+			Movement();
+		}
 
 		// move todo: sensitivity changes with screen resolution. no good fix. bad fix for now. please fix future me. sorry.
 		else if (controls.Camera.Move.IsPressed())
@@ -86,7 +90,7 @@ public class EditingCameraMovement : MonoBehaviour
 
 		focus = Vector3.Lerp(focus, target, moveSmoothness);// Vector3.SmoothDamp(focus, target, ref smoothTargetVel, focusTime);
 		Quaternion r = Quaternion.Euler(pitch, yaw, 0);
-		transform.position = r * Vector3.forward * dist + focus;																				;
+		transform.position = r * Vector3.forward * dist + focus;
 		transform.rotation = r;
 	}
 	void Orbit()
@@ -96,6 +100,12 @@ public class EditingCameraMovement : MonoBehaviour
 		else
 			vel = globalSensitivity * orbitSensitivity * controls.Camera.Mouse.ReadValue<Vector2>();
 		lastvel = vel;
+	}
+	void Movement()
+	{
+		Vector3 movement = controls.Camera.KeyboardMovement.ReadValue<Vector3>();
+		Vector3 globalMove = transform.rotation * movement;
+		target += globalMove * keyboardmoveSpeed;
 	}
 	void Zoom()
 	{

@@ -7,6 +7,24 @@ using UnityEngine;
 
 public class Assembler : MonoBehaviour
 {
+	#region singleton
+	private static Assembler _instance;
+	public static Assembler Instance { get { return _instance; } }
+	void Awake() { UpdateSingleton(); }
+	private void OnEnable() { UpdateSingleton(); }
+	void UpdateSingleton()
+	{
+		if (_instance != null && _instance != this)
+		{
+			Destroy(this);
+		}
+		else
+		{
+			_instance = this;
+		}
+	}
+	#endregion
+
 	public BuildingManager bm;
 
 	struct Connection
@@ -43,7 +61,7 @@ public class Assembler : MonoBehaviour
 	{
 		public List<Part> parts;
 	}
-
+	[System.Serializable]
 	public struct AssembledSubassembly
 	{
 		public Transform parentContainer;
@@ -52,13 +70,12 @@ public class Assembler : MonoBehaviour
 
 	public void Assemble()
 	{
-		GameManager.Instance.currentPlayMode = PlayingMode.Simulating;
-
 		bm.ReturnAllPartsToMain();
 		List<Subassembly> subassemblies = ComputeAssemblies(bm);
-		bm.HideAllPartsForSimulation();
 		List<AssembledSubassembly> assembledSubs = CopyToSimulation(subassemblies);
 		ReleaseRigidbodies(assembledSubs);
+
+		SimulationManager.Instance.assembledSubassemblies = assembledSubs;
 	}
 
 

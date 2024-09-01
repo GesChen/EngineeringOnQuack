@@ -89,6 +89,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""KeyboardMovement"",
+                    ""type"": ""Value"",
+                    ""id"": ""cf94fa63-f7b9-47b0-a259-795fe88f6e6b"",
+                    ""expectedControlType"": ""Vector3"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -168,6 +177,83 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""action"": ""MousePos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""WASDEQ"",
+                    ""id"": ""9ffebca1-7e6c-4434-8a68-af095173b95e"",
+                    ""path"": ""3DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""cbbb5a5d-a40e-421a-88fe-5db1843e4482"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""c0b891de-8f51-48d5-bb52-396141022a81"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""6f80c692-a291-46be-88d9-e17385cb4453"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""a6f8f952-aa47-40b7-b3a2-2152ce1fd0be"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""forward"",
+                    ""id"": ""8ae34474-621f-4d1b-a368-7ee2bfe38ef7"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""backward"",
+                    ""id"": ""4fc73ee9-1e14-4aab-918a-81ab23e1948a"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""KeyboardMovement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         },
@@ -1379,6 +1465,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Camera_Precision = m_Camera.FindAction("Precision", throwIfNotFound: true);
         m_Camera_Focus = m_Camera.FindAction("Focus", throwIfNotFound: true);
         m_Camera_MousePos = m_Camera.FindAction("MousePos", throwIfNotFound: true);
+        m_Camera_KeyboardMovement = m_Camera.FindAction("KeyboardMovement", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
@@ -1487,6 +1574,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_Precision;
     private readonly InputAction m_Camera_Focus;
     private readonly InputAction m_Camera_MousePos;
+    private readonly InputAction m_Camera_KeyboardMovement;
     public struct CameraActions
     {
         private @InputMaster m_Wrapper;
@@ -1498,6 +1586,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         public InputAction @Precision => m_Wrapper.m_Camera_Precision;
         public InputAction @Focus => m_Wrapper.m_Camera_Focus;
         public InputAction @MousePos => m_Wrapper.m_Camera_MousePos;
+        public InputAction @KeyboardMovement => m_Wrapper.m_Camera_KeyboardMovement;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1528,6 +1617,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @MousePos.started += instance.OnMousePos;
             @MousePos.performed += instance.OnMousePos;
             @MousePos.canceled += instance.OnMousePos;
+            @KeyboardMovement.started += instance.OnKeyboardMovement;
+            @KeyboardMovement.performed += instance.OnKeyboardMovement;
+            @KeyboardMovement.canceled += instance.OnKeyboardMovement;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -1553,6 +1645,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @MousePos.started -= instance.OnMousePos;
             @MousePos.performed -= instance.OnMousePos;
             @MousePos.canceled -= instance.OnMousePos;
+            @KeyboardMovement.started -= instance.OnKeyboardMovement;
+            @KeyboardMovement.performed -= instance.OnKeyboardMovement;
+            @KeyboardMovement.canceled -= instance.OnKeyboardMovement;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -2054,6 +2149,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnPrecision(InputAction.CallbackContext context);
         void OnFocus(InputAction.CallbackContext context);
         void OnMousePos(InputAction.CallbackContext context);
+        void OnKeyboardMovement(InputAction.CallbackContext context);
     }
     public interface IPlayerActions
     {

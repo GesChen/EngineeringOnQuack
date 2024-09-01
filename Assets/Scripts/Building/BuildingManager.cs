@@ -56,25 +56,20 @@ public class BuildingManager : MonoBehaviour
 	public List<BasePart> BaseParts;
 	public List<Part> Parts;
 	List<Part> lastParts;
-	public SelectionManager SelectionManager;
 	public TransformTools TransformTools;
-	public Assembler Assembler;
 	public Transform SimulationContainer;
 	public static Dictionary<string, BasePart> AllParts = new();
 	public GameObject templatePart;
 
-	void Start()
-	{
-
-	}
+	PlayingMode lastPlayingmode;
 
 	void Update()
 	{
-		Parts = FindObjectsOfType<Part>().OrderBy(part => part.ID).ToList(); // sort by id to make sure current stays in the same order
+		//Parts = mainPartsContainer.GetComponentsInChildren<Part>().OrderBy(part => part.ID).ToList(); // sort by id to make sure current stays in the same order
 
 		foreach(Part part in Parts)
 		{
-			part.Selected = SelectionManager.selection.Contains(part.transform);
+			part.Selected = SelectionManager.Instance.selection.Contains(part.transform);
 		}
 
 		if (lastParts != Parts)
@@ -83,9 +78,41 @@ public class BuildingManager : MonoBehaviour
 		}
 		lastParts = Parts;
 
-		bool building = GameManager.Instance.currentPlayMode == PlayingMode.Building;
-		SelectionManager.enabled = building;
-		TransformTools.enabled = building;
+		if (GameManager.Instance.currentPlayMode != lastPlayingmode)
+		{
+			switch (GameManager.Instance.currentPlayMode)
+			{
+				case PlayingMode.Building:
+					StopSimulating();
+					break;
+				case PlayingMode.Simulating:
+					StartSimulating();
+					break;
+			}
+		}
+
+		lastPlayingmode = GameManager.Instance.currentPlayMode;
+	}
+
+	public void StartSimulating()
+	{
+		SelectionManager.Instance.enabled = false;
+		TransformTools.active = false;
+		TransformTools.enabled = false;
+
+		ReturnAllPartsToMain();
+		HideAllPartsForSimulation();
+		SimulationManager.Instance.StartSimulating();
+	}
+
+
+	public void StopSimulating()
+	{
+		SelectionManager.Instance.enabled = true;
+		TransformTools.enabled = true;
+
+		SimulationManager.Instance.StopSimulating();
+		ShowAllPartsAfterSimulation();
 	}
 
 	public void PartsUpdated()
@@ -111,7 +138,7 @@ public class BuildingManager : MonoBehaviour
 		Parts.Clear();
 	}
 
-	public Part newPart(string basePartName)
+	public Part GeneratePart(string basePartName)
 	{
 		int bpIndex = BaseParts.FindIndex(bp => bp.partName == basePartName);
 		if (bpIndex == -1)
@@ -138,6 +165,13 @@ public class BuildingManager : MonoBehaviour
 		foreach (Part part in Parts)
 		{
 			part.gameObject.SetActive(false);
+		}
+	}
+	public void ShowAllPartsAfterSimulation()
+	{
+		foreach (Part part in Parts)
+		{
+			part.gameObject.SetActive(true);
 		}
 	}
 }
