@@ -100,6 +100,9 @@ public class BuildingManager : MonoBehaviour
 		TransformTools.active = false;
 		TransformTools.enabled = false;
 
+		foreach (Part part in Parts)
+			part.Selected = false;
+
 		ReturnAllPartsToMain();
 		HideAllPartsForSimulation();
 		SimulationManager.Instance.StartSimulating();
