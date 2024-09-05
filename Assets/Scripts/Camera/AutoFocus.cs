@@ -21,10 +21,12 @@ public class AutoFocus : MonoBehaviour
 
 	void Update()
 	{
-		Physics.Raycast(Camera.main.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2)), out RaycastHit hit);
-		target = hit.distance;
-		current = Mathf.Lerp(current, target, smoothness);
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(new(Screen.width / 2, Screen.height / 2)), out RaycastHit hit))
+		{
+			target = hit.distance;
+			current = Mathf.Lerp(current, target, smoothness);
 
-		dof.focusDistance.value = current;
+			dof.focusDistance.value = current;
+		}
 	}
 }
