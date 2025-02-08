@@ -28,6 +28,8 @@ public class SelectionManager : MonoBehaviour
 
 	public int testInterval;
 	public int minPixelsMovedForRetest;
+	[Tooltip("Makes sure tiny boxes dont select a bunch of stuff by accident")]
+	public float minBoxSize;
 
 	public List<Transform> selection;
 	public Transform selectionContainer;
@@ -75,7 +77,7 @@ public class SelectionManager : MonoBehaviour
 				ClickCheck();
 			}
 			else
-				FindObjectsInsideBounds();
+				FindObjectsInsideBounds(dragStart, mousePos);
 		}
 
 		dragging = mouseDown && !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
@@ -106,8 +108,11 @@ public class SelectionManager : MonoBehaviour
 		UIBox.sizeDelta = HF.Vector2Abs(size);
 	}
 
-	void FindObjectsInsideBounds()
+	void FindObjectsInsideBounds(Vector2 boundsStart, Vector2 boundsEnd)
 	{
+		// check size
+		if ((boundsStart - boundsEnd).sqrMagnitude < minBoxSize) return;
+
 		// handle multiselection
 		if (Controls.inputMaster.Selection.Multiselect.IsPressed())
 			selection = dragStartSelections;
@@ -119,7 +124,7 @@ public class SelectionManager : MonoBehaviour
 		{
 			if (part == null) continue;
 
-			if (PartIntersectsWithSelectionBox(part, mousePos, dragStart, maincamera) && 
+			if (PartIntersectsWithSelectionBox(part, boundsStart, boundsEnd, maincamera) && 
 				!selection.Contains(part.transform))
 			{
 				selection.Add(part.transform);

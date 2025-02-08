@@ -356,26 +356,26 @@ public class Evaluator : MonoBehaviour
 	
 	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
 	{
-		switch($"{typeFrom}-{typeTo}")
+		return $"{typeFrom}-{typeTo}" switch
 		{
-			case "string-string":return new(value);
-			case "string-number":return new(0f);
-			case "string-bool":return new(false);
-			case "string-list":return new(new List<dynamic> { value });
-			case "number-string":return new(HF.ConvertToString(value));
-			case "number-number":return new(value);
-			case "number-bool":return new(false);
-			case "number-list":return new(new List<dynamic> { value });
-			case "bool-string":return new(HF.ConvertToString(value));
-			case "bool-number":return new((bool)value ? 1f : 0f);
-			case "bool-bool": return new(value);
-			case "bool-list": return new(new List<dynamic> { value });
-			case "list-string": return new(HF.ConvertToString(value));
-			case "list-number": return new(0f);
-			case "list-bool": return new(false);
-			case "list-list": return new(value);
-			default: return Errors.UnknownType(interpreter);
-		}
+			"string-string" => new(value),
+			"string-number" => new(0f),
+			"string-bool" => new(false),
+			"string-list" => new(new List<dynamic> { value }),
+			"number-string" => new(HF.ConvertToString(value)),
+			"number-number" => new(value),
+			"number-bool" => new(false),
+			"number-list" => new(new List<dynamic> { value }),
+			"bool-string" => new(HF.ConvertToString(value)),
+			"bool-number" => new((bool)value ? 1f : 0f),
+			"bool-bool" => new(value),
+			"bool-list" => new(new List<dynamic> { value }),
+			"list-string" => new(HF.ConvertToString(value)),
+			"list-number" => new(0f),
+			"list-bool" => new(false),
+			"list-list" => new(value),
+			_ => Errors.UnknownType(interpreter),
+		};
 	}
 	
 	public static Output SoftCast(string typeA, ref dynamic A, string typeB, ref dynamic B, Interpreter interpreter)
