@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
-using System.Diagnostics;
 
 public class Tester : MonoBehaviour
 {
@@ -12,6 +11,19 @@ public class Tester : MonoBehaviour
 
 	public bool debug;
 	public bool testTime;
+
+	private void Start()
+	{
+		Primitive.Number number = new(5);
+
+		Data data = new Data();
+		Debug.Log(data is Token);
+
+		Token.Name name = new Token.Name("thing");
+		Debug.Log(name is Token);
+	}
+
+	/*
 	public Interpreter interpreter;
 	public Evaluator evaluator; 
 	public string scriptFilePath = "Assets\\Scripts\\Testing\\testscript.quack";
@@ -67,6 +79,7 @@ public class Tester : MonoBehaviour
 	{
 		UnityEngine.Debug.Log("Test");
 	}
+	*/
 }
 /*
 		interpreter.variables = new Dictionary<string, dynamic> { { "abc", 100 }, { "ohno", "69" } };
