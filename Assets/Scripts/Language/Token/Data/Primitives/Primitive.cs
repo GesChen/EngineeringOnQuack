@@ -1,6 +1,6 @@
-public partial class Primitive : Data
+public abstract partial class Primitive : Data
 {
-	public Primitive(Type type) : base(type) {
+	protected Primitive(Type type) : base(type) {
 	}
 
 	public partial class Number		: Primitive { }

@@ -4,19 +4,28 @@ using UnityEngine;
 
 public class Interpreter : MonoBehaviour
 {
-	public Memory Memory;
+	public Data RunFunction(Memory memory, Primitive.Function function, Data thisReference, List<Data> args) {
+		// handle internal functions
+		if (function.IsInternalFunction)
+			return function.InternalFunction.Invoke(thisReference, args);
 
-	//public Data RunFunction(Primitive.Function function, List<Data> args)
-	//{
-	//	if (function.IsInternalFunction)
-	//		return function.InternalFunction.Invoke(args);
+		// argument check
+		if (function.Parameters.Count != args.Count)
+			return Errors.InvaidArgumentCount(function.Name, function.Parameters.Count, args.Count);
 
-	//	Memory snapshot = Memory.Copy();
+		// set args in a copy of memory
+		Memory memoryCopy = memory.Copy();
+		for (int a = 0; a < args.Count; a++) {
+			memoryCopy.Set(function.Parameters[a].Value, args[a]);
+		}
 
+		// run the script with the memory copy
+		Data output = Run(ref memoryCopy, function.Script);
 
-	//}
+		return output;
+	}
 
-	public Data Run(Section script)
+	public Data Run(ref Memory memory, Section script)
 	{
 		return new();
 	}

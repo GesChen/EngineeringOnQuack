@@ -1,19 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public partial class Primitive : Data {
+public abstract partial class Primitive : Data {
 	public partial class Function : Primitive {
 		// functions dont have methods or instance vars
-		public static Type InternalType = new("Function", new Dictionary<string, Data>()); 
+		public static Type InternalType = new("Function", new Dictionary<string, Data>());
 
-		public Section Script; // user defined function code
+		// user defined function code
+		public List<Name> Parameters;
+		public Section Script; 
 
-		public Function(Section script) : base(InternalType) { // user defined function constructor
+		public Function(List<Name> parameters, Section script) : base(InternalType) { // user defined function constructor
+			Parameters = parameters;
 			Script = script;
 		}
 
+		public override string ToString() {
+			return $"Function object \"{Name}\"";
+		}
+
 		// internal function code below
-		public delegate Data InternalFunctionDelegate(List<Data> args);
+		public delegate Data InternalFunctionDelegate(Data thisReference, List<Data> args);
 		public bool IsInternalFunction = false;
 		public InternalFunctionDelegate InternalFunction;
 	

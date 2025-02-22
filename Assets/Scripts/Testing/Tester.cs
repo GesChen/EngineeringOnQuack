@@ -11,16 +11,19 @@ public class Tester : MonoBehaviour
 
 	public bool debug;
 	public bool testTime;
+	public Memory memory;
+	public Interpreter interpreter;
 
 	private void Start()
 	{
-		Primitive.Number number = new(5);
+		Primitive.String testString = new("test");
 
-		Data data = new Data();
-		Debug.Log(data is Token);
+		Debug.Log(testString);
 
-		Token.Name name = new Token.Name("thing");
-		Debug.Log(name is Token);
+		Primitive.Function function = testString.GetMember("upper") as Primitive.Function;
+		Data output = interpreter.RunFunction(memory, function, testString, new());
+
+		Debug.Log(output);
 	}
 
 	/*

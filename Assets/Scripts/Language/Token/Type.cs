@@ -15,4 +15,8 @@ public class Type {
 		Name = name;
 		Snapshot = new(data, null, null);
 	}
+
+	public override string ToString() {
+		return $"Type \"{Name}\"";
+	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Data : Token {
+	public string Name;
 	public Type Type;
 	public Dictionary<string, Data> InstanceVariables;
 
@@ -26,6 +27,12 @@ public class Data : Token {
 			throw new("Bad value in dynamic data call"); // probably replace this later with return error if needed but fear error will propogate and be hard to track down
 	}
 
+
+	public Data(string name, Type type) {
+		Name = name;
+		Type = type;
+		InstanceVariables = new();
+	}
 	public Data(Type type) {
 		Type = type;
 		InstanceVariables = new();
@@ -36,12 +43,15 @@ public class Data : Token {
 	}
 
 
-	//public Data GetMember(string name)
-	//{
-	//	// instance variables with same name as methods override the method
-	//	if (InstanceVariables.ContainsKey(name))
-	//		return InstanceVariables[name];
+	public virtual Data GetMember(string name) {
+		// instance variables with same name as methods override same name in memory
+		if (InstanceVariables.ContainsKey(name))
+			return InstanceVariables[name];
 
-	//	if ()
-	//}
+		return Type.Snapshot.Get(name);
+	}
+
+	public override string ToString() {
+		return $"Data \"{Name}\" of {Type}";
+	}
 }
