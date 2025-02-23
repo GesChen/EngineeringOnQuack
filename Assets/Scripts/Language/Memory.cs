@@ -7,6 +7,22 @@ public class Memory : MonoBehaviour {
 	public Dictionary<string, Type> Types;
 	public Section Script;
 
+	public void Initialize() {
+		Data = new() {
+			{ "print",		new Primitive.Function(InternalFunctions.print) }
+		};
+
+		Types = new() {
+			{ "Number",		Primitive.Number.	InternalType },
+			{ "String",		Primitive.String.	InternalType },
+			{ "Bool",		Primitive.Bool.		InternalType },
+			{ "List",		Primitive.List.		InternalType },
+			{ "Dict",		Primitive.Dict.		InternalType },
+			{ "Function",	Primitive.Function.	InternalType },
+			{ "Error",				  Error.	InternalType }
+		};
+	}
+
 	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types, Section script) {
 		Data = data;
 		Types = types;
@@ -36,7 +52,7 @@ public class Memory : MonoBehaviour {
 	}
 
 	//public Data Get(List<Token> location) {
-		
+
 	//}
 
 	public void Set(string name, Data data) {

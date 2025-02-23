@@ -16,12 +16,19 @@ public class Tester : MonoBehaviour
 
 	private void Start()
 	{
+		memory.Initialize();
+		Primitive.Function printfunc = memory.Get("print") as Primitive.Function;
+		Data toprint = new Primitive.String("Hello world!");
+		Data output = interpreter.RunFunction(memory, printfunc, null, new() { toprint });
+		Debug.Log(output);
+
+
 		Primitive.String testString = new("test");
 
 		Debug.Log(testString);
 
 		Primitive.Function function = testString.GetMember("upper") as Primitive.Function;
-		Data output = interpreter.RunFunction(memory, function, testString, new());
+		output = interpreter.RunFunction(memory, function, testString, new());
 
 		Debug.Log(output);
 	}

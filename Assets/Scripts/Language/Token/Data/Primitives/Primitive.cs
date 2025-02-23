@@ -1,7 +1,17 @@
+using System.Collections.Generic;
+
 public abstract partial class Primitive : Data
 {
-	protected Primitive(Type type) : base(type) {
-	}
+	protected Primitive(Type type) : base(type) { }
+
+	public static List<string> TypeNames = new() {
+		"Number",
+		"String",
+		"Bool",
+		"List",
+		"Dict",
+		"Function"
+	};
 
 	public partial class Number		: Primitive { }
 	public partial class String		: Primitive { }
@@ -9,5 +19,4 @@ public abstract partial class Primitive : Data
 	public partial class List		: Primitive { }
 	public partial class Dict		: Primitive { }
 	public partial class Function	: Primitive { }
-	public partial class Error		: Primitive { }
 }

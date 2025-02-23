@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public abstract partial class Primitive : Data {
 	public partial class Function : Primitive {
+		public static Function Default = new(new(), new(new())); // "yeah ik what that code does"
+
 		// functions dont have methods or instance vars
 		public static Type InternalType = new("Function", new Dictionary<string, Data>());
 
