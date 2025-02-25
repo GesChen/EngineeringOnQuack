@@ -45,15 +45,6 @@ public abstract partial class Primitive : Data {
 		}
 
 		// methods
-		private static Data GetEvaluator(Data thisRef, out Evaluator evaluator) {
-			evaluator = null;
-			Memory memory = thisRef.Memory;
-			Interpreter interpreter = memory.GetInterpreter();
-			if (interpreter is null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
-			evaluator = interpreter.GetEvaluator();
-			if (evaluator is null) return Errors.MissingOrInvalidConnection("Evaluator", "Memory"); // TODO: FIGURE THIS OUT???
-			return Data.Success;
-		}
 		public static Data eq(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("eq", 1, args.Count);
 			if (args[0] is not List) return new Bool(false);

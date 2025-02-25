@@ -11,6 +11,15 @@ public abstract partial class Primitive : Data {
 		"Dict",
 		"Function"
 	};
+	private static Data GetEvaluator(Data thisRef, out Evaluator evaluator) {
+		evaluator = null;
+		Memory memory = thisRef.Memory;
+		Interpreter interpreter = memory.GetInterpreter();
+		if (interpreter is null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
+		evaluator = interpreter.GetEvaluator();
+		if (evaluator is null) return Errors.MissingOrInvalidConnection("Evaluator", "Memory"); // TODO: FIGURE THIS OUT???
+		return Data.Success;
+	}
 
 	public partial class Number : Primitive { }
 	public partial class String : Primitive { }

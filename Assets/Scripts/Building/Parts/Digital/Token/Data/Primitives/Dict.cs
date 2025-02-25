@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using static Primitive;
 
 public abstract partial class Primitive : Data {
 	public partial class Dict : Primitive {
@@ -13,6 +12,10 @@ public abstract partial class Primitive : Data {
 			{ "eq"			, new Function(eq)			},
 			{ "lt"			, new Function(lt)			},
 			{ "tostring "	, new Function(tostring)	},
+			{ "clear"		, new Function(clear)		},
+			{ "values"		, new Function(values)		},
+			{ "keys"		, new Function(keys)		},
+			{ "removekey"	, new Function(removekey)	},
 			{ "tolist"		, new Function(tolist)		}
 		});
 
@@ -83,7 +86,38 @@ public abstract partial class Primitive : Data {
 			return new String(sb.ToString());
 		}
 
+		public static Data clear(Data thisRef, List<Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("clear", 0, args.Count);
+			(thisRef as Dict).Value.Clear();
+			return thisRef;
+		}
+		public static Data values(Data thisRef, List<Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("values", 0, args.Count);
+			return new List((thisRef as Dict).Value.Values.ToList());
+		}
+		public static Data keys(Data thisRef, List<Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("keys", 0, args.Count);
+			return new List((thisRef as Dict).Value.Keys.ToList());
+		}
+		public static Data removekey(Data thisRef, List<Data> args) {
+			if (args.Count != 1) return Errors.InvalidArgumentCount("removekey", 1, args.Count);
 
+			Data get = GetEvaluator(thisRef, out Evaluator evaluator);
+			if (get is Error) return get;
+			Operator equals = new("==");
+
+			Dictionary<Data, Data> copy = new();
+			foreach (KeyValuePair<Data, Data> kvp in (thisRef as Dict).Value) {
+				Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
+				if (compare is Error) return compare;
+
+				if (!(compare as Bool).Value)
+					copy.Add(kvp.Key, kvp.Value);
+			}
+
+			(thisRef as Dict).Value = copy;
+			return thisRef;
+		}
 		public static Data tolist(Data thisRef, List<Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("tolist", 0, args.Count);
 
