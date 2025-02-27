@@ -18,8 +18,10 @@ public class Tester : MonoBehaviour
 	public Cable IEcable;
 	public Cable IMcable;
 
-	private void Start()
+	void Start()
 	{
+	}
+		/*
 		// conect i and e
 		(CableConnection onItoECC, CableConnection onEtoICC) = IEcable.Connect(interpreter, evaluator);
 		interpreter.EvaluatorCC = onItoECC;
@@ -52,6 +54,7 @@ public class Tester : MonoBehaviour
 
 		print(set);
 	}
+		*/
 
 	/*
 	public Interpreter interpreter;

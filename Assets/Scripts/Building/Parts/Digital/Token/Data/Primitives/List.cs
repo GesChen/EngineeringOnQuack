@@ -58,7 +58,7 @@ public abstract partial class Primitive : Data {
 			List<Data> a = (thisRef as List).Value;
 			List<Data> b = (args[0] as List).Value;
 
-			Data get = GetEvaluator(thisRef, out Evaluator evaluator);
+			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
 
 			Data tryComp;
@@ -127,7 +127,7 @@ public abstract partial class Primitive : Data {
 		public static Data count(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("count", 1, args.Count);
 
-			Data get = GetEvaluator(thisRef, out Evaluator evaluator);
+			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
 
 			int amount = 0;
@@ -154,7 +154,7 @@ public abstract partial class Primitive : Data {
 		public static Data find(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("find", 1, args.Count);
 
-			Data get = GetEvaluator(thisRef, out Evaluator evaluator);
+			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
 
 			Operator equals = new("==");
@@ -201,7 +201,7 @@ public abstract partial class Primitive : Data {
 		public static Data removeall(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("removeall", 1, args.Count);
 
-			Data get = GetEvaluator(thisRef, out Evaluator evaluator);
+			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
 
 			Data[] items = (thisRef as List).Value.ToArray();

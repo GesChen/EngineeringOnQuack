@@ -8,7 +8,9 @@ public partial class Token {
 		public bool IsInstanceVariable;
 		public bool IsListItem;
 
+#pragma warning disable CS0108 // Member hides inherited member; missing new keyword
 		public string Name;
+#pragma warning restore CS0108 // Member hides inherited member; missing new keyword
 		public Data ThisReference;
 		public Data ParentReference;
 		public int ListIndex;

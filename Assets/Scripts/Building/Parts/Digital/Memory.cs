@@ -51,6 +51,9 @@ public class Memory {
 		return Data.ContainsKey(name);
 	}
 
+	/// <summary>
+	/// Returns data value if found, otherwise error
+	/// </summary>
 	public Data Get(string name) {
 		if (Data.ContainsKey(name)) return Data[name];
 		return Errors.UnknownVariable(name);
@@ -76,5 +79,15 @@ public class Memory {
 
 	public override string ToString() {
 		return $"Memory object";
+	}
+
+	public static Data GetEvaluator(Data thisRef, out Evaluator evaluator) {
+		evaluator = null;
+		Memory memory = thisRef.Memory;
+		Interpreter interpreter = memory.GetInterpreter();
+		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
+		evaluator = interpreter.GetEvaluator();
+		if (evaluator == null) return Errors.MissingOrInvalidConnection("Evaluator", "Memory"); // TODO: FIGURE THIS OUT???
+		return global::Data.Success;
 	}
 }

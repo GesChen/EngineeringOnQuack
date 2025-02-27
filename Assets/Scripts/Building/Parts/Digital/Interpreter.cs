@@ -14,8 +14,23 @@ public class Interpreter : Part
 			return part.component;
 		return null;
 	}
+	public Data TryGetMemory(out Memory memory) {
+		memory = GetMemory();
+
+		return memory == null ?
+			Errors.MissingOrInvalidConnection("Interpreter", "Memory") :
+			Data.Success;
+	}
+
 	public Evaluator GetEvaluator()
 		=> EvaluatorCC.Cable.OtherCC(EvaluatorCC).Part as Evaluator;
+	public Data TryGetEvaluator(out Evaluator evaluator) {
+		evaluator = GetEvaluator();
+
+		return evaluator == null ?
+			Errors.MissingOrInvalidConnection("Interpreter", "Evaluator") :
+			Data.Success;
+	}
 
 
 	// need memory so run call can have a copy of it
