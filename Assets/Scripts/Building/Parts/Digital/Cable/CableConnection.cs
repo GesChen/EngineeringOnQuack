@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class CableConnection
 {
-	public Cable cable;
-	public Part part;
+	public Cable Cable;
+	public Part Part;
+
+	public CableConnection(Cable cable, Part part) {
+		Cable = cable;
+		Part = part;
+	}
 }

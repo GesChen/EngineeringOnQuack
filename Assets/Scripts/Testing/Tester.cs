@@ -11,33 +11,46 @@ public class Tester : MonoBehaviour
 
 	public bool debug;
 	public bool testTime;
-	public Memory memory;
+	public MemoryPart memory;
 	public Interpreter interpreter;
+	public Evaluator evaluator;
+
+	public Cable IEcable;
+	public Cable IMcable;
 
 	private void Start()
 	{
-		memory.Initialize();
-		Primitive.Function printfunc = memory.Get("print") as Primitive.Function;
-		Data toprint = new Primitive.List(new() { new Primitive.Number(5), new Primitive.String("hello") });
-		Data output = interpreter.RunFunction(memory, printfunc, null, new() { toprint });
-		Debug.Log(output);
+		// conect i and e
+		(CableConnection onItoECC, CableConnection onEtoICC) = IEcable.Connect(interpreter, evaluator);
+		interpreter.EvaluatorCC = onItoECC;
+		evaluator.InterpreterCC = onEtoICC;
+		print(IEcable);
 
+		// conect i and m
+		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
+		interpreter.MemoryCC = onItoMCC;
+		memory.InterpreterCC = onMtoICC;
+		print(IMcable);
 
-		Primitive.String testString = new("test");
+		memory.Initialize(onMtoICC);
 
-		Debug.Log(testString);
+		// test type for a so not setting member of primitive
+		Memory testMem = new(onMtoICC);
+		Type testType = new("test", testMem);
+		
+		// a
+		Data a = new("a", testType, memory.component);
+		Token.Reference ar = Token.Reference.ExistingGlobalReference("a", a);
 
-		Primitive.Function function = testString.GetMember("upper") as Primitive.Function;
-		output = interpreter.RunFunction(memory, printfunc, testString, new());
+		// a.b
+		Token.Reference b = Token.Reference.NewMemberReference(ar, "b");
 
-		Debug.Log(output);
+		Data c = new Primitive.Number(7);
 
-		Primitive.List newlist = new(new());
-		Debug.Log("befpre " + newlist.Cast(Primitive.String.InternalType));
+		// a.b = c
+		Data set = b.SetData(c);
 
-		Primitive.List.add(newlist, new() { testString });
-		Debug.Log("after " + newlist.Cast(Primitive.String.InternalType));
-
+		print(set);
 	}
 
 	/*

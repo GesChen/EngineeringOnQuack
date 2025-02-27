@@ -1,4 +1,12 @@
-def a(x,y):
-    return x
+class a:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-print(a(1))
+foo = 5
+
+print(foo.x)
+
+foo.z = 100
+
+print(foo.z)

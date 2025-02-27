@@ -15,9 +15,9 @@ public abstract partial class Primitive : Data {
 		evaluator = null;
 		Memory memory = thisRef.Memory;
 		Interpreter interpreter = memory.GetInterpreter();
-		if (interpreter is null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
+		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
 		evaluator = interpreter.GetEvaluator();
-		if (evaluator is null) return Errors.MissingOrInvalidConnection("Evaluator", "Memory"); // TODO: FIGURE THIS OUT???
+		if (evaluator == null) return Errors.MissingOrInvalidConnection("Evaluator", "Memory"); // TODO: FIGURE THIS OUT???
 		return Data.Success;
 	}
 

@@ -60,8 +60,20 @@ public class Data : Token {
 		return Type.Snapshot.Get(name);
 	}
 
+	public Data SetThisMember(string name, Data data) {
+		return SetMember(this, name, data);
+	}
+
+	public static Data SetMember(Data thisReference, string name, Data data) {
+		if (thisReference is Primitive)
+			return Errors.CannotSetMemberOfPrimitive(name);
+		
+		thisReference.InstanceVariables[name] = data;
+		return data;
+	}
+
 	#region Casting
-	// self cast
+		// self cast
 	public Data Cast(Type toType) {
 		return CastFromTo(this, toType);
 	}

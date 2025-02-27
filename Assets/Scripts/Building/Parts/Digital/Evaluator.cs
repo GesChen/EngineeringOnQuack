@@ -8,13 +8,13 @@ public class Evaluator : Part
 	public CableConnection InterpreterCC;
 
 	public Interpreter GetInterpreter()
-		=> InterpreterCC.cable.otherCC(InterpreterCC).part as Interpreter;
+		=> InterpreterCC.Cable.OtherCC(InterpreterCC).Part as Interpreter;
 
 
 	public Data Compare(Data a, Data b, Token.Operator op, Memory memory) {
 		// not gona add comparison operator check bc whatever's calling this should already have done it
 		Interpreter interpreter = GetInterpreter();
-		if (interpreter is null) return Errors.MissingOrInvalidConnection("Interpreter", "Evaluator");
+		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Evaluator");
 
 		Data lt = LessThan(a, b, memory, interpreter); // is bool checks done in the methods already
 		if (lt is Error) return lt;

@@ -19,5 +19,10 @@ public static class Errors {
 		=> new($"Improper implementation of {function}" + (reason != null ? ": " + reason : ""));
 	public static Error MissingOrInvalidConnection(string portName, string partFrom)
 		=> new($"Missing or Invalid connection to the {portName} port on the {partFrom}");
-
+	public static Error CannotIndex(string type)
+		=> new($"Cannot index {type} object, Lists and Strings only");
+	public static Error IndexOutOfRange(int attempt)
+		=> new($"Index out of range: {attempt}");
+	public static Error CannotSetMemberOfPrimitive(string membername)
+		=> new($"Cannot set a member of a primitive value: {membername}");
 }

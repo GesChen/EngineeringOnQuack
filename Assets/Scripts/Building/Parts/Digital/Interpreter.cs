@@ -9,10 +9,13 @@ public class Interpreter : Part
 	public CableConnection EvaluatorCC;
 
 	// always add a null check manually in the script, data can't hold parts so no error returningn in here
-	public Memory GetMemory() 
-		=> MemoryCC.cable.otherCC(MemoryCC).part as Memory;
+	public Memory GetMemory() {
+		if (MemoryCC.Cable.OtherCC(MemoryCC).Part is MemoryPart part)
+			return part.component;
+		return null;
+	}
 	public Evaluator GetEvaluator()
-		=> EvaluatorCC.cable.otherCC(EvaluatorCC).part as Evaluator;
+		=> EvaluatorCC.Cable.OtherCC(EvaluatorCC).Part as Evaluator;
 
 
 	// need memory so run call can have a copy of it
@@ -26,7 +29,7 @@ public class Interpreter : Part
 			return Errors.InvalidArgumentCount(function.Name, function.Parameters.Count, args.Count);
 
 		// set args in a copy of memory
-		if (memory is null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
+		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
 
 		Memory memoryCopy = memory.Copy();
 		for (int a = 0; a < args.Count; a++) {
@@ -37,12 +40,12 @@ public class Interpreter : Part
 		memoryCopy.Set("this", thisReference);
 
 		// run the script with the memory copy
-		Data output = Run(ref memoryCopy, function.Script);
+		Data output = Run(memoryCopy, function.Script);
 
 		return output;
 	}
 
-	public Data Run(ref Memory memory, Section script)
+	public Data Run(Memory memory, Section script)
 	{
 		return new();
 	}

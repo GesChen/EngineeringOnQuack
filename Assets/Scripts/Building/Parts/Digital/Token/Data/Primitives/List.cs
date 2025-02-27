@@ -192,11 +192,11 @@ public abstract partial class Primitive : Data {
 			Data index = find(thisRef, args);
 			if (index is Error) return index; // idk how this would happen lmao
 
-			if ((index as Number).Value == -1) // return false if not found
-				return new Bool(false);
+			if ((index as Number).Value == -1) // return original if not found
+				return thisRef;
 
 			(thisRef as List).Value.RemoveAt((int)(index as Number).Value);
-			return new Bool(true);
+			return thisRef;
 		}
 		public static Data removeall(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("removeall", 1, args.Count);

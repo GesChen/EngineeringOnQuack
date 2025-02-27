@@ -2,15 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Memory : Part {
-	// part stuff
-
+public class Memory {
 	public CableConnection InterpreterCC;
 	public Interpreter GetInterpreter()
-		=> InterpreterCC.cable.otherCC(InterpreterCC).part as Interpreter;
-	
+		=> InterpreterCC.Cable.OtherCC(InterpreterCC).Part as Interpreter;
 
-	// actual memory stuff
 	public Dictionary<string, Data> Data;
 	public Dictionary<string, Type> Types;
 	public Section Script;
@@ -36,10 +32,11 @@ public class Memory : Part {
 		Types = types;
 		Script = script;
 	}
-	public Memory() {
+	public Memory(CableConnection interpreterCC) {
 		Data = new();
 		Types = new();
 		Script = null;
+		InterpreterCC = interpreterCC;
 	}
 
 	public Memory Copy() {
@@ -58,10 +55,6 @@ public class Memory : Part {
 		if (Data.ContainsKey(name)) return Data[name];
 		return Errors.UnknownVariable(name);
 	}
-
-	//public Data Get(List<Token> location) {
-
-	//}
 
 	public void Set(string name, Data data) {
 		Data[name] = data;
