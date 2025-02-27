@@ -86,4 +86,7 @@ public class Evaluator : Part
 		return run; // more handling to be done by specifics
 	}
 	
+	public Data Evaluate(int flags, Section section) {
+
+	}
 }

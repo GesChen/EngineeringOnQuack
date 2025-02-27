@@ -35,6 +35,9 @@ public class Cable : MonoBehaviour
 	}
 
 	public override string ToString() {
+		if (connectionA == null) return "Cable, cc A disconnected";
+		if (connectionB == null) return "Cable, cc B disconnected";
+
 		return $"Cable connecting {connectionA.Part.GetType().Name} -- {connectionB.Part.GetType().Name}";
 	}
 }
