@@ -102,7 +102,7 @@ public abstract partial class Primitive : Data {
 		public static Data removekey(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("removekey", 1, args.Count);
 
-			Data get = GetEvaluator(thisRef, out Evaluator evaluator);
+			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
 			Operator equals = new("==");
 

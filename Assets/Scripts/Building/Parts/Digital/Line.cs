@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Line : MonoBehaviour
+public class Line
 {
 	public int RealLineNumber;
 	public string OriginalString;

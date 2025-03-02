@@ -20,6 +20,10 @@ public class Tester : MonoBehaviour
 
 	void Start()
 	{
+		Line line = new(0, "", new List<Token>() { new Primitive.Number(5), new Token.Operator("."), new Primitive.Number(2) });
+		evaluator.Evaluate(0, line);
+
+
 	}
 		/*
 		// conect i and e

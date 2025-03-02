@@ -1,6 +1,4 @@
 public static class Errors {
-	public static Error template()
-		=> new($"");
 	public static Error Custom(string message)
 		=> new(message);
 	public static Error InvalidArgumentCount(string funcName, int expected, int got)
@@ -25,4 +23,8 @@ public static class Errors {
 		=> new($"Index out of range: {attempt}");
 	public static Error CannotSetMemberOfPrimitive(string membername)
 		=> new($"Cannot set a member of a primitive value: {membername}");
+	public static Error InvalidUseOfOperator(string op)
+		=> new($"Invalid use of operator {op}");
+	public static Error template()
+		=> new($"");
 }

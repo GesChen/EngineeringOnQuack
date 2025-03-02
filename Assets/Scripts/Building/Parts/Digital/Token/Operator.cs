@@ -2,10 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class Token
-{
-	public partial class Operator : Token
-	{
+public partial class Token {
+	public partial class Operator : Token {
 		public static List<string> UnaryOperators = new()
 		{
 			"+",
@@ -93,8 +91,7 @@ public partial class Token
 			":"
 		};
 
-		public enum OperatorType
-		{
+		public enum OperatorType {
 			Arithmetic,
 			Comparison,
 			Logical,
@@ -107,13 +104,11 @@ public partial class Token
 		public OperatorType Type;
 		public bool IsUnary;
 
-		public Operator(string op)
-		{
+		public Operator(string op) {
 			SetStringValue(op);
 		}
 
-		public void SetStringValue(string op)
-		{
+		public void SetStringValue(string op) {
 			StringValue = op;
 
 			if (ArithmeticOperators.Contains(op)) Type = OperatorType.Arithmetic;
@@ -123,6 +118,10 @@ public partial class Token
 			else if (SpecialOperators.Contains(op)) Type = OperatorType.Special;
 
 			IsUnary = UnaryOperators.Contains(op);
+		}
+
+		public override string ToString() {
+			return "Operator " + StringValue;
 		}
 	}
 }

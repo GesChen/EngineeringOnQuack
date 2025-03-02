@@ -2,10 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class Token
-{
-	public partial class Keyword : Token
-	{
+public partial class Token {
+	public partial class Keyword : Token {
 		public static List<string> Keywords = new()
 		{
 			"if",
@@ -24,8 +22,7 @@ public partial class Token
 
 		public string StringValue;
 
-		public Keyword(string keyword)
-		{
+		public Keyword(string keyword) {
 			StringValue = keyword;
 		}
 	}

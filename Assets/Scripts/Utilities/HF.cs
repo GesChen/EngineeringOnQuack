@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
 public static class HF {
 	#region Base Class Extensions
-	public static Color MultiplyColorByVector(Vector3 vector, Color color)
-	{
+	public static Color MultiplyColorByVector(Vector3 vector, Color color) {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 
@@ -18,8 +15,7 @@ public static class HF {
 	public static Vector3 Vector3Round(Vector3 v)
 		=> new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 
-	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t)
-	{
+	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t) {
 		return new Vector3(
 			Mathf.Lerp(a.x, b.x, t.x),
 			Mathf.Lerp(a.y, b.y, t.y),
@@ -30,36 +26,31 @@ public static class HF {
 		=> new(Mathf.Round(v.x), Mathf.Round(v.y));
 
 	public static Vector2 Vector2Abs(Vector2 v)
-		=> new (Mathf.Abs(v.x), Mathf.Abs(v.y));
+		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 	#endregion
 
-	public static void LogColor(string str, Color color)
-	{
+	public static void LogColor(string str, Color color) {
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
 	}
 
-	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
-	{
+	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices) {
 		float minDistance = float.MaxValue;
 
-		for (int i = 0; i < polygonVertices.Length; i++)
-		{
+		for (int i = 0; i < polygonVertices.Length; i++) {
 			Vector2 p1 = polygonVertices[i];
 			Vector2 p2 = polygonVertices[(i + 1) % polygonVertices.Length];
 
 			float distance = PointToLineSegmentDistance(point, p1, p2);
 
-			if (distance < minDistance)
-			{
+			if (distance < minDistance) {
 				minDistance = distance;
 			}
 		}
 
 		return minDistance;
 	}
-	
-	public static float PointToLineSegmentDistance(Vector2 point, Vector2 p1, Vector2 p2)
-	{
+
+	public static float PointToLineSegmentDistance(Vector2 point, Vector2 p1, Vector2 p2) {
 		Vector2 v = p2 - p1;
 		Vector2 w = point - p1;
 
@@ -76,9 +67,8 @@ public static class HF {
 
 		return Vector2.Distance(point, pb);
 	}
-	
-	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
-	{
+
+	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2) {
 		Vector3 deltaP = linePoint2 - linePoint1;
 		float a = Vector3.Dot(lineVec1, lineVec1);
 		float b = Vector3.Dot(lineVec1, lineVec2);
@@ -88,8 +78,7 @@ public static class HF {
 
 		float denom = a * c - b * b;
 
-		if (denom == 0)
-		{
+		if (denom == 0) {
 			// Lines are parallel
 			return Vector3.zero;
 		}
@@ -99,9 +88,8 @@ public static class HF {
 		return linePoint1 + t1 * -lineVec1;
 		//closestPoint2 = p2 + t2 * v2;
 	}
-	
-	public static Vector3 RayPlaneIntersect(Vector3 planePoint, Vector3 planeNormal, Vector3 rayOrigin, Vector3 rayDirection)
-	{
+
+	public static Vector3 RayPlaneIntersect(Vector3 planePoint, Vector3 planeNormal, Vector3 rayOrigin, Vector3 rayDirection) {
 		float t = Vector3.Dot(planeNormal, planePoint - rayOrigin) / Vector3.Dot(planeNormal, rayDirection);
 		Vector3 intersectionPoint = rayOrigin + t * rayDirection;
 
@@ -112,13 +100,11 @@ public static class HF {
 		return intersectionPoint;
 	}
 
-	public static bool Vector2InAABB(Vector2 point, Vector2 min, Vector2 max)
-	{
+	public static bool Vector2InAABB(Vector2 point, Vector2 min, Vector2 max) {
 		return point.x < max.x && point.y < max.y && point.x > min.x && point.y > min.y;
 	}
 
-	public static bool Vector2InRectTransform(Vector2 point, RectTransform rect)
-	{
+	public static bool Vector2InRectTransform(Vector2 point, RectTransform rect) {
 		Vector3[] corners = new Vector3[4];
 		rect.GetWorldCorners(corners);
 		Vector2 min = corners[0];
@@ -129,12 +115,11 @@ public static class HF {
 
 	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
 		=> Vector3.Dot(point - reference, direction);
-	
+
 	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir)
-		=> new (Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
-	
-	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal)
-	{
+		=> new(Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
+
+	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal) {
 		float dist = Vector3.Dot(point - planeOrig, planeNormal);
 		return point - dist * planeNormal;
 	}
@@ -142,31 +127,32 @@ public static class HF {
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true)
-	{
+	public static List<T> ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
+		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);
+		originalList.InsertRange(startIndexInc, replacementList);
+		return originalList;
+	}
+
+	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true) {
 		Type t = value.GetType();
 		if (value is null) return "";
 		else if (value is string s) return stringQuotes ? $"\"{s}\"" : s;
 		else if (value is double d) return d.ToString("0." + new string('#', 339)); // d.ToString("G10");
 		else if (value is bool b) return b ? "true" : "false";
-		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
-		{
+		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>)) {
 			string builtString = "";
 			if (listBrackets) builtString = "[";
-			for (int i = 0; i < value.Count; i++)
-			{
+			for (int i = 0; i < value.Count; i++) {
 				builtString += ConvertToString(value[i], stringQuotes);
 				if (i < value.Count - 1) builtString += ", ";
 			}
 			if (listBrackets) builtString += "]";
 			return builtString;
 		}
-		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-		{
+		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>)) {
 			List<string> keys = new(value.Keys);
 			string builtString = "{";
-			for (int i = 0; i < keys.Count; i++)
-			{
+			for (int i = 0; i < keys.Count; i++) {
 				dynamic key = keys[i];
 				builtString += ConvertToString(key, stringQuotes);
 				builtString += " : ";
@@ -180,13 +166,11 @@ public static class HF {
 		return value.ToString();
 	}
 
-	public static string RemoveNonStringSpace(string expr)
-	{
+	public static string RemoveNonStringSpace(string expr) {
 		StringBuilder tempString = new();
 		bool inString = false;
 
-		foreach (char c in expr)
-		{
+		foreach (char c in expr) {
 			if (c == '"')
 				inString = !inString;
 
@@ -197,38 +181,31 @@ public static class HF {
 		return tempString.ToString();
 	}
 
-	public static bool ContainsSubstringOutsideQuotes(string text, string substring)
-	{
-		if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(substring))
-		{
+	public static bool ContainsSubstringOutsideQuotes(string text, string substring) {
+		if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(substring)) {
 			return false;
 		}
 
 		bool inQuotes = false;
 		int prevCharIndex = -1;
 
-		for (int i = 0; i < text.Length; i++)
-		{
+		for (int i = 0; i < text.Length; i++) {
 			char currentChar = text[i];
 
 			// Handle escaped quotes within quotes
-			if (currentChar == '"' && prevCharIndex >= 0 && text[prevCharIndex] == '\\')
-			{
+			if (currentChar == '"' && prevCharIndex >= 0 && text[prevCharIndex] == '\\') {
 				prevCharIndex = -1;
 				continue;
 			}
 
 			// Toggle quote state
-			if (currentChar == '"')
-			{
+			if (currentChar == '"') {
 				inQuotes = !inQuotes;
 			}
 
 			// Check substring if not within quotes
-			else if (!inQuotes)
-			{
-				if (text[i..].StartsWith(substring))
-				{
+			else if (!inQuotes) {
+				if (text[i..].StartsWith(substring)) {
 					return true;
 				}
 			}
@@ -239,12 +216,10 @@ public static class HF {
 		return false;
 	}
 
-	public static bool ExpressionContainsSurfaceLevel(char symbol, string expr)
-	{
+	public static bool ExpressionContainsSurfaceLevel(char symbol, string expr) {
 		bool inString = false;
 		int depth = 0;
-		foreach (char c in expr)
-		{
+		foreach (char c in expr) {
 			if (c == '"') inString = !inString;
 			if (!inString && (c == '(' || c == '[')) depth++;
 			if (!inString && (c == ')' || c == ']')) depth--;
@@ -254,8 +229,7 @@ public static class HF {
 		return false;
 	}
 
-	public static string DetermineTypeFromString(string s)
-	{
+	public static string DetermineTypeFromString(string s) {
 		s = s.TrimStart('(').TrimEnd(')'); // remove parentheses
 
 		if (s.Length == 0) return null;
@@ -274,22 +248,20 @@ public static class HF {
 		return "variable"; //TODO!!!!!!!!!!
 	}
 
-	public static string DetermineTypeFromVariable(dynamic v)
-	{
+	public static string DetermineTypeFromVariable(dynamic v) {
 		if (v is null || (v is string && v == "")) return "null";
 		else if (v is string) return "string";
 		else if (v is double) return "number";
 		else if (v is bool) return "bool";
 		else if (v is List<dynamic>) return "list";
-		
+
 		Type t = v.GetType();
 		if (t.Name == "ClassInstance") return "Class Instance";
 		else if (t.Name == "ClassDefinition") return "Class Definition";
 		return t.Name.ToLower(); // function and script type are handled by this last return
 	}
 
-	public static bool VariableNameIsValid(string name)
-	{
+	public static bool VariableNameIsValid(string name) {
 		/* naming convention:
 		 - starts either with letter or _
 		 - following characters can be letter, number or _
@@ -304,8 +276,7 @@ public static class HF {
 		return true;
 	}
 
-	public static bool FasterStartsWith(string target, string prefix)
-	{
+	public static bool FasterStartsWith(string target, string prefix) {
 		if (target == null || prefix == null) return false;
 		if (prefix.Length > target.Length) return false;
 

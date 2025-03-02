@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CableConnection
-{
+public class CableConnection {
 	public Cable Cable;
 	public Part Part;
 
