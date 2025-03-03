@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class Interpreter : Part
 {
+	public Evaluator Evaluator;
 	public CableConnection MemoryCC;
-	public CableConnection EvaluatorCC;
 
 	// always add a null check manually in the script, data can't hold parts so no error returningn in here
 	public Memory GetMemory() {
@@ -21,17 +21,6 @@ public class Interpreter : Part
 			Errors.MissingOrInvalidConnection("Interpreter", "Memory") :
 			Data.Success;
 	}
-
-	public Evaluator GetEvaluator()
-		=> EvaluatorCC.Cable.OtherCC(EvaluatorCC).Part as Evaluator;
-	public Data TryGetEvaluator(out Evaluator evaluator) {
-		evaluator = GetEvaluator();
-
-		return evaluator == null ?
-			Errors.MissingOrInvalidConnection("Interpreter", "Evaluator") :
-			Data.Success;
-	}
-
 
 	// need memory so run call can have a copy of it
 	public Data RunFunction(Memory memory, Primitive.Function function, Data thisReference, List<Data> args) {

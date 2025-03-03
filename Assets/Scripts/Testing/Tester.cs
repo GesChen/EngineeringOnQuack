@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
-public class Tester : MonoBehaviour
-{
+public class Tester : MonoBehaviour {
 	//public string expr;
 	//public List<string> testCases = new();
 
 	public bool debug;
 	public bool testTime;
+	public int iters;
 	public MemoryPart memory;
 	public Interpreter interpreter;
 	public Evaluator evaluator;
@@ -18,47 +19,60 @@ public class Tester : MonoBehaviour
 	public Cable IEcable;
 	public Cable IMcable;
 
-	void Start()
-	{
-		Line line = new(0, "", new List<Token>() { new Primitive.Number(5), new Token.Operator("."), new Primitive.Number(2) });
-		evaluator.Evaluate(0, line);
+	void Start() {
+		Stopwatch sw = new();
+		sw.Start();
 
+		for (int i = 0; i < iters; i++) {
+			ToTest();
+		}
+		sw.Stop();
 
+		print($"{sw.ElapsedTicks * 100} ns");
+		print($"{sw.ElapsedMilliseconds} ms");
 	}
-		/*
-		// conect i and e
-		(CableConnection onItoECC, CableConnection onEtoICC) = IEcable.Connect(interpreter, evaluator);
-		interpreter.EvaluatorCC = onItoECC;
-		evaluator.InterpreterCC = onEtoICC;
-		print(IEcable);
 
-		// conect i and m
-		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
-		interpreter.MemoryCC = onItoMCC;
-		memory.InterpreterCC = onMtoICC;
-		print(IMcable);
+	void ToTest() {
+		//Line line = new(0, "", new List<Token>() { new Primitive.Number(5), new Token.Operator("."), new Primitive.Number(2) });
+		//evaluator.Evaluate(0, line);
 
-		memory.Initialize(onMtoICC);
-
-		// test type for a so not setting member of primitive
-		Memory testMem = new(onMtoICC);
-		Type testType = new("test", testMem);
-		
-		// a
-		Data a = new("a", testType, memory.component);
-		Token.Reference ar = Token.Reference.ExistingGlobalReference("a", a);
-
-		// a.b
-		Token.Reference b = Token.Reference.NewMemberReference(ar, "b");
-
-		Data c = new Primitive.Number(7);
-
-		// a.b = c
-		Data set = b.SetData(c);
-
-		print(set);
+		Tokenizer tokenizer = new();
+		tokenizer.Tokenize(" hello world -- comment thing -- more text but -- sl \n then ml --- blah blah \n more blah blah --- yada boo hoo");
 	}
-		*/
+	/*
+	// conect i and e
+	(CableConnection onItoECC, CableConnection onEtoICC) = IEcable.Connect(interpreter, evaluator);
+	interpreter.EvaluatorCC = onItoECC;
+	evaluator.InterpreterCC = onEtoICC;
+	print(IEcable);
+
+	// conect i and m
+	(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
+	interpreter.MemoryCC = onItoMCC;
+	memory.InterpreterCC = onMtoICC;
+	print(IMcable);
+
+	memory.Initialize(onMtoICC);
+
+	// test type for a so not setting member of primitive
+	Memory testMem = new(onMtoICC);
+	Type testType = new("test", testMem);
+
+	// a
+	Data a = new("a", testType, memory.component);
+	Token.Reference ar = Token.Reference.ExistingGlobalReference("a", a);
+
+	// a.b
+	Token.Reference b = Token.Reference.NewMemberReference(ar, "b");
+
+	Data c = new Primitive.Number(7);
+
+	// a.b = c
+	Data set = b.SetData(c);
+
+	print(set);
+}
+	*/
 
 	/*
 	public Interpreter interpreter;

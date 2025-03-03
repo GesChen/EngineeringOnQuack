@@ -86,8 +86,7 @@ public class Memory {
 		Memory memory = thisRef.Memory;
 		Interpreter interpreter = memory.GetInterpreter();
 		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
-		evaluator = interpreter.GetEvaluator();
-		if (evaluator == null) return Errors.MissingOrInvalidConnection("Evaluator", "Memory"); // TODO: FIGURE THIS OUT???
+		evaluator = interpreter.Evaluator;
 		return global::Data.Success;
 	}
 }

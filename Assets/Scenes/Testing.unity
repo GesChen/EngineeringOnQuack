@@ -5104,7 +5104,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1437857900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5117,7 +5117,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7a91e9ffbb7a545bca46e6e1548e28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DEBUGMODE: 1
 --- !u!114 &1437857901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5125,11 +5124,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1437857899}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 912cfbd810484aa4da112199315e3987, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ID: 0
+  basePart: {fileID: 0}
+  Selected: 0
+  Evaluator: {fileID: 0}
 --- !u!114 &1437857902
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5137,13 +5140,19 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1437857899}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   debug: 1
   testTime: 0
+  iters: 0
+  memory: {fileID: 0}
+  interpreter: {fileID: 0}
+  evaluator: {fileID: 0}
+  IEcable: {fileID: 0}
+  IMcable: {fileID: 0}
 --- !u!4 &1437857903
 Transform:
   m_ObjectHideFlags: 0

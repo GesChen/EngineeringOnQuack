@@ -1,30 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
-public class Evaluator : Part {
-	public CableConnection InterpreterCC;
-
-	public Interpreter GetInterpreter()
-		=> InterpreterCC.Cable.OtherCC(InterpreterCC).Part as Interpreter;
-
-	public Data TryGetInterpreter(out Interpreter interpreter) {
-		interpreter = GetInterpreter();
-
-		return interpreter == null ?
-			Errors.MissingOrInvalidConnection("Evaluator", "Interpreter") :
-			Data.Success;
-	}
+public class Evaluator : MonoBehaviour {
+	public Interpreter Interpreter;
 
 	public Data Compare(Data a, Data b, Token.Operator op, Memory memory) {
 		// not gona add comparison operator check bc whatever's calling this should already have done it
-		Interpreter interpreter = GetInterpreter();
-		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Evaluator");
 
-		Data lt = LessThan(a, b, memory, interpreter); // is bool checks done in the methods already
+		Data lt = LessThan(a, b, memory, Interpreter); // is bool checks done in the methods already
 		if (lt is Error) return lt;
 
-		Data eq = Equals(a, b, memory, interpreter);
+		Data eq = Equals(a, b, memory, Interpreter);
 		if (eq is Error) return eq;
 
 		bool lessthan = (lt as Primitive.Bool).Value;
@@ -141,9 +129,7 @@ public class Evaluator : Part {
 					break;
 				case Actions.Name:
 					// try get memory
-					Data tryget = TryGetInterpreter(out Interpreter interpreter);
-					if (tryget is Error) return tryget;
-					tryget = interpreter.TryGetMemory(out Memory memory);
+					Data tryget = Interpreter.TryGetMemory(out Memory memory);
 					if (tryget is Error) return tryget;
 
 					// check memory for name 
