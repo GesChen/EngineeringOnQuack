@@ -37,7 +37,15 @@ public class Tester : MonoBehaviour {
 		//evaluator.Evaluate(0, line);
 
 		Tokenizer tokenizer = new();
-		tokenizer.Tokenize(" hello world -- comment thing -- more text but -- sl \n then ml --- blah blah \n more blah blah --- yada boo hoo");
+		(Section section, Data output) = tokenizer.Tokenize(
+@"
+hello world
+this     is stuff   --commented out
+	indented   block
+unindented
+	yeah
+");
+		print(section);
 	}
 	/*
 	// conect i and e
