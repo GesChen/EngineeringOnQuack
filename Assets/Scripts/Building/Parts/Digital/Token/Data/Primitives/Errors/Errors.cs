@@ -29,6 +29,12 @@ public static class Errors {
 		=> new($"Invalid character {c}");
 	public static Error MismatchedSomething(string mismatched)
 		=> new($"Mismatched {mismatched}");
+	public static Error VarNameCannotStartWithNum()
+		=> new($"Variable name cannot start with a number");
+	public static Error UnknownOperator(string op)
+		=> new($"Unknown operator {op}");
+	public static Error CouldntParse(string line)
+		=> new($"Couldn't parse \"{line}\"");
 	public static Error template()
 		=> new($"");
 }

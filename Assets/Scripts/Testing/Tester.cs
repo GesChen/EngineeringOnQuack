@@ -39,11 +39,10 @@ public class Tester : MonoBehaviour {
 		Tokenizer tokenizer = new();
 		(Section section, Data output) = tokenizer.Tokenize(
 @"
-hello world
-this     is stuff   --commented out
-	indented   block
-unindented
-	yeah
+print('hello world')
+if 1 + 2 ==   3: -- this does something i guess
+	indented block = 0
+idk.dosomething55 
 ");
 		print(section);
 	}

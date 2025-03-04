@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
+using System.Linq;
 
 public class Tokenizer {
 	public string RemoveComments(string lines) {
@@ -72,10 +73,11 @@ public class Tokenizer {
 		// line has been stripped and preprocessed already
 
 		static int chartype(char c) {
-			if (char.IsLetter(c) || c == '_') return 0;	   // name
-			if (char.IsNumber(c)) return 1;				  // number
-			if (opchars.Contains(c)) return 2;			 // operator
-			if (regionchars.Contains(c)) return 3;		// region
+			if (char.IsLetter(c) || c == '_') return 0;	    // name
+			if (char.IsNumber(c)) return 1;				   // number
+			if (opchars.Contains(c)) return 2;			  // operator
+			if (regionchars.Contains(c)) return 3;		 // region
+			if (c == ' ') return 4;						// space
 			return -1;
 		}
 
@@ -88,41 +90,87 @@ public class Tokenizer {
 			char c = line[i];
 			int type = chartype(c);
 			if (type == -1) return (null, Errors.InvalidCharacter(c));
+			sb.Append(c);
+			
+			// region symbol, find region and process as own token
+			if (type == 3) {
+				sb.Clear(); // reset sb
+				
+				int start = i;
+				char lookfor = regionpairs[c]; // determine end char
+				while (i < line.Length && line[i] != lookfor) i++; // increase i until eol or end char
+				if (i == line.Length - 1) // eol, mismatched
+					return (null, Errors.MismatchedSomething(regionName(c)));
+				i++; // include the end char
 
-			switch (type) {
-				case 0:
+				string region = line[start..i];
+				region = region[1..^1]; // trim off ends
 
-					break;
-				case 1:
+				switch (c) {
+					case '(':
+					case '[':
+					case '{':
+						// add subexp wih proper source
+						(List<Token> subtokens, Data output) = TokenizeLine(region);
+						if (output is Error) return (null, output);
 
-					break;
-				case 2:
+						tokens.Add(new Token.SubExpression(subtokens,
+							c switch
+							{
+								'(' => Token.SubExpression.Source.Parentheses,
+								'[' => Token.SubExpression.Source.Brackets,
+								'{' => Token.SubExpression.Source.Braces,
+								_ => Token.SubExpression.Source.Parentheses // idk how to error here :(
+							}));
+						break;
 
-					break;
-				case 3: // region symbol, find region and process as own token
-					int start = i;
-					char lookfor = regionpairs[c]; // determine end char
-					while (i < line.Length && line[i] != lookfor) i++; // increase i until eol or end char
-					if (i == line.Length - 1) // eol, mismatched
-						return (null, Errors.MismatchedSomething(regionName(c)));
-					i++; // include the end char
+					case '"':
+					case '\'':
+						// add string primitive
 
-					switch (c) {
-						case '(':
-							break;
-						case '[':
-							break;
-						case '{':
-							break;
-						case '"':
-						case '\'':
-
-							break;
-					}
-
-					break;
+						tokens.Add(new Primitive.String(region));
+						break;
+				}
 			}
 
+			if (lastType != type && // covers space with type 4
+				) // TODO change this to fit actual number stuff whatever case idk have space now idk
+			{ // make new token 
+				string tokenString = sb.ToString();
+
+				sb.Clear();
+				if (c != ' ') sb.Append(c); // keep first char unless split by space
+
+				if (tokenString.All(c => char.IsLetterOrDigit(c) || c == '_'))
+				{ // name/kw conditions
+				  // first char is not number
+					if (char.IsDigit(tokenString[0])) return (null, Errors.VarNameCannotStartWithNum());
+
+					// keyword check
+					if (Token.Keyword.Keywords.Contains(tokenString))
+						tokens.Add(new Token.Keyword(tokenString));
+					else
+						tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
+				}
+				else if (tokenString.All(c => opchars.Contains(c)))
+				{ // all operator symbols
+					if (Token.Operator.AllOperators.Contains(tokenString))
+						tokens.Add(new Token.Operator(tokenString));
+					else
+						return (null, Errors.UnknownOperator(tokenString));
+				}
+				else if (tokenString.All(c => char.IsDigit(c)))
+				{ // number 
+					if (int.TryParse(tokenString, out int number))
+						tokens.Add(new Primitive.Number(number));
+					else
+						return (null, Errors.Custom("Couldn't parse number (wtf???)"));
+				}
+				else
+					return (null, Errors.CouldntParse(line));
+			}
+
+			lastType = type;
 			i++;
 		}
 		return (tokens, Data.Success);
