@@ -76,16 +76,20 @@ public class Tokenizer {
 		// line has been stripped and preprocessed already
 
 		var chartypes = new {
+			unknown = -1,
 			space = 0,
-			name = // TODO: FINISH THIS!! use this anonymous var as enum type shit and fix the char type uses
+			name = 1,
+			number = 2,
+			op = 3,
+			str = 4
 		};
 
-		static int chartype(char c) {
-			if (c == ' ') return 3;						 // space
-			if (char.IsLetter(c) || c == '_') return 0;	    // name
-			if (char.IsNumber(c)) return 1;				   // number
-			if (opchars.Contains(c)) return 2;			  // operator
-			if (c == '"' || c == '\'') return 4;		// string
+		int chartype(char c) {
+			if (c == ' ') return chartypes.space;					     // space
+			if (char.IsLetter(c) || c == '_') return chartypes.name;    // name
+			if (char.IsNumber(c)) return chartypes.number;			   // number
+			if (opchars.Contains(c)) return chartypes.op;			  // operator
+			if (c == '"' || c == '\'') return chartypes.str;		// string
 			return -1;
 		}
 
@@ -130,17 +134,23 @@ public class Tokenizer {
 		while (i < line.Length) {
 			char c = line[i];
 			int type = chartype(c);
-			if (type == -1) return (null, Errors.InvalidCharacter(c));
-			if (i == 0 || lastType == 3 || lastType == 4) lastType = type;
+			if (type == chartypes.unknown) return (null, Errors.InvalidCharacter(c));
+
+			bool lastOpThisNotFull = lastType == chartypes.op && // (sb (last op?) + this) is not valid op
+				!Token.Operator.AllOperators.Contains(sb.ToString() + c); // put before the lasttype change to type
+
+			if (i == 0 || 
+				lastType == chartypes.space || 
+				lastType == chartypes.str) 
+				lastType = type;
 
 			bool typechanged = lastType != type; // chartype changed, handle accordingly
+
 			bool numtonameVV = // no switch when go from number to name or vice versa
-				(lastType == 0 && type == 1) || 
-				(lastType == 1 && type == 0);
+				(lastType == chartypes.number && type == chartypes.name) || 
+				(lastType == chartypes.name && type == chartypes.number);
 
-			bool lastOpThisNotFull = lastType == 2 &&
-				!Token.Operator.AllOperators.Contains(sb.ToString() + c); // (sb (last op?) + this) is not valid op
-
+			
 			if ((typechanged && !numtonameVV) || lastOpThisNotFull) {
 				Data output = maketoken();
 				if (output is Error) return (null, output);
@@ -191,7 +201,9 @@ public class Tokenizer {
 */
 			
 			// still need custom string processing or else string contents get tokenized too
-			if (type == 4) {
+			if (type == chartypes.str) {
+				sb.Clear(); // dont include ' in sb
+
 				int start = i;
 				i++;
 				while (i < line.Length && line[i] != c) i++; // increase i until eol or end char
