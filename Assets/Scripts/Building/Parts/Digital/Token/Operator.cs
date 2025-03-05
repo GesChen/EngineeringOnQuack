@@ -4,13 +4,13 @@ using UnityEngine;
 
 public partial class Token {
 	public partial class Operator : Token {
-		public static List<string> UnaryOperators = new()
+		public static readonly List<string> UnaryOperators			= new()
 		{
 			"+",
 			"-",
 			"!"
 		};
-		public static List<string> ArithmeticOperators = new()
+		public static readonly List<string> ArithmeticOperators		= new()
 		{
 			"+",
 			"-",
@@ -19,7 +19,7 @@ public partial class Token {
 			"%",
 			"^"
 		};
-		public static List<string> ComparisonOperators = new()
+		public static readonly List<string> ComparisonOperators		= new()
 		{
 			"==",
 			"!=",
@@ -28,7 +28,7 @@ public partial class Token {
 			">=",
 			"<="
 		};
-		public static List<string> LogicalOperators = new()
+		public static readonly List<string> LogicalOperators		= new()
 		{
 			"&&",
 			"||",
@@ -37,26 +37,32 @@ public partial class Token {
 			"!!",
 			"!"
 		};
-		public static List<string> AssignmentOperators = new()
+		public static readonly List<string> AssignmentOperators		= new()
 		{
 			"=",
 			"+=",
 			"-=",
-			"++",
-			"--",
 			"*=",
 			"/=",
 			"^=",
 			"%="
 		};
-		public static List<string> SpecialOperators = new()
+		public static readonly List<string> RegionOperators			= new() {
+			"(",
+			")",
+			"[",
+			"]",
+			"{",
+			"}",
+		};
+		public static readonly List<string> SpecialOperators		= new()
 		{
 			".",
 			",",
 			"...",
 			":"
 		};
-		public static List<string> AllOperators = new()
+		public static readonly List<string> AllOperators			= new()
 		{
 			"+",
 			"-",
@@ -64,18 +70,21 @@ public partial class Token {
 			"/",
 			"%",
 			"^",
+
 			"==",
 			"!=",
 			">",
 			"<",
 			">=",
 			"<=",
+
 			"&&",
 			"||",
 			"!&",
 			"!|",
 			"!!",
 			"!",
+
 			"=",
 			"+=",
 			"-=",
@@ -85,11 +94,20 @@ public partial class Token {
 			"/=",
 			"^=",
 			"%=",
+
+			"(",
+			")",
+			"[",
+			"]",
+			"{",
+			"}",
+
 			".",
 			",",
-			"...",
+			"..",
 			":"
 		};
+		public static readonly HashSet<string> AllOperatorsHashSet	= new(AllOperators);
 
 		public enum OperatorType {
 			Arithmetic,
@@ -121,7 +139,7 @@ public partial class Token {
 		}
 
 		public override string ToString() {
-			return "Operator " + StringValue;
+			return $"#O {StringValue}";
 		}
 	}
 }

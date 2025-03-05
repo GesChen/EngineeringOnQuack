@@ -25,6 +25,16 @@ public static class Errors {
 		=> new($"Cannot set a member of a primitive value: {membername}");
 	public static Error InvalidUseOfOperator(string op)
 		=> new($"Invalid use of operator {op}");
+	public static Error InvalidCharacter(char c)
+		=> new($"Invalid character {HF.GetStringRepresentation(c.ToString())}");
+	public static Error MismatchedSomething(string mismatched)
+		=> new($"Mismatched {mismatched}");
+	public static Error VarNameCannotStartWithNum()
+		=> new($"Variable name cannot start with a number");
+	public static Error UnknownOperator(string op)
+		=> new($"Unknown operator {op}");
+	public static Error CouldntParse(string line)
+		=> new($"Couldn't parse \"{line}\"");
 	public static Error template()
 		=> new($"");
 }

@@ -17,6 +17,10 @@ public partial class Token {
 			Tokens = tokens;
 			From = from;
 		}
+
+		public override string ToString() {
+			return $"#S ({Tokens.Count}) from {From}";
+		}
 	}
 }
 

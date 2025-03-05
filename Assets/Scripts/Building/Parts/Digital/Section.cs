@@ -10,4 +10,8 @@ public class Section
 	{
 		Lines = lines;
 	}
+
+	public override string ToString() {
+		return $"Section: {string.Join('\n', Lines)}";
+	}
 }

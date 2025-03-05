@@ -9,5 +9,9 @@ public partial class Token {
 		public Name(string name) {
 			Value = name;
 		}
+
+		public override string ToString() {
+			return $"#N {Value}";
+		}
 	}
 }

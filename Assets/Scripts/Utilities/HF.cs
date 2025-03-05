@@ -285,4 +285,15 @@ public static class HF {
 				return false;
 		return true;
 	}
+
+	public static string GetStringRepresentation(string input) {
+		return input
+			.Replace("\t", @"\t")
+			.Replace("\n", @"\n")
+			.Replace("\r", @"\r")
+			.Replace("\v", @"\v")
+			.Replace("\f", @"\f")
+			.Replace("\0", @"\0")
+			.Replace(" ", @"\u0020");
+	}
 }

@@ -32,4 +32,11 @@ public class Line
 		LineType = LineTypeEnum.Section;
 		Section = section;
 	}
+
+	public override string ToString() {
+		if (LineType == LineTypeEnum.Line)
+			return $"Line ({Tokens.Count}): {OriginalString}";
+		else
+			return $"SubSection: {Section}";
+	}
 }

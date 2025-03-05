@@ -28,8 +28,11 @@ public class Tester : MonoBehaviour {
 		}
 		sw.Stop();
 
-		print($"{sw.ElapsedTicks * 100} ns");
-		print($"{sw.ElapsedMilliseconds} ms");
+		double ns = sw.ElapsedTicks * 100;
+		print($"{ns} ns");
+		print($"{ns / 1e6} ms");
+		print($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each");
+		print($"{(int) (iters / (ns / 1e9))} / second");
 	}
 
 	void ToTest() {
@@ -37,7 +40,13 @@ public class Tester : MonoBehaviour {
 		//evaluator.Evaluate(0, line);
 
 		Tokenizer tokenizer = new();
-		tokenizer.Tokenize(" hello world -- comment thing -- more text but -- sl \n then ml --- blah blah \n more blah blah --- yada boo hoo");
+		(Section section, Data output) = tokenizer.Tokenize(
+@"
+print('hello world')
+if 1 + 2 === ...5 type shit 2.+-.5   3:: -- this does something i guess
+	indented block = 0
+idk.dosomething55
+");
 	}
 	/*
 	// conect i and e
