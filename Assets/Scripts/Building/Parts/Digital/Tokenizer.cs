@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using System.Linq;
+using System.Drawing;
 
 public class Tokenizer {
 	public string RemoveComments(string lines) {
@@ -50,16 +51,18 @@ public class Tokenizer {
 	}
 
 	static readonly HashSet<char> opchars = new() {
-		'+', '-', '*', '/', '%', '^', // arithmetic
-		'=', '!', '>', '<',          // comparison
-		'&', '|',                   // logic
-		'.', ','                   // special
+		'+', '-', '*', '/', '%', '^',			    // arithmetic
+		'=', '!', '>', '<',						   // comparison
+		'&', '|',								  // logic
+		'(', ')', '[', ']', '{', '}',			 // region
+		'.', ',', ':'							// special
 	};
+	/*static readonly char singlequote = @"'"[0];
 	static readonly HashSet<char> regionchars = new() {
-		'(', ')', '[', ']', '{', '}', '"', '\''
+		'(', ')', '[', ']', '{', '}', '"', singlequote
 	};
 	static readonly Dictionary<char, char> regionpairs = new() {
-		{'(' , ')'}, {'[', ']'}, {'{' , '}'}, {'"' , '"'}, {'\'' , '\''}
+		{'(' , ')'}, {'[', ']'}, {'{' , '}'}, {'"' , '"'}, {singlequote , singlequote}
 	};
 	string regionName(char c) => c switch {
 		'(' => "parentheses",
@@ -67,17 +70,22 @@ public class Tokenizer {
 		'{' => "braces",
 		'"' or '\'' => "quotes",
 		_ => ""
-	};
+	};*/
 
 	public (List<Token>, Data) TokenizeLine(string line) {
 		// line has been stripped and preprocessed already
 
+		var chartypes = new {
+			space = 0,
+			name = // TODO: FINISH THIS!! use this anonymous var as enum type shit and fix the char type uses
+		};
+
 		static int chartype(char c) {
+			if (c == ' ') return 3;						 // space
 			if (char.IsLetter(c) || c == '_') return 0;	    // name
 			if (char.IsNumber(c)) return 1;				   // number
 			if (opchars.Contains(c)) return 2;			  // operator
-			if (regionchars.Contains(c)) return 3;		 // region
-			if (c == ' ') return 4;						// space
+			if (c == '"' || c == '\'') return 4;		// string
 			return -1;
 		}
 
@@ -86,22 +94,71 @@ public class Tokenizer {
 		int lastType = -1;
 		int i = 0;
 
+		Data maketoken() {
+			// make new token out of past built sb
+			string tokenString = sb.ToString();
+			sb.Clear();
+
+			if (tokenString.All(c => char.IsDigit(c))) { // number 
+				if (int.TryParse(tokenString, out int number))
+					tokens.Add(new Primitive.Number(number));
+				else
+					return Errors.Custom("Couldn't parse number (wtf???)");
+			}
+			else if (tokenString.All(c => char.IsLetterOrDigit(c) || c == '_')) { // name/kw conditions
+				if (char.IsDigit(tokenString[0])) // first char is not number
+					return Errors.VarNameCannotStartWithNum();
+
+				// keyword check
+				if (Token.Keyword.Keywords.Contains(tokenString))
+					tokens.Add(new Token.Keyword(tokenString));
+				else
+					tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
+			}
+			else if (tokenString.All(c => opchars.Contains(c))) { // all operator symbols
+				if (Token.Operator.AllOperators.Contains(tokenString))
+					tokens.Add(new Token.Operator(tokenString));
+				else
+					return Errors.UnknownOperator(tokenString);
+			}
+			else
+				return Errors.CouldntParse(line);
+
+			return Data.Success;
+		}
+
 		while (i < line.Length) {
 			char c = line[i];
 			int type = chartype(c);
 			if (type == -1) return (null, Errors.InvalidCharacter(c));
-			sb.Append(c);
-			
-			// region symbol, find region and process as own token
+			if (i == 0 || lastType == 3 || lastType == 4) lastType = type;
+
+			bool typechanged = lastType != type; // chartype changed, handle accordingly
+			bool numtonameVV = // no switch when go from number to name or vice versa
+				(lastType == 0 && type == 1) || 
+				(lastType == 1 && type == 0);
+
+			bool lastOpThisNotFull = lastType == 2 &&
+				!Token.Operator.AllOperators.Contains(sb.ToString() + c); // (sb (last op?) + this) is not valid op
+
+			if ((typechanged && !numtonameVV) || lastOpThisNotFull) {
+				Data output = maketoken();
+				if (output is Error) return (null, output);
+			}
+			if (c != ' ') sb.Append(c); // add char to sb after and if its not space
+
+			// old code for region symbol custom processing, no more subexpressions now
+			/*// c is region symbol -> find entire region and process as own token
 			if (type == 3) {
 				sb.Clear(); // reset sb
-				
+
 				int start = i;
 				char lookfor = regionpairs[c]; // determine end char
+				i++;
 				while (i < line.Length && line[i] != lookfor) i++; // increase i until eol or end char
-				if (i == line.Length - 1) // eol, mismatched
+				if (i == line.Length) // eol, mismatched
 					return (null, Errors.MismatchedSomething(regionName(c)));
-				i++; // include the end char
+				i++;
 
 				string region = line[start..i];
 				region = region[1..^1]; // trim off ends
@@ -115,8 +172,7 @@ public class Tokenizer {
 						if (output is Error) return (null, output);
 
 						tokens.Add(new Token.SubExpression(subtokens,
-							c switch
-							{
+							c switch {
 								'(' => Token.SubExpression.Source.Parentheses,
 								'[' => Token.SubExpression.Source.Brackets,
 								'{' => Token.SubExpression.Source.Braces,
@@ -132,46 +188,32 @@ public class Tokenizer {
 						break;
 				}
 			}
+*/
+			
+			// still need custom string processing or else string contents get tokenized too
+			if (type == 4) {
+				int start = i;
+				i++;
+				while (i < line.Length && line[i] != c) i++; // increase i until eol or end char
+				if (i == line.Length) // eol, mismatched
+					return (null, Errors.MismatchedSomething("quotes"));
+				//i++;
 
-			if (lastType != type && // covers space with type 4
-				) // TODO change this to fit actual number stuff whatever case idk have space now idk
-			{ // make new token 
-				string tokenString = sb.ToString();
+				string str = line[start..(i + 1)];
+				str = str[1..^1]; // trim off quotes
 
-				sb.Clear();
-				if (c != ' ') sb.Append(c); // keep first char unless split by space
-
-				if (tokenString.All(c => char.IsLetterOrDigit(c) || c == '_'))
-				{ // name/kw conditions
-				  // first char is not number
-					if (char.IsDigit(tokenString[0])) return (null, Errors.VarNameCannotStartWithNum());
-
-					// keyword check
-					if (Token.Keyword.Keywords.Contains(tokenString))
-						tokens.Add(new Token.Keyword(tokenString));
-					else
-						tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
-				}
-				else if (tokenString.All(c => opchars.Contains(c)))
-				{ // all operator symbols
-					if (Token.Operator.AllOperators.Contains(tokenString))
-						tokens.Add(new Token.Operator(tokenString));
-					else
-						return (null, Errors.UnknownOperator(tokenString));
-				}
-				else if (tokenString.All(c => char.IsDigit(c)))
-				{ // number 
-					if (int.TryParse(tokenString, out int number))
-						tokens.Add(new Primitive.Number(number));
-					else
-						return (null, Errors.Custom("Couldn't parse number (wtf???)"));
-				}
-				else
-					return (null, Errors.CouldntParse(line));
+				tokens.Add(new Primitive.String(str));
 			}
 
 			lastType = type;
 			i++;
+
+			if (i == line.Length) { // at end do one manual token generation 
+				// defo better way to do this but im too lazy rn
+				
+				Data output = maketoken();
+				if (output is Error) return (null, output);
+			}
 		}
 		return (tokens, Data.Success);
 	}
@@ -225,6 +267,7 @@ public class Tokenizer {
 		int i = 0;
 		while (i < lines.Length) {
 			string line = PreProcessLine(lines[i]);
+
 			if (string.IsNullOrEmpty(line)) { i++; continue; }
 
 			if (indentation(i) > startIndentation) {
@@ -242,7 +285,7 @@ public class Tokenizer {
 				sectionLines.Add(new(startLineNum + i, line, subsection)); // add a subsection
 			}
 			else {
-				(List<Token> tokens, Data output) = TokenizeLine(lines[i]);
+				(List<Token> tokens, Data output) = TokenizeLine(line);
 				if (output is Error) return (null, output);
 
 				sectionLines.Add(new(startLineNum + i, line, tokens));

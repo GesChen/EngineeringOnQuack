@@ -90,5 +90,8 @@ public partial class Token {
 			return ThisReference;
 		}
 
+		public override string ToString() {
+			return $"#R to {ThisReference.Type.Name} object";
+		}
 	}
 }

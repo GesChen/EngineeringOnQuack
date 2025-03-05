@@ -26,7 +26,7 @@ public static class Errors {
 	public static Error InvalidUseOfOperator(string op)
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)
-		=> new($"Invalid character {c}");
+		=> new($"Invalid character {HF.GetStringRepresentation(c.ToString())}");
 	public static Error MismatchedSomething(string mismatched)
 		=> new($"Mismatched {mismatched}");
 	public static Error VarNameCannotStartWithNum()

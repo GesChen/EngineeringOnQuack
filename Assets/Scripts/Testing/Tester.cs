@@ -40,11 +40,12 @@ public class Tester : MonoBehaviour {
 		(Section section, Data output) = tokenizer.Tokenize(
 @"
 print('hello world')
-if 1 + 2 ==   3: -- this does something i guess
+if 1 + 2 === ...5 type shit 2.+-.5   3:: -- this does something i guess
 	indented block = 0
-idk.dosomething55 
+idk.dosomething55
 ");
 		print(section);
+		print(output);
 	}
 	/*
 	// conect i and e

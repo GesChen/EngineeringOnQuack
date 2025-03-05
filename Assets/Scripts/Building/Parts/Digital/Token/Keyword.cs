@@ -25,5 +25,9 @@ public partial class Token {
 		public Keyword(string keyword) {
 			StringValue = keyword;
 		}
+
+		public override string ToString() {
+			return $"#K {StringValue}";
+		}
 	}
 }
