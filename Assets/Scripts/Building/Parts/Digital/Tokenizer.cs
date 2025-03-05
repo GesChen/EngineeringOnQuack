@@ -114,13 +114,13 @@ public class Tokenizer {
 					return Errors.VarNameCannotStartWithNum();
 
 				// keyword check
-				if (Token.Keyword.Keywords.Contains(tokenString))
+				if (Token.Keyword.KeywordsHashSet.Contains(tokenString))
 					tokens.Add(new Token.Keyword(tokenString));
 				else
 					tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
 			}
 			else if (tokenString.All(c => opchars.Contains(c))) { // all operator symbols
-				if (Token.Operator.AllOperators.Contains(tokenString))
+				if (Token.Operator.AllOperatorsHashSet.Contains(tokenString))
 					tokens.Add(new Token.Operator(tokenString));
 				else
 					return Errors.UnknownOperator(tokenString);

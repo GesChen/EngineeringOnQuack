@@ -174,7 +174,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   debug: 0
   testTime: 0
-  iters: 1
+  iters: 1000
   memory: {fileID: 1183928399}
   interpreter: {fileID: 1183928393}
   evaluator: {fileID: 1183928398}

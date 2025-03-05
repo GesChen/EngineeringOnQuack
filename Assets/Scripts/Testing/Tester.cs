@@ -28,8 +28,11 @@ public class Tester : MonoBehaviour {
 		}
 		sw.Stop();
 
-		print($"{sw.ElapsedTicks * 100} ns");
-		print($"{sw.ElapsedMilliseconds} ms");
+		double ns = sw.ElapsedTicks * 100;
+		print($"{ns} ns");
+		print($"{ns / 1e6} ms");
+		print($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each");
+		print($"{(int) (iters / (ns / 1e9))} / second");
 	}
 
 	void ToTest() {
@@ -44,8 +47,6 @@ if 1 + 2 === ...5 type shit 2.+-.5   3:: -- this does something i guess
 	indented block = 0
 idk.dosomething55
 ");
-		print(section);
-		print(output);
 	}
 	/*
 	// conect i and e
