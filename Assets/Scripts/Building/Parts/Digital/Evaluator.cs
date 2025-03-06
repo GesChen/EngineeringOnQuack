@@ -18,25 +18,15 @@ public class Evaluator : MonoBehaviour {
 		bool lessthan = (lt as Primitive.Bool).Value;
 		bool equals = (eq as Primitive.Bool).Value;
 
-		if (op.StringValue == "==") {
-			return eq;
-		}
-		else if (op.StringValue == "!=") { // (!=) = (! ==)
-			return new Primitive.Bool(!equals);
-		}
-		else if (op.StringValue == "<") {
-			return lt;
-		}
-		else if (op.StringValue == ">") { // (>) = (!<=) 
-			return new Primitive.Bool(!(lessthan || equals));
-		}
-		else if (op.StringValue == "<=") { // (<=) = (< || ==)
-			return new Primitive.Bool(lessthan || equals);
-		}
-		else if (op.StringValue == ">=") { // (>=) = (! <)
-			return new Primitive.Bool(!lessthan);
-		}
-		return Errors.CannotCompare(a.Type.Name, b.Type.Name);
+		return op.StringValue switch {
+			"==" => eq, 
+			"!=" => new Primitive.Bool(!equals), // (!=) = (! ==)
+			"<" => lt, 
+			">" => new Primitive.Bool(!(lessthan || equals)), // (>) = (!<=) 
+			"<=" => new Primitive.Bool(lessthan || equals), // (<=) = (< || ==)
+			">=" => new Primitive.Bool(!lessthan), // (>=) = (! <)
+			_ => Errors.CannotCompare(a.Type.Name, b.Type.Name),
+		};
 	}
 	private Data Equals(Data a, Data b, Memory memory, Interpreter interpreter) { // op should either be == or !=
 																				  // try to get the eq operator from either a or b, if neither has one then return false
@@ -93,24 +83,25 @@ public class Evaluator : MonoBehaviour {
 		while (remaining.Count > 1) { // main loop
 
 			// find leftmost and highest precedence
-			Actions action = Actions.None;
 
+			Actions highestAction = Actions.None;
 			int highestPrecedence = -1;
 			int highestIndex = -1;
 
 			for (int i = 0; i < remaining.Count; i++) {
 				Token token = remaining[i];
 
+				Actions action = Actions.None;
 				int precedence = -1;
-				if (token is Data) {
+				if (token is Data) { // D -> R
 					precedence = 15;
 					action = Actions.Data;
 				}
-				if (token is Token.Name) {
+				if (token is Token.Name) { // N -> R
 					precedence = 10;
 					action = Actions.Name;
 				}
-				else if (token is Token.Operator op && op.StringValue == ".") {
+				else if (token is Token.Operator op && op.StringValue == ".") { // handle .
 					precedence = 10;
 					action = Actions.DotOperator;
 				}
@@ -118,18 +109,24 @@ public class Evaluator : MonoBehaviour {
 				if (precedence > highestPrecedence) { // > not >= for leftmost
 					highestPrecedence = precedence;
 					highestIndex = i;
+					highestAction = action;
 				}
 			}
+			if (highestPrecedence == -1)
+				break; // done with iterating
 			Token highestToken = remaining[highestIndex];
 
-			switch (action) {
-				case Actions.Data: // converts data into reference
+			Data tryget;
+			switch (highestAction) {
+				// D -> R
+				case Actions.Data:
 					Data data = remaining[highestIndex] as Data;
 					remaining[highestIndex] = Token.Reference.ExistingGlobalReference("", data);
 					break;
+				// N -> R 
 				case Actions.Name:
 					// try get memory
-					Data tryget = Interpreter.TryGetMemory(out Memory memory);
+					tryget = Interpreter.TryGetMemory(out Memory memory);
 					if (tryget is Error) return tryget;
 
 					// check memory for name 
@@ -141,59 +138,67 @@ public class Evaluator : MonoBehaviour {
 						Token.Reference.ExistingGlobalReference(name, get) : // make existing if data exists
 						Token.Reference.NewGlobalReference(name);			// or make new
 					break;
+				// decimal / member handling
 				case Actions.DotOperator:
 					// check left and right for number (ref) and name (ref)
 					Token left = remaining.ElementAtOrDefault(highestIndex - 1);
 					Token right = remaining.ElementAtOrDefault(highestIndex + 1);
 
-					// right is number, handle decimal
-
 					// fat garbage that used to be 2 lines of casting ugh stupid errors
-					Token.Reference rightRef = right as Token.Reference;
 					Token.Reference leftRef = left as Token.Reference;
-					Primitive.Number rightAsNumber = rightRef != null ? rightRef.ThisReference as Primitive.Number : null;
-					Primitive.Number leftAsNumber = leftRef != null ? leftRef.ThisReference as Primitive.Number : null;
-					bool rightIsNumber = rightAsNumber != null;
-					bool leftIsNumber = leftAsNumber != null;
+					bool leftIsRef = leftRef != null;
+					Token.Reference rightRef = left as Token.Reference;
+					bool rightIsRef = leftRef != null;
 
-					if (rightIsNumber || leftIsNumber) {
-						int lookForNegativeAt = highestIndex - 1;
+					void handleAsNumber() { 
+						Primitive.Number leftAsNumber = leftIsRef ?
+							leftRef.ThisReference as Primitive.Number : null;
+						Primitive.Number rightAsNumber = rightIsRef ?
+							rightRef.ThisReference as Primitive.Number : null;
 
-						bool negative = false;
-						int leftNum = 0;
-						int rightNum = 0;
+						int leftNum = leftAsNumber != null ? (int)leftAsNumber.Value : 0;
+						int rightNum = rightAsNumber != null ? (int)rightAsNumber.Value : 0;
 
-						// look for number on left and right
-						if (leftAsNumber != null) {
-							lookForNegativeAt--;
-							leftNum = (int)leftAsNumber.Value;
-						}
-						if (rightAsNumber != null)
-							rightNum = (int)rightAsNumber.Value;
-
-						if (lookForNegativeAt > 0 &&
-							remaining[lookForNegativeAt] is Token.Operator op &&
-							op.StringValue == "-")
-							negative = true;
+						int replaceStart = highestIndex - (leftAsNumber != null ? 1 : 0);
+						int replaceEnd = highestIndex + (rightAsNumber != null ? 1 : 0);
 
 						double fractionalPart = rightNum * Math.Pow(10, Math.Floor(Math.Log10(rightNum)) - 1);
-						double realValue = (negative ? -1 : 1) * (leftNum + fractionalPart);
-
-						// replace region start & end inclusive
-						int replaceStart = highestIndex - (leftAsNumber != null ? 1 : 0) - (negative ? 1 : 0);
-						int replaceEnd = highestIndex + (rightAsNumber != null ? 1 : 0); // +1 if right is number
+						double realValue = leftNum + fractionalPart;
 
 						HF.ReplaceRange(remaining, replaceStart, replaceEnd, // replace those tokens with the value
 							new() { Token.Reference.ExistingGlobalReference("", // turn value into ref
 							new Primitive.Number(realValue)) }); // actual value
 					}
-					else if (right is Token.Name) { // normal member syntax, expect existing reference on left
 
+					// normal member syntax, expect existing reference on left
+					if (leftIsRef) {
+						if (left is Primitive.Number)
+							handleAsNumber();
+						if (right is Token.Name rightname) {
+							tryget = leftRef.GetData();
+							if (tryget is Error) return tryget;
+
+							tryget = tryget.GetMember(rightname.Value);
+							HF.ReplaceRange( // replace l . r with R
+								remaining,
+								highestIndex - 1,
+								highestIndex + 1,
+								new() { Token.Reference.ExistingMemberReference(
+									leftRef,
+									tryget,
+									rightname.Value)});
+						}
+						else
+							return Errors.InvalidUseOfOperator(".");
 					}
-					else
-						return Errors.InvalidUseOfOperator(".");
+					else { // left is null or anything else
+						if (right is Primitive.Number) // handle as number if right is number
+							handleAsNumber();
+						else
+							return Errors.InvalidUseOfOperator(".");
+					}
 
-						break;
+					break;
 			}
 
 			if (last.SequenceEqual(remaining))

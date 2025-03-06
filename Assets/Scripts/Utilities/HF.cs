@@ -127,10 +127,9 @@ public static class HF {
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static List<T> ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
+	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
 		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);
 		originalList.InsertRange(startIndexInc, replacementList);
-		return originalList;
 	}
 
 	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true) {

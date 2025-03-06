@@ -37,16 +37,24 @@ public class Tester : MonoBehaviour {
 
 	void ToTest() {
 		//Line line = new(0, "", new List<Token>() { new Primitive.Number(5), new Token.Operator("."), new Primitive.Number(2) });
-		//evaluator.Evaluate(0, line);
+
+		// conect i and m
+		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
+		interpreter.MemoryCC = onItoMCC;
+		memory.InterpreterCC = onMtoICC;
+		print(IMcable);
+
+		memory.Initialize(onMtoICC);
 
 		Tokenizer tokenizer = new();
 		(Section section, Data output) = tokenizer.Tokenize(
 @"
-print('hello world')
-if 1 + 2 === ...5 type shit 2.+-.5   3:: -- this does something i guess
-	indented block = 0
-idk.dosomething55
+'stuff'.lower()
 ");
+
+		Data eval = evaluator.Evaluate(0, section.Lines[0]);
+
+		print(eval);
 	}
 	/*
 	// conect i and e
