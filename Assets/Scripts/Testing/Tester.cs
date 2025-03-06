@@ -19,7 +19,19 @@ public class Tester : MonoBehaviour {
 	public Cable IEcable;
 	public Cable IMcable;
 
+	Section section;
 	void Start() {
+		BeforeTesting();
+	}
+
+	private void Update() {
+		if (Input.GetKeyDown("e"))
+			Test();
+
+		if (Input.GetKey("q"))
+			Test();
+	}
+	void Test() {
 		Stopwatch sw = new();
 		sw.Start();
 
@@ -32,29 +44,26 @@ public class Tester : MonoBehaviour {
 		print($"{ns} ns");
 		print($"{ns / 1e6} ms");
 		print($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each");
-		print($"{(int) (iters / (ns / 1e9))} / second");
+		print($"{(int)(iters / (ns / 1e9))} / second");
 	}
 
-	void ToTest() {
-		//Line line = new(0, "", new List<Token>() { new Primitive.Number(5), new Token.Operator("."), new Primitive.Number(2) });
-
-		// conect i and m
+	void BeforeTesting() {
 		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
 		interpreter.MemoryCC = onItoMCC;
 		memory.InterpreterCC = onMtoICC;
-		print(IMcable);
 
 		memory.Initialize(onMtoICC);
 
 		Tokenizer tokenizer = new();
-		(Section section, Data output) = tokenizer.Tokenize(
+		(Section secout, Data output) = tokenizer.Tokenize(
 @"
-'stuff'.lower()
+'stuff'.contains('tu')
 ");
 
-		Data eval = evaluator.Evaluate(0, section.Lines[0]);
-
-		print(eval);
+		section = secout;
+	}
+	void ToTest() {
+		Data eval = evaluator.Evaluate(0, section.Lines[0], memory.component);
 	}
 	/*
 	// conect i and e

@@ -132,6 +132,7 @@ public static class HF {
 		originalList.InsertRange(startIndexInc, replacementList);
 	}
 
+	/*
 	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true) {
 		Type t = value.GetType();
 		if (value is null) return "";
@@ -259,6 +260,7 @@ public static class HF {
 		else if (t.Name == "ClassDefinition") return "Class Definition";
 		return t.Name.ToLower(); // function and script type are handled by this last return
 	}
+	*/
 
 	public static bool VariableNameIsValid(string name) {
 		/* naming convention:
@@ -295,4 +297,5 @@ public static class HF {
 			.Replace("\0", @"\0")
 			.Replace(" ", @"\u0020");
 	}
+
 }

@@ -25,6 +25,12 @@ public class Line
 		LineType = LineTypeEnum.Line;
 		Tokens = tokens;
 	}
+	public Line(List<Token> tokens) {
+		RealLineNumber = 0;
+		OriginalString = "";
+		LineType = LineTypeEnum.Line;
+		Tokens = tokens;
+	}
 	public Line(int lineNum, string lineString, Section section)
 	{
 		RealLineNumber = lineNum;

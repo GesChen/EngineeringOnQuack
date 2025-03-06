@@ -35,6 +35,8 @@ public static class Errors {
 		=> new($"Unknown operator {op}");
 	public static Error CouldntParse(string line)
 		=> new($"Couldn't parse \"{line}\"");
+	public static Error MemberIsNotMethod(string membername, string of)
+		=> new($"Member {membername} of {of} is not a method");
 	public static Error template()
 		=> new($"");
 }
