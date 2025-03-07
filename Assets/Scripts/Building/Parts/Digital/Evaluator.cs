@@ -1,10 +1,7 @@
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using UnityEngine;
-using UnityEngine.InputSystem.XR.Haptics;
 
 public class Evaluator : MonoBehaviour {
 	public Interpreter Interpreter;
@@ -82,6 +79,8 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	public Data Evaluate(int flags, Line line, Memory memory) {
+		if (line.Tokens.Count == 0)
+			return Errors.CannotEvaluateEmpty();
 
 		List<Token> remaining = line.Tokens;
 		List<Token> last = new();
@@ -152,9 +151,9 @@ public class Evaluator : MonoBehaviour {
 			Token right = remaining.ElementAtOrDefault(highestIndex + 1);
 
 			Token.Reference leftRef = left as Token.Reference;
-			bool leftIsRef = leftRef != null;
-			Token.Reference rightRef = left as Token.Reference;
-			bool rightIsRef = leftRef != null;
+			bool leftIsRefAndExists = leftRef != null;
+			Token.Reference rightRef = right as Token.Reference;
+			bool rightIsRefAndExists = rightRef != null;
 
 			Data tryget;
 			switch (highestAction) {
@@ -180,9 +179,9 @@ public class Evaluator : MonoBehaviour {
 				// decimal / member handling
 				case Actions.DotOperator:
 					void handleAsNumber() {
-						Primitive.Number leftAsNumber = leftIsRef ?
+						Primitive.Number leftAsNumber = leftIsRefAndExists ?
 							leftRef.ThisReference as Primitive.Number : null;
-						Primitive.Number rightAsNumber = rightIsRef ?
+						Primitive.Number rightAsNumber = rightIsRefAndExists ?
 							rightRef.ThisReference as Primitive.Number : null;
 
 						int leftNum = leftAsNumber != null ? (int)leftAsNumber.Value : 0;
@@ -200,7 +199,7 @@ public class Evaluator : MonoBehaviour {
 					}
 
 					// normal member syntax, expect existing reference on left
-					if (leftIsRef) {
+					if (leftIsRefAndExists) {
 						if (left is Primitive.Number)
 							handleAsNumber();
 						if (right is Token.Name rightname) {
@@ -257,42 +256,21 @@ public class Evaluator : MonoBehaviour {
 					
 					switch (highestTokenAsOp.StringValue) {
 						case "(":
-							bool isArguments = leftIsRef;
+							bool isArguments = leftIsRefAndExists;
 							if (isArguments) {
 								// make sure left is a callable type
-								if (!leftRef.Exists)
+								if (!(left == null || leftRef.Exists))
 									return Errors.UnknownVariable(leftRef.Name);
 								if (leftRef.ThisReference is not Primitive.Function func)
 									return Errors.MemberIsNotMethod(leftRef.Name, leftRef.ThisReference.Type.Name);
 								
-								// split arg list into chunks delimited by comma
-								List<Token> curChunk = new();
-								List<List<Token>> argChunks = new();
-								i = 0;
-								while (i < regionTokens.Count) {
-									Token rt = regionTokens[i];
-									if (rt is Token.Operator op && op.StringValue == ",") {
-										argChunks.Add(curChunk);
-										curChunk.Clear();
-									}
-									else
-										curChunk.Add(rt);
-									i++;
-								}
-								argChunks.Add(curChunk);
+								Data evalArgs = EvaluateList(
+									flags,
+									line.CopyWithNewTokens(regionTokens),
+									memory);
+								if (evalArgs is Error) return evalArgs;
 
-								// eval arg token chunks into data
-								List<Data> args = new(); // can be optimized into array if desperate
-								foreach (List<Token> chunk in argChunks) {
-									Data tryEval = Evaluate(0,
-										new(line.RealLineNumber,
-										line.OriginalString,
-										chunk), memory);
-
-									if (tryEval is Error) return tryEval;
-
-									args.Add(tryEval);
-								}
+								List<Data> args = (evalArgs as Primitive.List).Value;
 
 								Data run = Interpreter.RunFunction(memory, func, leftRef.ParentReference, args);
 								if (run is Error) return run;
@@ -300,13 +278,7 @@ public class Evaluator : MonoBehaviour {
 								HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, new() { run });
 							}
 							else {
-								Data evalSubexp = Evaluate(0,
-									new(
-										line.RealLineNumber,
-										line.OriginalString,
-										regionTokens),
-									memory);
-
+								Data evalSubexp = Evaluate(0, line.CopyWithNewTokens(regionTokens), memory);
 								if (evalSubexp is Error) return evalSubexp;
 
 								HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalSubexp });
@@ -314,11 +286,43 @@ public class Evaluator : MonoBehaviour {
 							break;
 
 						case "[":
-							// eval the list
-							Data evalList = EvaluateList()
-							
-							bool indexing = leftIsRef;
+							bool indexing = leftIsRefAndExists;
 							if (indexing) {
+								Primitive.List leftAsList = leftRef.ThisReference as Primitive.List;
+								Primitive.String leftAsString = leftRef.ThisReference as Primitive.String;
+
+								if (leftAsList == null && leftAsString == null)
+									return Errors.CannotIndex(leftRef.ThisReference.Type.Name);
+
+								List<Data> baseList = leftAsList?.Value;
+								if (leftAsString != null)
+									baseList = Enumerable.Repeat<Data>(null, leftAsString.Value.Length).ToList(); // turn string into representative list
+
+								Data evalList = EvaluateList(
+									flags,
+									line.CopyWithNewTokens(regionTokens),
+									memory,
+									baseList
+									);
+								if (evalList is Error) return evalList;
+
+								// check indices
+								List<int> indices = new();
+								foreach (Data d in (evalList as Primitive.List).Value) {
+									if (d is not Primitive.Number num)
+										return Errors.CannotIndex(d.Type.Name);
+
+									if (num.Value)
+								}
+
+								if (leftAsList != null){ // left is list
+									List<Data> indexed = new();
+									foreach (int )
+
+									HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
+										new() { });
+								}
+								else
 
 							}
 							else {
@@ -356,7 +360,9 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 
-	private Data EvaluateList(int flags, List<Token> tokens, Memory memory) {
+	private Data EvaluateList(int flags, Line line, Memory memory, List<Data> baseList = null) {
+		List<Token> tokens = line.Tokens;
+		
 		// identify list type
 		bool rangeList = false;
 
@@ -375,12 +381,90 @@ public class Evaluator : MonoBehaviour {
 
 
 		if (rangeList) {
-			Token[] leftOfEllipsis = tokens.ToArray()[..ellipsisIndex]; // TODO figure out if this syntax is right
-			Token[] rightOfEllipsies = tokens.ToArray()[ellipsisIndex..];
+			Token[] leftOfEllipsis = tokens.ToArray()[..ellipsisIndex]; // exclusive
+			Token[] rightOfEllipsis = tokens.ToArray()[(ellipsisIndex + 1)..]; // inclusive 
 
+			double start = 0;
+			double step = 1;
+			double end = baseList != null ? baseList.Count : -1;
 
+			if (leftOfEllipsis.Length != 0) {
+				Data leftOfEllipsisEval = EvaluateList(
+								flags, 
+								line.CopyWithNewTokens(leftOfEllipsis.ToList()), 
+								memory);
+				if (leftOfEllipsisEval is Error) return leftOfEllipsisEval;
+				
+				Primitive.List leftList = leftOfEllipsisEval as Primitive.List;
+				
+				if (leftList.Value[0] is not Primitive.Number leftNum)
+					return Errors.CannotUseTypeWithFeature(leftList.Value[0].Type.Name, "range lists");
+
+				start = leftNum.Value;
+
+				if (leftList.Value.Count > 1) {
+					if (leftList.Value[1] is not Primitive.Number stepNum)
+						return Errors.CannotUseTypeWithFeature(leftList.Value[1].Type.Name, "range lists");
+
+					step = stepNum.Value;
+				}
+				if (leftList.Value.Count > 2)
+					return Errors.InvalidUseOfFeature("range lists", "too many start parameters");
+			}
+
+			if (rightOfEllipsis.Length != 0) {
+				Data rightOfEllipsisEval = Evaluate(
+					flags,
+					line.CopyWithNewTokens(leftOfEllipsis.ToList()),
+					memory);
+
+				if (rightOfEllipsisEval is Error) return rightOfEllipsisEval;
+
+				if (rightOfEllipsisEval is not Primitive.Number rightNum)
+					return Errors.CannotUseTypeWithFeature(rightOfEllipsisEval.Type.Name, "range lists");
+
+				end = rightNum.Value;
+			}
+
+			if (end == -1)
+				return Errors.InvalidUseOfFeature("range lists", "missing end parameter");
+
+			List<Data> list = new();
+
+			for (double i = start; i < end; i += step) {
+				list.Add(new Primitive.Number(i));
+			}
+
+			return new Primitive.List(list);
 		}
-		else {
+		else { // normal list
+			// split into chunks by comma
+			List<Token> curChunk = new();
+			List<List<Token>> tokenChunks = new();
+			int i = 0;
+			while (i < tokens.Count) {
+				Token rt = tokens[i];
+				if (rt is Token.Operator op && op.StringValue == ",") {
+					tokenChunks.Add(curChunk);
+					curChunk = new(); // instead of clearing so the reference isnt shared
+				}
+				else
+					curChunk.Add(rt);
+				i++;
+			}
+			if (curChunk.Count > 0) 
+				tokenChunks.Add(curChunk);
+
+			// eval arg token chunks into data
+			List<Data> items = new(); // can be optimized into array if desperate
+			foreach (List<Token> chunk in tokenChunks) {
+				Data tryEval = Evaluate(0, line.CopyWithNewTokens(chunk), memory);
+				if (tryEval is Error) return tryEval;
+
+				items.Add(tryEval);
+			}
+
+			return new Primitive.List(items);
 		}
 	}
 }

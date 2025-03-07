@@ -19,6 +19,8 @@ public static class Errors {
 		=> new($"Missing or Invalid connection to the {portName} port on the {partFrom}");
 	public static Error CannotIndex(string type)
 		=> new($"Cannot index {type} object, Lists and Strings only");
+	public static Error CannotIndexWithType(string type)
+		=> new($"Cannot index with {type}, must be whole numbers");
 	public static Error IndexOutOfRange(int attempt)
 		=> new($"Index out of range: {attempt}");
 	public static Error CannotSetMemberOfPrimitive(string membername)
@@ -27,6 +29,10 @@ public static class Errors {
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)
 		=> new($"Invalid character {HF.GetStringRepresentation(c.ToString())}");
+	public static Error InvalidUseOfFeature(string feature)
+		=> new($"Invalid use of {feature}");
+	public static Error InvalidUseOfFeature(string feature, string reason)
+		=> new($"Invalid use of {feature}: {reason}");
 	public static Error MismatchedSomething(string mismatched)
 		=> new($"Mismatched {mismatched}");
 	public static Error VarNameCannotStartWithNum()
@@ -37,6 +43,10 @@ public static class Errors {
 		=> new($"Couldn't parse \"{line}\"");
 	public static Error MemberIsNotMethod(string membername, string of)
 		=> new($"Member {membername} of {of} is not a method");
+	public static Error CannotUseTypeWithFeature(string type, string feature)
+		=> new($"Cannot use {type} type with {feature}");
+	public static Error CannotEvaluateEmpty()
+		=> new($"Cannot evaluate empty item"); // change wording? idk
 	public static Error template()
 		=> new($"");
 }

@@ -25,18 +25,19 @@ public class Line
 		LineType = LineTypeEnum.Line;
 		Tokens = tokens;
 	}
-	public Line(List<Token> tokens) {
-		RealLineNumber = 0;
-		OriginalString = "";
-		LineType = LineTypeEnum.Line;
-		Tokens = tokens;
-	}
 	public Line(int lineNum, string lineString, Section section)
 	{
 		RealLineNumber = lineNum;
 		OriginalString = lineString;
 		LineType = LineTypeEnum.Section;
 		Section = section;
+	}
+
+	public Line CopyWithNewTokens(List<Token> newTokens) {
+		return new(
+			RealLineNumber,
+			OriginalString,
+			newTokens);
 	}
 
 	public override string ToString() {
