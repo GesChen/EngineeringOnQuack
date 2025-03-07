@@ -57,13 +57,15 @@ public class Tester : MonoBehaviour {
 		Tokenizer tokenizer = new();
 		(Section secout, Data output) = tokenizer.Tokenize(
 @"
-'stuff'.contains('tu')
+[0..2]
 ");
 
 		section = secout;
 	}
 	void ToTest() {
-		Data eval = evaluator.Evaluate(0, section.Lines[0], memory.component);
+		// TODO: FIX RANGE LIST! no work 
+		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy(), memory.component);
+		int i = 0;
 	}
 	/*
 	// conect i and e

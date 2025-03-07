@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class Evaluator : MonoBehaviour {
@@ -84,8 +86,10 @@ public class Evaluator : MonoBehaviour {
 
 		List<Token> remaining = line.Tokens;
 		List<Token> last = new();
-
-		while (remaining.Count > 1) { // main loop
+		bool atLast = false;
+		while (!atLast || remaining.Count > 1) { // main loop
+			if (remaining.Count <= 1)
+				atLast = true;
 
 			// find leftmost and highest precedence
 
@@ -145,6 +149,7 @@ public class Evaluator : MonoBehaviour {
 			}
 			if (highestPrecedence == -1)
 				break; // done with iterating
+
 			Token highestToken = remaining[highestIndex];
 
 			Token left = remaining.ElementAtOrDefault(highestIndex - 1);
@@ -310,23 +315,43 @@ public class Evaluator : MonoBehaviour {
 								List<int> indices = new();
 								foreach (Data d in (evalList as Primitive.List).Value) {
 									if (d is not Primitive.Number num)
-										return Errors.CannotIndex(d.Type.Name);
+										return Errors.CannotIndexWithType(d.Type.Name);
 
-									if (num.Value)
+									int val = (int)num.Value;
+
+									if (num.Value != val)
+										return Errors.CannotIndexWithType("non whole number");
+
+									if (val >= baseList.Count ||
+										val < -baseList.Count)
+										return Errors.IndexOutOfRange(val);
+
+									indices.Add((int)num.Value);
 								}
 
-								if (leftAsList != null){ // left is list
+								if (leftAsList != null) { // left is list
 									List<Data> indexed = new();
-									foreach (int )
+									foreach (int val in indices)
+										indexed.Add(leftAsList.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
 
 									HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-										new() { });
+										new() { new Primitive.List(indexed) });
 								}
-								else
+								else { // left is string
+									StringBuilder sb = new();
+									foreach (int val in indices)
+										sb.Append(leftAsString.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
+
+									HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
+										new() { new Primitive.String(sb.ToString()) });
+								}
 
 							}
-							else {
+							else { // normal list
+								Data evalList = EvaluateList(flags, line.CopyWithNewTokens(regionTokens), memory);
+								if (evalList is Error) return evalList;
 
+								HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalList });
 							}
 							break;
 

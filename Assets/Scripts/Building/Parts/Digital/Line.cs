@@ -46,4 +46,8 @@ public class Line
 		else
 			return $"SubSection: {Section}";
 	}
+
+	public Line DeepCopy() {
+		return new(RealLineNumber, string.Copy(OriginalString), new List<Token>(Tokens));
+	}
 }
