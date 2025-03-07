@@ -410,8 +410,15 @@ public class Evaluator : MonoBehaviour {
 			Token[] rightOfEllipsis = tokens.ToArray()[(ellipsisIndex + 1)..]; // inclusive 
 
 			double start = 0;
-			double step = 1;
-			double end = baseList != null ? baseList.Count : -1;
+			bool stepDefined = false;
+			double step = 0;
+			bool endDefined = false;
+			double end = 0;
+
+			if (baseList != null) { // ternaries hard to understand so using if instead
+				endDefined = true;
+				end = baseList.Count;
+			}
 
 			if (leftOfEllipsis.Length != 0) {
 				Data leftOfEllipsisEval = EvaluateList(
@@ -431,6 +438,7 @@ public class Evaluator : MonoBehaviour {
 					if (leftList.Value[1] is not Primitive.Number stepNum)
 						return Errors.CannotUseTypeWithFeature(leftList.Value[1].Type.Name, "range lists");
 
+					stepDefined = true;
 					step = stepNum.Value;
 				}
 				if (leftList.Value.Count > 2)
@@ -440,7 +448,7 @@ public class Evaluator : MonoBehaviour {
 			if (rightOfEllipsis.Length != 0) {
 				Data rightOfEllipsisEval = Evaluate(
 					flags,
-					line.CopyWithNewTokens(leftOfEllipsis.ToList()),
+					line.CopyWithNewTokens(rightOfEllipsis.ToList()),
 					memory);
 
 				if (rightOfEllipsisEval is Error) return rightOfEllipsisEval;
@@ -448,15 +456,20 @@ public class Evaluator : MonoBehaviour {
 				if (rightOfEllipsisEval is not Primitive.Number rightNum)
 					return Errors.CannotUseTypeWithFeature(rightOfEllipsisEval.Type.Name, "range lists");
 
+				endDefined = true;
 				end = rightNum.Value;
 			}
 
-			if (end == -1)
+			if (!stepDefined)
+				step = start < end ? 1 : -1;
+
+			if (!endDefined)
 				return Errors.InvalidUseOfFeature("range lists", "missing end parameter");
 
 			List<Data> list = new();
 
-			for (double i = start; i < end; i += step) {
+			// TODO: MAKE THIS LOGIC BETTER LMAO
+			for (double i = start; start < end ? (i < end) : (i > end); i += step) {
 				list.Add(new Primitive.Number(i));
 			}
 
