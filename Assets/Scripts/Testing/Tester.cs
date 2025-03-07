@@ -57,7 +57,7 @@ public class Tester : MonoBehaviour {
 		Tokenizer tokenizer = new();
 		(Section secout, Data output) = tokenizer.Tokenize(
 @"
-[4..2]
+[0,2..20]
 ");
 
 		section = secout;

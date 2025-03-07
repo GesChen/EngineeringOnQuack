@@ -461,7 +461,9 @@ public class Evaluator : MonoBehaviour {
 			}
 
 			if (!stepDefined)
-				step = start < end ? 1 : -1;
+				step = 1;
+
+			step = (start < end ? 1 : -1) * Math.Abs(step); // force step to work
 
 			if (!endDefined)
 				return Errors.InvalidUseOfFeature("range lists", "missing end parameter");
