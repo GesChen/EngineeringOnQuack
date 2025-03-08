@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.XR;
 
 public partial class Token {
 	public partial class Operator : Token {
@@ -70,38 +72,31 @@ public partial class Token {
 			"/",
 			"%",
 			"^",
-
 			"==",
 			"!=",
 			">",
 			"<",
 			">=",
 			"<=",
-
 			"&&",
 			"||",
 			"!&",
 			"!|",
 			"!!",
 			"!",
-
 			"=",
 			"+=",
 			"-=",
-			"++",
-			"--",
 			"*=",
 			"/=",
 			"^=",
 			"%=",
-
 			"(",
 			")",
 			"[",
 			"]",
 			"{",
 			"}",
-
 			".",
 			",",
 			"..",
@@ -117,7 +112,47 @@ public partial class Token {
 			Special
 		}
 
+		public enum Ops {
+			None,
+			Plus,
+			Minus,
+			Multiply,
+			Divide,
+			Mod,
+			Power,
+			Equality,
+			NotEquals,
+			GreaterThan,
+			LessThan,
+			GreaterThanOrEqualTo,
+			LessThanOrEqualTo,
+			And,
+			Or,
+			Nand,
+			Nor,
+			Xor,
+			Not,
+			Equals,
+			PlusEquals,
+			MinusEquals,
+			MultiplyEquals,
+			DivideEquals,
+			PowerEquals,
+			ModEquals,
+			OpenParentheses,
+			CloseParentheses,
+			OpenBracket,
+			CloseBracket,
+			OpenBrace,
+			CloseBrace,
+			Dot,
+			Comma,
+			Ellipsis,
+			Colon
+		}
+
 		public string StringValue { get; private set; }
+		public Ops Value { get; private set; }
 
 		public OperatorType Type;
 		public bool IsUnary;
@@ -136,6 +171,45 @@ public partial class Token {
 			else if (SpecialOperators.Contains(op)) Type = OperatorType.Special;
 
 			IsUnary = UnaryOperators.Contains(op);
+
+			Value = op switch {
+				"+"		=> Ops.Plus					,
+				"-"		=> Ops.Minus				,
+				"*"		=> Ops.Multiply				,
+				"/"		=> Ops.Divide				,
+				"%"		=> Ops.Mod					,
+				"^"		=> Ops.Power				,
+				"=="	=> Ops.Equality				,
+				"!="	=> Ops.NotEquals			,
+				">"		=> Ops.GreaterThan			,
+				"<"		=> Ops.LessThan				,
+				">="	=> Ops.GreaterThanOrEqualTo	,
+				"<="	=> Ops.LessThanOrEqualTo	,
+				"&&"	=> Ops.And					,
+				"||"	=> Ops.Or					,
+				"!&"	=> Ops.Nand					,
+				"!|"	=> Ops.Nor					,
+				"!!"	=> Ops.Xor					,
+				"!"		=> Ops.Not					,
+				"="		=> Ops.Equals				,
+				"+="	=> Ops.PlusEquals			,
+				"-="	=> Ops.MinusEquals			,
+				"*="	=> Ops.MultiplyEquals		,
+				"/="	=> Ops.DivideEquals			,
+				"^="	=> Ops.PowerEquals			,
+				"%="	=> Ops.ModEquals			,
+				"("		=> Ops.OpenParentheses		,
+				")"		=> Ops.CloseParentheses		,
+				"["		=> Ops.OpenBracket			,
+				"]"		=> Ops.CloseBracket			,
+				"{"		=> Ops.OpenBrace			,
+				"}"		=> Ops.CloseBrace			,
+				"."		=> Ops.Dot					,
+				","		=> Ops.Comma				,
+				".."	=> Ops.Ellipsis				,
+				":"		=> Ops.Colon				,
+				_		=> Ops.None
+			};
 		}
 
 		public override string ToString() {

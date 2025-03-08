@@ -57,7 +57,8 @@ public class Tester : MonoBehaviour {
 		Tokenizer tokenizer = new();
 		(Section secout, Data output) = tokenizer.Tokenize(
 @"
-[0,2..20]
+('test'.count('t')).tostring()
+{ 'foo' : 2, 'test': 3 }
 ");
 
 		section = secout;

@@ -29,10 +29,6 @@ public static class Errors {
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)
 		=> new($"Invalid character {HF.GetStringRepresentation(c.ToString())}");
-	public static Error InvalidUseOfFeature(string feature)
-		=> new($"Invalid use of {feature}");
-	public static Error InvalidUseOfFeature(string feature, string reason)
-		=> new($"Invalid use of {feature}: {reason}");
 	public static Error MismatchedSomething(string mismatched)
 		=> new($"Mismatched {mismatched}");
 	public static Error VarNameCannotStartWithNum()
@@ -47,6 +43,14 @@ public static class Errors {
 		=> new($"Cannot use {type} type with {feature}");
 	public static Error CannotEvaluateEmpty()
 		=> new($"Cannot evaluate empty item"); // change wording? idk
+	public static Error BadSyntaxFor(string thing)
+		=> new($"Bad syntax for {thing}");
+	public static Error BadSyntaxFor(string thing, string reason)
+		=> new($"Bad syntax for {thing}: {reason}");
+	public static Error UnknownKey()
+		=> new($"Unknown key");
+	public static Error UnknownKey(string key)
+		=> new($"Unknown key: {key}");
 	public static Error template()
 		=> new($"");
 }

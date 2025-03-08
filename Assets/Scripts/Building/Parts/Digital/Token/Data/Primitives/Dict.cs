@@ -12,6 +12,7 @@ public abstract partial class Primitive : Data {
 			{ "eq"			, new Function(eq)			},
 			{ "lt"			, new Function(lt)			},
 			{ "tostring "	, new Function(tostring)	},
+			{ "get"			, new Function(get)			},
 			{ "clear"		, new Function(clear)		},
 			{ "values"		, new Function(values)		},
 			{ "keys"		, new Function(keys)		},
@@ -62,7 +63,7 @@ public abstract partial class Primitive : Data {
 			// init
 			Dictionary<Data, Data> v = (thisRef as Dict).Value;
 			StringBuilder sb = new();
-			sb.Append("{");
+			sb.Append("{ ");
 
 			int i = 0;
 			foreach (KeyValuePair<Data, Data> kv in v) {
@@ -83,9 +84,31 @@ public abstract partial class Primitive : Data {
 				if (i != v.Count - 1) sb.Append(", ");
 				i++;
 			}
+			sb.Append(" }");
 			return new String(sb.ToString());
 		}
 
+
+		public static Data get(Data thisRef, List<Data> args) {
+			if (args.Count != 1) return Errors.InvalidArgumentCount("getkey", 1, args.Count);
+
+			Data key = args[0];
+			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
+			if (get is Error) return get;
+			Operator equals = new("==");
+
+			foreach (KeyValuePair<Data, Data> kvp in (thisRef as Dict).Value) {
+				Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
+				if (compare is Error) return compare;
+
+				if ((compare as Bool).Value) return kvp.Value;
+			}
+
+			// no value found
+			Data keyAsString = key.Cast(String.InternalType);
+			if (keyAsString is Error) return Errors.UnknownKey();
+			return Errors.UnknownKey((keyAsString as String).Value);
+		}
 		public static Data clear(Data thisRef, List<Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("clear", 0, args.Count);
 			(thisRef as Dict).Value.Clear();
