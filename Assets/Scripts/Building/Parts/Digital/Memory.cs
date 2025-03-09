@@ -13,7 +13,9 @@ public class Memory {
 
 	public void Initialize() {
 		Data = new() {
-			{ "print",		new Primitive.Function(InternalFunctions.print) }
+			{ "print",		new Primitive.Function(InternalFunctions.print) },
+			{ "true",		new Primitive.Bool(true) },
+			{ "false",		new Primitive.Bool(false) }
 		};
 
 		Types = new() {
