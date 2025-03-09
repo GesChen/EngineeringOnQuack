@@ -57,10 +57,15 @@ public class Tester : MonoBehaviour {
 		Tokenizer tokenizer = new();
 		(Section secout, Data output) = tokenizer.Tokenize(
 @"
+''+(1+2*3)+'test'
+[1...3]
 ('test'.count('t')).tostring()
+!1
 { 'foo' : 2, 'test': 3 }
 ");
 
+		if (output is Error)
+			print(output);
 		section = secout;
 	}
 	void ToTest() {

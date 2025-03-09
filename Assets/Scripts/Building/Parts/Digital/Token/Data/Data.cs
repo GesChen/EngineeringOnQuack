@@ -83,70 +83,73 @@ public class Data : Token {
 		string FTN = fromValue.Type.Name;
 		string TTN = toType.Name;
 
-		if (FTN == TTN)
+		char FTNC = FTN[0];
+		char TTNC = TTN[0];
+
+		if (FTNC == TTNC)
 			return fromValue;
 
 		// have to be primitives, no cast (from or to function) or (from dict)
 		if (!Primitive.TypeNames.Contains(FTN) || !Primitive.TypeNames.Contains(TTN))
 			return Errors.InvalidCast(FTN, TTN);
-		if (FTN == "Function" || TTN == "Dict" || TTN == "Function")
+		if (FTNC == 'F' || FTNC == 'D' || FTNC == 'F')
 			return Errors.InvalidCast(FTN, TTN);
 
-		switch (FTN) {
-			case "Number": return NumberCast(fromValue as Number, TTN);
-			case "String": return StringCast(fromValue as String, TTN);
-			case "Bool": return BoolCast(fromValue as Bool, TTN);
-			case "List": return ListCast(fromValue as List, TTN);
-			case "Dict": return DictCast(fromValue as Dict, TTN);
-			default: return Errors.InvalidCast(FTN, TTN);
-		}
+		return FTNC switch {
+			'N' => NumberCast(fromValue as Number,	TTNC, TTN),
+			'S' => StringCast(fromValue as String,	TTNC, TTN),
+			'B' => BoolCast(fromValue as Bool,		TTNC, TTN),
+			'L' => ListCast(fromValue as List,		TTNC, TTN),
+			'D' => DictCast(fromValue as Dict,		TTNC, TTN),
+			_ => Errors.InvalidCast(FTN, TTN),
+		};
 	}
 
-	private static Data NumberCast(Number value, string to) {
+	private static Data NumberCast(Number value, char toc, string to) {
 		double v = value.Value;
-		switch (to) {
-			case "String": return Number.tostring(value, new());
-			case "Bool": return new Bool(v != 0);
-			case "List": return new List(new() { value });
+		switch (toc) {
+			case 'S' : return Number.tostring(value, new());
+			case 'B' : return new Bool(v != 0);
+			case 'L' : return new List(new() { value });
 		}
 		return Errors.InvalidCast("Number", to);
 	}
-	private static Data StringCast(String value, string to) {
+	private static Data StringCast(String value, char toc, string to) {
 		string v = value.Value;
-		switch (to) {
-			case "Number":
+		switch (toc) {
+			case 'N':
 				if (double.TryParse(v, out double val)) return new Number(val);
 				return Errors.CannotParseValueAs("String", "Number");
-			case "Bool": return new Bool(v != "");
-			case "List": return new List(new() { value });
+			case 'B': return new Bool(v != "");
+			case 'L': return new List(new() { value });
 		}
 		return Errors.InvalidCast("String", to);
 	}
-	private static Data BoolCast(Bool value, string to) {
+	private static Data BoolCast(Bool value, char toc, string to) {
 		bool v = value.Value;
-		switch (to) {
-			case "Number": return new Number(v ? 1 : 0);
-			case "String": return Bool.tostring(value, new());
-			case "List": return new List(new() { value });
+		switch (toc) {
+			case 'N': return new Number(v ? 1 : 0);
+			case 'S': return Bool.tostring(value, new());
+			case 'L': return new List(new() { value });
 		}
 		return Errors.InvalidCast("Bool", to);
 	}
-	private static Data ListCast(List value, string to) {
+	private static Data ListCast(List value, char toc, string to) {
 		List<Data> v = value.Value;
-		switch (to) {
-			case "Number": return new Number(v.Count == 0 ? 1 : 0);
-			case "String": return List.tostring(value, new());
-			case "Bool": return new Bool(v.Count != 0);
+		switch (toc) {
+			case 'N': return new Number(v.Count == 0 ? 1 : 0);
+			case 'S': return List.tostring(value, new());
+			case 'B': return new Bool(v.Count != 0);
 		}
 		return Errors.InvalidCast("List", to);
 	}
-	private static Data DictCast(Dict value, string to) {
+	private static Data DictCast(Dict value, char toc, string to) {
 		Dictionary<Data, Data> v = value.Value;
-		switch (to) {
-			case "Number": return new Number(v.Count == 0 ? 1 : 0);
-			case "String": return Dict.tostring(value, new());
-			case "Bool": return new Bool(v.Count != 0);
-			case "List": return Dict.tolist(value, new());
+		switch (toc) {
+			case 'N': return new Number(v.Count == 0 ? 1 : 0);
+			case 'S': return Dict.tostring(value, new());
+			case 'B': return new Bool(v.Count != 0);
+			case 'L': return Dict.tolist(value, new());
 		}
 		return Errors.InvalidCast("Dict", to);
 	}

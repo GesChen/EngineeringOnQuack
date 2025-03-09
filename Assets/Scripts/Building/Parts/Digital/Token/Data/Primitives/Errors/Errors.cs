@@ -51,6 +51,12 @@ public static class Errors {
 		=> new($"Unknown key");
 	public static Error UnknownKey(string key)
 		=> new($"Unknown key: {key}");
+	public static Error UnsupportedOperation(string op, string typeA, string typeB)
+		=> new($"Unsupported operation: {typeA} {op} {typeB}");
+	public static Error DivisonByZero()
+		=> new($"Division by zero");
+	public static Error Expected(string what, string where)
+		=> new($"Expected {what} {where}");
 	public static Error template()
 		=> new($"");
 }

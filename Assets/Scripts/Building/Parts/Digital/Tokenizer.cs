@@ -103,6 +103,9 @@ public class Tokenizer {
 			string tokenString = sb.ToString();
 			sb.Clear();
 
+			if (tokenString == "")
+				return Data.Success; // can be caused by string's custom processing code
+
 			if (tokenString.All(c => char.IsDigit(c))) { // number 
 				if (int.TryParse(tokenString, out int number))
 					tokens.Add(new Primitive.Number(number));
@@ -120,7 +123,7 @@ public class Tokenizer {
 					tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
 			}
 			else if (tokenString.All(c => opchars.Contains(c))) { // all operator symbols
-				if (Token.Operator.AllOperatorsHashSet.Contains(tokenString))
+				if (Token.Operator.AllOperatorStringsHashSet.Contains(tokenString))
 					tokens.Add(new Token.Operator(tokenString));
 				else
 					return Errors.UnknownOperator(tokenString);
@@ -137,7 +140,7 @@ public class Tokenizer {
 			if (type == chartypes.unknown) return (null, Errors.InvalidCharacter(c));
 
 			bool lastOpThisNotFull = lastType == chartypes.op && // (sb (last op?) + this) is not valid op
-				!Token.Operator.AllOperators.Contains(sb.ToString() + c); // put before the lasttype change to type
+				!Token.Operator.AllOperatorStrings.Contains(sb.ToString() + c); // put before the lasttype change to type
 
 			if (i == 0 || 
 				lastType == chartypes.space || 

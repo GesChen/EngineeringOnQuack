@@ -77,6 +77,9 @@ public class Evaluator : MonoBehaviour {
 		DotOperator,
 		Region,
 		Unary,
+		Arithmetic,
+		Comparison,
+		Logical
 	}
 
 	struct ActionContext {
@@ -94,7 +97,6 @@ public class Evaluator : MonoBehaviour {
 		public bool				rightIsRefAndExists;
 	}
 
-	
 	public Data Evaluate(int flags, Line line, Memory memory) {
 		if (line.Tokens.Count == 0)
 			return Errors.CannotEvaluateEmpty();
@@ -174,6 +176,12 @@ public class Evaluator : MonoBehaviour {
 					Data tryHandleUnary = HandleUnary(localActionContext);
 					if (tryHandleUnary is Error) return tryHandleUnary;
 					break;
+
+				// normal operators
+				case Actions.Arithmetic:
+					Data tryHandleArithmetic = HandleArithmetic(localActionContext);
+					if (tryHandleArithmetic is Error) return tryHandleArithmetic;
+					break;
 			}
 
 			if (last.SequenceEqual(remaining)) break; // duplicate between iters = break
@@ -198,7 +206,6 @@ public class Evaluator : MonoBehaviour {
 
 		for (int i = 0; i < remaining.Count; i++) {
 			Token token = remaining[i];
-
 			Actions action = Actions.None;
 			int precedence = -1;
 
@@ -207,19 +214,19 @@ public class Evaluator : MonoBehaviour {
 
 			// D -> R
 			if (token is Data) {
-				precedence = 15;
+				precedence = 20;
 				action = Actions.Data;
 			}
 
 			// N -> R
 			if (token is Token.Name) {
-				precedence = 10;
+				precedence = 15;
 				action = Actions.Name;
 			}
 
 			// handle .
 			else if (isOp && op.Value == Token.Operator.Ops.Dot) {
-				precedence = 10;
+				precedence = 15;
 				action = Actions.DotOperator;
 			}
 
@@ -228,18 +235,29 @@ public class Evaluator : MonoBehaviour {
 				(op.Value	== Token.Operator.Ops.OpenParentheses ||
 				op.Value	== Token.Operator.Ops.OpenBracket ||
 				op.Value	== Token.Operator.Ops.OpenBrace)) {
-				precedence = 10;
+				precedence = 15;
 				action = Actions.Region;
 			}
 
 			// unary operator
-			else if (isOp &&
-				(op.Value == Token.Operator.Ops.Plus || 
-				op.Value == Token.Operator.Ops.Minus|| 
-				op.Value == Token.Operator.Ops.Not) &&
+			else if (isOp && Token.Operator.UnaryOperatorsHashSet.Contains(op.Value) &&
 				(i == 0 || remaining[i - 1] is Token.Operator or Token.Keyword)) {
-				precedence = 9; // slightly less than others
+				precedence = 14; // slightly less than others
 				action = Actions.Unary;
+			}
+
+			// normal operators
+			else if (isOp && Token.Operator.ArithmeticOperatorsHashSet.Contains(op.Value)) {
+				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
+				action = Actions.Arithmetic;
+			}
+			else if (isOp && Token.Operator.ComparisonOperatorsHashSet.Contains(op.Value)) {
+				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
+				action = Actions.Comparison;
+			}
+			else if (isOp && Token.Operator.LogicalOperatorsHashSet.Contains(op.Value)) {
+				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
+				action = Actions.Logical;
 			}
 
 			if (precedence > highestPrecedence) { // > not >= for leftmost
@@ -332,10 +350,10 @@ public class Evaluator : MonoBehaviour {
 
 		Token.Operator highestTokenAsOp = highestToken as Token.Operator; // it should be operator plz....
 
-		Token.Operator.Ops pairing = highestTokenAsOp.StringValue switch {
-			"(" => Token.Operator.Ops.CloseParentheses,
-			"[" => Token.Operator.Ops.CloseBracket,
-			"{" => Token.Operator.Ops.CloseBrace,
+		Token.Operator.Ops pairing = highestTokenAsOp.Value switch {
+			Token.Operator.Ops.OpenParentheses => Token.Operator.Ops.CloseParentheses,
+			Token.Operator.Ops.OpenBracket => Token.Operator.Ops.CloseBracket,
+			Token.Operator.Ops.OpenBrace => Token.Operator.Ops.CloseBrace,
 			_ => Token.Operator.Ops.None
 		};
 		if (pairing == Token.Operator.Ops.None) return Errors.CouldntParse(line.OriginalString);
@@ -493,6 +511,45 @@ public class Evaluator : MonoBehaviour {
 
 	private Data HandleUnary(ActionContext AC) {
 		#region unpack AC
+		List<Token> remaining = AC.remaining;
+		Token highestToken = AC.highestToken;
+		int highestIndex = AC.highestIndex;
+		Token.Reference rightRef = AC.rightRef;
+		bool rightIsRefAndExists = AC.rightIsRefAndExists;
+		#endregion
+
+		Token.Operator thisOp = (highestToken as Token.Operator);
+
+		if (!rightIsRefAndExists)
+			return Errors.InvalidUseOfOperator(thisOp.StringValue);
+
+		if (thisOp.Value == Token.Operator.Ops.Plus ||
+			thisOp.Value == Token.Operator.Ops.Minus) { // + or -
+
+			Data castToNumber = rightRef.ThisReference.Cast(Primitive.Number.InternalType);
+			if (castToNumber is Error) return castToNumber;
+
+			double value = (castToNumber as Primitive.Number).Value;
+			// use a copy of the number i guess
+			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
+				new() { new Primitive.Number(value * (thisOp.Value == Token.Operator.Ops.Minus ? -1 : 1)) });
+		}
+		else { // !
+			Data castToBool = rightRef.ThisReference.Cast(Primitive.Bool.InternalType);
+			if (castToBool is Error) return castToBool;
+
+			bool value = (castToBool as Primitive.Bool).Value;
+
+			// use a copy of the bool
+			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
+				new() { new Primitive.Bool(!value) });
+		}
+
+		return Data.Success;
+	}
+
+	private Data HandleArithmetic(ActionContext AC) {
+		#region unpack AC
 		int flags = AC.flags;
 		Line line = AC.line;
 		Memory memory = AC.memory;
@@ -507,6 +564,54 @@ public class Evaluator : MonoBehaviour {
 		bool rightIsRefAndExists = AC.rightIsRefAndExists;
 		#endregion
 
+		// assume precedence is sorted out already
+
+		Token.Operator op = highestToken as Token.Operator;
+
+		// check left and right
+		if (leftRef == null)
+			return Errors.Expected("expression", "left of "+op.StringValue);
+		if (rightRef == null)
+			return Errors.Expected("expression", "right of " + op.StringValue);
+
+		if (!leftIsRefAndExists)
+			return Errors.UnknownVariable(leftRef.Name);
+		if (!rightIsRefAndExists)
+			return Errors.UnknownVariable(rightRef.Name);
+
+		Data leftData = leftRef.ThisReference;
+		Data rightData = rightRef.ThisReference;
+
+		// cast right to left 
+		rightData = rightData.Cast(leftRef.ThisReference.Type);
+		if (rightData is Error) return rightData;
+
+		Dictionary<Token.Operator.Ops, string> opNames = new() {
+			{ Token.Operator.Ops.Plus,		"ad" },
+			{ Token.Operator.Ops.Minus,		"su" },
+			{ Token.Operator.Ops.Multiply,	"mu" },
+			{ Token.Operator.Ops.Divide,	"di" },
+			{ Token.Operator.Ops.Mod,		"mo" },
+			{ Token.Operator.Ops.Power,		"po" } 
+		};
+
+		string operationName = opNames[op.Value];
+		Data tryGetLeftMember = leftData.GetMember(operationName);
+		if (tryGetLeftMember is Error)
+			return Errors.UnsupportedOperation(
+				op.StringValue, 
+				leftRef.ThisReference.Type.Name, 
+				rightRef.ThisReference.Type.Name);
+
+		Data runFunction = Interpreter.RunFunction(
+			memory, 
+			tryGetLeftMember as Primitive.Function, 
+			leftData, 
+			new() { rightData }
+		);
+		if (runFunction is Error) return runFunction;
+
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { runFunction });
 
 		return Data.Success;
 	}
@@ -525,8 +630,8 @@ public class Evaluator : MonoBehaviour {
 				eCount++;
 			}
 		}
-		if (eCount > 1) // either 0 or 1 ..s
-			return Errors.InvalidUseOfOperator("..");
+		if (eCount > 1) // either 0 or 1 ...s
+			return Errors.InvalidUseOfOperator("...");
 		else if (eCount > 0) // this is range
 			rangeList = true;
 
