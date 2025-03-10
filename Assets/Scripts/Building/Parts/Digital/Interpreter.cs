@@ -55,6 +55,6 @@ public class Interpreter : Part
 
 	public Data Run(Memory memory, Section script)
 	{
-		return new();
+		return Data.Success;
 	}
 }

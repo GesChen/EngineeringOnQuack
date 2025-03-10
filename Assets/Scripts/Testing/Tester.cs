@@ -9,6 +9,7 @@ public class Tester : MonoBehaviour {
 	//public string expr;
 	public List<string> testCases = new();
 	public int useTestCase;
+	public List<Color> colors;
 
 	public bool debug;
 	public bool testTime;
@@ -23,10 +24,14 @@ public class Tester : MonoBehaviour {
 	Section section;
 	void Start() {
 		BeforeTesting();
+		Updatetest();
 	}
 
 	private void Update() {
 		if (Input.GetKeyDown("w"))
+			Updatetest();
+
+		if (Input.GetKeyDown("r"))
 			BeforeTesting();
 
 		if (Input.GetKeyDown("e"))
@@ -47,10 +52,10 @@ public class Tester : MonoBehaviour {
 		sw.Stop();
 
 		double ns = sw.ElapsedTicks * 100;
-		print($"{ns} ns");
-		print($"{ns / 1e6} ms");
-		print($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each");
-		print($"{(int)(iters / (ns / 1e9))} / second");
+		HF.LogColor($"{ns} ns",													colors[0]);
+		HF.LogColor($"{ns / 1e6} ms",											colors[0]);
+		HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each",	colors[0]);
+		HF.LogColor($"{(int)(iters / (ns / 1e9))} / second",					colors[0]);
 	}
 
 	void BeforeTesting() {
@@ -59,21 +64,24 @@ public class Tester : MonoBehaviour {
 		memory.InterpreterCC = onMtoICC;
 
 		memory.Initialize(onMtoICC);
-
+	}
+	void Updatetest() {
 		Tokenizer tokenizer = new();
 		(Section secout, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
 
 		if (output is Error)
 			print(output);
 		section = secout;
+
+		HF.LogColor($"test updated to {testCases[useTestCase]}", colors[1]);
 	}
 	void TestOnce() {
-		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy(), memory.component);
+		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
 		print(eval);
 	}
 	void ToTest() {
 		// TODO: FIX RANGE LIST! no work 
-		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy(), memory.component);
+		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
 		int i = 0;
 	}
 	/*

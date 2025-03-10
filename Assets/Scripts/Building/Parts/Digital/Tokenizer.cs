@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Text;
 using System.Linq;
 using System.Drawing;
+using System.ComponentModel.Design.Serialization;
 
 public class Tokenizer {
 	public string RemoveComments(string lines) {

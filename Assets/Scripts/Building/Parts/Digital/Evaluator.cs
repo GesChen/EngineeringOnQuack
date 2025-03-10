@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 
 public class Evaluator : MonoBehaviour {
 	public Interpreter Interpreter;
@@ -109,7 +110,26 @@ public class Evaluator : MonoBehaviour {
 		public bool				rightIsRefAndExists;
 	}
 
-	public Data Evaluate(int flags, Line line, Memory memory) {
+	public Data Evaluate(int flags, Line line) {
+		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
+		if (tryGetMemory is Error) return tryGetMemory;
+
+		Data.currentUseMemory = memory;
+		UpdateAllLineDataWithMemory(ref line, memory);
+		Data tryEvaluate = EvaluateInternal(flags, line, memory);
+		Data.currentUseMemory = null;
+
+		return tryEvaluate;
+	}
+
+	private void UpdateAllLineDataWithMemory(ref Line line, Memory memory) {
+		foreach (Token token in line.Tokens) {
+			if (token is Data d)
+				d.Memory = memory;
+		}
+	}
+
+	private Data EvaluateInternal(int flags, Line line, Memory memory) {
 		if (line.Tokens.Count == 0)
 			return Errors.CannotEvaluateEmpty();
 
@@ -336,25 +356,33 @@ public class Evaluator : MonoBehaviour {
 		}
 
 		// normal member syntax, expect existing reference on left
-		if (leftIsRefAndExists) {
-			if (right is Token.Name rightname) {
-				Data tryget = leftRef.GetData();
-				if (tryget is Error) return tryget;
+		if (leftRef != null) {// left is ref
+			if (leftIsRefAndExists) { // leftref exists
+				if (right is Token.Name rightname) {
+					Data tryget = leftRef.GetData();
+					if (tryget is Error) return tryget;
 
-				tryget = tryget.GetMember(rightname.Value);
-				HF.ReplaceRange( // replace l . r with R
-					remaining,
-					highestIndex - 1,
-					highestIndex + 1,
-					new() { Token.Reference.ExistingMemberReference(
-									leftRef,
-									tryget,
-									rightname.Value)});
+					tryget = tryget.GetMember(rightname.Value);
+
+					Token.Reference dataRef = null;
+					if (tryget is Error)
+						dataRef = Token.Reference.NewMemberReference(leftRef, rightname.Value);
+					else
+						dataRef = Token.Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
+
+					HF.ReplaceRange( // replace l . r with R
+						remaining,
+						highestIndex - 1,
+						highestIndex + 1,
+						new() { dataRef });
+				}
+				else if (leftRef.ThisReference is Primitive.Number)
+					handleAsNumber();
+				else
+					return Errors.InvalidUseOfOperator(".");
 			}
-			else if (leftRef.ThisReference is Primitive.Number)
-				handleAsNumber();
 			else
-				return Errors.InvalidUseOfOperator(".");
+				return Errors.UnknownVariable(leftRef.Name);
 		}
 		else { // left is null or anything else
 			if (right is Primitive.Number) // handle as number if right is number
@@ -441,7 +469,7 @@ public class Evaluator : MonoBehaviour {
 					HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, new() { run });
 				}
 				else {
-					Data evalSubexp = Evaluate(0, line.CopyWithNewTokens(regionTokens), memory);
+					Data evalSubexp = Evaluate(0, line.CopyWithNewTokens(regionTokens));
 					if (evalSubexp is Error) return evalSubexp;
 
 					HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalSubexp });
@@ -759,7 +787,8 @@ public class Evaluator : MonoBehaviour {
 		if (leftRef == null)
 			return Errors.Expected("expression", "left of " + op.StringValue);
 
-		leftRef.SetData(rightData);
+		Data trySet = leftRef.SetData(rightData);
+		if (trySet is Error) return trySet;
 
 		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { rightData });
 		return Data.Success;
@@ -828,8 +857,7 @@ public class Evaluator : MonoBehaviour {
 			if (rightOfEllipsis.Length != 0) {
 				Data rightOfEllipsisEval = Evaluate(
 					flags,
-					line.CopyWithNewTokens(rightOfEllipsis.ToList()),
-					memory);
+					line.CopyWithNewTokens(rightOfEllipsis.ToList()));
 
 				if (rightOfEllipsisEval is Error) return rightOfEllipsisEval;
 
@@ -877,7 +905,7 @@ public class Evaluator : MonoBehaviour {
 			// eval arg token chunks into data
 			List<Data> items = new(); // can be optimized into array if desperate
 			foreach (List<Token> chunk in tokenChunks) {
-				Data tryEval = Evaluate(0, line.CopyWithNewTokens(chunk), memory);
+				Data tryEval = Evaluate(0, line.CopyWithNewTokens(chunk));
 				if (tryEval is Error) return tryEval;
 
 				items.Add(tryEval);
@@ -940,14 +968,10 @@ public class Evaluator : MonoBehaviour {
 
 		Dictionary<Data, Data> newDict = new();
 		foreach (Token[][] kvpTokenGroup in kvpGroups) {
-			Data evalKey = Evaluate(flags, 
-				line.CopyWithNewTokens(kvpTokenGroup[0].ToList()), 
-				memory);
+			Data evalKey = Evaluate(flags, line.CopyWithNewTokens(kvpTokenGroup[0].ToList()));
 			if (evalKey is Error) return evalKey;
 
-			Data evalValue = Evaluate(flags,
-				line.CopyWithNewTokens(kvpTokenGroup[1].ToList()),
-				memory);
+			Data evalValue = Evaluate(flags, line.CopyWithNewTokens(kvpTokenGroup[1].ToList()));
 			if (evalValue is Error) return evalValue;
 
 			newDict[evalKey] = evalValue;

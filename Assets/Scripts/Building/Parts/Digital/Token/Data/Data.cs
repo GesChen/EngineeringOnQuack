@@ -11,25 +11,7 @@ public class Data : Token {
 	public Dictionary<string, Data> InstanceVariables;
 	public Memory Memory;
 
-	// for internal use only, convenient wrapper method to quickly make primitives for testing
-	// should probably not use this in the actual language
-	// for those, just explicitly use the proper primitive type
-	/*public static Data Dynamic(dynamic value) {
-		System.Type valueType = value.GetType();
-
-		if (valueType == typeof(double))
-			return new Number(value);
-		else if (valueType == typeof(string))
-			return new String(value);
-		else if (valueType == typeof(bool))
-			return new Bool(value);
-		else if (valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(List<>))
-			return new List(value);
-		else if (valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-			return new Dict(value);
-		else
-			throw new("Bad value in dynamic data call"); // probably replace this later with return error if needed but fear error will propogate and be hard to track down
-	}*/
+	public static Memory currentUseMemory;
 
 	// constructors
 	public Data(string name, Type type, Memory memory) {
@@ -41,10 +23,7 @@ public class Data : Token {
 	public Data(Type type) {
 		Type = type;
 		InstanceVariables = new();
-	}
-
-	// test constructor DO NOT USE 
-	public Data() {
+		Memory = currentUseMemory;
 	}
 
 	// statics

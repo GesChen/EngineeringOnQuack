@@ -79,7 +79,8 @@ public partial class Token {
 			}
 
 			else if (IsInstanceVariable) {
-				ParentReference.SetThisMember(Name, data);
+				Data trySet = ParentReference.SetThisMember(Name, data);
+				if (trySet is Error) return trySet;
 			}
 
 			else { // global variable
