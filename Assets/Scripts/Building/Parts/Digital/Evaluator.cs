@@ -243,7 +243,7 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	private void GetHighestPrecedenceAction(
-		in List<Token> remaining,
+		in  List<Token> remaining,
 		out Actions highestAction,
 		out float highestPrecedence,
 		out int highestIndex) {
@@ -325,13 +325,13 @@ public class Evaluator : MonoBehaviour {
 
 	private Data HandleDotOperator(in ActionContext AC) {
 		#region unpack AC
-		List<Token> remaining = AC.remaining;
-		int highestIndex = AC.highestIndex;
-		Token right = AC.right;
-		Reference leftRef = AC.leftRef;
-		bool leftIsRefAndExists = AC.leftIsRefAndExists;
-		Reference rightRef = AC.rightRef;
-		bool rightIsRefAndExists = AC.rightIsRefAndExists;
+		List<Token> remaining		= AC.remaining;
+		int highestIndex			= AC.highestIndex;
+		Token right					= AC.right;
+		Reference leftRef			= AC.leftRef;
+		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
+		Reference rightRef			= AC.rightRef;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
 		#endregion
 
 		void handleAsNumber() {
@@ -349,39 +349,38 @@ public class Evaluator : MonoBehaviour {
 			double fractionalPart = rightNum * Math.Pow(10, Math.Floor(Math.Log10(rightNum)) - 1);
 			double realValue = leftNum + fractionalPart;
 
-			HF.ReplaceRange(remaining, replaceStart, replaceEnd, // replace those tokens with the value
-				new() { Reference.ExistingGlobalReference("", // turn value into ref
-						new Primitive.Number(realValue)) }); // actual value
+			HF.ReplaceRange(remaining, replaceStart, replaceEnd,	  // replace those tokens with the value
+				new() { Reference.ExistingGlobalReference("",		 // turn value into ref
+				new Primitive.Number(realValue)) });				// actual value
 		}
 
 		// normal member syntax, expect existing reference on left
 		if (leftRef != null) {// left is ref
-			if (leftIsRefAndExists) { // leftref exists
-				if (right is Name rightname) {
-					Data tryget = leftRef.GetData();
-					if (tryget is Error) return tryget;
-
-					tryget = tryget.GetMember(rightname.Value);
-
-					Reference dataRef;
-					if (tryget is Error)
-						dataRef = Reference.NewMemberReference(leftRef, rightname.Value);
-					else
-						dataRef = Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
-
-					HF.ReplaceRange( // replace l . r with R
-						remaining,
-						highestIndex - 1,
-						highestIndex + 1,
-						new() { dataRef });
-				}
-				else if (leftRef.ThisReference is Primitive.Number)
-					handleAsNumber();
-				else
-					return Errors.InvalidUseOfOperator(".");
-			}
-			else
+			if (leftIsRefAndExists) // leftref exists
 				return Errors.UnknownVariable(leftRef.Name);
+				
+			if (right is Name rightname) {
+				Data tryget = leftRef.GetData();
+				if (tryget is Error) return tryget;
+
+				tryget = tryget.GetMember(rightname.Value);
+
+				Reference dataRef;
+				if (tryget is Error)
+					dataRef = Reference.NewMemberReference(leftRef, rightname.Value);
+				else
+					dataRef = Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
+
+				HF.ReplaceRange( // replace l . r with R
+					remaining,
+					highestIndex - 1,
+					highestIndex + 1,
+					new() { dataRef });
+			}
+			else if (leftRef.ThisReference is Primitive.Number)
+				handleAsNumber();
+			else
+				return Errors.InvalidUseOfOperator(".");
 		}
 		else { // left is null or anything else
 			if (right is Primitive.Number) // handle as number if right is number
@@ -478,9 +477,9 @@ public class Evaluator : MonoBehaviour {
 			case "[":
 				bool indexing = leftIsRefAndExists;
 				if (indexing) {
-					Primitive.List leftAsList = leftRef.ThisReference as Primitive.List;
-					Primitive.String leftAsString = leftRef.ThisReference as Primitive.String;
-					Primitive.Dict leftAsDict = leftRef.ThisReference as Primitive.Dict;
+					Primitive.List leftAsList		= leftRef.ThisReference as Primitive.List;
+					Primitive.String leftAsString	= leftRef.ThisReference as Primitive.String;
+					Primitive.Dict leftAsDict		= leftRef.ThisReference as Primitive.Dict;
 
 					if (leftAsList == null && leftAsString == null && leftAsDict == null)
 						return Errors.CannotIndex(leftRef.ThisReference.Type.Name);
@@ -572,11 +571,11 @@ public class Evaluator : MonoBehaviour {
 
 	private Data HandleUnary(in ActionContext AC) {
 		#region unpack AC
-		List<Token> remaining = AC.remaining;
-		Token highestToken = AC.highestToken;
-		int highestIndex = AC.highestIndex;
-		Reference rightRef = AC.rightRef;
-		bool rightIsRefAndExists = AC.rightIsRefAndExists;
+		List<Token> remaining		= AC.remaining;
+		Token highestToken			= AC.highestToken;
+		int highestIndex			= AC.highestIndex;
+		Reference rightRef			= AC.rightRef;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
 		#endregion
 
 		Operator thisOp = (highestToken as Operator);
@@ -858,9 +857,9 @@ public class Evaluator : MonoBehaviour {
 
 			if (leftOfEllipsis.Length != 0) {
 				Data leftOfEllipsisEval = EvaluateList(
-								flags, 
-								line.CopyWithNewTokens(leftOfEllipsis.ToList()), 
-								memory);
+					flags, 
+					line.CopyWithNewTokens(leftOfEllipsis.ToList()), 
+					memory);
 				if (leftOfEllipsisEval is Error) return leftOfEllipsisEval;
 				
 				Primitive.List leftList = leftOfEllipsisEval as Primitive.List;
@@ -877,7 +876,7 @@ public class Evaluator : MonoBehaviour {
 					stepDefined = true;
 					step = stepNum.Value;
 				}
-				if (leftList.Value.Count > 2)
+				else if (leftList.Value.Count > 2)
 					return Errors.BadSyntaxFor("range lists", "too many start parameters");
 			}
 
@@ -982,12 +981,12 @@ public class Evaluator : MonoBehaviour {
 				}
 			}
 			if (colonCount == 0) return Errors.BadSyntaxFor("dictionary", "missing colon");
-			if (colonCount > 1) return Errors.BadSyntaxFor("dictionary", "too many colons");
+			if (colonCount > 1)  return Errors.BadSyntaxFor("dictionary", "too many colons");
 
 			Token[] key = group.ToArray()[..colonIndex];
 			Token[] value = group.ToArray()[(colonIndex + 1)..];
 
-			if (key.Length == 0) return Errors.BadSyntaxFor("dictionary", "missing key");
+			if (key.Length == 0)  return Errors.BadSyntaxFor("dictionary", "missing key");
 			if (value.Length == 0) return Errors.BadSyntaxFor("dictionary", "missing value");
 
 			kvpGroups.Add(new[] { key, value });
