@@ -8,13 +8,13 @@ using static Token;
 public class Evaluator : MonoBehaviour {
 	public Interpreter Interpreter;
 
-	public Data Compare(Data a, Data b, Token.Operator op, Memory memory) {
+	public Data Compare(Data a, Data b, Operator op, Memory memory) {
 		// not gona add comparison operator check bc whatever's calling this should already have done it
 
 		Data lt = null;
 		bool lessthan = false;
-		if (!(op.Value == Token.Operator.Ops.Equality || 
-			op.Value == Token.Operator.Ops.NotEquals)) {
+		if (!(op.Value == Operator.Ops.Equality || 
+			op.Value == Operator.Ops.NotEquals)) {
 			lt = LessThan(a, b, memory, Interpreter); // is bool checks done in the methods already
 			if (lt is Error) return lt;
 		
@@ -23,8 +23,8 @@ public class Evaluator : MonoBehaviour {
 
 		Data eq = null;
 		bool equals = false;
-		if (!(op.Value == Token.Operator.Ops.LessThan ||
-			op.Value == Token.Operator.Ops.GreaterThanOrEqualTo)) {
+		if (!(op.Value == Operator.Ops.LessThan ||
+			op.Value == Operator.Ops.GreaterThanOrEqualTo)) {
 			eq = Equals(a, b, memory, Interpreter);
 			if (eq is Error) return eq;
 		
@@ -32,12 +32,12 @@ public class Evaluator : MonoBehaviour {
 		}
 
 		return op.Value switch {
-			Token.Operator.Ops.Equality				=> eq,
-			Token.Operator.Ops.NotEquals			=> new Primitive.Bool(!equals), // (!=) = (! ==)
-			Token.Operator.Ops.LessThan				=> lt,
-			Token.Operator.Ops.GreaterThan			=> new Primitive.Bool(!(lessthan || equals)), // (>) = (!<=) 
-			Token.Operator.Ops.LessThanOrEqualTo	=> new Primitive.Bool(lessthan || equals), // (<=) = (< || ==)
-			Token.Operator.Ops.GreaterThanOrEqualTo	=> new Primitive.Bool(!lessthan), // (>=) = (! <)
+			Operator.Ops.Equality				=> eq,
+			Operator.Ops.NotEquals				=> new Primitive.Bool(!equals), // (!=) = (! ==)
+			Operator.Ops.LessThan				=> lt,
+			Operator.Ops.GreaterThan			=> new Primitive.Bool(!(lessthan || equals)), // (>) = (!<=) 
+			Operator.Ops.LessThanOrEqualTo		=> new Primitive.Bool(lessthan || equals), // (<=) = (< || ==)
+			Operator.Ops.GreaterThanOrEqualTo	=> new Primitive.Bool(!lessthan), // (>=) = (! <)
 			_ => Errors.CannotCompare(a.Type.Name, b.Type.Name),
 		};
 	}
@@ -104,9 +104,9 @@ public class Evaluator : MonoBehaviour {
 		public int				highestIndex;
 		public Token			left;
 		public Token			right;
-		public Token.Reference	leftRef;
+		public Reference	leftRef;
 		public bool				leftIsRefAndExists;
-		public Token.Reference	rightRef;
+		public Reference	rightRef;
 		public bool				rightIsRefAndExists;
 	}
 
@@ -150,11 +150,11 @@ public class Evaluator : MonoBehaviour {
 
 			Token highestToken = remaining[highestIndex];
 			Token left					= remaining.ElementAtOrDefault(highestIndex - 1);
-			Token.Reference leftRef		= left as Token.Reference;
+			Reference leftRef			= left as Reference;
 			bool leftIsRefAndExists		= leftRef != null && leftRef.Exists;
 
 			Token right					= remaining.ElementAtOrDefault(highestIndex + 1);
-			Token.Reference rightRef	= right as Token.Reference;
+			Reference rightRef			= right as Reference;
 			bool rightIsRefAndExists	= rightRef != null && rightRef.Exists;
 
 			ActionContext localActionContext = new() {
@@ -176,19 +176,19 @@ public class Evaluator : MonoBehaviour {
 				// D -> R
 				case Actions.Data:
 					Data data = remaining[highestIndex] as Data;
-					remaining[highestIndex] = Token.Reference.ExistingGlobalReference("", data);
+					remaining[highestIndex] = Reference.ExistingGlobalReference("", data);
 					break;
 				
 				// N -> R 
 				case Actions.Name:
 					// check memory for name 
-					string name = (highestToken as Token.Name).Value;
+					string name = (highestToken as Name).Value;
 					Data get = memory.Get(name);
 
 					// replace name token with reference token
 					remaining[highestIndex] = (get is not Error) ?
-						Token.Reference.ExistingGlobalReference(name, get) :	 // make existing if data exists
-						Token.Reference.NewGlobalReference(name);				// or make new
+						Reference.ExistingGlobalReference(name, get) :	 // make existing if data exists
+						Reference.NewGlobalReference(name);				// or make new
 					break;
 				
 				// decimal / member handling
@@ -236,7 +236,7 @@ public class Evaluator : MonoBehaviour {
 			last = new(remaining);
 		}
 
-		if (remaining.Count == 1 && remaining[0] is Token.Reference r)
+		if (remaining.Count == 1 && remaining[0] is Reference r)
 			return r.ThisReference;
 
 		return Data.Success;
@@ -257,8 +257,8 @@ public class Evaluator : MonoBehaviour {
 			Actions action = Actions.None;
 			float precedence = -1;
 
-			bool isOp = token is Token.Operator;
-			Token.Operator op = isOp ? token as Token.Operator : null;
+			bool isOp = token is Operator;
+			Operator op = isOp ? token as Operator : null;
 
 			// D -> R
 			if (token is Data) {
@@ -267,49 +267,49 @@ public class Evaluator : MonoBehaviour {
 			}
 
 			// N -> R
-			if (token is Token.Name) {
+			if (token is Name) {
 				precedence = 15;
 				action = Actions.Name;
 			}
 
 			// handle .
-			else if (isOp && op.Value == Token.Operator.Ops.Dot) {
+			else if (isOp && op.Value == Operator.Ops.Dot) {
 				precedence = 15;
 				action = Actions.DotOperator;
 			}
 
 			// region operator
 			else if (isOp &&
-				(op.Value	== Token.Operator.Ops.OpenParentheses ||
-				op.Value	== Token.Operator.Ops.OpenBracket ||
-				op.Value	== Token.Operator.Ops.OpenBrace)) {
+				(op.Value	== Operator.Ops.OpenParentheses ||
+				op.Value	== Operator.Ops.OpenBracket ||
+				op.Value	== Operator.Ops.OpenBrace)) {
 				precedence = 15;
 				action = Actions.Region;
 			}
 
 			// unary operator
-			else if (isOp && Token.Operator.UnaryOperatorsHashSet.Contains(op.Value) &&
-				(i == 0 || remaining[i - 1] is Token.Operator or Token.Keyword)) {
+			else if (isOp && Operator.UnaryOperatorsHashSet.Contains(op.Value) &&
+				(i == 0 || remaining[i - 1] is Operator or Keyword)) {
 				precedence = 14; // slightly less than others
 				action = Actions.Unary;
 			}
 
 			// normal operators
-			else if (isOp && Token.Operator.ArithmeticOperatorsHashSet.Contains(op.Value)) {
-				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
+			else if (isOp && Operator.ArithmeticOperatorsHashSet.Contains(op.Value)) {
+				precedence = Operator.NormalOperatorsPrecedence[op.Value];
 				action = Actions.Arithmetic;
 			}
-			else if (isOp && Token.Operator.ComparisonOperatorsHashSet.Contains(op.Value)) {
-				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
+			else if (isOp && Operator.ComparisonOperatorsHashSet.Contains(op.Value)) {
+				precedence = Operator.NormalOperatorsPrecedence[op.Value];
 				action = Actions.Comparison;
 			}
-			else if (isOp && Token.Operator.LogicalOperatorsHashSet.Contains(op.Value)) {
-				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
+			else if (isOp && Operator.LogicalOperatorsHashSet.Contains(op.Value)) {
+				precedence = Operator.NormalOperatorsPrecedence[op.Value];
 				action = Actions.Logical;
 			}
 
 			// assignment
-			else if (isOp && Token.Operator.AssignmentOperatorsHashSet.Contains(op.Value)) {
+			else if (isOp && Operator.AssignmentOperatorsHashSet.Contains(op.Value)) {
 				// 4 (1 below highest of normal) + inverse 0-1 of position in the thing
 				precedence = 4 + Mathf.InverseLerp(0, remaining.Count + 1, i);
 				action = Actions.Assignment;
@@ -327,11 +327,10 @@ public class Evaluator : MonoBehaviour {
 		#region unpack AC
 		List<Token> remaining = AC.remaining;
 		int highestIndex = AC.highestIndex;
-		Token left = AC.left;
 		Token right = AC.right;
-		Token.Reference leftRef = AC.leftRef;
+		Reference leftRef = AC.leftRef;
 		bool leftIsRefAndExists = AC.leftIsRefAndExists;
-		Token.Reference rightRef = AC.rightRef;
+		Reference rightRef = AC.rightRef;
 		bool rightIsRefAndExists = AC.rightIsRefAndExists;
 		#endregion
 
@@ -351,24 +350,24 @@ public class Evaluator : MonoBehaviour {
 			double realValue = leftNum + fractionalPart;
 
 			HF.ReplaceRange(remaining, replaceStart, replaceEnd, // replace those tokens with the value
-				new() { Token.Reference.ExistingGlobalReference("", // turn value into ref
-							new Primitive.Number(realValue)) }); // actual value
+				new() { Reference.ExistingGlobalReference("", // turn value into ref
+						new Primitive.Number(realValue)) }); // actual value
 		}
 
 		// normal member syntax, expect existing reference on left
 		if (leftRef != null) {// left is ref
 			if (leftIsRefAndExists) { // leftref exists
-				if (right is Token.Name rightname) {
+				if (right is Name rightname) {
 					Data tryget = leftRef.GetData();
 					if (tryget is Error) return tryget;
 
 					tryget = tryget.GetMember(rightname.Value);
 
-					Token.Reference dataRef = null;
+					Reference dataRef;
 					if (tryget is Error)
-						dataRef = Token.Reference.NewMemberReference(leftRef, rightname.Value);
+						dataRef = Reference.NewMemberReference(leftRef, rightname.Value);
 					else
-						dataRef = Token.Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
+						dataRef = Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
 
 					HF.ReplaceRange( // replace l . r with R
 						remaining,
@@ -404,26 +403,26 @@ public class Evaluator : MonoBehaviour {
 		int highestIndex			= AC.highestIndex			;
 		Token left					= AC.left					;
 		Token right					= AC.right					;
-		Token.Reference leftRef		= AC.leftRef				;
+		Reference leftRef			= AC.leftRef				;
 		bool leftIsRefAndExists		= AC.leftIsRefAndExists		;
-		Token.Reference rightRef	= AC.rightRef				;
+		Reference rightRef			= AC.rightRef				;
 		bool rightIsRefAndExists	= AC.rightIsRefAndExists	;
 		#endregion
 
-		Token.Operator highestTokenAsOp = highestToken as Token.Operator; // it should be operator plz....
+		Operator highestTokenAsOp = highestToken as Operator; // it should be operator plz....
 
-		Token.Operator.Ops pairing = highestTokenAsOp.Value switch {
-			Token.Operator.Ops.OpenParentheses => Token.Operator.Ops.CloseParentheses,
-			Token.Operator.Ops.OpenBracket => Token.Operator.Ops.CloseBracket,
-			Token.Operator.Ops.OpenBrace => Token.Operator.Ops.CloseBrace,
-			_ => Token.Operator.Ops.None
+		Operator.Ops pairing = highestTokenAsOp.Value switch {
+			Operator.Ops.OpenParentheses	=>	Operator.Ops.CloseParentheses,
+			Operator.Ops.OpenBracket		=> Operator.Ops.CloseBracket,
+			Operator.Ops.OpenBrace			=> Operator.Ops.CloseBrace,
+			_ => Operator.Ops.None
 		};
-		if (pairing == Token.Operator.Ops.None) return Errors.CouldntParse(line.OriginalString);
+		if (pairing == Operator.Ops.None) return Errors.CouldntParse(line.OriginalString);
 		
 		int i = highestIndex;
 		int depth = 0;
 		while (i < remaining.Count) { // find index of matching
-			if (remaining[i] is Token.Operator op) {
+			if (remaining[i] is Operator op) {
 				if (op.Value == pairing) {
 					depth--;
 					if (depth == 0) break;
@@ -561,7 +560,7 @@ public class Evaluator : MonoBehaviour {
 				break;
 
 			case "{":
-				Data evalDict = EvaluateDict(flags, line.CopyWithNewTokens(regionTokens), memory);
+				Data evalDict = EvaluateDict(flags, line.CopyWithNewTokens(regionTokens));
 				if (evalDict is Error) return evalDict;
 
 				HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalDict });
@@ -576,17 +575,17 @@ public class Evaluator : MonoBehaviour {
 		List<Token> remaining = AC.remaining;
 		Token highestToken = AC.highestToken;
 		int highestIndex = AC.highestIndex;
-		Token.Reference rightRef = AC.rightRef;
+		Reference rightRef = AC.rightRef;
 		bool rightIsRefAndExists = AC.rightIsRefAndExists;
 		#endregion
 
-		Token.Operator thisOp = (highestToken as Token.Operator);
+		Operator thisOp = (highestToken as Operator);
 
 		if (!rightIsRefAndExists)
 			return Errors.InvalidUseOfOperator(thisOp.StringValue);
 
-		if (thisOp.Value == Token.Operator.Ops.Plus ||
-			thisOp.Value == Token.Operator.Ops.Minus) { // + or -
+		if (thisOp.Value == Operator.Ops.Plus ||
+			thisOp.Value == Operator.Ops.Minus) { // + or -
 
 			Data castToNumber = rightRef.ThisReference.Cast(Primitive.Number.InternalType);
 			if (castToNumber is Error) return castToNumber;
@@ -594,7 +593,7 @@ public class Evaluator : MonoBehaviour {
 			double value = (castToNumber as Primitive.Number).Value;
 			// use a copy of the number i guess
 			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
-				new() { new Primitive.Number(value * (thisOp.Value == Token.Operator.Ops.Minus ? -1 : 1)) });
+				new() { new Primitive.Number(value * (thisOp.Value == Operator.Ops.Minus ? -1 : 1)) });
 		}
 		else { // !
 			Data castToBool = rightRef.ThisReference.Cast(Primitive.Bool.InternalType);
@@ -612,12 +611,12 @@ public class Evaluator : MonoBehaviour {
 
 	private Data OperatorCheck(
 		in ActionContext AC,
-		in Token.Operator op,
+		in Operator op,
 		out Data leftData, out Data rightData) {
 		#region unpack AC
-		Token.Reference leftRef = AC.leftRef;
+		Reference leftRef = AC.leftRef;
 		bool leftIsRefAndExists = AC.leftIsRefAndExists;
-		Token.Reference rightRef = AC.rightRef;
+		Reference rightRef = AC.rightRef;
 		bool rightIsRefAndExists = AC.rightIsRefAndExists;
 		#endregion
 		
@@ -646,13 +645,13 @@ public class Evaluator : MonoBehaviour {
 		List<Token> remaining = AC.remaining;
 		Token highestToken = AC.highestToken;
 		int highestIndex = AC.highestIndex;
-		Token.Reference leftRef = AC.leftRef;
-		Token.Reference rightRef = AC.rightRef;
+		Reference leftRef = AC.leftRef;
+		Reference rightRef = AC.rightRef;
 		#endregion
 
 		// assume precedence is sorted out already
 
-		Token.Operator op = highestToken as Token.Operator;
+		Operator op = highestToken as Operator;
 
 		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
 		if (check is Error) return check;
@@ -666,9 +665,9 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	private Data PerformOperation(
-		in Token.Operator op,
+		in Operator op,
 		in Data leftData, in Data rightData,
-		in Token.Reference leftRef, in Token.Reference rightRef,
+		in Reference leftRef, in Reference rightRef,
 		in Memory memory) {
 		
 		// cast left to right
@@ -676,13 +675,13 @@ public class Evaluator : MonoBehaviour {
 		if (leftData is Error) return leftData;
 		Data right = rightData;
 
-		Dictionary<Token.Operator.Ops, string> opNames = new() {
-			{ Token.Operator.Ops.Plus,		"ad" },
-			{ Token.Operator.Ops.Minus,		"su" },
-			{ Token.Operator.Ops.Multiply,	"mu" },
-			{ Token.Operator.Ops.Divide,	"di" },
-			{ Token.Operator.Ops.Mod,		"mo" },
-			{ Token.Operator.Ops.Power,		"po" } 
+		Dictionary<Operator.Ops, string> opNames = new() {
+			{ Operator.Ops.Plus,		"ad" },
+			{ Operator.Ops.Minus,		"su" },
+			{ Operator.Ops.Multiply,	"mu" },
+			{ Operator.Ops.Divide,		"di" },
+			{ Operator.Ops.Mod,			"mo" },
+			{ Operator.Ops.Power,		"po" } 
 		};
 
 		string operationName = opNames[op.Value];
@@ -707,15 +706,11 @@ public class Evaluator : MonoBehaviour {
 		List<Token> remaining = AC.remaining;
 		Token highestToken = AC.highestToken;
 		int highestIndex = AC.highestIndex;
-		Token.Reference leftRef = AC.leftRef;
-		bool leftIsRefAndExists = AC.leftIsRefAndExists;
-		Token.Reference rightRef = AC.rightRef;
-		bool rightIsRefAndExists = AC.rightIsRefAndExists;
 		#endregion
 
 		// assume precedence is sorted out already
 
-		Token.Operator op = highestToken as Token.Operator;
+		Operator op = highestToken as Operator;
 
 		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
 		if (check is Error) return check;
@@ -737,7 +732,7 @@ public class Evaluator : MonoBehaviour {
 
 		// assume precedence is sorted out already
 
-		Token.Operator op = highestToken as Token.Operator;
+		Operator op = highestToken as Operator;
 
 		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
 		if (check is Error) return check;
@@ -752,11 +747,11 @@ public class Evaluator : MonoBehaviour {
 		bool b = (trycastRight as Primitive.Bool).Value;
 
 		bool result = op.Value switch {
-			Token.Operator.Ops.And	=> a && b,
-			Token.Operator.Ops.Or	=> a || b,
-			Token.Operator.Ops.Nand	=> !(a && b),
-			Token.Operator.Ops.Nor	=> !(a || b),
-			Token.Operator.Ops.Xor	=> a != b,
+			Operator.Ops.And	=> a && b,
+			Operator.Ops.Or		=> a || b,
+			Operator.Ops.Nand	=> !(a && b),
+			Operator.Ops.Nor	=> !(a || b),
+			Operator.Ops.Xor	=> a != b,
 			_ => false // vs wouldnt stop screaming at me to add default case
 		};
 
@@ -768,23 +763,19 @@ public class Evaluator : MonoBehaviour {
 	
 	private Data HandleAssignment(in ActionContext AC) {
 		#region unpack AC
-		int flags					= AC.flags;
-		Line line					= AC.line;
 		Memory memory				= AC.memory;
 		List<Token> remaining		= AC.remaining;
 		Token highestToken			= AC.highestToken;
 		int highestIndex			= AC.highestIndex;
-		Token left					= AC.left;
-		Token right					= AC.right;
-		Token.Reference leftRef		= AC.leftRef;
+		Reference leftRef		= AC.leftRef;
 		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
-		Token.Reference rightRef	= AC.rightRef;
+		Reference rightRef	= AC.rightRef;
 		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
 		#endregion
 
 		// assume precedence is sorted out already
 
-		Token.Operator op = highestToken as Token.Operator;
+		Operator op = highestToken as Operator;
 
 		// check right for ref to existing data
 		if (rightRef == null)
@@ -799,22 +790,22 @@ public class Evaluator : MonoBehaviour {
 
 		Data newValue;
 
-		if (op.Value == Token.Operator.Ops.Equals)
+		if (op.Value == Operator.Ops.Equals)
 			newValue = rightData;
 		else {
 			if (!leftIsRefAndExists) // += and others have to have existing left type
 				return Errors.UnknownVariable(leftRef.Name);
 
 			string opToPerform = op.Value switch {
-				Token.Operator.Ops.PlusEquals		=> "+",
-				Token.Operator.Ops.MinusEquals		=> "-",
-				Token.Operator.Ops.MultiplyEquals	=> "*",
-				Token.Operator.Ops.DivideEquals		=> "/",
-				Token.Operator.Ops.PowerEquals		=> "^",
-				Token.Operator.Ops.ModEquals		=> "%",
+				Operator.Ops.PlusEquals			=> "+",
+				Operator.Ops.MinusEquals		=> "-",
+				Operator.Ops.MultiplyEquals		=> "*",
+				Operator.Ops.DivideEquals		=> "/",
+				Operator.Ops.PowerEquals		=> "^",
+				Operator.Ops.ModEquals			=> "%",
 				_ => ""
 			};
-			Token.Operator inlineOp = new(opToPerform); // sets it up so i dont have to
+			Operator inlineOp = new(opToPerform); // sets it up so i dont have to
 
 			Data performOp = PerformOperation(
 				inlineOp, leftRef.ThisReference, rightData, leftRef, rightRef, memory);
@@ -839,7 +830,7 @@ public class Evaluator : MonoBehaviour {
 		int eCount = 0;
 		int ellipsisIndex = -1;
 		for (int i = 0; i < tokens.Count; i++) {
-			if (tokens[i] is Token.Operator op && op.Value == Token.Operator.Ops.Ellipsis) {
+			if (tokens[i] is Operator op && op.Value == Operator.Ops.Ellipsis) {
 				ellipsisIndex = i;
 				eCount++;
 			}
@@ -927,7 +918,7 @@ public class Evaluator : MonoBehaviour {
 			int i = 0;
 			while (i < tokens.Count) {
 				Token rt = tokens[i];
-				if (rt is Token.Operator op && op.Value == Token.Operator.Ops.Comma) {
+				if (rt is Operator op && op.Value == Operator.Ops.Comma) {
 					tokenChunks.Add(curChunk);
 					curChunk = new(); // instead of clearing so the reference isnt shared
 				}
@@ -951,7 +942,7 @@ public class Evaluator : MonoBehaviour {
 		}
 	}
 
-	private Data EvaluateDict(int flags, Line line, Memory memory) {
+	private Data EvaluateDict(int flags, Line line) {
 		List<Token> tokens = line.Tokens;
 
 		// stole from evallist lol
@@ -962,7 +953,7 @@ public class Evaluator : MonoBehaviour {
 		int i = 0;
 		while (i < tokens.Count) {
 			Token rt = tokens[i];
-			if (rt is Token.Operator op && op.Value == Token.Operator.Ops.Comma) {
+			if (rt is Operator op && op.Value == Operator.Ops.Comma) {
 				tokenChunks.Add(curChunk);
 				curChunk = new(); // instead of clearing so the reference isnt shared
 			}
@@ -985,7 +976,7 @@ public class Evaluator : MonoBehaviour {
 			int colonCount = 0;
 			int colonIndex = -1;
 			for (int ci = 0; ci < group.Count; ci++) {
-				if (group[ci] is Token.Operator co && co.Value == Token.Operator.Ops.Colon) {
+				if (group[ci] is Operator co && co.Value == Operator.Ops.Colon) {
 					colonCount++;
 					colonIndex = ci;
 				}
