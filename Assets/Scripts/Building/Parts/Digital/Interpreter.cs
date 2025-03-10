@@ -10,8 +10,12 @@ public class Interpreter : Part
 
 	// always add a null check manually in the script, data can't hold parts so no error returningn in here
 	public Memory GetMemory() {
+		if (MemoryCC == null)
+			return null;
+
 		if (MemoryCC.Cable.OtherCC(MemoryCC).Part is MemoryPart part)
 			return part.component;
+
 		return null;
 	}
 	public Data TryGetMemory(out Memory memory) {
@@ -51,6 +55,6 @@ public class Interpreter : Part
 
 	public Data Run(Memory memory, Section script)
 	{
-		return new();
+		return Data.Success;
 	}
 }

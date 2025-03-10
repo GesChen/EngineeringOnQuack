@@ -19,6 +19,8 @@ public static class Errors {
 		=> new($"Missing or Invalid connection to the {portName} port on the {partFrom}");
 	public static Error CannotIndex(string type)
 		=> new($"Cannot index {type} object, Lists and Strings only");
+	public static Error CannotIndexWithType(string type)
+		=> new($"Cannot index with {type}, must be whole numbers");
 	public static Error IndexOutOfRange(int attempt)
 		=> new($"Index out of range: {attempt}");
 	public static Error CannotSetMemberOfPrimitive(string membername)
@@ -35,6 +37,26 @@ public static class Errors {
 		=> new($"Unknown operator {op}");
 	public static Error CouldntParse(string line)
 		=> new($"Couldn't parse \"{line}\"");
+	public static Error MemberIsNotMethod(string membername, string of)
+		=> new($"Member {membername} of {of} is not a method");
+	public static Error CannotUseTypeWithFeature(string type, string feature)
+		=> new($"Cannot use {type} type with {feature}");
+	public static Error CannotEvaluateEmpty()
+		=> new($"Cannot evaluate empty item"); // change wording? idk
+	public static Error BadSyntaxFor(string thing)
+		=> new($"Bad syntax for {thing}");
+	public static Error BadSyntaxFor(string thing, string reason)
+		=> new($"Bad syntax for {thing}: {reason}");
+	public static Error UnknownKey()
+		=> new($"Unknown key");
+	public static Error UnknownKey(string key)
+		=> new($"Unknown key: {key}");
+	public static Error UnsupportedOperation(string op, string typeA, string typeB)
+		=> new($"Unsupported operation: {typeA} {op} {typeB}");
+	public static Error DivisonByZero()
+		=> new($"Division by zero");
+	public static Error Expected(string what, string where)
+		=> new($"Expected {what} {where}");
 	public static Error template()
 		=> new($"");
 }

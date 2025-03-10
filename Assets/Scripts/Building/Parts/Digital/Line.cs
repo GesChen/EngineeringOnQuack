@@ -33,10 +33,21 @@ public class Line
 		Section = section;
 	}
 
+	public Line CopyWithNewTokens(List<Token> newTokens) {
+		return new(
+			RealLineNumber,
+			OriginalString,
+			newTokens);
+	}
+
 	public override string ToString() {
 		if (LineType == LineTypeEnum.Line)
 			return $"Line ({Tokens.Count}): {OriginalString}";
 		else
 			return $"SubSection: {Section}";
+	}
+
+	public Line DeepCopy() {
+		return new(RealLineNumber, string.Copy(OriginalString), new List<Token>(Tokens));
 	}
 }

@@ -13,7 +13,27 @@ public class Memory {
 
 	public void Initialize() {
 		Data = new() {
-			{ "print",		new Primitive.Function(InternalFunctions.print) }
+			// normal functions
+			{ "print",		new Primitive.Function(InternalFunctions.print) },
+
+			// castings
+			{ "num",		new Primitive.Function(InternalFunctions.num)	},
+			{ "bool",		new Primitive.Function(InternalFunctions.@bool)	},
+			{ "str",		new Primitive.Function(InternalFunctions.str)	},
+			{ "list",		new Primitive.Function(InternalFunctions.list)	},
+			{ "dict",		new Primitive.Function(InternalFunctions.dict)	},
+
+			// arithmetic
+			{ "abs",		new Primitive.Function(InternalFunctions.abs)	},
+			{ "sqrt",		new Primitive.Function(InternalFunctions.sqrt)	},
+			{ "round",		new Primitive.Function(InternalFunctions.round)	},
+			{ "sum",		new Primitive.Function(InternalFunctions.sum)	},
+			{ "max",		new Primitive.Function(InternalFunctions.max)	},
+			{ "min",		new Primitive.Function(InternalFunctions.min)	},
+
+			// bool 
+			{ "true",		new Primitive.Bool(true) },
+			{ "false",		new Primitive.Bool(false) }
 		};
 
 		Types = new() {
@@ -40,10 +60,11 @@ public class Memory {
 	}
 
 	public Memory Copy() {
+		
 		return new(
 			new Dictionary<string, Data>(Data),
 			new Dictionary<string, Type>(Types),
-			new(Script.Lines)
+			new(Script?.Lines)
 			);
 	}
 
@@ -66,8 +87,8 @@ public class Memory {
 			Types.Remove(name);
 	}
 
-	public void Set(List<Token> location, Data data) {
-
+	public Data Set(Token.Reference reference, Data data) {
+		return reference.SetData(data);
 	}
 
 	public void NewType(string name, Type type) {
