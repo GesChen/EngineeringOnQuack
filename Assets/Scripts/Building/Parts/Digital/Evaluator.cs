@@ -90,7 +90,8 @@ public class Evaluator : MonoBehaviour {
 		Unary,
 		Arithmetic,
 		Comparison,
-		Logical
+		Logical,
+		Assignment
 	}
 
 	struct ActionContext {
@@ -121,7 +122,7 @@ public class Evaluator : MonoBehaviour {
 			GetHighestPrecedenceAction(
 				remaining,
 				out Actions highestAction,
-				out int highestPrecedence,
+				out float highestPrecedence,
 				out int highestIndex
 			);
 			if (highestPrecedence == -1)
@@ -204,6 +205,11 @@ public class Evaluator : MonoBehaviour {
 					if (tryHandleLogical is Error) return tryHandleLogical;
 					break;
 
+				// assignment
+				case Actions.Assignment:
+					Data tryHandleAssignment = HandleAssignment(localActionContext);
+					if (tryHandleAssignment is Error) return tryHandleAssignment;
+					break;
 			}
 
 			if (last.SequenceEqual(remaining)) break; // duplicate between iters = break
@@ -217,9 +223,9 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	private void GetHighestPrecedenceAction(
-		List<Token> remaining,
+		in List<Token> remaining,
 		out Actions highestAction,
-		out int highestPrecedence,
+		out float highestPrecedence,
 		out int highestIndex) {
 
 		highestAction = Actions.None;
@@ -229,7 +235,7 @@ public class Evaluator : MonoBehaviour {
 		for (int i = 0; i < remaining.Count; i++) {
 			Token token = remaining[i];
 			Actions action = Actions.None;
-			int precedence = -1;
+			float precedence = -1;
 
 			bool isOp = token is Token.Operator;
 			Token.Operator op = isOp ? token as Token.Operator : null;
@@ -280,6 +286,13 @@ public class Evaluator : MonoBehaviour {
 			else if (isOp && Token.Operator.LogicalOperatorsHashSet.Contains(op.Value)) {
 				precedence = Token.Operator.NormalOperatorsPrecedence[op.Value];
 				action = Actions.Logical;
+			}
+
+			// assignment
+			else if (isOp && Token.Operator.AssignmentOperatorsHashSet.Contains(op.Value)) {
+				// 4 (1 below highest of normal) + inverse 0-1 of position in the thing
+				precedence = 4 + (1 - Mathf.InverseLerp(0, remaining.Count + 1, i));
+				action = Actions.Assignment;
 			}
 
 			if (precedence > highestPrecedence) { // > not >= for leftmost
@@ -706,11 +719,49 @@ public class Evaluator : MonoBehaviour {
 			Token.Operator.Ops.Nand	=> !(a && b),
 			Token.Operator.Ops.Nor	=> !(a || b),
 			Token.Operator.Ops.Xor	=> a != b,
+			_ => false // vs wouldnt stop screaming at me to add default case
 		};
 
 		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
 			new() { new Primitive.Bool(result) });
 
+		return Data.Success;
+	}
+	
+	private Data HandleAssignment(ActionContext AC) {
+		#region unpack AC
+		int flags					= AC.flags;
+		Line line					= AC.line;
+		Memory memory				= AC.memory;
+		List<Token> remaining		= AC.remaining;
+		Token highestToken			= AC.highestToken;
+		int highestIndex			= AC.highestIndex;
+		Token left					= AC.left;
+		Token right					= AC.right;
+		Token.Reference leftRef		= AC.leftRef;
+		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
+		Token.Reference rightRef	= AC.rightRef;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
+		#endregion
+
+		// assume precedence is sorted out already
+
+		Token.Operator op = highestToken as Token.Operator;
+
+		// check right for ref to existing data
+		if (rightRef == null)
+			return Errors.Expected("expression", "right of " + op.StringValue);
+		if (!rightIsRefAndExists)
+			return Errors.UnknownVariable(rightRef.Name);
+		Data rightData = rightRef.ThisReference;
+
+		// check left for ref (doesnt have to exist)
+		if (leftRef == null)
+			return Errors.Expected("expression", "left of " + op.StringValue);
+
+		leftRef.SetData(rightData);
+
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { rightData });
 		return Data.Success;
 	}
 

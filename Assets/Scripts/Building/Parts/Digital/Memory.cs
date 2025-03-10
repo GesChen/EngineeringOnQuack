@@ -68,8 +68,8 @@ public class Memory {
 			Types.Remove(name);
 	}
 
-	public void Set(List<Token> location, Data data) {
-
+	public void Set(Token.Reference reference, Data data) {
+		reference.SetData(data);
 	}
 
 	public void NewType(string name, Type type) {
