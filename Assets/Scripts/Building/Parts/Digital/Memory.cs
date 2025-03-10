@@ -42,10 +42,11 @@ public class Memory {
 	}
 
 	public Memory Copy() {
+		
 		return new(
 			new Dictionary<string, Data>(Data),
 			new Dictionary<string, Type>(Types),
-			new(Script.Lines)
+			new(Script?.Lines)
 			);
 	}
 

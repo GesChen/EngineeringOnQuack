@@ -64,6 +64,7 @@ public class Tester : MonoBehaviour {
 		memory.InterpreterCC = onMtoICC;
 
 		memory.Initialize(onMtoICC);
+		HF.LogColor($"memory initialized", colors[1]);
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
@@ -76,7 +77,9 @@ public class Tester : MonoBehaviour {
 		HF.LogColor($"test updated to {testCases[useTestCase]}", colors[1]);
 	}
 	void TestOnce() {
+		Memory before = memory.component.Copy();
 		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
+		memory.component = before; // make sure no changes are made to memory in the testonce
 		print(eval);
 	}
 	void ToTest() {

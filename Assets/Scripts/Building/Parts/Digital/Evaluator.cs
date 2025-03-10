@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
+using static Token;
 
 public class Evaluator : MonoBehaviour {
 	public Interpreter Interpreter;
@@ -311,7 +311,7 @@ public class Evaluator : MonoBehaviour {
 			// assignment
 			else if (isOp && Token.Operator.AssignmentOperatorsHashSet.Contains(op.Value)) {
 				// 4 (1 below highest of normal) + inverse 0-1 of position in the thing
-				precedence = 4 + (1 - Mathf.InverseLerp(0, remaining.Count + 1, i));
+				precedence = 4 + Mathf.InverseLerp(0, remaining.Count + 1, i);
 				action = Actions.Assignment;
 			}
 
@@ -657,9 +657,24 @@ public class Evaluator : MonoBehaviour {
 		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
 		if (check is Error) return check;
 
+		Data perform = PerformOperation(op, leftData, rightData, leftRef, rightRef, memory);
+		if (perform is Error) return perform;
+
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { perform });
+
+		return Data.Success;
+	}
+
+	private Data PerformOperation(
+		in Token.Operator op,
+		in Data leftData, in Data rightData,
+		in Token.Reference leftRef, in Token.Reference rightRef,
+		in Memory memory) {
+		
 		// cast left to right
-		leftData = leftData.Cast(rightRef.ThisReference.Type);
+		Data left = leftData.Cast(rightRef.ThisReference.Type);
 		if (leftData is Error) return leftData;
+		Data right = rightData;
 
 		Dictionary<Token.Operator.Ops, string> opNames = new() {
 			{ Token.Operator.Ops.Plus,		"ad" },
@@ -681,17 +696,12 @@ public class Evaluator : MonoBehaviour {
 		Data runFunction = Interpreter.RunFunction(
 			memory, 
 			tryGetLeftMember as Primitive.Function, 
-			leftData, 
-			new() { rightData }
+			left, new() { right }
 		);
-		if (runFunction is Error) return runFunction;
-
-		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { runFunction });
-
-		return Data.Success;
+		return runFunction;
 	}
 	
-	private Data HandleComparison(ActionContext AC) {
+	private Data HandleComparison(in ActionContext AC) {
 		#region unpack AC
 		Memory memory = AC.memory;
 		List<Token> remaining = AC.remaining;
@@ -718,7 +728,7 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 
-	private Data HandleLogical(ActionContext AC) {
+	private Data HandleLogical(in ActionContext AC) {
 		#region unpack AC
 		List<Token> remaining = AC.remaining;
 		Token highestToken = AC.highestToken;
@@ -756,7 +766,7 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 	
-	private Data HandleAssignment(ActionContext AC) {
+	private Data HandleAssignment(in ActionContext AC) {
 		#region unpack AC
 		int flags					= AC.flags;
 		Line line					= AC.line;
@@ -787,10 +797,36 @@ public class Evaluator : MonoBehaviour {
 		if (leftRef == null)
 			return Errors.Expected("expression", "left of " + op.StringValue);
 
-		Data trySet = leftRef.SetData(rightData);
+		Data newValue;
+
+		if (op.Value == Token.Operator.Ops.Equals)
+			newValue = rightData;
+		else {
+			if (!leftIsRefAndExists) // += and others have to have existing left type
+				return Errors.UnknownVariable(leftRef.Name);
+
+			string opToPerform = op.Value switch {
+				Token.Operator.Ops.PlusEquals		=> "+",
+				Token.Operator.Ops.MinusEquals		=> "-",
+				Token.Operator.Ops.MultiplyEquals	=> "*",
+				Token.Operator.Ops.DivideEquals		=> "/",
+				Token.Operator.Ops.PowerEquals		=> "^",
+				Token.Operator.Ops.ModEquals		=> "%",
+				_ => ""
+			};
+			Token.Operator inlineOp = new(opToPerform); // sets it up so i dont have to
+
+			Data performOp = PerformOperation(
+				inlineOp, leftRef.ThisReference, rightData, leftRef, rightRef, memory);
+			if (performOp is Error) return performOp;
+
+			newValue = performOp;
+		}
+
+		Data trySet = leftRef.SetData(newValue);
 		if (trySet is Error) return trySet;
 
-		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { rightData });
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { newValue });
 		return Data.Success;
 	}
 
