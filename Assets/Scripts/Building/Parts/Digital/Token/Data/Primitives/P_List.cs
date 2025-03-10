@@ -15,6 +15,7 @@ public abstract partial class Primitive : Data {
 			{ "ad"			, new Function(ad)			},
 			{ "mu"			, new Function(mu)			},
 			{ "tostring"	, new Function(tostring)	},
+			{ "todict"		, new Function(todict)		},
 			{ "add"			, new Function(add)			},
 			{ "clear"		, new Function(clear)		},
 			{ "contains"	, new Function(contains)	},
@@ -138,7 +139,24 @@ public abstract partial class Primitive : Data {
 
 			return new String(builder.ToString());
 		}
-	
+		public static Data todict(Data thisRef, List<Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
+
+			List<Data> L = (thisRef as List).Value; // get this list
+
+			Dictionary<Data, Data> newDict = new();
+
+			// check list structure while performing cast
+			foreach (Data d in L) {
+				if (!(d is List SubL && SubL.Value.Count != 2))
+					return Errors.BadSyntaxFor("List to Dict conversion");
+				
+				newDict[SubL.Value[0]] = SubL.Value[1]; // nothing can go wrong right!!!! plz?
+			}
+
+			return new Dict(newDict);
+		}
+
 		public static Data add(Data thisRef, List<Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("add", 1, args.Count);
 			(thisRef as List).Value.Add(args[0]);

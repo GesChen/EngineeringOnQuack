@@ -13,7 +13,25 @@ public class Memory {
 
 	public void Initialize() {
 		Data = new() {
+			// normal functions
 			{ "print",		new Primitive.Function(InternalFunctions.print) },
+
+			// castings
+			{ "num",		new Primitive.Function(InternalFunctions.num)	},
+			{ "bool",		new Primitive.Function(InternalFunctions.@bool)	},
+			{ "str",		new Primitive.Function(InternalFunctions.str)	},
+			{ "list",		new Primitive.Function(InternalFunctions.list)	},
+			{ "dict",		new Primitive.Function(InternalFunctions.dict)	},
+
+			// arithmetic
+			{ "abs",		new Primitive.Function(InternalFunctions.abs)	},
+			{ "sqrt",		new Primitive.Function(InternalFunctions.sqrt)	},
+			{ "round",		new Primitive.Function(InternalFunctions.round)	},
+			{ "sum",		new Primitive.Function(InternalFunctions.sum)	},
+			{ "max",		new Primitive.Function(InternalFunctions.max)	},
+			{ "min",		new Primitive.Function(InternalFunctions.min)	},
+
+			// bool 
 			{ "true",		new Primitive.Bool(true) },
 			{ "false",		new Primitive.Bool(false) }
 		};

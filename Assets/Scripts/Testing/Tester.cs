@@ -4,6 +4,7 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
+using System;
 
 public class Tester : MonoBehaviour {
 	//public string expr;
@@ -62,7 +63,6 @@ public class Tester : MonoBehaviour {
 		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
 		interpreter.MemoryCC = onItoMCC;
 		memory.InterpreterCC = onMtoICC;
-
 		memory.Initialize(onMtoICC);
 		HF.LogColor($"memory initialized", colors[1]);
 	}

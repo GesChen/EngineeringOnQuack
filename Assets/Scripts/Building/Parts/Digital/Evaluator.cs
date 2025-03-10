@@ -104,9 +104,9 @@ public class Evaluator : MonoBehaviour {
 		public int				highestIndex;
 		public Token			left;
 		public Token			right;
-		public Reference	leftRef;
+		public Reference		leftRef;
 		public bool				leftIsRefAndExists;
-		public Reference	rightRef;
+		public Reference		rightRef;
 		public bool				rightIsRefAndExists;
 	}
 
@@ -766,9 +766,9 @@ public class Evaluator : MonoBehaviour {
 		List<Token> remaining		= AC.remaining;
 		Token highestToken			= AC.highestToken;
 		int highestIndex			= AC.highestIndex;
-		Reference leftRef		= AC.leftRef;
+		Reference leftRef			= AC.leftRef;
 		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
-		Reference rightRef	= AC.rightRef;
+		Reference rightRef			= AC.rightRef;
 		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
 		#endregion
 
@@ -986,7 +986,7 @@ public class Evaluator : MonoBehaviour {
 			Token[] key = group.ToArray()[..colonIndex];
 			Token[] value = group.ToArray()[(colonIndex + 1)..];
 
-			if (key.Length == 0)  return Errors.BadSyntaxFor("dictionary", "missing key");
+			if (key.Length == 0)   return Errors.BadSyntaxFor("dictionary", "missing key");
 			if (value.Length == 0) return Errors.BadSyntaxFor("dictionary", "missing value");
 
 			kvpGroups.Add(new[] { key, value });

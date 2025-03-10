@@ -59,13 +59,13 @@ public class Data : Token {
 
 	// cast any two types
 	public static Data CastFromTo(Data fromValue, Type toType) {
-		string FTN = fromValue.Type.Name;
-		string TTN = toType.Name;
+		string FTN = fromValue.Type.Name;	// FromTypeName
+		string TTN = toType.Name;			// ToTypeName
 
-		char FTNC = FTN[0];
-		char TTNC = TTN[0];
+		char FTNC = FTN[0];	// FromTypeNameChar(0)
+		char TTNC = TTN[0]; // ToTypeNameChar(0)
 
-		if (FTNC == TTNC)
+		if (FTNC == TTNC) // no casting needed!
 			return fromValue;
 
 		// have to be primitives, no cast (from or to function) or (from dict)
@@ -119,6 +119,7 @@ public class Data : Token {
 			case 'N': return new Number(v.Count == 0 ? 1 : 0);
 			case 'S': return List.tostring(value, new());
 			case 'B': return new Bool(v.Count != 0);
+			case 'D': return List.todict(value, new());
 		}
 		return Errors.InvalidCast("List", to);
 	}
