@@ -20,7 +20,7 @@ public class Tester : MonoBehaviour {
 	public Cable IEcable;
 	public Cable IMcable;
 
-	Section section;
+	Script script;
 	void Start() {
 		BeforeTesting();
 		Updatetest();
@@ -68,19 +68,15 @@ public class Tester : MonoBehaviour {
 
 		if (output is Error)
 			print(output);
-		section = secout;
+		script = scriptOut;
 
 		HF.LogColor($"test updated to {testCases[useTestCase]}", colors[1]);
 	}
 	void TestOnce() {
 		Memory before = memory.component.Copy();
-		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
-		memory.component = before; // make sure no changes are made to memory in the testonce
-		print(eval);
 	}
 	void ToTest() {
-		// TODO: FIX RANGE LIST! no work 
-		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
+		interpreter.Run(memory.component, script);
 		int i = 0;
 	}
 	/*

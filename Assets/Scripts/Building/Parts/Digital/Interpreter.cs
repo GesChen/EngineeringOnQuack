@@ -1,10 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-public class Interpreter : Part
-{
+public class Interpreter : Part {
 	public Evaluator Evaluator;
 	public CableConnection MemoryCC;
 
@@ -53,8 +50,43 @@ public class Interpreter : Part
 		return output;
 	}
 
-	public Data Run(Memory memory, Script script)
-	{
+	public Data Run(Memory memory, Script script) {
+		return RunSection(memory, script.Contents);
+	}
+
+	private Data RunSection(Memory memory, Section section) {
+		List<Line> lines = section.Lines;
+
+		int flags = 0;
+		int i = 0;
+		while (i < lines.Count) {
+			Line line = lines[i];
+
+			if (flags & Flags.ExpectSectionNext != 0 &&
+				line.LineType != Line.LineTypeEnum.Section)
+				return Errors.Expected("Section", "");
+
+			if (flags & Flags.DontRunNextLine != 0) {
+				// unset flag
+				continue;
+			}
+
+			if (line.LineType == Line.LineTypeEnum.Line) {
+
+				Evaluator.Output evaluateOut = Evaluator.Evaluate(flags, line);
+				if (evaluateOut.data is Error) return evaluateOut.data;
+
+				if (flags & Flags.ReturnData != 0)
+					return evaluateOut.data;
+			}
+			else {
+				Data trySection = RunSection(memory, line.Section);
+				if (trySection is Error) return trySection;
+			}
+
+			i++;
+		}
+
 		return Data.Success;
 	}
 }

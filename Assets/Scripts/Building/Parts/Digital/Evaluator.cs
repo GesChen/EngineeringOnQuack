@@ -110,7 +110,12 @@ public class Evaluator : MonoBehaviour {
 		public bool				rightIsRefAndExists;
 	}
 
-	public Data Evaluate(int flags, Line line) {
+	public struct Output {
+		public Data data;
+		public int flags;
+	}
+
+	public Output Evaluate(int flags, Line line) {
 		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
 		if (tryGetMemory is Error) return tryGetMemory;
 
