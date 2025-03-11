@@ -57,6 +57,8 @@ public static class Errors {
 		=> new($"Division by zero");
 	public static Error Expected(string what, string where)
 		=> new($"Expected {what} {where}");
+	public static Error Unexpected(string what, string where)
+		=> new($"Unexpected {what} {where}");
 	public static Error template()
 		=> new($"");
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 public class Interpreter : Part {
@@ -57,29 +58,56 @@ public class Interpreter : Part {
 	private Data RunSection(Memory memory, Section section) {
 		List<Line> lines = section.Lines;
 
-		int flags = 0;
+		Flags flags = 0;
 		int i = 0;
 		while (i < lines.Count) {
 			Line line = lines[i];
 
-			if (flags & Flags.ExpectSectionNext != 0 &&
-				line.LineType != Line.LineTypeEnum.Section)
+			// section/line check before DRNL
+			// check if section token and line contents match
+			if ((flags & Flags.ExpectSectionNext) != 0 &&
+				line.LineType == Line.LineTypeEnum.Line)
 				return Errors.Expected("Section", "");
-
-			if (flags & Flags.DontRunNextLine != 0) {
-				// unset flag
+			else
+				if ((flags & Flags.ExpectSectionNext) == 0)
+					return Errors.Unexpected("Section", "");
+			
+			if ((flags & Flags.DontRunNextLine) != 0) {
+				flags &= ~Flags.DontRunNextLine; // unset flag
 				continue;
 			}
 
 			if (line.LineType == Line.LineTypeEnum.Line) {
-
-				Evaluator.Output evaluateOut = Evaluator.Evaluate(flags, line);
+				Evaluator.Output evaluateOut = Evaluator.Evaluate(line);
 				if (evaluateOut.data is Error) return evaluateOut.data;
 
-				if (flags & Flags.ReturnData != 0)
+				if ((flags & Flags.ReturnData) != 0)
 					return evaluateOut.data;
+				else if ((flags & Flags.IfSucceeded) != 0 ||
+					(flags & Flags.IfFailed) != 0) {
+
+				}
+
+				/*if ((flags & Flags.EnterFor) != 0) {
+					Primitive.List L = evaluateOut.data as Primitive.List;
+					Primitive.String S = evaluateOut.data as Primitive.String;
+
+					if (!(L != null || S != null))
+						return Errors.CannotUseTypeWithFeature(evaluateOut.data.Type.Name, "for loops");
+
+					List<Data> iterateOver = L != null ? L.Value : // turn string into char list
+						S.Value.Select(c => new Primitive.String(c.ToString()) as Data).ToList();
+
+					foreach (Data d in iterateOver) {
+
+					}
+				}*/
+
+				// this might not be the right approach cuz some flags need to persist
+				flags = evaluateOut.flags;
 			}
 			else {
+				
 				Data trySection = RunSection(memory, line.Section);
 				if (trySection is Error) return trySection;
 			}
