@@ -7,13 +7,11 @@ using System.Diagnostics;
 using System;
 
 public class Tester : MonoBehaviour {
-	//public string expr;
+	[TextArea]
 	public List<string> testCases = new();
 	public int useTestCase;
 	public List<Color> colors;
 
-	public bool debug;
-	public bool testTime;
 	public int iters;
 	public MemoryPart memory;
 	public Interpreter interpreter;
@@ -53,10 +51,8 @@ public class Tester : MonoBehaviour {
 		sw.Stop();
 
 		double ns = sw.ElapsedTicks * 100;
-		HF.LogColor($"{ns} ns",													colors[0]);
-		HF.LogColor($"{ns / 1e6} ms",											colors[0]);
+		HF.LogColor($"{ns} ns ({ns / 1e6} ms)",									colors[0]);
 		HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each",	colors[0]);
-		HF.LogColor($"{(int)(iters / (ns / 1e9))} / second",					colors[0]);
 	}
 
 	void BeforeTesting() {
@@ -68,7 +64,7 @@ public class Tester : MonoBehaviour {
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
-		(Section secout, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+		(Script scriptOut, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
 
 		if (output is Error)
 			print(output);

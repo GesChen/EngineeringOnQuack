@@ -9,7 +9,6 @@ public class Memory {
 
 	public Dictionary<string, Data> Data;
 	public Dictionary<string, Type> Types;
-	public Section Script;
 
 	public void Initialize() {
 		Data = new() {
@@ -47,15 +46,13 @@ public class Memory {
 		};
 	}
 
-	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types, Section script) {
+	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types) {
 		Data = data;
 		Types = types;
-		Script = script;
 	}
 	public Memory(CableConnection interpreterCC) {
 		Data = new();
 		Types = new();
-		Script = null;
 		InterpreterCC = interpreterCC;
 	}
 
@@ -63,8 +60,7 @@ public class Memory {
 		
 		return new(
 			new Dictionary<string, Data>(Data),
-			new Dictionary<string, Type>(Types),
-			new(Script?.Lines)
+			new Dictionary<string, Type>(Types)
 			);
 	}
 

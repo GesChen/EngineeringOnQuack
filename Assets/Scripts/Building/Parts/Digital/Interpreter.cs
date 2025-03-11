@@ -53,7 +53,7 @@ public class Interpreter : Part
 		return output;
 	}
 
-	public Data Run(Memory memory, Section script)
+	public Data Run(Memory memory, Script script)
 	{
 		return Data.Success;
 	}

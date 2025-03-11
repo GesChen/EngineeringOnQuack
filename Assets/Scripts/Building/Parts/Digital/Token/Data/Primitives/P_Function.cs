@@ -3,16 +3,16 @@ using System.Collections.Generic;
 
 public abstract partial class Primitive : Data {
 	public partial class Function : Primitive {
-		public static Function Default = new(new(), new(new())); // "yeah ik what that code does"
+		public static Function Default = new(new(), new()); // "yeah ik what that code does"
 
 		// functions dont have methods or instance vars
 		public static Type InternalType = new("Function", new Dictionary<string, Data>());
 
 		// user defined function code
 		public List<Name> Parameters;
-		public Section Script; 
+		public Script Script; 
 
-		public Function(List<Name> parameters, Section script) : base(InternalType) { // user defined function constructor
+		public Function(List<Name> parameters, Script script) : base(InternalType) { // user defined function constructor
 			Parameters = parameters;
 			Script = script;
 		}
