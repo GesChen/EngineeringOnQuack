@@ -5,6 +5,8 @@ public static class Errors {
 		=> new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got)
 		=> new($"Function \"{funcName}\" expects {expected} in argument {index}, got {got} instead");
+	public static Error UnknownVariable(Token.Reference reference)
+		=> new($"Unknown variable \"{reference.Name}\"");
 	public static Error UnknownVariable(string name)
 		=> new($"Unknown variable \"{name}\"");
 	public static Error InvalidCast(string from, string to)
@@ -28,7 +30,7 @@ public static class Errors {
 	public static Error InvalidUseOfOperator(string op)
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)
-		=> new($"Invalid character {HF.GetStringRepresentation(c.ToString())}");
+		=> new($"Invalid character {HF.Repr(c.ToString())}");
 	public static Error MismatchedSomething(string mismatched)
 		=> new($"Mismatched {mismatched}");
 	public static Error VarNameCannotStartWithNum()
@@ -57,8 +59,12 @@ public static class Errors {
 		=> new($"Division by zero");
 	public static Error Expected(string what, string where)
 		=> new($"Expected {what} {where}");
+	public static Error Expected(string what)
+		=> new($"Expected {what}");
 	public static Error Unexpected(string what, string where)
 		=> new($"Unexpected {what} {where}");
+	public static Error Unexpected(string what)
+		=> new($"Unexpected {what}");
 	public static Error template()
 		=> new($"");
 }

@@ -34,6 +34,7 @@ public class Memory {
 			{ "true",		new Primitive.Bool(true) },
 			{ "false",		new Primitive.Bool(false) }
 		};
+		foreach (Data d in Data.Values) d.Memory = this;
 
 		Types = new() {
 			{ "Number",		Primitive.Number.	InternalType },

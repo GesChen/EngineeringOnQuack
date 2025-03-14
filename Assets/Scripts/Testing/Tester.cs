@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System;
 
 public class Tester : MonoBehaviour {
+	public bool testFile;
+	public string filename;
 	[TextArea]
 	public List<string> testCases = new();
 	public int useTestCase;
@@ -52,7 +54,9 @@ public class Tester : MonoBehaviour {
 
 		double ns = sw.ElapsedTicks * 100;
 		HF.LogColor($"{ns} ns ({ns / 1e6} ms)",									colors[0]);
-		HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each",	colors[0]);
+		
+		if (iters > 1)
+			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each",	colors[0]);
 	}
 
 	void BeforeTesting() {
@@ -64,19 +68,39 @@ public class Tester : MonoBehaviour {
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
-		(Script scriptOut, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+		if (testFile) {
+			TextAsset temp = Resources.Load(filename) as TextAsset;
+			string contents = temp.text;
 
-		if (output is Error)
-			print(output);
-		script = scriptOut;
+			(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
-		HF.LogColor($"test updated to {testCases[useTestCase]}", colors[1]);
+			if (output is Error) print(output);
+			script = scriptOut;
+
+			HF.LogColor($"test updated to testcase file", colors[1]);
+		}
+		else {
+
+			(Script scriptOut, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+
+			if (output is Error) print(output);
+			script = scriptOut;
+
+			HF.LogColor($"test updated to {HF.Repr(testCases[useTestCase])}", colors[1]);
+		}
+
 	}
 	void TestOnce() {
-		Memory before = memory.component.Copy();
+		if (iters == 1) return;
+
+		Memory copy = memory.component.Copy();
+		Data run = interpreter.Run(copy, script);
+		print(run);
 	}
 	void ToTest() {
-		interpreter.Run(memory.component, script);
+		Data run = interpreter.Run(memory.component, script);
+		if (iters == 1)
+			print(run);
 		int i = 0;
 	}
 	/*

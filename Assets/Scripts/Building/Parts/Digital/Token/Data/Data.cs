@@ -28,6 +28,7 @@ public class Data : Token {
 
 	// statics
 	public static Data Success = new Bool(true);
+	public static Data Fail = new Bool(false);
 
 	#region methods
 

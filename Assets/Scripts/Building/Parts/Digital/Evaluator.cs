@@ -113,10 +113,18 @@ public class Evaluator : MonoBehaviour {
 		public Data data;
 		public Flags flags;
 	}
+	public Output NewOutput(Data data)
+		=> new() { data = data };
+	private Output ErrorOutput(Error error)
+		=> new() { data = error };
+	private Output SuccessOutput()
+		=> new() { data = Data.Success };
 
-	public Output Evaluate(Line line) {
+	public Output Evaluate(Line originalLine) {
 		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
 		if (tryGetMemory is Error) return new() { data = tryGetMemory };
+
+		Line line = originalLine.DeepCopy();
 
 		Data.currentUseMemory = memory;
 		UpdateAllLineDataWithMemory(ref line, memory);
@@ -239,6 +247,10 @@ public class Evaluator : MonoBehaviour {
 			last = new(remaining);
 		}
 
+		Output tryHandle = HandleFinal(ref remaining);
+		if (tryHandle.data is Error) return tryHandle.data;
+		flags = tryHandle.flags;
+
 		if (remaining.Count == 1 && remaining[0] is Reference r)
 			return r.ThisReference;
 
@@ -360,7 +372,7 @@ public class Evaluator : MonoBehaviour {
 		// normal member syntax, expect existing reference on left
 		if (leftRef != null) {// left is ref
 			if (leftIsRefAndExists) // leftref exists
-				return Errors.UnknownVariable(leftRef.Name);
+				return Errors.UnknownVariable(leftRef);
 				
 			if (right is Name rightname) {
 				Data tryget = leftRef.GetData();
@@ -451,7 +463,7 @@ public class Evaluator : MonoBehaviour {
 				if (isArguments) {
 					// make sure left is a callable type
 					if (!(left == null || leftRef.Exists))
-						return Errors.UnknownVariable(leftRef.Name);
+						return Errors.UnknownVariable(leftRef);
 					if (leftRef.ThisReference is not Primitive.Function func)
 						return Errors.MemberIsNotMethod(leftRef.Name, leftRef.ThisReference.Type.Name);
 
@@ -629,9 +641,9 @@ public class Evaluator : MonoBehaviour {
 			return Errors.Expected("expression", "right of " + op.StringValue);
 
 		if (!leftIsRefAndExists)
-			return Errors.UnknownVariable(leftRef.Name);
+			return Errors.UnknownVariable(leftRef);
 		if (!rightIsRefAndExists)
-			return Errors.UnknownVariable(rightRef.Name);
+			return Errors.UnknownVariable(rightRef);
 
 		leftData = leftRef.ThisReference;
 		rightData = rightRef.ThisReference;
@@ -780,7 +792,7 @@ public class Evaluator : MonoBehaviour {
 		if (rightRef == null)
 			return Errors.Expected("expression", "right of " + op.StringValue);
 		if (!rightIsRefAndExists)
-			return Errors.UnknownVariable(rightRef.Name);
+			return Errors.UnknownVariable(rightRef);
 		Data rightData = rightRef.ThisReference;
 
 		// check left for ref (doesnt have to exist)
@@ -793,7 +805,7 @@ public class Evaluator : MonoBehaviour {
 			newValue = rightData;
 		else {
 			if (!leftIsRefAndExists) // += and others have to have existing left type
-				return Errors.UnknownVariable(leftRef.Name);
+				return Errors.UnknownVariable(leftRef);
 
 			string opToPerform = op.Value switch {
 				Operator.Ops.PlusEquals			=> "+",
@@ -818,6 +830,240 @@ public class Evaluator : MonoBehaviour {
 
 		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { newValue });
 		return Data.Success;
+	}
+
+	private Output HandleFinal(ref List<Token> remaining) {
+
+		// check for keywords
+		if (remaining[0] is Keyword kw) {
+			Output tryHandleKeywords = HandleKeywords(ref remaining, kw);
+			if (tryHandleKeywords.data is Error) return tryHandleKeywords;
+
+			return tryHandleKeywords;
+		}
+
+		// check for function/class declaration
+
+		return SuccessOutput();
+	}
+
+	private Output HandleKeywords	(ref List<Token> tokens, Keyword kw) {
+		return kw.Value switch {
+			Keyword.Kws.If			=> HandleIf			(ref tokens),
+			Keyword.Kws.Else		=> HandleElse		(ref tokens),
+			Keyword.Kws.For			=> HandleFor		(ref tokens),
+			Keyword.Kws.While		=> HandleWhile		(ref tokens),
+			Keyword.Kws.Break		=> HandleBreak		(ref tokens),
+			Keyword.Kws.Continue	=> HandleContinue	(ref tokens),
+			Keyword.Kws.Pass		=> HandlePass		(ref tokens),
+			Keyword.Kws.Return		=> HandleReturn		(ref tokens),
+			Keyword.Kws.Try			=> HandleTry		(ref tokens),
+			Keyword.Kws.Except		=> HandleExcept		(ref tokens),
+			Keyword.Kws.Finally		=> HandleFinally	(ref tokens),
+			Keyword.Kws.Raise		=> HandleRaise		(ref tokens),
+			_ => NewOutput(Data.Success)
+		};
+	}
+	private Output HandleIf			(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 3 ||
+			!(tokens[1] is Reference R && // check for R : 
+			tokens[2] is Operator o && o.Value == Operator.Ops.Colon))
+			return ErrorOutput(Errors.BadSyntaxFor("if statement"));
+
+		if (!R.Exists)
+			return ErrorOutput(Errors.UnknownVariable(R));
+
+		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
+		if (dataAsBool is Error) NewOutput(dataAsBool);
+
+		if ((dataAsBool as Primitive.Bool).Value)
+			return new() {
+				data = Data.Success,
+				flags = 
+					Flags.If |
+					Flags.Success
+			};
+		else
+			return new() {
+				data = Data.Fail,
+				flags = 
+					Flags.If |
+					Flags.Fail
+			};
+	}
+	private Output HandleElse		(ref List<Token> tokens) {
+		// check if this is else if
+		if (tokens.Count > 1 &&
+			tokens[1] is Keyword kw && kw.Value == Keyword.Kws.If)
+			return HandleElseIf(ref tokens);
+
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return ErrorOutput(Errors.BadSyntaxFor("else statement"));
+
+		return new() {
+			data = Data.Success,
+			flags = Flags.Else
+		};
+	}
+	private Output HandleElseIf		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 4 ||
+			!(tokens[2] is Reference R && // check for R :
+			tokens[3] is Operator o && o.Value == Operator.Ops.Colon))
+			return ErrorOutput(Errors.BadSyntaxFor("else if statement"));
+
+		if (!R.Exists)
+			return ErrorOutput(Errors.UnknownVariable(R));
+
+		Data dataAsBool = (tokens[2] as Reference).ThisReference.Cast(Primitive.Bool.InternalType);
+		if (dataAsBool is Error) NewOutput(dataAsBool);
+
+		if ((dataAsBool as Primitive.Bool).Value)
+			return new() {
+				data = Data.Success,
+				flags =
+					Flags.Else |
+					Flags.If |
+					Flags.Success
+			};
+		else
+			return new() {
+				data = Data.Fail,
+				flags =
+					Flags.Else |
+					Flags.If |
+					Flags.Fail
+			};
+	}
+	private Output HandleFor		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 3 ||
+			!(tokens[1] is Reference R &&
+			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
+			return ErrorOutput(Errors.BadSyntaxFor("for loop"));
+
+		if (!R.Exists)
+			return ErrorOutput(Errors.UnknownVariable(R));
+
+		Data dataAsList = R.ThisReference.Cast(Primitive.List.InternalType);
+		if (dataAsList is Error) return NewOutput(dataAsList);
+
+		return new() {
+			data = dataAsList,
+			flags = Flags.For
+		};
+	}
+	private Output HandleWhile		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 3 ||
+			!(tokens[1] is Reference R &&
+			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
+			return ErrorOutput(Errors.BadSyntaxFor("while loop"));
+
+		if (!R.Exists)
+			return ErrorOutput(Errors.UnknownVariable(R));
+
+		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
+		if (dataAsBool is Error) return NewOutput(dataAsBool);
+
+		return new() {
+			data = dataAsBool,
+			flags = Flags.While
+		};
+	}
+	private Output HandleBreak		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 1)
+			return ErrorOutput(Errors.BadSyntaxFor("break statement"));
+
+		return new() {
+			data = Data.Fail,
+			flags = Flags.Break
+		};
+	}
+	private Output HandleContinue	(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 1)
+			return ErrorOutput(Errors.BadSyntaxFor("continue statement"));
+
+		return new() {
+			data = Data.Success,
+			flags = Flags.Continue
+		};
+	}
+	private Output HandlePass		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 1)
+			return ErrorOutput(Errors.BadSyntaxFor("pass statement"));
+
+		return SuccessOutput();
+	}
+	private Output HandleReturn		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			tokens[1] is not Reference R)
+			return ErrorOutput(Errors.BadSyntaxFor("return statement"));
+
+		if (!R.Exists)
+			return ErrorOutput(Errors.UnknownVariable(R));
+
+		return new() {
+			data = R.ThisReference,
+			flags = Flags.Return
+		};
+	}
+	private Output HandleTry		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return ErrorOutput(Errors.BadSyntaxFor("try statement"));
+
+		return new() {
+			data = Data.Success,
+			flags = Flags.Try
+		};
+	}
+	private Output HandleExcept		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return ErrorOutput(Errors.BadSyntaxFor("except statement"));
+
+		return new() {
+			data = Data.Success,
+			flags = Flags.Except
+		};
+	}
+	private Output HandleFinally	(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return ErrorOutput(Errors.BadSyntaxFor("finally statement"));
+
+		return new() {
+			data = Data.Success,
+			flags = Flags.Finally
+		};
+	}
+	private Output HandleRaise		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			tokens[1] is not Reference R)
+			return ErrorOutput(Errors.BadSyntaxFor("finally statement"));
+
+		if (!R.Exists)
+			return ErrorOutput(Errors.UnknownVariable(R));
+
+		Data castToString = R.ThisReference.Cast(Primitive.String.InternalType);
+		if (castToString is Error) return NewOutput(castToString);
+
+		return new() {
+			data = castToString,
+			flags = Flags.Finally
+		};
 	}
 
 	private Data EvaluateList(Line line, Memory memory, List<Data> baseList = null) {

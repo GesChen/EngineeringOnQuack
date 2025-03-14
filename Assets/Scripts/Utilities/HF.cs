@@ -157,14 +157,13 @@ public static class HF {
 		return true;
 	}
 
-	public static string GetStringRepresentation(string input) {
+	public static string Repr(string input) {
 		return input
 			.Replace("\t", @"\t")
 			.Replace("\n", @"\n")
 			.Replace("\r", @"\r")
 			.Replace("\v", @"\v")
 			.Replace("\f", @"\f")
-			.Replace("\0", @"\0")
-			.Replace(" ", @"\u0020");
+			.Replace("\0", @"\0");
 	}
 }
