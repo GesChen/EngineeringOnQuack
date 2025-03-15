@@ -292,6 +292,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testFile: 1
+  filename: testing
   testCases:
   - a=b=3
   - ('test'.count('t')).tostring() == '2' && true
@@ -305,8 +307,6 @@ MonoBehaviour:
   - {r: 1, g: 0.9961413, b: 0, a: 1}
   - {r: 0.09516716, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.102307126, b: 0, a: 1}
-  debug: 0
-  testTime: 1
   iters: 1
   memory: {fileID: 1183928399}
   interpreter: {fileID: 1183928393}

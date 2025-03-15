@@ -371,8 +371,8 @@ public class Evaluator : MonoBehaviour {
 
 		// normal member syntax, expect existing reference on left
 		if (leftRef != null) {// left is ref
-			if (leftIsRefAndExists) // leftref exists
-				return Errors.UnknownVariable(leftRef);
+			if (!leftIsRefAndExists) // leftref doesnt exist
+				return Errors.UnknownName(leftRef);
 				
 			if (right is Name rightname) {
 				Data tryget = leftRef.GetData();
@@ -425,7 +425,7 @@ public class Evaluator : MonoBehaviour {
 		Operator highestTokenAsOp = highestToken as Operator; // it should be operator plz....
 
 		Operator.Ops pairing = highestTokenAsOp.Value switch {
-			Operator.Ops.OpenParentheses	=>	Operator.Ops.CloseParentheses,
+			Operator.Ops.OpenParentheses	=> Operator.Ops.CloseParentheses,
 			Operator.Ops.OpenBracket		=> Operator.Ops.CloseBracket,
 			Operator.Ops.OpenBrace			=> Operator.Ops.CloseBrace,
 			_ => Operator.Ops.None
@@ -448,22 +448,22 @@ public class Evaluator : MonoBehaviour {
 		int pairIndex = i;
 
 		if (pairIndex == remaining.Count) return Errors.MismatchedSomething(
-			highestTokenAsOp.StringValue switch {
-				"(" => "parentheses",
-				"[" => "brackets",
-				"{" => "braces",
+			highestTokenAsOp.Value switch {
+				Operator.Ops.OpenParentheses => "parentheses",
+				Operator.Ops.OpenBracket => "brackets",
+				Operator.Ops.OpenBrace => "braces",
 				_ => "unknown"
 			});
 
 		List<Token> regionTokens = remaining.GetRange(highestIndex + 1, pairIndex - highestIndex - 1);
 
-		switch (highestTokenAsOp.StringValue) {
-			case "(":
-				bool isArguments = leftIsRefAndExists;
+		switch (highestTokenAsOp.Value) {
+			case Operator.Ops.OpenParentheses:
+				bool isArguments = leftRef != null; // doesnt matter if it doesnt exist, will be errored
 				if (isArguments) {
 					// make sure left is a callable type
-					if (!(left == null || leftRef.Exists))
-						return Errors.UnknownVariable(leftRef);
+					if (!leftRef.Exists)
+						return Errors.UnknownName(leftRef);
 					if (leftRef.ThisReference is not Primitive.Function func)
 						return Errors.MemberIsNotMethod(leftRef.Name, leftRef.ThisReference.Type.Name);
 
@@ -487,7 +487,7 @@ public class Evaluator : MonoBehaviour {
 				}
 				break;
 
-			case "[":
+			case Operator.Ops.OpenBracket:
 				bool indexing = leftIsRefAndExists;
 				if (indexing) {
 					Primitive.List leftAsList		= leftRef.ThisReference as Primitive.List;
@@ -570,7 +570,7 @@ public class Evaluator : MonoBehaviour {
 				}
 				break;
 
-			case "{":
+			case Operator.Ops.OpenBrace:
 				Data evalDict = EvaluateDict(line.CopyWithNewTokens(regionTokens));
 				if (evalDict is Error) return evalDict;
 
@@ -641,9 +641,9 @@ public class Evaluator : MonoBehaviour {
 			return Errors.Expected("expression", "right of " + op.StringValue);
 
 		if (!leftIsRefAndExists)
-			return Errors.UnknownVariable(leftRef);
+			return Errors.UnknownName(leftRef);
 		if (!rightIsRefAndExists)
-			return Errors.UnknownVariable(rightRef);
+			return Errors.UnknownName(rightRef);
 
 		leftData = leftRef.ThisReference;
 		rightData = rightRef.ThisReference;
@@ -792,7 +792,7 @@ public class Evaluator : MonoBehaviour {
 		if (rightRef == null)
 			return Errors.Expected("expression", "right of " + op.StringValue);
 		if (!rightIsRefAndExists)
-			return Errors.UnknownVariable(rightRef);
+			return Errors.UnknownName(rightRef);
 		Data rightData = rightRef.ThisReference;
 
 		// check left for ref (doesnt have to exist)
@@ -805,7 +805,7 @@ public class Evaluator : MonoBehaviour {
 			newValue = rightData;
 		else {
 			if (!leftIsRefAndExists) // += and others have to have existing left type
-				return Errors.UnknownVariable(leftRef);
+				return Errors.UnknownName(leftRef);
 
 			string opToPerform = op.Value switch {
 				Operator.Ops.PlusEquals			=> "+",
@@ -872,7 +872,7 @@ public class Evaluator : MonoBehaviour {
 			return ErrorOutput(Errors.BadSyntaxFor("if statement"));
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownVariable(R));
+			return ErrorOutput(Errors.UnknownName(R));
 
 		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
 		if (dataAsBool is Error) NewOutput(dataAsBool);
@@ -916,7 +916,7 @@ public class Evaluator : MonoBehaviour {
 			return ErrorOutput(Errors.BadSyntaxFor("else if statement"));
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownVariable(R));
+			return ErrorOutput(Errors.UnknownName(R));
 
 		Data dataAsBool = (tokens[2] as Reference).ThisReference.Cast(Primitive.Bool.InternalType);
 		if (dataAsBool is Error) NewOutput(dataAsBool);
@@ -946,7 +946,7 @@ public class Evaluator : MonoBehaviour {
 			return ErrorOutput(Errors.BadSyntaxFor("for loop"));
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownVariable(R));
+			return ErrorOutput(Errors.UnknownName(R));
 
 		Data dataAsList = R.ThisReference.Cast(Primitive.List.InternalType);
 		if (dataAsList is Error) return NewOutput(dataAsList);
@@ -964,7 +964,7 @@ public class Evaluator : MonoBehaviour {
 			return ErrorOutput(Errors.BadSyntaxFor("while loop"));
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownVariable(R));
+			return ErrorOutput(Errors.UnknownName(R));
 
 		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
 		if (dataAsBool is Error) return NewOutput(dataAsBool);
@@ -1008,7 +1008,7 @@ public class Evaluator : MonoBehaviour {
 			return ErrorOutput(Errors.BadSyntaxFor("return statement"));
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownVariable(R));
+			return ErrorOutput(Errors.UnknownName(R));
 
 		return new() {
 			data = R.ThisReference,
@@ -1055,7 +1055,7 @@ public class Evaluator : MonoBehaviour {
 			return ErrorOutput(Errors.BadSyntaxFor("finally statement"));
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownVariable(R));
+			return ErrorOutput(Errors.UnknownName(R));
 
 		Data castToString = R.ThisReference.Cast(Primitive.String.InternalType);
 		if (castToString is Error) return NewOutput(castToString);
@@ -1067,7 +1067,9 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	private Data EvaluateList(Line line, Memory memory, List<Data> baseList = null) {
+		// expects unsurrounded list, just tokens and commas
 		List<Token> tokens = line.Tokens;
+		if (tokens.Count == 0) return new Primitive.List();
 		
 		// identify list type
 		bool rangeList = false;
@@ -1160,13 +1162,36 @@ public class Evaluator : MonoBehaviour {
 			List<Token> curChunk = new();
 			List<List<Token>> tokenChunks = new();
 			int i = 0;
+			int depth = 0; // have to account for nested lists
 			while (i < tokens.Count) {
 				Token rt = tokens[i];
-				if (rt is Operator op && op.Value == Operator.Ops.Comma) {
-					tokenChunks.Add(curChunk);
-					curChunk = new(); // instead of clearing so the reference isnt shared
+				bool added = false;
+				if (rt is Operator op){
+					switch (op.Value) {
+						case Operator.Ops.Comma: // normal comma breakage into new chunk
+							if (depth == 0) {
+								added = true;
+								tokenChunks.Add(curChunk);
+								curChunk = new(); // instead of clearing so the reference isnt shared
+							}
+							break;
+
+						case Operator.Ops.OpenParentheses:
+						case Operator.Ops.OpenBracket:
+						case Operator.Ops.OpenBrace:
+							depth++;
+							break;
+
+						case Operator.Ops.CloseParentheses:
+						case Operator.Ops.CloseBracket:
+						case Operator.Ops.CloseBrace:
+							depth--;
+							break;
+
+					}
 				}
-				else
+
+				if (!added)
 					curChunk.Add(rt);
 				i++;
 			}

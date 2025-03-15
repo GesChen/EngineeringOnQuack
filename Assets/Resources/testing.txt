@@ -1,6 +1,3 @@
-a = 1 * 2 == 3
+a = "idk lol"
 
-if a:
-	print("hello")
-else:
-	print("goodbye")
+print([1,a.replace('l','w'),3 * 100,["hello", 12, "type shit"].tostring().upper()])

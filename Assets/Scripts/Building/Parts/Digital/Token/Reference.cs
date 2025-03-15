@@ -53,7 +53,7 @@ public partial class Token {
 
 		public Data GetData() {
 			if (!Exists)
-				return Errors.UnknownVariable(Name);
+				return Errors.UnknownName(Name);
 
 			if (IsListItem) {
 				if (ParentReference is not Primitive.List parentList)

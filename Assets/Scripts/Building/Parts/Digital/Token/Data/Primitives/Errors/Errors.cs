@@ -5,10 +5,10 @@ public static class Errors {
 		=> new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got)
 		=> new($"Function \"{funcName}\" expects {expected} in argument {index}, got {got} instead");
-	public static Error UnknownVariable(Token.Reference reference)
-		=> new($"Unknown variable \"{reference.Name}\"");
-	public static Error UnknownVariable(string name)
-		=> new($"Unknown variable \"{name}\"");
+	public static Error UnknownName(Token.Reference reference)
+		=> new($"Unknown name \"{reference.Name}\"");
+	public static Error UnknownName(string name)
+		=> new($"Unknown name \"{name}\"");
 	public static Error InvalidCast(string from, string to)
 		=> new($"Cannot cast a {from} to a {to}");
 	public static Error CannotParseValueAs(string value, string @as)

@@ -125,9 +125,12 @@ public abstract partial class Primitive : Data {
 				// try to cast the data at i to a string
 				Data casted = d.Cast(String.InternalType) as String;
 				if (casted is Error) return casted;
+				string castedString = (casted as String).Value;
+				if (d is String)
+					castedString = $"\"{castedString}\"";
 
 				// add the new string
-				builder.Append((casted as String).Value);
+				builder.Append(castedString);
 
 				if (i != L.Count - 1) builder.Append(", ");
 

@@ -98,7 +98,7 @@ public abstract partial class Primitive : Data {
 		public static Data tostring(Data thisRef, List<Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
 
-			return thisRef;
+			return new String((thisRef as String).Value); // make sure its copied
 		}
 
 		public static Data upper(Data thisRef, List<Data> args) {

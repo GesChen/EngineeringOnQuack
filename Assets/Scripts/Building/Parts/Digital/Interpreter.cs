@@ -1,9 +1,6 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using UnityEditor.Experimental;
-using UnityEngine.Animations;
-using UnityEngine.Experimental.GlobalIllumination;
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;
@@ -63,6 +60,11 @@ public class Interpreter : Part {
 		public bool SkipNext;
 		public bool ExpectingElse;
 		public bool IfSuccceded; // if succeeded
+
+		public bool ForLoopNext;
+		public List<Data> LoopOver;
+
+		public bool WhileLoopNext;
 	}
 
 	bool CheckFlag(Flags flags, Flags check)

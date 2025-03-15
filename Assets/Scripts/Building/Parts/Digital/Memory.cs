@@ -74,7 +74,7 @@ public class Memory {
 	/// </summary>
 	public Data Get(string name) {
 		if (Data.ContainsKey(name)) return Data[name];
-		return Errors.UnknownVariable(name);
+		return Errors.UnknownName(name);
 	}
 
 	public void Set(string name, Data data) {

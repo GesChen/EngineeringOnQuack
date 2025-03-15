@@ -66,7 +66,7 @@ public class Data : Token {
 		char FTNC = FTN[0];	// FromTypeNameChar(0)
 		char TTNC = TTN[0]; // ToTypeNameChar(0)
 
-		if (FTNC == TTNC) // no casting needed!
+		if (FTNC == TTNC ) // no casting needed!
 			return fromValue;
 
 		// have to be primitives, no cast (from or to function) or (from dict)
