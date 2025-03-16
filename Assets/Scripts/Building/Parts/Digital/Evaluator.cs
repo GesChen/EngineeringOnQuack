@@ -120,11 +120,12 @@ public class Evaluator : MonoBehaviour {
 	private Output SuccessOutput()
 		=> new() { data = Data.Success };
 
-	public Output Evaluate(Line originalLine) {
+	public Output Evaluate(Line line, bool makeCopy = true) {
 		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
 		if (tryGetMemory is Error) return new() { data = tryGetMemory };
 
-		Line line = originalLine.DeepCopy();
+		if (makeCopy)
+			line = line.DeepCopy();
 
 		Data.currentUseMemory = memory;
 		UpdateAllLineDataWithMemory(ref line, memory);
@@ -1076,14 +1077,33 @@ public class Evaluator : MonoBehaviour {
 
 		int eCount = 0;
 		int ellipsisIndex = -1;
+		int depth = 0; // dont count ..s in nested
 		for (int i = 0; i < tokens.Count; i++) {
-			if (tokens[i] is Operator op && op.Value == Operator.Ops.Ellipsis) {
-				ellipsisIndex = i;
-				eCount++;
-			}
+			if (tokens[i] is Operator op)
+				switch (op.Value) {
+					case Operator.Ops.Ellipsis: // normal comma breakage into new chunk
+						if (depth == 0) {
+							ellipsisIndex = i;
+							eCount++;
+						}
+						break;
+
+					case Operator.Ops.OpenParentheses:
+					case Operator.Ops.OpenBracket:
+					case Operator.Ops.OpenBrace:
+						depth++;
+						break;
+
+					case Operator.Ops.CloseParentheses:
+					case Operator.Ops.CloseBracket:
+					case Operator.Ops.CloseBrace:
+						depth--;
+						break;
+
+				}
 		}
-		if (eCount > 1) // either 0 or 1 ...s
-			return Errors.InvalidUseOfOperator("...");
+		if (eCount > 1) // either 0 or 1 ..s
+			return Errors.InvalidUseOfOperator("..");
 		else if (eCount > 0) // this is range
 			rangeList = true;
 
@@ -1162,7 +1182,7 @@ public class Evaluator : MonoBehaviour {
 			List<Token> curChunk = new();
 			List<List<Token>> tokenChunks = new();
 			int i = 0;
-			int depth = 0; // have to account for nested lists
+			depth = 0; // have to account for nested lists
 			while (i < tokens.Count) {
 				Token rt = tokens[i];
 				bool added = false;

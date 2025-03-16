@@ -62,7 +62,7 @@ public class Interpreter : Part {
 		public bool IfSuccceded; // if succeeded
 
 		public bool ForLoopNext;
-		public List<Data> LoopOver;
+		public Token.Reference LoopOver;
 
 		public bool WhileLoopNext;
 	}
@@ -96,7 +96,9 @@ public class Interpreter : Part {
 			#endregion
 
 			if (line.LineType == Line.LineTypeEnum.Line) {
-				Evaluator.Output output = Evaluator.Evaluate(line);
+
+				Line lineCopy = line.DeepCopy();
+				Evaluator.Output output = Evaluator.Evaluate(lineCopy, false);
 				if (output.data is Error) return output.data;
 				Flags nFlags = output.flags;
 
@@ -148,13 +150,32 @@ public class Interpreter : Part {
 						state.IfSuccceded = false;
 					}
 				}
-				
+				else if (CheckFlag(nFlags, Flags.For)) {
+					state.ForLoopNext = true;
+					state.ExpectingSection = true;
+					state.LoopOver = lineCopy.Tokens[1] as Token.Reference;
+				}
 			}
 			else { // run section contents
 				state.ExpectingSection = false;
 
-				Data trySection = RunSection(memory, line.Section);
-				if (trySection is Error) return trySection;
+				if (!state.ForLoopNext) { // run once
+					Data trySection = RunSection(memory, line.Section);
+					if (trySection is Error) return trySection;
+				}
+				else { // run as for loop
+					foreach(Data item in // iterate over loopover
+						(state.LoopOver.ThisReference as Primitive.List).Value) {
+
+						// set the iterator
+						Data trySet = memory.Set(state.LoopOver, item);
+						if (trySet is Error) return trySet;
+
+						// run this section
+						Data trySection = RunSection(memory, line.Section);
+						if (trySection is Error) return trySection;
+					}
+				}
 			}
 
 				//// section/line check before DRNL

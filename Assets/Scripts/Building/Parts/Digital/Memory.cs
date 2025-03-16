@@ -85,6 +85,7 @@ public class Memory {
 	}
 
 	public Data Set(Token.Reference reference, Data data) {
+		data.Memory = this;
 		return reference.SetData(data);
 	}
 
