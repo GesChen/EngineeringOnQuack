@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -130,21 +131,21 @@ public static class HF {
 	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
 		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);
 		originalList.InsertRange(startIndexInc, replacementList);
+
+		FasterReplaceRange(new List<int>(), startIndexInc, endIndexInc, new int[2]{ 1, 2 });
 	}
 
-	public static bool VariableNameIsValid(string name) {
-		/* naming convention:
-		 - starts either with letter or _
-		 - following characters can be letter, number or _
-		 - variable names are case sensitive
-		*/
-		if (string.IsNullOrWhiteSpace(name)) return false;
-		if (!(char.IsLetter(name[0]) || name[0] == '_')) return false;
+	public static List<T> FasterReplaceRange<T>(List<T> values, int startIndexInc, int endIndexInc, T[] replacement) {
+		if (endIndexInc < startIndexInc) throw new("End index cannot be before start");
+		int count = endIndexInc - startIndexInc + 1;
 
-		foreach (char c in name)
-			if (!(char.IsLetter(c) || char.IsDigit(c) || c == '_')) return false;
+		T[] original = values.ToArray();
+		T[] replaced = new T[values.Count - count + replacement.Length];
+		Array.Copy(original, replaced, startIndexInc - 1);
+		Array.Copy(replacement, 0, replaced, startIndexInc, replacement.Length);
+		Array.Copy(original, endIndexInc + 1, replaced, startIndexInc + replacement.Length, original.Length - endIndexInc);
 
-		return true;
+		return replaced.ToList();
 	}
 
 	public static bool FasterStartsWith(string target, string prefix) {
