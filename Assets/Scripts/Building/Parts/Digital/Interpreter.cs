@@ -103,9 +103,9 @@ public class Interpreter : Part {
 			if (line.LineType == Line.LineTypeEnum.Line) {
 
 				Line lineCopy = line.DeepCopy();
-				Evaluator.Output output = Evaluator.Evaluate(lineCopy, false);
-				if (output.data is Error) return output.data;
-				Flags nFlags = output.flags;
+				Data output = Evaluator.Evaluate(lineCopy, false);
+				if (output is Error) return output;
+				Flags nFlags = output.Flags;
 
 				#region checks
 				if (!state.ExpectingElse && // not expecting else

@@ -109,30 +109,19 @@ public class Evaluator : MonoBehaviour {
 		public bool				rightIsRefAndExists;
 	}
 
-	public struct Output {
-		public Data data;
-		public Flags flags;
-	}
-	public Output NewOutput(Data data)
-		=> new() { data = data };
-	private Output ErrorOutput(Error error)
-		=> new() { data = error };
-	private Output SuccessOutput()
-		=> new() { data = Data.Success };
-
-	public Output Evaluate(Line line, bool makeCopy = true) {
+	public Data Evaluate(Line line, bool makeCopy = true) {
 		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
-		if (tryGetMemory is Error) return new() { data = tryGetMemory };
+		if (tryGetMemory is Error) return tryGetMemory;
 
 		if (makeCopy)
 			line = line.DeepCopy();
 
 		Data.currentUseMemory = memory;
 		UpdateAllLineDataWithMemory(ref line, memory);
-		Data tryEvaluate = EvaluateInternal(line, memory, out Flags flags);
+		Data tryEvaluate = EvaluateInternal(line, memory);
 		Data.currentUseMemory = null;
 
-		return new() { data = tryEvaluate, flags = flags };
+		return tryEvaluate;
 	}
 
 	private void UpdateAllLineDataWithMemory(ref Line line, Memory memory) {
@@ -142,8 +131,7 @@ public class Evaluator : MonoBehaviour {
 		}
 	}
 
-	private Data EvaluateInternal(Line line, Memory memory, out Flags flags) {
-		flags = Flags.None;
+	private Data EvaluateInternal(Line line, Memory memory) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
 
 		List<Token> remaining = line.Tokens;
@@ -248,14 +236,14 @@ public class Evaluator : MonoBehaviour {
 			last = new(remaining);
 		}
 
-		Output tryHandle = HandleFinal(ref remaining);
-		if (tryHandle.data is Error) return tryHandle.data;
-		flags = tryHandle.flags;
+		Data tryHandle = HandleFinal(ref remaining);
+		if (tryHandle is Error) return tryHandle;
+		Flags flags = tryHandle.Flags;
 
 		if (remaining.Count == 1 && remaining[0] is Reference r)
 			return r.ThisReference;
 
-		return Data.Success;
+		return Data.Success.CopyWithFlags(tryHandle.Flags);
 	}
 
 	private void GetHighestPrecedenceAction(
@@ -481,10 +469,10 @@ public class Evaluator : MonoBehaviour {
 					HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, new() { run });
 				}
 				else {
-					Output evalSubexp = Evaluate(line.CopyWithNewTokens(regionTokens));
-					if (evalSubexp.data is Error) return evalSubexp.data;
+					Data evalSubexp = Evaluate(line.CopyWithNewTokens(regionTokens));
+					if (evalSubexp is Error) return evalSubexp;
 
-					HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalSubexp.data });
+					HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalSubexp });
 				}
 				break;
 
@@ -834,22 +822,22 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 
-	private Output HandleFinal(ref List<Token> remaining) {
+	private Data HandleFinal(ref List<Token> remaining) {
 
 		// check for keywords
 		if (remaining[0] is Keyword kw) {
-			Output tryHandleKeywords = HandleKeywords(ref remaining, kw);
-			if (tryHandleKeywords.data is Error) return tryHandleKeywords;
+			Data tryHandleKeywords = HandleKeywords(ref remaining, kw);
+			if (tryHandleKeywords is Error) return tryHandleKeywords;
 
 			return tryHandleKeywords;
 		}
 
 		// check for function/class declaration
 
-		return SuccessOutput();
+		return Data.Success;
 	}
 
-	private Output HandleKeywords	(ref List<Token> tokens, Keyword kw) {
+	private Data HandleKeywords	(ref List<Token> tokens, Keyword kw) {
 		return kw.Value switch {
 			Keyword.Kws.If			=> HandleIf			(ref tokens),
 			Keyword.Kws.Else		=> HandleElse		(ref tokens),
@@ -863,38 +851,34 @@ public class Evaluator : MonoBehaviour {
 			Keyword.Kws.Except		=> HandleExcept		(ref tokens),
 			Keyword.Kws.Finally		=> HandleFinally	(ref tokens),
 			Keyword.Kws.Raise		=> HandleRaise		(ref tokens),
-			_ => NewOutput(Data.Success)
+			_ => Data.Success
 		};
 	}
-	private Output HandleIf			(ref List<Token> tokens) {
+	private Data HandleIf			(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 3 ||
 			!(tokens[1] is Reference R && // check for R : 
 			tokens[2] is Operator o && o.Value == Operator.Ops.Colon))
-			return ErrorOutput(Errors.BadSyntaxFor("if statement"));
+			return Errors.BadSyntaxFor("if statement");
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownName(R));
+			return Errors.UnknownName(R);
 
 		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
-		if (dataAsBool is Error) NewOutput(dataAsBool);
+		if (dataAsBool is Error) return dataAsBool;
 
 		if ((dataAsBool as Primitive.Bool).Value)
-			return new() {
-				data = Data.Success,
-				flags = 
-					Flags.If |
-					Flags.Success
-			};
+			return Data.Success.CopyWithFlags(
+									Flags.If |
+									Flags.Success
+									);
 		else
-			return new() {
-				data = Data.Fail,
-				flags = 
-					Flags.If |
-					Flags.Fail
-			};
+			return Data.Fail.CopyWithFlags(
+								Flags.If |
+								Flags.Fail
+								);
 	}
-	private Output HandleElse		(ref List<Token> tokens) {
+	private Data HandleElse		(ref List<Token> tokens) {
 		// check if this is else if
 		if (tokens.Count > 1 &&
 			tokens[1] is Keyword kw && kw.Value == Keyword.Kws.If)
@@ -903,169 +887,135 @@ public class Evaluator : MonoBehaviour {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
-			return ErrorOutput(Errors.BadSyntaxFor("else statement"));
+			return Errors.BadSyntaxFor("else statement");
 
-		return new() {
-			data = Data.Success,
-			flags = Flags.Else
-		};
+		return Data.Success.CopyWithFlags(Flags.Else);
 	}
-	private Output HandleElseIf		(ref List<Token> tokens) {
+	private Data HandleElseIf		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 4 ||
 			!(tokens[2] is Reference R && // check for R :
 			tokens[3] is Operator o && o.Value == Operator.Ops.Colon))
-			return ErrorOutput(Errors.BadSyntaxFor("else if statement"));
+			return Errors.BadSyntaxFor("else if statement");
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownName(R));
+			return Errors.UnknownName(R);
 
 		Data dataAsBool = (tokens[2] as Reference).ThisReference.Cast(Primitive.Bool.InternalType);
-		if (dataAsBool is Error) NewOutput(dataAsBool);
+		if (dataAsBool is Error) return dataAsBool;
 
 		if ((dataAsBool as Primitive.Bool).Value)
-			return new() {
-				data = Data.Success,
-				flags =
-					Flags.Else |
-					Flags.If |
-					Flags.Success
-			};
+			return Data.Success.CopyWithFlags(
+									Flags.Else |
+									Flags.If |
+									Flags.Success
+									);
 		else
-			return new() {
-				data = Data.Fail,
-				flags =
-					Flags.Else |
-					Flags.If |
-					Flags.Fail
-			};
+			return Data.Fail.CopyWithFlags(
+								Flags.Else |
+								Flags.If |
+								Flags.Fail
+								);
 	}
-	private Output HandleFor		(ref List<Token> tokens) {
+	private Data HandleFor		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 3 ||
 			!(tokens[1] is Reference R &&
 			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
-			return ErrorOutput(Errors.BadSyntaxFor("for loop"));
+			return Errors.BadSyntaxFor("for loop");
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownName(R));
+			return Errors.UnknownName(R);
 
 		Data dataAsList = R.ThisReference.Cast(Primitive.List.InternalType);
-		if (dataAsList is Error) return NewOutput(dataAsList);
+		if (dataAsList is Error) return dataAsList;
 
-		return new() {
-			data = dataAsList,
-			flags = Flags.For
-		};
+		return dataAsList.CopyWithFlags(Flags.For);
 	}
-	private Output HandleWhile		(ref List<Token> tokens) {
+	private Data HandleWhile		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 3 ||
 			!(tokens[1] is Reference R &&
 			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
-			return ErrorOutput(Errors.BadSyntaxFor("while loop"));
+			return Errors.BadSyntaxFor("while loop");
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownName(R));
+			return Errors.UnknownName(R);
 
 		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
-		if (dataAsBool is Error) return NewOutput(dataAsBool);
+		if (dataAsBool is Error) return dataAsBool;
 
-		return new() {
-			data = dataAsBool,
-			flags = Flags.While
-		};
+		return dataAsBool.CopyWithFlags(Flags.While);
 	}
-	private Output HandleBreak		(ref List<Token> tokens) {
+	private Data HandleBreak		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
-			return ErrorOutput(Errors.BadSyntaxFor("break statement"));
+			return Errors.BadSyntaxFor("break statement");
 
-		return new() {
-			data = Data.Fail,
-			flags = Flags.Break
-		};
+		return Data.Fail.CopyWithFlags(Flags.Break);
 	}
-	private Output HandleContinue	(ref List<Token> tokens) {
+	private Data HandleContinue	(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
-			return ErrorOutput(Errors.BadSyntaxFor("continue statement"));
+			return Errors.BadSyntaxFor("continue statement");
 
-		return new() {
-			data = Data.Success,
-			flags = Flags.Continue
-		};
+		return Data.Success.CopyWithFlags(Flags.Continue);
 	}
-	private Output HandlePass		(ref List<Token> tokens) {
+	private Data HandlePass		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
-			return ErrorOutput(Errors.BadSyntaxFor("pass statement"));
+			return Errors.BadSyntaxFor("pass statement");
 
-		return SuccessOutput();
+		return Data.Success;
 	}
-	private Output HandleReturn		(ref List<Token> tokens) {
+	private Data HandleReturn		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			tokens[1] is not Reference R)
-			return ErrorOutput(Errors.BadSyntaxFor("return statement"));
+			return Errors.BadSyntaxFor("return statement");
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownName(R));
+			return Errors.UnknownName(R);
 
-		return new() {
-			data = R.ThisReference,
-			flags = Flags.Return
-		};
+		return R.ThisReference.CopyWithFlags(Flags.Return);
 	}
-	private Output HandleTry		(ref List<Token> tokens) {
+	private Data HandleTry		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
-			return ErrorOutput(Errors.BadSyntaxFor("try statement"));
+			return Errors.BadSyntaxFor("try statement");
 
-		return new() {
-			data = Data.Success,
-			flags = Flags.Try
-		};
+		return Data.Success.CopyWithFlags(Flags.Try);
 	}
-	private Output HandleExcept		(ref List<Token> tokens) {
+	private Data HandleExcept		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
-			return ErrorOutput(Errors.BadSyntaxFor("except statement"));
+			return Errors.BadSyntaxFor("except statement");
 
-		return new() {
-			data = Data.Success,
-			flags = Flags.Except
-		};
+		return Data.Success.CopyWithFlags(Flags.Except);
 	}
-	private Output HandleFinally	(ref List<Token> tokens) {
+	private Data HandleFinally	(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
-			return ErrorOutput(Errors.BadSyntaxFor("finally statement"));
+			return Errors.BadSyntaxFor("finally statement");
 
-		return new() {
-			data = Data.Success,
-			flags = Flags.Finally
-		};
+		return Data.Success.CopyWithFlags(Flags.Finally);
 	}
-	private Output HandleRaise		(ref List<Token> tokens) {
+	private Data HandleRaise		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			tokens[1] is not Reference R)
-			return ErrorOutput(Errors.BadSyntaxFor("finally statement"));
+			return Errors.BadSyntaxFor("finally statement");
 
 		if (!R.Exists)
-			return ErrorOutput(Errors.UnknownName(R));
+			return Errors.UnknownName(R);
 
 		Data castToString = R.ThisReference.Cast(Primitive.String.InternalType);
-		if (castToString is Error) return NewOutput(castToString);
+		if (castToString is Error) return castToString;
 
-		return new() {
-			data = castToString,
-			flags = Flags.Finally
-		};
+		return castToString.CopyWithFlags(Flags.Finally);
 	}
 
 	private Data EvaluateList(Line line, Memory memory, List<Data> baseList = null) {
@@ -1149,9 +1099,9 @@ public class Evaluator : MonoBehaviour {
 			}
 
 			if (rightOfEllipsis.Length != 0) {
-				Output rightOfEllipsisEvalOutput = Evaluate(
+				Data rightOfEllipsisEvalOutput = Evaluate(
 					line.CopyWithNewTokens(rightOfEllipsis.ToList()));
-				Data rightOfEllipsisEval = rightOfEllipsisEvalOutput.data;
+				Data rightOfEllipsisEval = rightOfEllipsisEvalOutput;
 
 				if (rightOfEllipsisEval is Error) return rightOfEllipsisEval;
 
@@ -1222,10 +1172,10 @@ public class Evaluator : MonoBehaviour {
 			// eval arg token chunks into data
 			List<Data> items = new(); // can be optimized into array if desperate
 			foreach (List<Token> chunk in tokenChunks) {
-				Output tryEval = Evaluate(line.CopyWithNewTokens(chunk));
-				if (tryEval.data is Error) return tryEval.data;
+				Data tryEval = Evaluate(line.CopyWithNewTokens(chunk));
+				if (tryEval is Error) return tryEval;
 
-				items.Add(tryEval.data);
+				items.Add(tryEval);
 			}
 
 			return new Primitive.List(items);
@@ -1285,13 +1235,13 @@ public class Evaluator : MonoBehaviour {
 
 		Dictionary<Data, Data> newDict = new();
 		foreach (Token[][] kvpTokenGroup in kvpGroups) {
-			Output evalKey = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[0].ToList()));
-			if (evalKey.data is Error) return evalKey.data;
+			Data evalKey = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[0].ToList()));
+			if (evalKey is Error) return evalKey;
 
-			Output evalValue = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[1].ToList()));
-			if (evalValue.data is Error) return evalValue.data;
+			Data evalValue = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[1].ToList()));
+			if (evalValue is Error) return evalValue;
 
-			newDict[evalKey.data] = evalValue.data;
+			newDict[evalKey] = evalValue;
 		}
 
 		return new Primitive.Dict(newDict);

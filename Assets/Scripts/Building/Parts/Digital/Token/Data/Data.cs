@@ -10,20 +10,23 @@ public class Data : Token {
 	public Type Type;
 	public Dictionary<string, Data> InstanceVariables;
 	public Memory Memory;
+	public Flags Flags;
 
 	public static Memory currentUseMemory;
 
 	// constructors
-	public Data(string name, Type type, Memory memory) {
+	public Data(string name, Type type, Memory memory, Flags flags) {
 		Name = name;
 		Type = type;
 		InstanceVariables = new();
 		Memory = memory;
+		Flags = flags;
 	}
 	public Data(Type type) {
 		Type = type;
 		InstanceVariables = new();
 		Memory = currentUseMemory;
+		Flags = Flags.None;
 	}
 
 	// statics
@@ -31,6 +34,22 @@ public class Data : Token {
 	public static Data Fail = new Bool(false);
 
 	#region methods
+	public Data Copy() {
+		return new(
+			Name,
+			Type,
+			Memory,
+			Flags);
+	}
+	public Data CopyWithFlags(Flags flags) {
+		Data copy = Copy();
+		copy.Flags = flags;
+		return copy;
+	}
+	public Data ClearFlags() {
+		Flags = Flags.None;
+		return this;
+	}
 
 	public virtual Data GetMember(string name) {
 		// instance variables with same name as methods override same name in memory

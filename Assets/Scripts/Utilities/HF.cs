@@ -131,11 +131,9 @@ public static class HF {
 	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
 		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);
 		originalList.InsertRange(startIndexInc, replacementList);
-
-		FasterReplaceRange(new List<int>(), startIndexInc, endIndexInc, new int[2]{ 1, 2 });
 	}
 
-	public static List<T> FasterReplaceRange<T>(List<T> values, int startIndexInc, int endIndexInc, T[] replacement) {
+	/*public static List<T> FasterReplaceRange<T>(List<T> values, int startIndexInc, int endIndexInc, T[] replacement) {
 		if (endIndexInc < startIndexInc) throw new("End index cannot be before start");
 		int count = endIndexInc - startIndexInc + 1;
 
@@ -146,7 +144,7 @@ public static class HF {
 		Array.Copy(original, endIndexInc + 1, replaced, startIndexInc + replacement.Length, original.Length - endIndexInc);
 
 		return replaced.ToList();
-	}
+	}*/
 
 	public static bool FasterStartsWith(string target, string prefix) {
 		if (target == null || prefix == null) return false;

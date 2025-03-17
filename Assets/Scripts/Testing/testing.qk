@@ -1,5 +1,5 @@
 for a = [..10]:
 	for i = [..a]:
-		print(i*a)
+		x = (i*a)
 
-print(a)
+print(x)
