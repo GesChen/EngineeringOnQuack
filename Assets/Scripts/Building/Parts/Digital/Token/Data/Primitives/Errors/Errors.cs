@@ -27,6 +27,8 @@ public static class Errors {
 		=> new($"Index out of range: {attempt}");
 	public static Error CannotSetMemberOfPrimitive(string membername)
 		=> new($"Cannot set a member of a primitive value: {membername}");
+	public static Error CannotSetLiteral()
+		=> new($"Cannot set a literal to another value");
 	public static Error InvalidUseOfOperator(string op)
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)

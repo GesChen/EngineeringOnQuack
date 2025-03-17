@@ -36,6 +36,17 @@ public partial class Token {
 			ListIndex = listIndex;
 		}
 
+		public Reference Copy() {
+			return new(
+				Exists,
+				IsInstanceVariable,
+				IsListItem,
+				Name,
+				ThisReference,
+				ParentReference,
+				ListIndex);
+		}
+
 		public static Reference ExistingGlobalReference(string name, Data data)
 			=> new(true, false, false, name, data, null, -1);
 
@@ -87,6 +98,7 @@ public partial class Token {
 				data.Memory.Set(Name, data); // set the name in the memory where the data is from, might help?
 			}
 
+			Exists = true;
 			ThisReference = data; // re reference the new data object
 			return ThisReference;
 		}

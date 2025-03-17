@@ -25,7 +25,11 @@ public class Interpreter : Part {
 	}
 
 	// need memory so run call can have a copy of it
-	public Data RunFunction(Memory memory, Primitive.Function function, Data thisReference, List<Data> args) {
+	public Data RunFunction(
+		Memory memory, 
+		Primitive.Function function, 
+		Data thisReference, 
+		List<Data> args) {
 		// handle internal functions
 		if (function.IsInternalFunction)
 			return function.InternalFunction.Invoke(thisReference, args);
@@ -164,11 +168,13 @@ public class Interpreter : Part {
 					if (trySection is Error) return trySection;
 				}
 				else { // run as for loop
-					foreach(Data item in // iterate over loopover
-						(state.LoopOver.ThisReference as Primitive.List).Value) {
+					List<Data> values = (state.LoopOver.ThisReference as Primitive.List).Value;
+					Token.Reference iterator = state.LoopOver.Copy(); // keep original ref to iterator
 
+					// iterate over loopover
+					foreach (Data item in values) {
 						// set the iterator
-						Data trySet = memory.Set(state.LoopOver, item);
+						Data trySet = memory.Set(iterator, item);
 						if (trySet is Error) return trySet;
 
 						// run this section

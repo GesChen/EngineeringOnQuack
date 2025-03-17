@@ -8,7 +8,7 @@ using System;
 
 public class Tester : MonoBehaviour {
 	public bool testFile;
-	public string filename;
+	public string filepath;
 	[TextArea]
 	public List<string> testCases = new();
 	public int useTestCase;
@@ -53,10 +53,10 @@ public class Tester : MonoBehaviour {
 		sw.Stop();
 
 		double ns = sw.ElapsedTicks * 100;
-		HF.LogColor($"{ns} ns ({ns / 1e6} ms)",									colors[0]);
+		HF.LogColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
 		
 		if (iters > 1)
-			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each",	colors[0]);
+			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
 	}
 
 	void BeforeTesting() {
@@ -69,15 +69,16 @@ public class Tester : MonoBehaviour {
 	void Updatetest() {
 		Tokenizer tokenizer = new();
 		if (testFile) {
-			TextAsset temp = Resources.Load(filename) as TextAsset;
-			string contents = temp.text;
+			if (File.Exists(filepath)) {
+				string contents = File.ReadAllText(filepath);
 
-			(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
+				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
-			if (output is Error) print(output);
-			script = scriptOut;
+				if (output is Error) print(output);
+				script = scriptOut;
 
-			HF.LogColor($"test updated to testcase file", colors[1]);
+				HF.LogColor($"test updated to testcase file", colors[1]);
+			}
 		}
 		else {
 

@@ -58,7 +58,6 @@ public class Memory {
 	}
 
 	public Memory Copy() {
-		
 		return new(
 			new Dictionary<string, Data>(Data),
 			new Dictionary<string, Type>(Types)
@@ -85,6 +84,9 @@ public class Memory {
 	}
 
 	public Data Set(Token.Reference reference, Data data) {
+		if (reference.Name == "")
+			return Errors.CannotSetLiteral();
+		
 		data.Memory = this;
 		return reference.SetData(data);
 	}

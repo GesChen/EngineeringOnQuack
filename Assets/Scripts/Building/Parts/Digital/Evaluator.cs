@@ -826,10 +826,11 @@ public class Evaluator : MonoBehaviour {
 			newValue = performOp;
 		}
 
-		Data trySet = leftRef.SetData(newValue);
+		Data trySet = memory.Set(leftRef, newValue);
 		if (trySet is Error) return trySet;
 
-		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { newValue });
+		// replace with left bc its the actual new reference that got assigned
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { leftRef });
 		return Data.Success;
 	}
 
