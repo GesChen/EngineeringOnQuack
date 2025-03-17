@@ -8,7 +8,9 @@ using System;
 
 public class Tester : MonoBehaviour {
 	public bool testFile;
-	public string filepath;
+	public bool usefp1;
+	public string filepath1;
+	public string filepath2;
 	[TextArea]
 	public List<string> testCases = new();
 	public int useTestCase;
@@ -69,8 +71,9 @@ public class Tester : MonoBehaviour {
 	void Updatetest() {
 		Tokenizer tokenizer = new();
 		if (testFile) {
-			if (File.Exists(filepath)) {
-				string contents = File.ReadAllText(filepath);
+			string path = usefp1 ? filepath1 : filepath2;
+			if (File.Exists(path)) {
+				string contents = File.ReadAllText(path);
 
 				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 

@@ -293,7 +293,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testFile: 1
-  filepath: C:\CProjects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Testing\testing.qk
+  usefp1: 0
+  filepath1: C:\CProjects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Testing\testing.qk
+  filepath2: C:\Users\gesch\Tools\Unity\EngineeringOnQuack\Assets\Scripts\Testing\testing.qk
   testCases:
   - a=b=3
   - ('test'.count('t')).tostring() == '2' && true

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;
@@ -76,13 +77,13 @@ public class Interpreter : Part {
 
 	private Data RunSection(Memory memory, Section section) {
 		List<Line> lines = section.Lines;
-
 		InternalState state = new();
 
 		int i = 0;
 		while (i < lines.Count) {
 			Line line = lines[i];
-
+			//Debug.Log($"running {line}");
+			
 			#region prechecks
 			// line type check
 			if (line.LineType == Line.LineTypeEnum.Line && state.ExpectingSection)
@@ -184,63 +185,7 @@ public class Interpreter : Part {
 				}
 			}
 
-				//// section/line check before DRNL
-				//// check if section token and line contents match
-				//if ((pFlags & Flags.ExpectSectionNext) != 0)	  // expecting section
-				//	if (line.LineType == Line.LineTypeEnum.Line) // but got line
-				//		return Errors.Expected("indented section");
-				//else												 // expecting line
-				//	if (line.LineType == Line.LineTypeEnum.Section) // but got section
-				//		return Errors.Unexpected("indented section");
-
-				//// skip this line and clear the DRNL flag
-				//if ((pFlags & Flags.DontRunNextLine) != 0) {
-				//	pFlags &= ~Flags.DontRunNextLine; // unset flag
-				//	i++;
-				//	continue;
-				//}
-
-				//if (line.LineType == Line.LineTypeEnum.Line) {
-				//	Evaluator.Output evaluateOut = Evaluator.Evaluate(line);
-				//	if (evaluateOut.data is Error) return evaluateOut.data;
-				//	Flags nFlags = evaluateOut.flags;
-
-				//	if ((nFlags & Flags.ReturnData) != 0)
-				//		return evaluateOut.data;
-
-				//	// make sure this else was expected
-				//	if ((nFlags & Flags.LineWasElse) != 0) {
-				//		// must have had previous if statement otherwise unexpected
-				//		if (!((pFlags & Flags.IfSucceeded) != 0 ||
-				//			(pFlags & Flags.IfFailed) != 0))
-				//			return Errors.Unexpected("else statement");
-				//	}
-
-				//	/*if ((flags & Flags.EnterFor) != 0) {
-				//		Primitive.List L = evaluateOut.data as Primitive.List;
-				//		Primitive.String S = evaluateOut.data as Primitive.String;
-
-				//		if (!(L != null || S != null))
-				//			return Errors.CannotUseTypeWithFeature(evaluateOut.data.Type.Name, "for loops");
-
-				//		List<Data> iterateOver = L != null ? L.Value : // turn string into char list
-				//			S.Value.Select(c => new Primitive.String(c.ToString()) as Data).ToList();
-
-				//		foreach (Data d in iterateOver) {
-
-				//		}
-				//	}*/
-
-				//	// this might not be the right approach cuz some flags need to persist
-				//	pFlags = evaluateOut.flags;
-				//}
-				//else { // section
-
-				//	Data trySection = RunSection(memory, line.Section);
-				//	if (trySection is Error) return trySection;
-				//}
-
-				i++;
+			i++;
 		}
 
 		return Data.Success;

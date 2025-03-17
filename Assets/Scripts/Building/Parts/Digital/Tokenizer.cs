@@ -228,14 +228,13 @@ public class Tokenizer {
 
 			if (indentation(i) > startIndentation) {
 				List<string> subSecStrings = new();
-				int n = i; // get entire chunk of indented text
-				while (n < lines.Length && indentation(n) > startIndentation) {
-					subSecStrings.Add(lines[n]);
-					n++;
+				while (i < lines.Length && indentation(i) > startIndentation) {
+					subSecStrings.Add(lines[i]);
+					i++;
 				}
 
 				// recurse deeper sections, give starting index
-				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray(), n);
+				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray(), i);
 				if (output is Error) return (null, output);
 
 				sectionLines.Add(new(startLineNum + i, line, subsection)); // add a subsection

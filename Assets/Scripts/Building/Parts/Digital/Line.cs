@@ -42,9 +42,9 @@ public class Line
 
 	public override string ToString() {
 		if (LineType == LineTypeEnum.Line)
-			return $"Line ({Tokens.Count}): {OriginalString}";
+			return $"Line {RealLineNumber} ({Tokens.Count}): {OriginalString}";
 		else
-			return $"SubSection: {Section}";
+			return $"Sub{Section}";
 	}
 
 	public Line DeepCopy() {

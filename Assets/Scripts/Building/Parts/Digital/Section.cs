@@ -15,6 +15,6 @@ public class Section
 	}
 
 	public override string ToString() {
-		return $"Section: {string.Join('\n', Lines)}";
+		return $"Section ({Lines.Count}): {string.Join('\n', Lines)}";
 	}
 }
