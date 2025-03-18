@@ -166,13 +166,16 @@ public class Interpreter : Part {
 				}
 				else if (CheckFlag(nFlags, Flags.While)) {
 					state.ExpectingSection = true;
-					state.ReturnToWhileStatement = true;
 
 					if (!(lineCopy.Tokens[1] is Token.Reference condition &&
 						condition.ThisReference is Primitive.Bool b))
 						return Errors.BadSyntaxFor("while loop");
 
 					state.SkipNext = !b.Value;
+					state.ReturnToWhileStatement = b.Value;
+
+					if (!b.Value) // reset at the last 
+						state.WhileLoops = 0;
 				}
 				else if (CheckFlag(nFlags, Flags.Break)) {
 					return output; // has break flag
@@ -224,7 +227,9 @@ public class Interpreter : Part {
 						if (CheckFlag(sFlags, Flags.Break)) {
 							break;
 						}
-						
+						else if (CheckFlag(sFlags, Flags.Return)) {
+							return trySection; // propogates return flag
+						}
 					}
 				}
 				else {  // run once
