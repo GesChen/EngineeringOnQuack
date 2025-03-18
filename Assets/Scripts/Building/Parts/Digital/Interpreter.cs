@@ -69,7 +69,7 @@ public class Interpreter : Part {
 		public bool ForLoopNext;
 		public Token.Reference LoopOver;
 
-		public bool WhileLoopNext;
+		public bool ReturnToWhileStatement;
 	}
 
 	bool CheckFlag(Flags flags, Flags check)
@@ -160,15 +160,21 @@ public class Interpreter : Part {
 					state.ExpectingSection = true;
 					state.LoopOver = lineCopy.Tokens[1] as Token.Reference;
 				}
+				else if (CheckFlag(nFlags, Flags.While)) {
+					state.ExpectingSection = true;
+					state.ReturnToWhileStatement = true;
+
+					if (!(lineCopy.Tokens[1] is Token.Reference condition &&
+						condition.ThisReference is Primitive.Bool b))
+						return Errors.BadSyntaxFor("while loop");
+
+					state.SkipNext = !b.Value;
+				}
 			}
 			else { // run section contents
 				state.ExpectingSection = false;
 
-				if (!state.ForLoopNext) { // run once
-					Data trySection = RunSection(memory, line.Section);
-					if (trySection is Error) return trySection;
-				}
-				else { // run as for loop
+				if (state.ForLoopNext) {// run as for loop
 					List<Data> values = (state.LoopOver.ThisReference as Primitive.List).Value;
 					Token.Reference iterator = state.LoopOver.Copy(); // keep original ref to iterator
 
@@ -182,6 +188,13 @@ public class Interpreter : Part {
 						Data trySection = RunSection(memory, line.Section);
 						if (trySection is Error) return trySection;
 					}
+				}
+				else {  // run once
+					Data trySection = RunSection(memory, line.Section);
+					if (trySection is Error) return trySection;
+
+					if (state.ReturnToWhileStatement)
+						i -= 2;
 				}
 			}
 

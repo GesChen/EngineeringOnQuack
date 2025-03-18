@@ -236,14 +236,17 @@ public class Evaluator : MonoBehaviour {
 			last = new(remaining);
 		}
 
-		Data tryHandle = HandleFinal(ref remaining);
-		if (tryHandle is Error) return tryHandle;
-		Flags flags = tryHandle.Flags;
+		if (remaining[0] is Keyword kw) {
+			Data handleKeywords = HandleKeywords(ref remaining, kw);
+			if (handleKeywords is Error) return handleKeywords;
+
+			return handleKeywords;
+		}
 
 		if (remaining.Count == 1 && remaining[0] is Reference r)
 			return r.ThisReference;
 
-		return Data.Success.CopyWithFlags(tryHandle.Flags);
+		return Data.Success;
 	}
 
 	private void GetHighestPrecedenceAction(
@@ -822,21 +825,6 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 
-	private Data HandleFinal(ref List<Token> remaining) {
-
-		// check for keywords
-		if (remaining[0] is Keyword kw) {
-			Data tryHandleKeywords = HandleKeywords(ref remaining, kw);
-			if (tryHandleKeywords is Error) return tryHandleKeywords;
-
-			return tryHandleKeywords;
-		}
-
-		// check for function/class declaration
-
-		return Data.Success;
-	}
-
 	private Data HandleKeywords	(ref List<Token> tokens, Keyword kw) {
 		return kw.Value switch {
 			Keyword.Kws.If			=> HandleIf			(ref tokens),
@@ -938,7 +926,7 @@ public class Evaluator : MonoBehaviour {
 			!(tokens[1] is Reference R &&
 			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
 			return Errors.BadSyntaxFor("while loop");
-
+		
 		if (!R.Exists)
 			return Errors.UnknownName(R);
 
