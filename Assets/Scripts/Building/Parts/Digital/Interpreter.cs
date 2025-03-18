@@ -70,6 +70,10 @@ public class Interpreter : Part {
 		public Token.Reference LoopOver;
 
 		public bool ReturnToWhileStatement;
+		public int WhileLoops;
+
+		public bool TryNext;
+		public bool TryErrored;
 	}
 
 	bool CheckFlag(Flags flags, Flags check)
@@ -170,6 +174,34 @@ public class Interpreter : Part {
 
 					state.SkipNext = !b.Value;
 				}
+				else if (CheckFlag(nFlags, Flags.Break)) {
+					return output; // has break flag
+				}
+				else if (CheckFlag(nFlags, Flags.Continue)) {
+					return output; // has continue flag
+				}
+				else if (CheckFlag(nFlags, Flags.Pass)) {
+					continue; // do noything
+				}
+				else if (CheckFlag(nFlags, Flags.Return)) {
+					return output; // has return flag
+				}
+				else if (CheckFlag(nFlags, Flags.Try)) {
+					state.ExpectingSection = true;
+					state.TryNext = true;
+				}
+				else if (CheckFlag(nFlags, Flags.Except)) {
+					state.ExpectingSection = true;
+					if (state.TryErrored) {
+						state.SkipNext = false;
+					}
+					else {
+						state.SkipNext = true; // skip if try didnt error
+					}
+				}
+				else if (CheckFlag(nFlags, Flags.Finally)) {
+					state.ExpectingSection = true;
+				}
 			}
 			else { // run section contents
 				state.ExpectingSection = false;
@@ -187,6 +219,12 @@ public class Interpreter : Part {
 						// run this section
 						Data trySection = RunSection(memory, line.Section);
 						if (trySection is Error) return trySection;
+						Flags sFlags = trySection.Flags;
+
+						if (CheckFlag(sFlags, Flags.Break)) {
+							break;
+						}
+						
 					}
 				}
 				else {  // run once
