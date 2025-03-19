@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEditor.U2D;
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;
@@ -97,9 +97,7 @@ public class Interpreter : Part {
 		while (i < lines.Count) {
 			Line line = lines[i];
 
-#if DEBUGMODE
-			Debug.Log($"running {line} {i}");
-#endif
+			if (LanguageConfig.DEBUG) Debug.Log($"running {line} {i}");
 
 			#region prechecks
 			// line type check
@@ -252,8 +250,17 @@ public class Interpreter : Part {
 					Data trySection = RunSection(memory, line.Section);
 					if (trySection is Error) return trySection;
 
-					if (state.ReturnToWhileStatement)
+					if (CheckFlag(trySection.Flags, Flags.Break)) {
+						if (state.ReturnToWhileStatement) // break if at loop level
+							state.ReturnToWhileStatement = false;
+						else // propogate if not at loop level
+							return trySection;
+					}
+
+					if (state.ReturnToWhileStatement) {
+						state.WhileLoops++; // prevent inf loops
 						i -= 2;
+					}
 				}
 			}
 
