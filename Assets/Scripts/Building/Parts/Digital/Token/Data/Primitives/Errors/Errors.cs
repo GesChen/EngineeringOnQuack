@@ -1,6 +1,8 @@
 public static class Errors {
 	public static Error Custom(string message)
 		=> new(message);
+	public static Error NoScriptLoaded()
+		=> new($"[INTERNAL] No script loaded");
 	public static Error InvalidArgumentCount(string funcName, int expected, int got)
 		=> new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got)
@@ -67,6 +69,10 @@ public static class Errors {
 		=> new($"Unexpected {what} {where}");
 	public static Error Unexpected(string what)
 		=> new($"Unexpected {what}");
+	public static Error WhileLoopLimitReached()
+		=> new($"While loop iterations limit reached: {LanguageConfig.MaxWhileLoopIters}");
+	public static Error RecursionLimitReached()
+		=> new($"Recursion depth limit reached: {LanguageConfig.RecursionDepthLimit}");
 	public static Error template()
 		=> new($"");
 }

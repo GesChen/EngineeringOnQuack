@@ -1,5 +1,13 @@
-for a = [..10]:
-	for i = [..a]:
-		x = (i*a)
+counter = 0
+target = 5
 
-print(x)
+print("Testing while loop implementation:")
+
+while counter < target:
+    print("Iteration " + str(counter + 1))
+    counter += 1
+
+if counter == target:
+	print("pass")
+else:
+	print("fail")

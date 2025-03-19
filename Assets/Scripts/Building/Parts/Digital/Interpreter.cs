@@ -1,7 +1,10 @@
+//#define DEBUGMODE
+
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;
@@ -30,7 +33,8 @@ public class Interpreter : Part {
 		Memory memory, 
 		Primitive.Function function, 
 		Data thisReference, 
-		List<Data> args) {
+		List<Data> args,
+		int depth = 0) {
 		// handle internal functions
 		if (function.IsInternalFunction)
 			return function.InternalFunction.Invoke(thisReference, args);
@@ -51,16 +55,22 @@ public class Interpreter : Part {
 		memoryCopy.Set("this", thisReference);
 
 		// run the script with the memory copy
-		Data output = Run(memoryCopy, function.Script);
+		Data output = Run(memoryCopy, function.Script, depth + 1); // increase depth on function call
 
 		return output;
 	}
 
-	public Data Run(Memory memory, Script script) {
-		return RunSection(memory, script.Contents);
+	public Data Run(Memory memory, Script script, int depth = 0) {
+		if (script == null)
+			return Errors.NoScriptLoaded();
+
+		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
+			return Errors.RecursionLimitReached();
+		
+		return RunSection(memory, script.Contents, depth);
 	}
 
-	struct InternalState {
+	class InternalState {
 		public bool ExpectingSection;
 		public bool SkipNext;
 		public bool ExpectingElse;
@@ -79,15 +89,18 @@ public class Interpreter : Part {
 	bool CheckFlag(Flags flags, Flags check)
 		=> (flags & check) != 0;
 
-	private Data RunSection(Memory memory, Section section) {
+	private Data RunSection(Memory memory, Section section, int depth = 0) {
 		List<Line> lines = section.Lines;
 		InternalState state = new();
 
 		int i = 0;
 		while (i < lines.Count) {
 			Line line = lines[i];
-			//Debug.Log($"running {line}");
-			
+
+#if DEBUGMODE
+			Debug.Log($"running {line} {i}");
+#endif
+
 			#region prechecks
 			// line type check
 			if (line.LineType == Line.LineTypeEnum.Line && state.ExpectingSection)
@@ -107,7 +120,7 @@ public class Interpreter : Part {
 			if (line.LineType == Line.LineTypeEnum.Line) {
 
 				Line lineCopy = line.DeepCopy();
-				Data output = Evaluator.Evaluate(lineCopy, false);
+				Data output = Evaluator.Evaluate(lineCopy, false, depth);
 				if (output is Error) return output;
 				Flags nFlags = output.Flags;
 
@@ -128,7 +141,7 @@ public class Interpreter : Part {
 						state.SkipNext = true;
 
 					else { // only run if if failed
-						if (!((nFlags & Flags.If) != 0)) { // normal else
+						if (!CheckFlag(nFlags, Flags.If)) { // normal else
 							state.ExpectingElse = false;
 						}
 						else { // else if 
@@ -165,6 +178,9 @@ public class Interpreter : Part {
 					state.LoopOver = lineCopy.Tokens[1] as Token.Reference;
 				}
 				else if (CheckFlag(nFlags, Flags.While)) {
+					if (state.WhileLoops > LanguageConfig.MaxWhileLoopIters)
+						return Errors.WhileLoopLimitReached();
+
 					state.ExpectingSection = true;
 
 					if (!(lineCopy.Tokens[1] is Token.Reference condition &&

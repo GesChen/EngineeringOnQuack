@@ -95,9 +95,10 @@ public class Evaluator : MonoBehaviour {
 		Assignment
 	}
 
-	struct ActionContext {
+	class ActionContext {
 		public Line				line;
 		public Memory			memory;
+		public int				curRecursionDepth;
 		public List<Token>		remaining;
 		public Token			highestToken;
 		public int				highestIndex;
@@ -107,9 +108,37 @@ public class Evaluator : MonoBehaviour {
 		public bool				leftIsRefAndExists;
 		public Reference		rightRef;
 		public bool				rightIsRefAndExists;
+
+		public ActionContext(
+			Line line, 
+			Memory memory, 
+			int curRecursionDepth, 
+			List<Token> remaining, 
+			Token highestToken, 
+			int highestIndex, 
+			Token left, 
+			Token right, 
+			Reference leftRef, 
+			bool leftIsRefAndExists, 
+			Reference rightRef, 
+			bool rightIsRefAndExists) {
+
+			this.line = line;
+			this.memory = memory;
+			this.curRecursionDepth = curRecursionDepth;
+			this.remaining = remaining;
+			this.highestToken = highestToken;
+			this.highestIndex = highestIndex;
+			this.left = left;
+			this.right = right;
+			this.leftRef = leftRef;
+			this.leftIsRefAndExists = leftIsRefAndExists;
+			this.rightRef = rightRef;
+			this.rightIsRefAndExists = rightIsRefAndExists;
+		}
 	}
 
-	public Data Evaluate(Line line, bool makeCopy = true) {
+	public Data Evaluate(Line line, bool makeCopy = true, int depth = 0) {
 		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
 		if (tryGetMemory is Error) return tryGetMemory;
 
@@ -118,7 +147,7 @@ public class Evaluator : MonoBehaviour {
 
 		Data.currentUseMemory = memory;
 		UpdateAllLineDataWithMemory(ref line, memory);
-		Data tryEvaluate = EvaluateInternal(line, memory);
+		Data tryEvaluate = EvaluateInternal(line, memory, depth);
 		Data.currentUseMemory = null;
 
 		return tryEvaluate;
@@ -131,7 +160,7 @@ public class Evaluator : MonoBehaviour {
 		}
 	}
 
-	private Data EvaluateInternal(Line line, Memory memory) {
+	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
 
 		List<Token> remaining = line.Tokens;
@@ -158,19 +187,20 @@ public class Evaluator : MonoBehaviour {
 			Reference rightRef			= right as Reference;
 			bool rightIsRefAndExists	= rightRef != null && rightRef.Exists;
 
-			ActionContext localActionContext = new() {
-				line					= line,
-				memory					= memory,
-				remaining				= remaining,
-				highestToken			= highestToken,
-				highestIndex			= highestIndex,
-				left					= left,
-				right					= right,
-				leftRef					= leftRef,
-				leftIsRefAndExists		= leftIsRefAndExists,
-				rightRef				= rightRef,
-				rightIsRefAndExists		= rightIsRefAndExists
-			};
+			ActionContext localActionContext = new (
+				line,
+				memory,
+				depth,
+				remaining,
+				highestToken,
+				highestIndex,
+				left,
+				right,
+				leftRef,
+				leftIsRefAndExists,
+				rightRef,
+				rightIsRefAndExists
+			);
 
 			switch (highestAction) {
 				// D -> R
@@ -452,7 +482,7 @@ public class Evaluator : MonoBehaviour {
 		switch (highestTokenAsOp.Value) {
 			case Operator.Ops.OpenParentheses:
 				bool isArguments = leftRef != null; // doesnt matter if it doesnt exist, will be errored
-				if (isArguments) {
+				if (isArguments) { // run function
 					// make sure left is a callable type
 					if (!leftRef.Exists)
 						return Errors.UnknownName(leftRef);
@@ -675,7 +705,7 @@ public class Evaluator : MonoBehaviour {
 		
 		// cast left to right
 		Data left = leftData.Cast(rightRef.ThisReference.Type);
-		if (leftData is Error) return leftData;
+		if (left is Error) return left;
 		Data right = rightData;
 
 		Dictionary<Operator.Ops, string> opNames = new() {
@@ -694,10 +724,12 @@ public class Evaluator : MonoBehaviour {
 				op.StringValue, 
 				leftRef.ThisReference.Type.Name, 
 				rightRef.ThisReference.Type.Name);
+		if (tryGetLeftMember is not Primitive.Function F)
+			return Errors.MemberIsNotMethod(operationName, leftData.Type.Name);
 
 		Data runFunction = Interpreter.RunFunction(
 			memory, 
-			tryGetLeftMember as Primitive.Function, 
+			F, 
 			left, new() { right }
 		);
 		return runFunction;

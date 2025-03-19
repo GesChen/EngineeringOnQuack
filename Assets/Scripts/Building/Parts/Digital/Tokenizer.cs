@@ -232,18 +232,19 @@ public class Tokenizer {
 					subSecStrings.Add(lines[i]);
 					i++;
 				}
+				i--; // dont go into the next token
 
 				// recurse deeper sections, give starting index
 				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray(), i);
 				if (output is Error) return (null, output);
 
-				sectionLines.Add(new(startLineNum + i, line, subsection)); // add a subsection
+				sectionLines.Add(new(startLineNum + i + 1, line, subsection)); // add a subsection
 			}
 			else {
 				(List<Token> tokens, Data output) = TokenizeLine(line);
 				if (output is Error) return (null, output);
 
-				sectionLines.Add(new(startLineNum + i, line, tokens));
+				sectionLines.Add(new(startLineNum + i + 1, line, tokens));
 			}
 
 			i++;

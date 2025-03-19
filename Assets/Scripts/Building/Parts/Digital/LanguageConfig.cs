@@ -4,6 +4,8 @@ using UnityEngine;
 
 public static class LanguageConfig
 {
-	public static int MaxContainerSerializeLength = 100;
-	public static int SpacesPerTab = 4;
+	public const int MaxContainerSerializeLength = 128;
+	public const int SpacesPerTab = 4;
+	public const int MaxWhileLoopIters = 1024;
+	public const int RecursionDepthLimit = 1024;
 }
