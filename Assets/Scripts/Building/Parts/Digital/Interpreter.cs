@@ -1,10 +1,7 @@
-//#define DEBUGMODE
-
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor.U2D;
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;
@@ -255,6 +252,10 @@ public class Interpreter : Part {
 							state.ReturnToWhileStatement = false;
 						else // propogate if not at loop level
 							return trySection;
+					}
+
+					if (CheckFlag(trySection.Flags, Flags.Continue)) { // propogate continue until original loop catches
+						return trySection;
 					}
 
 					if (state.ReturnToWhileStatement) {

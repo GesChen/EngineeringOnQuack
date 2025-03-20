@@ -165,6 +165,11 @@ public class Evaluator : MonoBehaviour {
 	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
 
+		Data performDeclarationChecks = DeclarationChecks(line.Tokens, memory);
+		if (performDeclarationChecks is Error ||
+			performDeclarationChecks is Primitive.Bool b && b.Value) // check passed
+			return performDeclarationChecks;
+
 		List<Token> remaining = line.Tokens;
 		List<Token> last = new();
 		bool atLast = false;
@@ -279,6 +284,57 @@ public class Evaluator : MonoBehaviour {
 			return r.ThisReference;
 
 		return Data.Success;
+	}
+
+	private Data DeclarationChecks(List<Token> tokens, Memory memory) {
+		// check for function, inline function, or class
+
+		int colonIndex = tokens.FindIndex(t => t is Operator op && op.Value == Operator.Ops.Colon);
+		if (tokens[0] is Name N && colonIndex != -1) { // some kind of declaration
+
+			// determine if this is some kind of function
+			(int oPIndex, int oPCount) = FindAndCountOperator(tokens, Operator.Ops.OpenParentheses);
+			(int cPIndex, int cPCount) = FindAndCountOperator(tokens, Operator.Ops.CloseParentheses);
+
+			bool maybeFunction = (oPIndex != -1) || (cPIndex != -1);
+
+			if (maybeFunction) {
+				if (oPCount > 1 || cPCount > 1)
+					return Errors.BadSyntaxFor("function declaration", "mismatched parentheses");
+
+				List<string> argNames = new();
+				for (int i = oPIndex + 1; i < cPIndex; i++) {
+					Token thisToken = tokens[i];
+					if ((thisToken is Operator thisOp && thisOp.Value != Operator.Ops.Comma) || // any thats not ,
+						(tokens[i-1] is Operator)) // 2 ops in a row
+						return Errors.BadSyntaxFor("function declaration", "bad argument list syntax");
+
+					if (thisToken is Keyword)
+						return Errors.BadSyntaxFor("function declaration", "cannot use keywords as arguments");
+
+					if (thisToken is not Name thisName) // for good measure
+						return Errors.BadSyntaxFor("function declaration");
+
+					argNames.Add(thisName.Value);
+				}
+
+				(int eqIndex, int eqCount) = FindAndCountOperator(tokens, Operator.Ops.Equals);
+				if (eqIndex != -1) { // inline function 
+					
+				}
+
+				// normal function
+
+			}
+			else { // must be class
+				if (tokens.Count != 2 ||
+					colonIndex != 1)
+					return Errors.BadSyntaxFor("class declaration");
+
+				return new Primitive.String(N.Value).CopyWithFlags(Flags.MakeClass);
+			}
+		}
+		return Data.Fail;
 	}
 
 	private void GetHighestPrecedenceAction(
@@ -1048,33 +1104,9 @@ public class Evaluator : MonoBehaviour {
 		// identify list type
 		bool rangeList = false;
 
-		int eCount = 0;
-		int ellipsisIndex = -1;
-		int depth = 0; // dont count ..s in nested
-		for (int i = 0; i < tokens.Count; i++) {
-			if (tokens[i] is Operator op)
-				switch (op.Value) {
-					case Operator.Ops.Ellipsis: // normal comma breakage into new chunk
-						if (depth == 0) {
-							ellipsisIndex = i;
-							eCount++;
-						}
-						break;
-
-					case Operator.Ops.OpenParentheses:
-					case Operator.Ops.OpenBracket:
-					case Operator.Ops.OpenBrace:
-						depth++;
-						break;
-
-					case Operator.Ops.CloseParentheses:
-					case Operator.Ops.CloseBracket:
-					case Operator.Ops.CloseBrace:
-						depth--;
-						break;
-
-				}
-		}
+		// find and count ellipses
+		(int eCount, int ellipsisIndex)= FindAndCountOperator(line.Tokens, Operator.Ops.Ellipsis);
+		
 		if (eCount > 1) // either 0 or 1 ..s
 			return Errors.InvalidUseOfOperator("..");
 		else if (eCount > 0) // this is range
@@ -1155,7 +1187,7 @@ public class Evaluator : MonoBehaviour {
 			List<Token> curChunk = new();
 			List<List<Token>> tokenChunks = new();
 			int i = 0;
-			depth = 0; // have to account for nested lists
+			int depth = 0; // have to account for nested lists
 			while (i < tokens.Count) {
 				Token rt = tokens[i];
 				bool added = false;
@@ -1267,5 +1299,39 @@ public class Evaluator : MonoBehaviour {
 		}
 
 		return new Primitive.Dict(newDict);
+	}
+
+	private (int, int) FindAndCountOperator(List<Token> tokens, Operator.Ops lookFor) {
+		int count = 0;
+		int index = -1;
+
+		int depth = 0;
+		for (int i = 0; i < tokens.Count; i++) {
+			if (tokens[i] is Operator op) {
+				switch (op.Value) {
+					case Operator.Ops.OpenParentheses:
+					case Operator.Ops.OpenBracket:
+					case Operator.Ops.OpenBrace:
+						depth++;
+						break;
+
+					case Operator.Ops.CloseParentheses:
+					case Operator.Ops.CloseBracket:
+					case Operator.Ops.CloseBrace:
+						depth--;
+						break;
+
+				}
+
+				if (op.Value == lookFor) {
+					if (depth == 0) {
+						index = i;
+						count++;
+					}
+				}
+			}
+		}
+
+		return (index, count);
 	}
 }
