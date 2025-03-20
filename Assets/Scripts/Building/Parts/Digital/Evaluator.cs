@@ -139,7 +139,7 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	public Data Evaluate(Line line, bool makeCopy = true, int depth = 0) {
-		if (LanguageConfig.DEBUG) Debug.Log("Evaluating ")
+		if (LanguageConfig.DEBUG) Debug.Log($"Evaluating {line.TokenList()}");
 
 		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
 		if (tryGetMemory is Error) return tryGetMemory;

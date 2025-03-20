@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Line
 {
@@ -45,6 +46,9 @@ public class Line
 			return $"Line {RealLineNumber} ({Tokens.Count}): {OriginalString}";
 		else
 			return $"Sub{Section}";
+	}
+	public string TokenList() {
+		return string.Join(" ", Tokens.Select(c=>$"<{c}>"));
 	}
 
 	public Line DeepCopy() {

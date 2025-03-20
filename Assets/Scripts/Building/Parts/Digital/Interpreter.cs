@@ -97,7 +97,7 @@ public class Interpreter : Part {
 		while (i < lines.Count) {
 			Line line = lines[i];
 
-			if (LanguageConfig.DEBUG) Debug.Log($"running {line} {i}");
+			if (LanguageConfig.DEBUG) Debug.Log($"{i} running {line} ");
 
 			#region prechecks
 			// line type check
