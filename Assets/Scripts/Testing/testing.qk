@@ -1,5 +1,6 @@
-for i = [..10]:
-	if i == 5:
-		return "test"
-	print(i)
-print("out")
+function(x,y):
+	print(x)
+	print("hello")
+	print(y)
+	return x + y
+

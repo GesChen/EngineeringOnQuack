@@ -10,41 +10,41 @@ public class Memory {
 	public Dictionary<string, Data> Data;
 	public Dictionary<string, Type> Types;
 
+	public static Dictionary<string, Data> StaticData = new() {
+		// normal functions
+		{ "print",		new Primitive.Function(InternalFunctions.print)	},
+
+		// castings
+		{ "num",		new Primitive.Function(InternalFunctions.num)	},
+		{ "bool",		new Primitive.Function(InternalFunctions.@bool)	},
+		{ "str",		new Primitive.Function(InternalFunctions.str)	},
+		{ "list",		new Primitive.Function(InternalFunctions.list)	},
+		{ "dict",		new Primitive.Function(InternalFunctions.dict)	},
+
+		// arithmetic
+		{ "abs",		new Primitive.Function(InternalFunctions.abs)	},
+		{ "sqrt",		new Primitive.Function(InternalFunctions.sqrt)	},
+		{ "round",		new Primitive.Function(InternalFunctions.round)	},
+		{ "sum",		new Primitive.Function(InternalFunctions.sum)	},
+		{ "max",		new Primitive.Function(InternalFunctions.max)	},
+		{ "min",		new Primitive.Function(InternalFunctions.min)	},
+
+		// bool 
+		{ "true",		new Primitive.Bool(true) },
+		{ "false",		new Primitive.Bool(false) }
+	};
+	public static Dictionary<string, Type> StaticTypes = new() {
+		{ "Number",		Primitive.Number.	InternalType },
+		{ "String",		Primitive.String.	InternalType },
+		{ "Bool",		Primitive.Bool.		InternalType },
+		{ "List",		Primitive.List.		InternalType },
+		{ "Dict",		Primitive.Dict.		InternalType },
+		{ "Function",	Primitive.Function.	InternalType },
+		{ "Error",				  Error.	InternalType }
+	};
+
 	public void Initialize() {
-		Data = new() {
-			// normal functions
-			{ "print",		new Primitive.Function(InternalFunctions.print) },
-
-			// castings
-			{ "num",		new Primitive.Function(InternalFunctions.num)	},
-			{ "bool",		new Primitive.Function(InternalFunctions.@bool)	},
-			{ "str",		new Primitive.Function(InternalFunctions.str)	},
-			{ "list",		new Primitive.Function(InternalFunctions.list)	},
-			{ "dict",		new Primitive.Function(InternalFunctions.dict)	},
-
-			// arithmetic
-			{ "abs",		new Primitive.Function(InternalFunctions.abs)	},
-			{ "sqrt",		new Primitive.Function(InternalFunctions.sqrt)	},
-			{ "round",		new Primitive.Function(InternalFunctions.round)	},
-			{ "sum",		new Primitive.Function(InternalFunctions.sum)	},
-			{ "max",		new Primitive.Function(InternalFunctions.max)	},
-			{ "min",		new Primitive.Function(InternalFunctions.min)	},
-
-			// bool 
-			{ "true",		new Primitive.Bool(true) },
-			{ "false",		new Primitive.Bool(false) }
-		};
 		foreach (Data d in Data.Values) d.Memory = this;
-
-		Types = new() {
-			{ "Number",		Primitive.Number.	InternalType },
-			{ "String",		Primitive.String.	InternalType },
-			{ "Bool",		Primitive.Bool.		InternalType },
-			{ "List",		Primitive.List.		InternalType },
-			{ "Dict",		Primitive.Dict.		InternalType },
-			{ "Function",	Primitive.Function.	InternalType },
-			{ "Error",				  Error.	InternalType }
-		};
 	}
 
 	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types) {
@@ -72,15 +72,26 @@ public class Memory {
 	/// Returns data value if found, otherwise error
 	/// </summary>
 	public Data Get(string name) {
+		if (StaticData.ContainsKey(name)) {
+			Data staticCopy = StaticData[name].Copy();
+			staticCopy.Memory = this;
+			return staticCopy;
+		}
 		if (Data.ContainsKey(name)) return Data[name];
 		return Errors.UnknownName(name);
 	}
 
-	public void Set(string name, Data data) {
+	public Data Set(string name, Data data) {
+		if (StaticData.ContainsKey(name))
+			return Errors.CannotSetBuiltin("value", name);
+		if (StaticTypes.ContainsKey(name))
+			return Errors.CannotSetBuiltin("type", name);
+		if (Types.ContainsKey(name))
+			return Errors.CannotSetType(name);
+
 		Data[name] = data;
 
-		if (Types.ContainsKey(name))
-			Types.Remove(name);
+		return global::Data.Success;
 	}
 
 	public Data Set(Token.Reference reference, Data data) {

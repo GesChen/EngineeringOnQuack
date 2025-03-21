@@ -8,27 +8,45 @@ public abstract partial class Primitive : Data {
 		// functions dont have methods or instance vars
 		public static Type InternalType = new("Function", new Dictionary<string, Data>());
 
-		// user defined function code
-		public List<Name> Parameters;
-		public Script Script; 
+		public enum FunctionTypeEnum {
+			UserDefined,
+			UserDefinedInline,
+			Internal
+		}
+		public FunctionTypeEnum FunctionType;
 
-		public Function(List<Name> parameters, Script script) : base(InternalType) { // user defined function constructor
+		#region user defined
+		public List<Name> Parameters;
+		public Script Script; // normal
+		public List<Token> InlineDefinition;
+
+		// normal function
+		public Function(List<Name> parameters, Script script) : base(InternalType) {
+			FunctionType = FunctionTypeEnum.UserDefined;
 			Parameters = parameters;
 			Script = script;
 		}
 
-		public override string ToString() {
-			return $"Function object \"{Name}\"";
+		// inline function
+		public Function(List<Name> parameters, List<Token> definition) : base(InternalType) {
+			FunctionType = FunctionTypeEnum.UserDefinedInline;
+			Parameters = parameters;
+			InlineDefinition = definition;
 		}
+		#endregion
 
-		// internal function code below
+		#region internal
 		public delegate Data InternalFunctionDelegate(Data thisReference, List<Data> args);
-		public bool IsInternalFunction = false;
 		public InternalFunctionDelegate InternalFunction;
 	
 		public Function(InternalFunctionDelegate internalFunction) : base(InternalType) {
-			IsInternalFunction = true;
+			FunctionType = FunctionTypeEnum.Internal;
 			InternalFunction = internalFunction;
+		}
+		#endregion
+
+		public override string ToString() {
+			return $"Function object \"{Name}\"";
 		}
 	}
 }

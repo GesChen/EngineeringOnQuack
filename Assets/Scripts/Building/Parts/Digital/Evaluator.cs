@@ -165,10 +165,10 @@ public class Evaluator : MonoBehaviour {
 	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
 
-		Data performDeclarationChecks = DeclarationChecks(line.Tokens, memory);
-		if (performDeclarationChecks is Error ||
-			performDeclarationChecks is Primitive.Bool b && b.Value) // check passed
-			return performDeclarationChecks;
+		Data declChecks = DeclarationChecks(line.Tokens, memory);
+		if (declChecks is Error ||
+			declChecks.Flags != Flags.None) // check passed
+			return declChecks;
 
 		List<Token> remaining = line.Tokens;
 		List<Token> last = new();
@@ -299,39 +299,62 @@ public class Evaluator : MonoBehaviour {
 			bool maybeFunction = (oPIndex != -1) || (cPIndex != -1);
 
 			if (maybeFunction) {
-				if (oPCount > 1 || cPCount > 1)
+				if (oPIndex == -1 || cPIndex == -1 ||
+					oPCount > 1 || cPCount > 1)
 					return Errors.BadSyntaxFor("function declaration", "mismatched parentheses");
 
-				List<string> argNames = new();
+				// find all param names and store as string list
+				List<string> paramNames = new();
 				for (int i = oPIndex + 1; i < cPIndex; i++) {
 					Token thisToken = tokens[i];
-					if ((thisToken is Operator thisOp && thisOp.Value != Operator.Ops.Comma) || // any thats not ,
-						(tokens[i-1] is Operator)) // 2 ops in a row
-						return Errors.BadSyntaxFor("function declaration", "bad argument list syntax");
 
+					if (thisToken is Operator thisOp) {
+						if (thisOp.Value == Operator.Ops.Comma) {
+							if (i > oPIndex + 1 && tokens[i - 1] is Operator) // 2 ops in a row
+								return Errors.BadSyntaxFor("function declaration", "bad parameter list syntax");
+							
+							continue; // delimeter, ignore it
+						}
+						else // any op other than , 
+							return Errors.BadSyntaxFor("function declaration", $"invalid operator {thisOp.StringValue} in parameters");
+					}
+					
 					if (thisToken is Keyword)
-						return Errors.BadSyntaxFor("function declaration", "cannot use keywords as arguments");
+						return Errors.BadSyntaxFor("function declaration", "cannot use keywords as parameters");
 
 					if (thisToken is not Name thisName) // for good measure
 						return Errors.BadSyntaxFor("function declaration");
 
-					argNames.Add(thisName.Value);
+					paramNames.Add(thisName.Value);
 				}
 
 				(int eqIndex, int eqCount) = FindAndCountOperator(tokens, Operator.Ops.Equals);
+				
 				if (eqIndex != -1) { // inline function 
-					
+					return new Primitive.List(new() {	   // return list with function info
+						new Primitive.String(N.Value),	  // name
+						new Primitive.Number(cPIndex)	 // c paren index (rest is definition)
+					}).SetFlags(Flags.MakeInline);		// tell interpreter to make inline func
 				}
 
 				// normal function
+				return new Primitive.List(new() {	  // return list with function info
+					new Primitive.String(N.Value),	 // name
+					new Primitive.List(paramNames		// turn arg names into list of strings
+						.Select(n => new Primitive.String(n) as Data)
+						.ToList())				  //
+				}).SetFlags(Flags.MakeFunction); // tell interpreter to make function
 
 			}
 			else { // must be class
+
+				// class syntax: <name> <:>
 				if (tokens.Count != 2 ||
 					colonIndex != 1)
 					return Errors.BadSyntaxFor("class declaration");
 
-				return new Primitive.String(N.Value).CopyWithFlags(Flags.MakeClass);
+				return new Primitive.String(N.Value) // return new class name
+					.SetFlags(Flags.MakeClass);		// tell interpreter to make class
 			}
 		}
 		return Data.Fail;
@@ -1309,18 +1332,11 @@ public class Evaluator : MonoBehaviour {
 		for (int i = 0; i < tokens.Count; i++) {
 			if (tokens[i] is Operator op) {
 				switch (op.Value) {
-					case Operator.Ops.OpenParentheses:
-					case Operator.Ops.OpenBracket:
-					case Operator.Ops.OpenBrace:
-						depth++;
-						break;
-
 					case Operator.Ops.CloseParentheses:
 					case Operator.Ops.CloseBracket:
 					case Operator.Ops.CloseBrace:
 						depth--;
 						break;
-
 				}
 
 				if (op.Value == lookFor) {
@@ -1328,6 +1344,14 @@ public class Evaluator : MonoBehaviour {
 						index = i;
 						count++;
 					}
+				}
+				
+				switch (op.Value) {
+					case Operator.Ops.OpenParentheses:
+					case Operator.Ops.OpenBracket:
+					case Operator.Ops.OpenBrace:
+						depth++;
+						break;
 				}
 			}
 		}

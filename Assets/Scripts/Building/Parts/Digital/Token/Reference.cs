@@ -95,7 +95,8 @@ public partial class Token {
 			}
 
 			else { // global variable
-				data.Memory.Set(Name, data); // set the name in the memory where the data is from, might help?
+				Data trySet = data.Memory.Set(Name, data); // set the name in the memory where the data is from, might help?
+				if (trySet is Error) return trySet;
 			}
 
 			Exists = true;

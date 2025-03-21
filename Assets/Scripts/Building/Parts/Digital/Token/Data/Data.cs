@@ -10,7 +10,7 @@ public class Data : Token {
 	public Type Type;
 	public Dictionary<string, Data> InstanceVariables;
 	public Memory Memory;
-	public Flags Flags;
+	public Flags Flags = Flags.None;
 
 	public static Memory currentUseMemory;
 
@@ -41,14 +41,17 @@ public class Data : Token {
 			Memory,
 			Flags);
 	}
-	public Data CopyWithFlags(Flags flags) {
-		Data copy = Copy();
-		copy.Flags = flags;
-		return copy;
+	
+	public Data SetFlags(Flags flags) {
+		Flags = flags;
+		return this;
 	}
 	public Data ClearFlags() {
 		Flags = Flags.None;
 		return this;
+	}
+	public Data CopyWithFlags(Flags flags) {
+		return Copy().SetFlags(flags);
 	}
 
 	public virtual Data GetMember(string name) {

@@ -31,6 +31,10 @@ public static class Errors {
 		=> new($"Cannot set a member of a primitive value: {membername}");
 	public static Error CannotSetLiteral()
 		=> new($"Cannot set a literal to another value");
+	public static Error CannotSetBuiltin(string thing, string name)
+		=> new($"Cannot set a builtin {thing} ({name}) to a value");
+	public static Error CannotSetType(string name)
+		=> new($"Cannot set a type ({name}) to another value");
 	public static Error InvalidUseOfOperator(string op)
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)

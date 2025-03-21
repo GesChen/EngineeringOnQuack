@@ -43,13 +43,16 @@ public class Interpreter : Part {
 		// set args in a copy of memory
 		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
 
+		Data trySet;
 		Memory memoryCopy = memory.Copy();
 		for (int a = 0; a < args.Count; a++) {
-			memoryCopy.Set(function.Parameters[a].Value, args[a]);
+			trySet = memoryCopy.Set(function.Parameters[a].Value, args[a]);
+			if (trySet is Error) return trySet;
 		}
 
 		// set this
-		memoryCopy.Set("this", thisReference);
+		trySet = memoryCopy.Set("this", thisReference);
+		if (trySet is Error) return trySet;
 
 		// run the script with the memory copy
 		Data output = Run(memoryCopy, function.Script, depth + 1); // increase depth on function call
@@ -81,6 +84,10 @@ public class Interpreter : Part {
 
 		public bool TryNext;
 		public bool TryErrored;
+
+		public bool MakeFunction;
+		public string NewFunctionName;
+		public List<string> NewFuncParams;
 	}
 
 	bool CheckFlag(Flags flags, Flags check)
@@ -215,6 +222,37 @@ public class Interpreter : Part {
 				}
 				else if (CheckFlag(nFlags, Flags.Finally)) {
 					state.ExpectingSection = true;
+				}
+
+				else if (CheckFlag(nFlags, Flags.MakeFunction)) {
+					List<Data> formattedOutput = (output as Primitive.List).Value;
+
+					string name = (formattedOutput[0] as Primitive.String).Value;
+
+					List<string> nenwparams =
+						(formattedOutput[1] as Primitive.List).Value
+						.Select(d => (d as Primitive.String).Value)
+						.ToList();
+
+					state.ExpectingSection = true;
+					state.MakeFunction = true;
+					state.NewFunctionName = name;
+					state.NewFuncParams = nenwparams;
+				}
+				else if (CheckFlag(nFlags, Flags.MakeInline)) {
+					List<Data> formattedOutput = (output as Primitive.List).Value;
+					
+					string name = (formattedOutput[0] as Primitive.String).Value;
+
+					List<string> nenwparams =
+						(formattedOutput[1] as Primitive.List).Value
+						.Select(d => (d as Primitive.String).Value)
+						.ToList();
+
+					int functionDefStartIndex = (int)(formattedOutput[2] as Primitive.Number).Value;
+					Token[] functionDef = line.Tokens.Skip(functionDefStartIndex).ToArray();
+
+					memory.Set(name, new Primitive.Function())
 				}
 			}
 			else { // run section contents
