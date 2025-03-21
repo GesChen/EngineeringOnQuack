@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Resources;
+using System.Security.Policy;
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;
@@ -33,12 +35,12 @@ public class Interpreter : Part {
 		List<Data> args,
 		int depth = 0) {
 		// handle internal functions
-		if (function.IsInternalFunction)
+		if (function.FunctionType == Primitive.Function.FunctionTypeEnum.Internal)
 			return function.InternalFunction.Invoke(thisReference, args);
 
 		// argument check
-		if (function.Parameters.Count != args.Count)
-			return Errors.InvalidArgumentCount(function.Name, function.Parameters.Count, args.Count);
+		if (function.Parameters.Length != args.Count)
+			return Errors.InvalidArgumentCount(function.Name, function.Parameters.Length, args.Count);
 
 		// set args in a copy of memory
 		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
@@ -46,7 +48,7 @@ public class Interpreter : Part {
 		Data trySet;
 		Memory memoryCopy = memory.Copy();
 		for (int a = 0; a < args.Count; a++) {
-			trySet = memoryCopy.Set(function.Parameters[a].Value, args[a]);
+			trySet = memoryCopy.Set(function.Parameters[a], args[a]);
 			if (trySet is Error) return trySet;
 		}
 
@@ -55,7 +57,7 @@ public class Interpreter : Part {
 		if (trySet is Error) return trySet;
 
 		// run the script with the memory copy
-		Data output = Run(memoryCopy, function.Script, depth + 1); // increase depth on function call
+		Data output = RunSection(memoryCopy, function.Script, depth + 1); // increase depth on function call
 
 		return output;
 	}
@@ -64,9 +66,6 @@ public class Interpreter : Part {
 		if (script == null)
 			return Errors.NoScriptLoaded();
 
-		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
-			return Errors.RecursionLimitReached();
-		
 		return RunSection(memory, script.Contents, depth);
 	}
 
@@ -85,20 +84,24 @@ public class Interpreter : Part {
 		public bool TryNext;
 		public bool TryErrored;
 
+		public string NewName;
+
 		public bool MakeFunction;
-		public string NewFunctionName;
-		public List<string> NewFuncParams;
+		public string[] NewFuncParams;
 	}
 
 	bool CheckFlag(Flags flags, Flags check)
 		=> (flags & check) != 0;
 
 	private Data RunSection(Memory memory, Section section, int depth = 0) {
-		List<Line> lines = section.Lines;
+		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
+			return Errors.RecursionLimitReached();
+
+		Line[] lines = section.Lines;
 		InternalState state = new();
 
 		int i = 0;
-		while (i < lines.Count) {
+		while (i < lines.Length) {
 			Line line = lines[i];
 
 			if (LanguageConfig.DEBUG) Debug.Log($"{i} running {line} ");
@@ -202,7 +205,7 @@ public class Interpreter : Part {
 					return output; // has continue flag
 				}
 				else if (CheckFlag(nFlags, Flags.Pass)) {
-					continue; // do noything
+					continue; // do nothing
 				}
 				else if (CheckFlag(nFlags, Flags.Return)) {
 					return output; // has return flag
@@ -229,30 +232,30 @@ public class Interpreter : Part {
 
 					string name = (formattedOutput[0] as Primitive.String).Value;
 
-					List<string> nenwparams =
+					string[] newparams =
 						(formattedOutput[1] as Primitive.List).Value
 						.Select(d => (d as Primitive.String).Value)
-						.ToList();
+						.ToArray();
 
 					state.ExpectingSection = true;
 					state.MakeFunction = true;
-					state.NewFunctionName = name;
-					state.NewFuncParams = nenwparams;
+					state.NewName = name;
+					state.NewFuncParams = newparams;
 				}
 				else if (CheckFlag(nFlags, Flags.MakeInline)) {
 					List<Data> formattedOutput = (output as Primitive.List).Value;
 					
 					string name = (formattedOutput[0] as Primitive.String).Value;
 
-					List<string> nenwparams =
+					string[] newparams =
 						(formattedOutput[1] as Primitive.List).Value
 						.Select(d => (d as Primitive.String).Value)
-						.ToList();
+						.ToArray();
 
 					int functionDefStartIndex = (int)(formattedOutput[2] as Primitive.Number).Value;
 					Token[] functionDef = line.Tokens.Skip(functionDefStartIndex).ToArray();
 
-					memory.Set(name, new Primitive.Function())
+					memory.Set(name, new Primitive.Function(newparams, functionDef));
 				}
 			}
 			else { // run section contents
@@ -281,7 +284,12 @@ public class Interpreter : Part {
 						}
 					}
 				}
-				else {  // run once
+				else if (state.MakeFunction) {
+					Primitive.Function newFunction = new(state.NewFuncParams, line.Section);
+					Data trySet = memory.Set(state.NewName, newFunction);
+					if (trySet is Error) return trySet;
+				}
+				else { // run once
 					Data trySection = RunSection(memory, line.Section);
 					if (trySection is Error) return trySection;
 

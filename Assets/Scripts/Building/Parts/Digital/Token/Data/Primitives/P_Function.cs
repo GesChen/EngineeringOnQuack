@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public abstract partial class Primitive : Data {
 	public partial class Function : Primitive {
-		public static Function Default = new(new(), new()); // "yeah ik what that code does"
+		public static Function Default = new(new string[0], new Script()); // "yeah ik what that code does"
 
 		// functions dont have methods or instance vars
 		public static Type InternalType = new("Function", new Dictionary<string, Data>());
@@ -16,19 +16,19 @@ public abstract partial class Primitive : Data {
 		public FunctionTypeEnum FunctionType;
 
 		#region user defined
-		public List<Name> Parameters;
-		public Script Script; // normal
-		public List<Token> InlineDefinition;
+		public string[] Parameters;
+		public Section Script ; // normal
+		public Token[] InlineDefinition;
 
 		// normal function
-		public Function(List<Name> parameters, Script script) : base(InternalType) {
+		public Function(string[] parameters, Section script) : base(InternalType) {
 			FunctionType = FunctionTypeEnum.UserDefined;
 			Parameters = parameters;
 			Script = script;
 		}
 
 		// inline function
-		public Function(List<Name> parameters, List<Token> definition) : base(InternalType) {
+		public Function(string[] parameters, Token[] definition) : base(InternalType) {
 			FunctionType = FunctionTypeEnum.UserDefinedInline;
 			Parameters = parameters;
 			InlineDefinition = definition;

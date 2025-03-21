@@ -1,20 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Section
 {
-	public List<Line> Lines;
+	public Line[] Lines;
 
-	public Section(List<Line> lines)
+	public Section(Line[] lines)
 	{
 		Lines = lines;
 	}
 	public Section() {
-		Lines = new();
+		Lines = new Line[0];
 	}
 
 	public override string ToString() {
-		return $"Section ({Lines.Count}): {string.Join('\n', Lines)}";
+		return $"Section ({Lines.Length}): {string.Join('\n', Lines.ToList())}";
 	}
 }
