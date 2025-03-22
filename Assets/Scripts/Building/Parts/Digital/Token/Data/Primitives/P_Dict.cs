@@ -26,12 +26,19 @@ public abstract partial class Primitive : Data {
 		public Dict(Dictionary<Data, Data> value) : base(InternalType) { // default constructor
 			Value = value;
 		}
+		public Dict(Dict original) : base(original) {
+			Value = original.Value;
+		}
 		public Dict() : base(InternalType) { // empty constructor
 			Value = new();
 		}
 
 		public override string ToString() {
 			return (tostring(this, new()) as String).Value;
+		}
+
+		public override Data Copy() {
+			return new Dict(this);
 		}
 
 		#region comparison operators
@@ -163,7 +170,7 @@ public abstract partial class Primitive : Data {
 
 			Dictionary<Data, Data> v = (thisRef as Dict).Value;
 			foreach (KeyValuePair<Data, Data> kv in v) {
-				List pair = new(new() { kv.Key, kv.Value });
+				List pair = new(new List<Data>() { kv.Key, kv.Value });
 				newList.Add(pair);
 			}
 

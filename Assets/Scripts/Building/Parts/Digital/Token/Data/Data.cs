@@ -16,17 +16,24 @@ public class Data : Token {
 
 	// constructors
 	public Data(string name, Type type, Memory memory, Flags flags) {
-		Name = name;
-		Type = type;
-		InstanceVariables = new();
-		Memory = memory;
-		Flags = flags;
+		Name				= name;
+		Type				= type;
+		InstanceVariables	= new();
+		Memory				= memory;
+		Flags				= flags;
 	}
 	public Data(Type type) {
-		Type = type;
-		InstanceVariables = new();
-		Memory = currentUseMemory;
-		Flags = Flags.None;
+		Type				= type;
+		InstanceVariables	= new();
+		Memory				= currentUseMemory;
+		Flags				= Flags.None;
+	}
+	public Data(Data original) { // copy constructor
+		Name				= original.Name;
+		Type				= original.Type;
+		InstanceVariables	= original.InstanceVariables;
+		Memory				= original.Memory;
+		Flags				= original.Flags;
 	}
 
 	// statics
@@ -34,14 +41,9 @@ public class Data : Token {
 	public static Data Fail = new Bool(false);
 
 	#region methods
-	public Data Copy() {
-		return new(
-			Name,
-			Type,
-			Memory,
-			Flags);
+	public virtual Data Copy() {
+		return new(this); // call copy constructor
 	}
-	
 	public Data SetFlags(Flags flags) {
 		Flags = flags;
 		return this;
@@ -51,7 +53,7 @@ public class Data : Token {
 		return this;
 	}
 	public Data CopyWithFlags(Flags flags) {
-		return Copy().SetFlags(flags);
+		return new Data(this).SetFlags(flags);
 	}
 
 	public virtual Data GetMember(string name) {
@@ -98,11 +100,11 @@ public class Data : Token {
 			return Errors.InvalidCast(FTN, TTN);
 
 		return FTNC switch {
-			'N' => NumberCast(fromValue as Number,	TTNC, TTN),
-			'S' => StringCast(fromValue as String,	TTNC, TTN),
-			'B' => BoolCast(fromValue as Bool,		TTNC, TTN),
-			'L' => ListCast(fromValue as List,		TTNC, TTN),
-			'D' => DictCast(fromValue as Dict,		TTNC, TTN),
+			'N' => NumberCast	(fromValue as Number,	TTNC, TTN),
+			'S' => StringCast	(fromValue as String,	TTNC, TTN),
+			'B' => BoolCast		(fromValue as Bool,		TTNC, TTN),
+			'L' => ListCast		(fromValue as List,		TTNC, TTN),
+			'D' => DictCast		(fromValue as Dict,		TTNC, TTN),
 			_ => Errors.InvalidCast(FTN, TTN),
 		};
 	}
@@ -112,7 +114,7 @@ public class Data : Token {
 		switch (toc) {
 			case 'S' : return Number.tostring(value, new());
 			case 'B' : return new Bool(v != 0);
-			case 'L' : return new List(new() { value });
+			case 'L' : return new List(new List<Data>() { value });
 		}
 		return Errors.InvalidCast("Number", to);
 	}
@@ -123,7 +125,7 @@ public class Data : Token {
 				if (double.TryParse(v, out double val)) return new Number(val);
 				return Errors.CannotParseValueAs("String", "Number");
 			case 'B': return new Bool(v != "");
-			case 'L': return new List(new() { value });
+			case 'L': return new List(new List<Data>() { value });
 		}
 		return Errors.InvalidCast("String", to);
 	}
@@ -132,7 +134,7 @@ public class Data : Token {
 		switch (toc) {
 			case 'N': return new Number(v ? 1 : 0);
 			case 'S': return Bool.tostring(value, new());
-			case 'L': return new List(new() { value });
+			case 'L': return new List(new List<Data>() { value });
 		}
 		return Errors.InvalidCast("Bool", to);
 	}
@@ -159,7 +161,7 @@ public class Data : Token {
 	#endregion
 
 	public override string ToString() {
-		return $"{Type} object \"{Name}\"";
+		return $"[DATA DEFAULT TS] Type {Type.Name} object \"{Name}\"";
 	}
 
 	#endregion

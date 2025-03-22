@@ -4,7 +4,7 @@ using System;
 
 public abstract partial class Primitive : Data {
 	public partial class Number : Primitive {
-		public static Number Default = new(0);
+		public static Number Default = new();
 		
 		// defines internal type with name and memory
 		public static Type InternalType = new("Number", new Dictionary<string, Data>() {
@@ -24,11 +24,19 @@ public abstract partial class Primitive : Data {
 		public Number(double value) : base(InternalType) { // default constructor
 			Value = value;
 		}
-
+		public Number(Number original) : base(original) {
+			Value = original.Value;
+		}
+		public Number() : base(InternalType) {
+			Value = 0;
+		}
 		public override string ToString() {
 			return (tostring(this, new()) as String).Value;
 		}
 
+		public override Data Copy() {
+			return new Number(this);
+		}
 
 		#region methods
 		public static Data eq(Data thisRef, List<Data> args) {

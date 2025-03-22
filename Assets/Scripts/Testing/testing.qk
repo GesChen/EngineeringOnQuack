@@ -4,3 +4,5 @@ function(x,y):
 	print(y)
 	return x + y
 
+function(1,2)
+print("ewtf")

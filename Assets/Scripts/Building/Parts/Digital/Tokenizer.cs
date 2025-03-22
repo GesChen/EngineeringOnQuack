@@ -249,7 +249,7 @@ public class Tokenizer {
 
 			i++;
 		}
-		return (new(sectionLines), Data.Success);
+		return (new(sectionLines.ToArray()), Data.Success);
 	}
 
 	public (Script, Data) Tokenize(string text) {

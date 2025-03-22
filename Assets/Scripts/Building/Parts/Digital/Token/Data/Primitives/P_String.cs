@@ -5,6 +5,7 @@ using System;
 
 public abstract partial class Primitive : Data {
 	public partial class String : Primitive {
+		public static String Default = new();
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("String", new Dictionary<string, Data>() {
@@ -36,17 +37,24 @@ public abstract partial class Primitive : Data {
 			{ "split"		, new Function(split)		}
 		});
 
-		public static String Default = new("");
-
-
 		public string Value; // internal value
 
 		public String(string value) : base(InternalType) { // default constructor
 			Value = value;
 		}
+		public String(String original) : base(original) {
+			Value = original.Value;
+		}
+		public String() : base(InternalType) {
+			Value = "";
+		}
 
 		public override string ToString() {
 			return (tostring(this, new()) as String).Value;
+		}
+
+		public override Data Copy() {
+			return new String(this);
 		}
 
 		#region methods

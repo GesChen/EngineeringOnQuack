@@ -104,7 +104,7 @@ public class Tester : MonoBehaviour {
 	void ToTest() {
 		Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)
-			print(run);
+			print($"run out:"+run);
 		int i = 0;
 	}
 	/*

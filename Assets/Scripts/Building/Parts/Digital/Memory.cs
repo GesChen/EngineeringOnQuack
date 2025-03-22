@@ -56,6 +56,9 @@ public class Memory {
 		Types = new();
 		InterpreterCC = interpreterCC;
 	}
+	public Memory(Memory original) {
+
+	}
 
 	public Memory Copy() {
 		return new(

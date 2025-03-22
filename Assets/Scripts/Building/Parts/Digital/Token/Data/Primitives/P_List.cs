@@ -35,6 +35,9 @@ public abstract partial class Primitive : Data {
 		public List(List<Data> value) : base(InternalType) { // default constructor
 			Value = value;
 		}
+		public List(List original) : base(original) {
+			Value = original.Value;
+		}
 		public List() : base(InternalType) { // default constructor
 			Value = new();
 		}
@@ -45,6 +48,10 @@ public abstract partial class Primitive : Data {
 				return "List object";
 
 			return (tryInternal as String).Value;
+		}
+
+		public override Data Copy() {
+			return new List(this);
 		}
 
 		// methods
@@ -200,7 +207,7 @@ public abstract partial class Primitive : Data {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("extend", 1, args.Count);
 
 			if (args[0] is not List extension) // make sure extension is a list so addrange works
-				extension = new(new() { args[0] });
+				extension = new(new List<Data>() { args[0] });
 
 			(thisRef as List).Value.AddRange(extension.Value);
 			return thisRef;
@@ -228,7 +235,7 @@ public abstract partial class Primitive : Data {
 			if (index.Value != Math.Round(index.Value)) return Errors.InvalidArgumentType("inject", 0, "whole number", "decimal");
 
 			if (args[1] is not List extension)
-				extension = new(new() { args[1] });
+				extension = new(new List<Data>() { args[1] });
 
 			(thisRef as List).Value.InsertRange((int)index.Value, extension.Value); // safety cast even tho already checked
 			return thisRef;

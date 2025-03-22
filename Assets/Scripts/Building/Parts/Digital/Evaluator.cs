@@ -138,11 +138,8 @@ public class Evaluator : MonoBehaviour {
 		}
 	}
 
-	public Data Evaluate(Line line, bool makeCopy = true, int depth = 0) {
+	public Data Evaluate(Line line, Memory memory, bool makeCopy = true, int depth = 0) {
 		if (LanguageConfig.DEBUG) Debug.Log($"Evaluating {line.TokenList()}");
-
-		Data tryGetMemory = Interpreter.TryGetMemory(out Memory memory);
-		if (tryGetMemory is Error) return tryGetMemory;
 
 		if (makeCopy)
 			line = line.DeepCopy();
@@ -212,7 +209,7 @@ public class Evaluator : MonoBehaviour {
 			switch (highestAction) {
 				// D -> R
 				case Actions.Data:
-					Data data = remaining[highestIndex] as Data;
+					Data data = highestToken as Data;
 					remaining[highestIndex] = Reference.ExistingGlobalReference("", data);
 					break;
 				
@@ -221,6 +218,7 @@ public class Evaluator : MonoBehaviour {
 					// check memory for name 
 					string name = (highestToken as Name).Value;
 					Data get = memory.Get(name);
+					if (get is Error) return get;
 
 					// replace name token with reference token
 					remaining[highestIndex] = (get is not Error) ?
@@ -331,19 +329,19 @@ public class Evaluator : MonoBehaviour {
 				(int eqIndex, int eqCount) = FindAndCountOperator(tokens, Operator.Ops.Equals);
 				
 				if (eqIndex != -1) { // inline function 
-					return new Primitive.List(new() {	   // return list with function info
-						new Primitive.String(N.Value),	  // name
-						new Primitive.Number(cPIndex)	 // c paren index (rest is definition)
-					}).SetFlags(Flags.MakeInline);		// tell interpreter to make inline func
+					return new Primitive.List(new List<Data>() {	   // return list with function info
+						new Primitive.String(N.Value),				  // name
+						new Primitive.Number(cPIndex)				 // c paren index (rest is definition)
+					}).SetFlags(Flags.MakeInline);					// tell interpreter to make inline func
 				}
 
 				// normal function
-				return new Primitive.List(new() {	  // return list with function info
-					new Primitive.String(N.Value),	 // name
-					new Primitive.List(paramNames		// turn arg names into list of strings
+				return new Primitive.List(new List<Data>() {		  // return list with function info
+					new Primitive.String(N.Value),					 // name
+					new Primitive.List(paramNames					// turn arg names into list of strings
 						.Select(n => new Primitive.String(n) as Data)
-						.ToList())				  //
-				}).SetFlags(Flags.MakeFunction); // tell interpreter to make function
+						.ToList())								  //
+				}).SetFlags(Flags.MakeFunction);				 // tell interpreter to make function
 
 			}
 			else { // must be class
@@ -564,26 +562,13 @@ public class Evaluator : MonoBehaviour {
 			case Operator.Ops.OpenParentheses:
 				bool isArguments = leftRef != null; // doesnt matter if it doesnt exist, will be errored
 				if (isArguments) { // run function
-					// make sure left is a callable type
-					if (!leftRef.Exists)
-						return Errors.UnknownName(leftRef);
-					if (leftRef.ThisReference is not Primitive.Function func)
-						return Errors.MemberIsNotMethod(leftRef.Name, leftRef.ThisReference.Type.Name);
-
-					Data evalArgs = EvaluateList(
-						line.CopyWithNewTokens(regionTokens),
-						memory);
-					if (evalArgs is Error) return evalArgs;
-
-					List<Data> args = (evalArgs as Primitive.List).Value;
-
-					Data run = Interpreter.RunFunction(memory, func, leftRef.ParentReference, args);
+					Data run = RunFunction(AC, regionTokens);
 					if (run is Error) return run;
 
 					HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, new() { run });
 				}
 				else {
-					Data evalSubexp = Evaluate(line.CopyWithNewTokens(regionTokens));
+					Data evalSubexp = Evaluate(line.CopyWithNewTokens(regionTokens), memory);
 					if (evalSubexp is Error) return evalSubexp;
 
 					HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalSubexp });
@@ -674,7 +659,7 @@ public class Evaluator : MonoBehaviour {
 				break;
 
 			case Operator.Ops.OpenBrace:
-				Data evalDict = EvaluateDict(line.CopyWithNewTokens(regionTokens));
+				Data evalDict = EvaluateDict(line.CopyWithNewTokens(regionTokens), memory);
 				if (evalDict is Error) return evalDict;
 
 				HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalDict });
@@ -682,6 +667,32 @@ public class Evaluator : MonoBehaviour {
 		}
 
 		return Data.Success;
+	}
+
+	private Data RunFunction(in ActionContext AC, List<Token> regionTokens) {
+		#region unpack AC
+		Line line = AC.line;
+		Memory memory = AC.memory;
+		Reference leftRef = AC.leftRef;
+		#endregion
+		
+		// make sure left is a callable type
+		if (!leftRef.Exists)
+			return Errors.UnknownName(leftRef);
+
+		if (leftRef.ThisReference is not Primitive.Function func)
+			return Errors.MemberIsNotMethod(leftRef.Name, leftRef.ThisReference.Type.Name);
+
+		Data evalArgs = EvaluateList(
+			line.CopyWithNewTokens(regionTokens),
+			memory);
+		if (evalArgs is Error) return evalArgs;
+
+		List<Data> args = (evalArgs as Primitive.List).Value;
+
+		Data run = Interpreter.RunFunction(memory, func, leftRef.ParentReference, args);
+		run.ClearFlags();
+		return run;
 	}
 
 	private Data HandleUnary(in ActionContext AC) {
@@ -1176,9 +1187,9 @@ public class Evaluator : MonoBehaviour {
 			}
 
 			if (rightOfEllipsis.Length != 0) {
-				Data rightOfEllipsisEvalOutput = Evaluate(
-					line.CopyWithNewTokens(rightOfEllipsis.ToList()));
-				Data rightOfEllipsisEval = rightOfEllipsisEvalOutput;
+				Data rightOfEllipsisEval = Evaluate(
+					line.CopyWithNewTokens(rightOfEllipsis.ToList()),
+					memory);
 
 				if (rightOfEllipsisEval is Error) return rightOfEllipsisEval;
 
@@ -1249,7 +1260,7 @@ public class Evaluator : MonoBehaviour {
 			// eval arg token chunks into data
 			List<Data> items = new(); // can be optimized into array if desperate
 			foreach (List<Token> chunk in tokenChunks) {
-				Data tryEval = Evaluate(line.CopyWithNewTokens(chunk));
+				Data tryEval = Evaluate(line.CopyWithNewTokens(chunk), memory);
 				if (tryEval is Error) return tryEval;
 
 				items.Add(tryEval);
@@ -1259,7 +1270,7 @@ public class Evaluator : MonoBehaviour {
 		}
 	}
 
-	private Data EvaluateDict(Line line) {
+	private Data EvaluateDict(Line line, Memory memory) {
 		List<Token> tokens = line.Tokens;
 
 		// stole from evallist lol
@@ -1312,10 +1323,10 @@ public class Evaluator : MonoBehaviour {
 
 		Dictionary<Data, Data> newDict = new();
 		foreach (Token[][] kvpTokenGroup in kvpGroups) {
-			Data evalKey = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[0].ToList()));
+			Data evalKey = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[0].ToList()), memory);
 			if (evalKey is Error) return evalKey;
 
-			Data evalValue = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[1].ToList()));
+			Data evalValue = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[1].ToList()), memory);
 			if (evalValue is Error) return evalValue;
 
 			newDict[evalKey] = evalValue;

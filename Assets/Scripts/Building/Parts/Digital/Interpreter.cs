@@ -125,7 +125,7 @@ public class Interpreter : Part {
 			if (line.LineType == Line.LineTypeEnum.Line) {
 
 				Line lineCopy = line.DeepCopy();
-				Data output = Evaluator.Evaluate(lineCopy, false, depth);
+				Data output = Evaluator.Evaluate(lineCopy, memory, false, depth);
 				if (output is Error) return output;
 				Flags nFlags = output.Flags;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public abstract partial class Primitive : Data {
 	public partial class Function : Primitive {
-		public static Function Default = new(new string[0], new Script()); // "yeah ik what that code does"
+		public static Function Default = new();
 
 		// functions dont have methods or instance vars
 		public static Type InternalType = new("Function", new Dictionary<string, Data>());
@@ -45,8 +45,23 @@ public abstract partial class Primitive : Data {
 		}
 		#endregion
 
+		public Function(Function original) : base(original) { // copy constructor
+			FunctionType		= original.FunctionType;
+			Parameters			= original.Parameters;
+			Script				= original.Script;
+			InlineDefinition	= original.InlineDefinition;
+			InternalFunction	= original.InternalFunction;
+		}
+		public Function() : base(InternalType) {
+			// todo?
+		}
+		
 		public override string ToString() {
-			return $"Function object \"{Name}\"";
+			return $"Function object";
+		}
+
+		public override Data Copy() {
+			return new Function(this);
 		}
 	}
 }
