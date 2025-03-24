@@ -224,11 +224,12 @@ public class Tokenizer {
 		while (i < lines.Length) {
 			string line = PreProcessLine(lines[i]);
 
-			if (string.IsNullOrEmpty(line)) { i++; continue; }
+			if (string.IsNullOrWhiteSpace(line)) { i++; continue; }
 
 			if (indentation(i) > startIndentation) {
 				List<string> subSecStrings = new();
-				while (i < lines.Length && indentation(i) > startIndentation) {
+				while (i < lines.Length && 
+					(indentation(i) > startIndentation || string.IsNullOrWhiteSpace(lines[i]))) {
 					subSecStrings.Add(lines[i]);
 					i++;
 				}

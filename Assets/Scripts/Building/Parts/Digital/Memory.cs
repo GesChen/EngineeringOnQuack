@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Token;
 
 public class Memory {
 	public CableConnection InterpreterCC;
@@ -12,6 +13,7 @@ public class Memory {
 
 	public static Dictionary<string, Data> StaticData = new() {
 		// normal functions
+		{ "breakpoint",	new Primitive.Function(InternalFunctions.breakpoint)},
 		{ "print",		new Primitive.Function(InternalFunctions.print)	},
 
 		// castings
@@ -81,6 +83,9 @@ public class Memory {
 			return staticCopy;
 		}
 		if (Data.ContainsKey(name)) return Data[name];
+		if (StaticTypes.ContainsKey(name) ||
+			Types.ContainsKey(name))
+			return Errors.TypeCannotBeUsedAsVariable(name);
 		return Errors.UnknownName(name);
 	}
 
@@ -92,24 +97,28 @@ public class Memory {
 		if (Types.ContainsKey(name))
 			return Errors.CannotSetType(name);
 
+		if (LanguageConfig.DEBUG) Debug.Log($"data set {name} {data}");
 		Data[name] = data;
 
 		return global::Data.Success;
 	}
 
-	public Data Set(Token.Reference reference, Data data) {
+	public Data Set(Reference reference, Data data) {
 		if (reference.Name == "")
 			return Errors.CannotSetLiteral();
-		
+		if (StaticTypes.ContainsKey(reference.Name))
+			return Errors.CannotOverwriteBuiltin(reference.Name);
+
 		data.Memory = this;
 		return reference.SetData(data);
 	}
 
-	public void NewType(string name, Type type) {
+	public Data NewType(Type type) {
+		string name = type.Name;
+		if (StaticTypes.ContainsKey(name))
+			return Errors.CannotOverwriteBuiltin(name);
 		Types[name] = type;
-
-		if (Data.ContainsKey(name))
-			Data.Remove(name);
+		return global::Data.Success;
 	}
 
 	public override string ToString() {

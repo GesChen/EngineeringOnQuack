@@ -103,4 +103,9 @@ public static class InternalFunctions
 		}
 		return new Primitive.Number(min);
 	}
+
+	public static Data breakpoint(Data _, List<Data> __) {
+		Debug.Log("[INTERNAL] breakpoint hit");
+		return Data.Success;
+	}
 }

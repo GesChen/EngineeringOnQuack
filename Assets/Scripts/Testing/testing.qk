@@ -1,8 +1,16 @@
-function(x,y):
-	print(x)
-	print("hello")
-	print(y)
-	return x + y
+test:
+    a = 0
+    print("innit")
 
-function(1,2)
-print("ewtf")
+    breakpoint()
+
+    test(x):
+        a = x
+        print("constructed " + str(x))
+
+    something(y):
+        print(x + y)
+        print("nuts")
+
+thing = test(1)
+thing.something(2)

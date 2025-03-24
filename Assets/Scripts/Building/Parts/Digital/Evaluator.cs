@@ -217,8 +217,8 @@ public class Evaluator : MonoBehaviour {
 				case Actions.Name:
 					// check memory for name 
 					string name = (highestToken as Name).Value;
-					Data get = memory.Get(name);
-					if (get is Error) return get;
+					Data get = memory.Get(name); 
+					// dont return error again LMAO
 
 					// replace name token with reference token
 					remaining[highestIndex] = (get is not Error) ?
@@ -278,6 +278,7 @@ public class Evaluator : MonoBehaviour {
 			return handleKeywords;
 		}
 
+		// return data if thats what it collapses to
 		if (remaining.Count == 1 && remaining[0] is Reference r)
 			return r.ThisReference;
 
@@ -287,7 +288,7 @@ public class Evaluator : MonoBehaviour {
 	private Data DeclarationChecks(List<Token> tokens, Memory memory) {
 		// check for function, inline function, or class
 
-		int colonIndex = tokens.FindIndex(t => t is Operator op && op.Value == Operator.Ops.Colon);
+		(int colonIndex, _) = FindAndCountOperator(tokens, Operator.Ops.Colon);
 		if (tokens[0] is Name N && colonIndex != -1) { // some kind of declaration
 
 			// determine if this is some kind of function
@@ -645,9 +646,12 @@ public class Evaluator : MonoBehaviour {
 							values.Add(trygetvalue);
 						}
 
+						Data res =
+							values.Count > 1 ? new Primitive.List(values) :
+							values[0];
 
 						HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-							new() { new Primitive.List(values) });
+							new() { res });
 					}
 				}
 				else { // normal list
@@ -1139,7 +1143,7 @@ public class Evaluator : MonoBehaviour {
 		bool rangeList = false;
 
 		// find and count ellipses
-		(int eCount, int ellipsisIndex)= FindAndCountOperator(line.Tokens, Operator.Ops.Ellipsis);
+		(int ellipsisIndex, int eCount) = FindAndCountOperator(line.Tokens, Operator.Ops.Ellipsis);
 		
 		if (eCount > 1) // either 0 or 1 ..s
 			return Errors.InvalidUseOfOperator("..");

@@ -11,6 +11,7 @@ public abstract partial class Primitive : Data {
 		public enum FunctionTypeEnum {
 			UserDefined,
 			UserDefinedInline,
+			Constructor,
 			Internal
 		}
 		public FunctionTypeEnum FunctionType;
@@ -32,6 +33,16 @@ public abstract partial class Primitive : Data {
 			FunctionType = FunctionTypeEnum.UserDefinedInline;
 			Parameters = parameters;
 			InlineDefinition = definition;
+		}
+		#endregion
+
+		#region
+		public Type TypeFor;
+		public Function(string[] parameters, Section script, Type typeFor) : base(InternalType) {
+			Parameters = parameters;
+			Script = script;
+			TypeFor = typeFor;
+			FunctionType = FunctionTypeEnum.Constructor;
 		}
 		#endregion
 

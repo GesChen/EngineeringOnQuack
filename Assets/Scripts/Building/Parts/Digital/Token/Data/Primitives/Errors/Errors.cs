@@ -27,8 +27,10 @@ public static class Errors {
 		=> new($"Cannot index with {type}, must be whole numbers");
 	public static Error IndexOutOfRange(int attempt)
 		=> new($"Index out of range: {attempt}");
-	public static Error CannotSetMemberOfPrimitive(string membername)
-		=> new($"Cannot set a member of a primitive value: {membername}");
+	public static Error CannotSetMemberOfBuiltin(string membername)
+		=> new($"Cannot set a member of a builtin type: {membername}");
+	public static Error CannotOverwriteBuiltin(string name)
+		=> new($"Cannot overwrite builtin type {name}");
 	public static Error CannotSetLiteral()
 		=> new($"Cannot set a literal to another value");
 	public static Error CannotSetBuiltin(string thing, string name)
@@ -77,6 +79,8 @@ public static class Errors {
 		=> new($"While loop iterations limit reached: {LanguageConfig.MaxWhileLoopIters}");
 	public static Error RecursionLimitReached()
 		=> new($"Recursion depth limit reached: {LanguageConfig.RecursionDepthLimit}");
+	public static Error TypeCannotBeUsedAsVariable(string name)
+		=> new($"Type {name}cannot be used as variable");
 	public static Error template()
 		=> new($"");
 }

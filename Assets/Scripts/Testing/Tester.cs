@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using System;
+using System.Runtime.InteropServices;
 
 public class Tester : MonoBehaviour {
 	public bool testFile;
@@ -56,7 +57,7 @@ public class Tester : MonoBehaviour {
 
 		double ns = sw.ElapsedTicks * 100;
 		HF.LogColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
-		
+
 		if (iters > 1)
 			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
 	}
@@ -75,6 +76,7 @@ public class Tester : MonoBehaviour {
 			if (File.Exists(path)) {
 				string contents = File.ReadAllText(path);
 
+				print($"tokenizing {contents}");
 				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
 				if (output is Error) print(output);
@@ -104,9 +106,10 @@ public class Tester : MonoBehaviour {
 	void ToTest() {
 		Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)
-			print($"run out:"+run);
+			print($"run out:" + run);
 		int i = 0;
 	}
+
 	/*
 	// conect i and e
 	(CableConnection onItoECC, CableConnection onEtoICC) = IEcable.Connect(interpreter, evaluator);

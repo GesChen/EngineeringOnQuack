@@ -8,7 +8,6 @@ public class Data : Token {
 	public string Name;
 #pragma warning restore CS0108
 	public Type Type;
-	public Dictionary<string, Data> InstanceVariables;
 	public Memory Memory;
 	public Flags Flags = Flags.None;
 
@@ -18,21 +17,18 @@ public class Data : Token {
 	public Data(string name, Type type, Memory memory, Flags flags) {
 		Name				= name;
 		Type				= type;
-		InstanceVariables	= new();
 		Memory				= memory;
 		Flags				= flags;
 	}
 	public Data(Type type) {
 		Type				= type;
-		InstanceVariables	= new();
-		Memory				= currentUseMemory;
+		Memory				= new(currentUseMemory?.InterpreterCC);
 		Flags				= Flags.None;
 	}
 	public Data(Data original) { // copy constructor
 		Name				= original.Name;
 		Type				= original.Type;
-		InstanceVariables	= original.InstanceVariables;
-		Memory				= original.Memory;
+		Memory				= original.Memory.Copy();
 		Flags				= original.Flags;
 	}
 
@@ -58,8 +54,9 @@ public class Data : Token {
 
 	public virtual Data GetMember(string name) {
 		// instance variables with same name as methods override same name in memory
-		if (InstanceVariables.ContainsKey(name))
-			return InstanceVariables[name];
+		Data get = Memory.Get(name);
+		if (get is not Error)
+			return get;
 
 		return Type.Snapshot.Get(name);
 	}
@@ -70,9 +67,9 @@ public class Data : Token {
 
 	public static Data SetMember(Data thisReference, string name, Data data) {
 		if (thisReference is Primitive)
-			return Errors.CannotSetMemberOfPrimitive(name);
+			return Errors.CannotSetMemberOfBuiltin(name);
 		
-		thisReference.InstanceVariables[name] = data;
+		thisReference.Memory.Set(name, data);
 		return data;
 	}
 
@@ -90,13 +87,13 @@ public class Data : Token {
 		char FTNC = FTN[0];	// FromTypeNameChar(0)
 		char TTNC = TTN[0]; // ToTypeNameChar(0)
 
-		if (FTNC == TTNC ) // no casting needed!
+		if (FTNC == TTNC) // no casting needed!
 			return fromValue;
 
 		// have to be primitives, no cast (from or to function) or (from dict)
 		if (!Primitive.TypeNames.Contains(FTN) || !Primitive.TypeNames.Contains(TTN))
 			return Errors.InvalidCast(FTN, TTN);
-		if (FTNC == 'F' || FTNC == 'D' || FTNC == 'F')
+		if (FTNC == 'F' || TTNC == 'D' || TTNC == 'F')
 			return Errors.InvalidCast(FTN, TTN);
 
 		return FTNC switch {

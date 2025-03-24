@@ -3,9 +3,7 @@ startTime = datetime.now()
 
 x = 0
 for i in range(10000):
-	x += i
-
-print(x)
+    x += i
 
 #Python 3: 
-print(datetime.now() - startTime)
+print((datetime.now() - startTime).microseconds / 1000)

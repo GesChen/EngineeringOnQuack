@@ -12,7 +12,7 @@ public abstract partial class Primitive : Data {
 			{ "eq"			, new Function(eq)			},
 			{ "lt"			, new Function(lt)			},
 			{ "ad"			, new Function(ad)			},
-			{ "tostring "	, new Function(tostring)	},
+			{ "tostring"	, new Function(tostring)	},
 			{ "get"			, new Function(get)			},
 			{ "clear"		, new Function(clear)		},
 			{ "values"		, new Function(values)		},

@@ -29,15 +29,31 @@ public class Interpreter : Part {
 
 	// need memory so run call can have a copy of it
 	public Data RunFunction(
-		Memory memory, 
-		Primitive.Function function, 
-		Data thisReference, 
+		Memory memory,
+		Primitive.Function function,
+		Data thisReference,
 		List<Data> args,
 		int depth = 0) {
-		// handle internal functions
-		if (function.FunctionType == Primitive.Function.FunctionTypeEnum.Internal)
-			return function.InternalFunction.Invoke(thisReference, args);
 
+		// handle different function types
+		switch (function.FunctionType) {
+			case Primitive.Function.FunctionTypeEnum.Internal:
+				return function.InternalFunction.Invoke(thisReference, args);
+
+			case Primitive.Function.FunctionTypeEnum.Constructor:
+				Data newObject = new(function.TypeFor);
+
+				Data runConstructor = RunFunction(
+					newObject.Memory,
+					function,
+					newObject,
+					args,
+					depth + 1);
+				if (runConstructor is Error)
+					return runConstructor;
+
+				return newObject;
+		}
 		// argument check
 		if (function.Parameters.Length != args.Count)
 			return Errors.InvalidArgumentCount(function.Name, function.Parameters.Length, args.Count);
@@ -88,12 +104,14 @@ public class Interpreter : Part {
 
 		public bool MakeFunction;
 		public string[] NewFuncParams;
+
+		public bool MakeClass;
 	}
 
 	bool CheckFlag(Flags flags, Flags check)
 		=> (flags & check) != 0;
 
-	private Data RunSection(Memory memory, Section section, int depth = 0) {
+	private Data RunSection(Memory memory, Section section, int depth) {
 		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
 			return Errors.RecursionLimitReached();
 
@@ -257,6 +275,13 @@ public class Interpreter : Part {
 
 					memory.Set(name, new Primitive.Function(newparams, functionDef));
 				}
+				else if (CheckFlag(nFlags, Flags.MakeClass)) {
+					string name = (output as Primitive.String).Value;
+
+					state.ExpectingSection = true;
+					state.MakeClass = true;
+					state.NewName = name;
+				}
 			}
 			else { // run section contents
 				state.ExpectingSection = false;
@@ -272,7 +297,7 @@ public class Interpreter : Part {
 						if (trySet is Error) return trySet;
 
 						// run this section
-						Data trySection = RunSection(memory, line.Section);
+						Data trySection = RunSection(memory, line.Section, depth);
 						if (trySection is Error) return trySection;
 						Flags sFlags = trySection.Flags;
 
@@ -283,14 +308,35 @@ public class Interpreter : Part {
 							return trySection; // propogates return flag
 						}
 					}
+
+					state.ForLoopNext = false;
 				}
 				else if (state.MakeFunction) {
 					Primitive.Function newFunction = new(state.NewFuncParams, line.Section);
 					Data trySet = memory.Set(state.NewName, newFunction);
 					if (trySet is Error) return trySet;
+
+					state.MakeFunction = false;
+				}
+				else if (state.MakeClass) {
+					Memory copyForRun = memory.Copy();
+					Data trySection = RunSection(copyForRun, line.Section, depth);
+					
+					Type newType = new(state.NewName, copyForRun);
+					
+					// check if constructor was defined when it ran
+					if (copyForRun.Get(state.NewName) is Primitive.Function tryGetConstructor) {
+						Primitive.Function constructor = new(
+							tryGetConstructor.Parameters,
+							tryGetConstructor.Script,
+							newType);
+						memory.Set(state.NewName, tryGetConstructor); // save it 
+					}
+
+					Data makeNewType = memory.NewType(newType);
 				}
 				else { // run once
-					Data trySection = RunSection(memory, line.Section);
+					Data trySection = RunSection(memory, line.Section, depth);
 					if (trySection is Error) return trySection;
 
 					if (CheckFlag(trySection.Flags, Flags.Break)) {
@@ -316,4 +362,6 @@ public class Interpreter : Part {
 
 		return Data.Success;
 	}
+
+
 }

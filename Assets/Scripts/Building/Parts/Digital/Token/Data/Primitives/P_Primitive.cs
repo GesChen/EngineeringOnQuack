@@ -13,10 +13,10 @@ public abstract partial class Primitive : Data {
 		"Function"
 	};
 
-	public partial class Number	 	: Primitive { }
-	public partial class String	 	: Primitive { }
-	public partial class Bool	 	: Primitive { }
-	public partial class List	 	: Primitive { }
-	public partial class Dict	 	: Primitive { }
+	public partial class Number		: Primitive { }
+	public partial class String		: Primitive { }
+	public partial class Bool		: Primitive { }
+	public partial class List		: Primitive { }
+	public partial class Dict		: Primitive { }
 	public partial class Function	: Primitive { }
 }
