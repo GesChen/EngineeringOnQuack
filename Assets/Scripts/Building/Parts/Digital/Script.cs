@@ -20,4 +20,7 @@ public class Script
 		OriginalText = "";
 	}
 
+	public override string ToString() {
+		return $"Script \"{Name}\": \n{Contents}";
+	}
 }

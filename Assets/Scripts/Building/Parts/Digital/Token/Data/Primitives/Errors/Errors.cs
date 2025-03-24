@@ -10,7 +10,7 @@ public static class Errors {
 	public static Error UnknownName(Token.Reference reference)
 		=> new($"Unknown name \"{reference.Name}\"");
 	public static Error UnknownName(string name)
-		=> new($"Unknown name \"{name}\"");
+		=>	new($"Unknown name \"{name}\"");
 	public static Error InvalidCast(string from, string to)
 		=> new($"Cannot cast a {from} to a {to}");
 	public static Error CannotParseValueAs(string value, string @as)

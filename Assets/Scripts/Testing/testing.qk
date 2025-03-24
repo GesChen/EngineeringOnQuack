@@ -2,14 +2,13 @@ test:
     a = 0
     print("innit")
 
-    breakpoint()
-
     test(x):
         a = x
         print("constructed " + str(x))
 
     something(y):
-        print(x + y)
+        breakpoint()
+        print(a + y)
         print("nuts")
 
 thing = test(1)

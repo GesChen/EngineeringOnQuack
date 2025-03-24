@@ -16,6 +16,7 @@ public class Section
 	}
 
 	public override string ToString() {
-		return $"Section ({Lines.Length}): {string.Join('\n', Lines.ToList())}";
+		// shitfuck linq magic
+		return $"Section ({Lines.Length}): {{\n{string.Join('\n', Lines.Select(L=>" "+L.ToString()).ToList())}\n}}";
 	}
 }

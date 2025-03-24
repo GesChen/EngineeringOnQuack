@@ -83,6 +83,7 @@ public class Tester : MonoBehaviour {
 				script = scriptOut;
 
 				HF.LogColor($"test updated to testcase file", colors[1]);
+				print($"updated script: \n{script}");
 			}
 		}
 		else {
@@ -104,10 +105,14 @@ public class Tester : MonoBehaviour {
 		print(run);
 	}
 	void ToTest() {
-		Data run = interpreter.Run(memory.component, script);
+
+		ScriptSaveLoad.sScript s = ScriptSaveLoad.ConvertScriptToStruct(script);
+		print(s);
+
+		/*	Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)
 			print($"run out:" + run);
-		int i = 0;
+*/
 	}
 
 	/*

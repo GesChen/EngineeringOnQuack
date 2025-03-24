@@ -43,6 +43,9 @@ public class Interpreter : Part {
 			case Primitive.Function.FunctionTypeEnum.Constructor:
 				Data newObject = new(function.TypeFor);
 
+				// DONT INFINITE RECUSE!!!
+				function.FunctionType = Primitive.Function.FunctionTypeEnum.UserDefined; 
+
 				Data runConstructor = RunFunction(
 					newObject.Memory,
 					function,
@@ -330,7 +333,7 @@ public class Interpreter : Part {
 							tryGetConstructor.Parameters,
 							tryGetConstructor.Script,
 							newType);
-						memory.Set(state.NewName, tryGetConstructor); // save it 
+						memory.Set(state.NewName, constructor); // save it 
 					}
 
 					Data makeNewType = memory.NewType(newType);
@@ -362,6 +365,4 @@ public class Interpreter : Part {
 
 		return Data.Success;
 	}
-
-
 }
