@@ -7,10 +7,10 @@ public abstract partial class Primitive : Data {
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("Bool", new Dictionary<string, Data>() {
-			{ "eq"			, new Function(eq)			},
-			{ "lt"			, new Function(lt)			},
-			{ "mu"			, new Function(mu)			},
-			{ "tostring"	, new Function(tostring)	}
+			{ "eq"			, new Function("eq", eq)			},
+			{ "lt"			, new Function("lt", lt)			},
+			{ "mu"			, new Function("mu", mu)			},
+			{ "tostring"	, new Function("tostring", tostring)	}
 		});
 
 		public bool Value; // internal value

@@ -13,3 +13,7 @@ test:
 breakpoint()
 thing = test(1)
 thing.something(2)
+
+fed = "test"
+print(fed)
+print(fed.upper())

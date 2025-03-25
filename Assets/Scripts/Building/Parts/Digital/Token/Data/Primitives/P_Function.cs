@@ -22,14 +22,16 @@ public abstract partial class Primitive : Data {
 		public Token[] InlineDefinition;
 
 		// normal function
-		public Function(string[] parameters, Section script) : base(InternalType) {
+		public Function(string name, string[] parameters, Section script) : base(InternalType) {
+			Name = name;
 			FunctionType = FunctionTypeEnum.UserDefined;
 			Parameters = parameters;
 			Script = script;
 		}
 
 		// inline function
-		public Function(string[] parameters, Token[] definition) : base(InternalType) {
+		public Function(string name, string[] parameters, Token[] definition) : base(InternalType) {
+			Name = name;
 			FunctionType = FunctionTypeEnum.UserDefinedInline;
 			Parameters = parameters;
 			InlineDefinition = definition;
@@ -38,7 +40,8 @@ public abstract partial class Primitive : Data {
 
 		#region
 		public Type TypeFor;
-		public Function(string[] parameters, Section script, Type typeFor) : base(InternalType) {
+		public Function(string name, string[] parameters, Section script, Type typeFor) : base(InternalType) {
+			Name = name;
 			Parameters = parameters;
 			Script = script;
 			TypeFor = typeFor;
@@ -50,7 +53,8 @@ public abstract partial class Primitive : Data {
 		public delegate Data InternalFunctionDelegate(Data thisReference, List<Data> args);
 		public InternalFunctionDelegate InternalFunction;
 	
-		public Function(InternalFunctionDelegate internalFunction) : base(InternalType) {
+		public Function(string name, InternalFunctionDelegate internalFunction) : base(InternalType) {
+			Name = name;
 			FunctionType = FunctionTypeEnum.Internal;
 			InternalFunction = internalFunction;
 		}

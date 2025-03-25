@@ -366,8 +366,94 @@
             "SV": ")"
           }
         ]
+      },
+      {
+        "RLN": 17,
+        "OS": "fed = \"test\"",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": "="
+          },
+          {
+            "T": 3,
+            "RV": {
+              "TR": {
+                "PT": 1,
+                "SV": "test"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "RLN": 18,
+        "OS": "print(fed)",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "print"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 19,
+        "OS": "print(fed.upper())",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "print"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": "."
+          },
+          {
+            "T": 1,
+            "SV": "upper"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
       }
     ]
   },
-  "OriginalText": "test:\r\n    a = 0\r\n    print(\"innit\")\r\n\r\n    test(x):\r\n        a = x\r\n        print(\"constructed \" + str(x))\r\n\r\n    something(y):\r\n        print(a + y)\r\n        print(\"nuts\")\r\n\r\nbreakpoint()\r\nthing = test(1)\r\nthing.something(2)"
+  "OriginalText": "test:\r\n    a = 0\r\n    print(\"innit\")\r\n\r\n    test(x):\r\n        a = x\r\n        print(\"constructed \" + str(x))\r\n\r\n    something(y):\r\n        print(a + y)\r\n        print(\"nuts\")\r\n\r\nbreakpoint()\r\nthing = test(1)\r\nthing.something(2)\r\n\r\nfed = \"test\"\r\nprint(fed)\r\nprint(fed.upper())"
 }

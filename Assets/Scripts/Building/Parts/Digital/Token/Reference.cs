@@ -81,7 +81,7 @@ public partial class Token {
 			return ThisReference;
 		}
 
-		public Data SetData(Data data) {
+		public Data SetData(Memory memory, Data data) {
 			if (IsListItem) {
 				if (ParentReference is not Primitive.List parentList)
 					return Errors.CannotIndex(ParentReference.Type.Name);
@@ -98,7 +98,7 @@ public partial class Token {
 			}
 
 			else { // global variable
-				Data trySet = data.Memory.Set(Name, data); // set the name in the memory where the data is from, might help?
+				Data trySet = memory.Set(Name, data); // set the name in the memory where the data is from, might help?
 				if (trySet is Error) return trySet;
 			}
 

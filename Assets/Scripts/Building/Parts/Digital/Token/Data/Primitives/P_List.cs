@@ -10,24 +10,24 @@ public abstract partial class Primitive : Data {
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("List", new Dictionary<string, Data>() {
-			{ "eq"			, new Function(eq)			},
-			{ "lt"			, new Function(lt)			},
-			{ "ad"			, new Function(ad)			},
-			{ "mu"			, new Function(mu)			},
-			{ "tostring"	, new Function(tostring)	},
-			{ "todict"		, new Function(todict)		},
-			{ "add"			, new Function(add)			},
-			{ "clear"		, new Function(clear)		},
-			{ "contains"	, new Function(contains)	},
-			{ "count"		, new Function(count)		},
-			{ "extend"		, new Function(extend)		},
-			{ "find"		, new Function(find)		},
-			{ "inject"		, new Function(inject)		},
-			{ "insert"		, new Function(insert)		},
-			{ "remove"		, new Function(remove)		},
-			{ "removeall"	, new Function(removeall)	},
-			{ "removeindex"	, new Function(removeindex)	},
-			{ "reverse"		, new Function(reverse)		}
+			{ "eq"			, new Function("eq"				, eq)			},
+			{ "lt"			, new Function("lt"				, lt)			},
+			{ "ad"			, new Function("ad"				, ad)			},
+			{ "mu"			, new Function("mu"				, mu)			},
+			{ "tostring"	, new Function("tostring"		, tostring)		},
+			{ "todict"		, new Function("todict"			, todict)		},
+			{ "add"			, new Function("add"			, add)			},
+			{ "clear"		, new Function("clear"			, clear)		},
+			{ "contains"	, new Function("contains"		, contains)		},
+			{ "count"		, new Function("count"			, count)		},
+			{ "extend"		, new Function("extend"			, extend)		},
+			{ "find"		, new Function("find"			, find)			},
+			{ "inject"		, new Function("inject"			, inject)		},
+			{ "insert"		, new Function("insert"			, insert)		},
+			{ "remove"		, new Function("remove"			, remove)		},
+			{ "removeall"	, new Function("removeall"		, removeall)	},
+			{ "removeindex"	, new Function("removeindex"	, removeindex)	},
+			{ "reverse"		, new Function("reverse"		, reverse)		}
 		});
 
 		public List<Data> Value; // internal value

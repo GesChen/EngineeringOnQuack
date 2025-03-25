@@ -9,16 +9,16 @@ public abstract partial class Primitive : Data {
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("Dict", new Dictionary<string, Data>() {
-			{ "eq"			, new Function(eq)			},
-			{ "lt"			, new Function(lt)			},
-			{ "ad"			, new Function(ad)			},
-			{ "tostring"	, new Function(tostring)	},
-			{ "get"			, new Function(get)			},
-			{ "clear"		, new Function(clear)		},
-			{ "values"		, new Function(values)		},
-			{ "keys"		, new Function(keys)		},
-			{ "removekey"	, new Function(removekey)	},
-			{ "tolist"		, new Function(tolist)		}
+			{ "eq"			, new Function("eq"			, eq)			},
+			{ "lt"			, new Function("lt"			, lt)			},
+			{ "ad"			, new Function("ad"			, ad)			},
+			{ "tostring"	, new Function("tostring"	, tostring)		},
+			{ "get"			, new Function("get"		, get)			},
+			{ "clear"		, new Function("clear"		, clear)		},
+			{ "values"		, new Function("values"		, values)		},
+			{ "keys"		, new Function("keys"		, keys)			},
+			{ "removekey"	, new Function("removekey"	, removekey)	},
+			{ "tolist"		, new Function("tolist"		, tolist)		}
 		});
 
 		public Dictionary<Data, Data> Value; // internal value

@@ -15,23 +15,23 @@ public class Memory {
 
 	public static Dictionary<string, Data> StaticData = new() {
 		// normal functions
-		{ "breakpoint",	new Primitive.Function(InternalFunctions.breakpoint)},
-		{ "print",		new Primitive.Function(InternalFunctions.print)	},
+		{ "breakpoint",	new Primitive.Function("breakpoint",InternalFunctions.breakpoint)},
+		{ "print",		new Primitive.Function("print",		InternalFunctions.print)	},
 
 		// castings
-		{ "num",		new Primitive.Function(InternalFunctions.num)	},
-		{ "bool",		new Primitive.Function(InternalFunctions.@bool)	},
-		{ "str",		new Primitive.Function(InternalFunctions.str)	},
-		{ "list",		new Primitive.Function(InternalFunctions.list)	},
-		{ "dict",		new Primitive.Function(InternalFunctions.dict)	},
+		{ "num",		new Primitive.Function("num",		InternalFunctions.num)		},
+		{ "bool",		new Primitive.Function("bool",		InternalFunctions.@bool)	},
+		{ "str",		new Primitive.Function("str",		InternalFunctions.str)		},
+		{ "list",		new Primitive.Function("list",		InternalFunctions.list)		},
+		{ "dict",		new Primitive.Function("dict",		InternalFunctions.dict)		},
 
 		// arithmetic
-		{ "abs",		new Primitive.Function(InternalFunctions.abs)	},
-		{ "sqrt",		new Primitive.Function(InternalFunctions.sqrt)	},
-		{ "round",		new Primitive.Function(InternalFunctions.round)	},
-		{ "sum",		new Primitive.Function(InternalFunctions.sum)	},
-		{ "max",		new Primitive.Function(InternalFunctions.max)	},
-		{ "min",		new Primitive.Function(InternalFunctions.min)	},
+		{ "abs",		new Primitive.Function("abs",		InternalFunctions.abs)		},
+		{ "sqrt",		new Primitive.Function("sqrt",		InternalFunctions.sqrt)		},
+		{ "round",		new Primitive.Function("round",		InternalFunctions.round)	},
+		{ "sum",		new Primitive.Function("sum",		InternalFunctions.sum)		},
+		{ "max",		new Primitive.Function("max",		InternalFunctions.max)		},
+		{ "min",		new Primitive.Function("min",		InternalFunctions.min)		},
 
 		// bool 
 		{ "true",		new Primitive.Bool(true) },
@@ -63,26 +63,29 @@ public class Memory {
 		Nick = nick;
 	}
 	public Memory(Memory original) {
-
+		Data = new Dictionary<string, Data>(original.Data);
+		Types = new Dictionary<string, Type>(original.Types);
+		InterpreterCC = original.InterpreterCC;
+		Nick = $"Copy of {original.Nick}";
 	}
 
 	public Memory Copy() {
-		return new(
-			new Dictionary<string, Data>(Data),
-			new Dictionary<string, Type>(Types),
-			$"copy of {Nick}"
-			);
+		return new(this);
 	}
 
 	public bool Exists(string name) {
 		return Data.ContainsKey(name);
 	}
 
+	public string MemoryDump() {
+		return $"memory dump: \n{string.Join("\n", Data)}";
+	}
+
 	/// <summary>
 	/// Returns data value if found, otherwise error
 	/// </summary>
 	public Data Get(string name) {
-		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: getting {name}", Color.yellow);
+		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: getting {name}\n{MemoryDump()}", Color.yellow);
 
 		if (StaticData.ContainsKey(name)) {
 			Data staticCopy = StaticData[name].Copy();
@@ -97,7 +100,7 @@ public class Memory {
 	}
 
 	public Data Set(string name, Data data) {
-		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: setting {name} {data}", Color.yellow);
+		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: name setting {name} {data}\n{MemoryDump()}", Color.yellow);
 
 		if (StaticData.ContainsKey(name))
 			return Errors.CannotSetBuiltin("value", name);
@@ -112,15 +115,15 @@ public class Memory {
 	}
 
 	public Data Set(Reference reference, Data data) {
-		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: setting {reference.Name} {data}", Color.yellow);
+		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: ref setting {reference.Name} {data}\n{MemoryDump()}", Color.yellow);
 
 		if (reference.Name == "")
 			return Errors.CannotSetLiteral();
 		if (StaticTypes.ContainsKey(reference.Name))
 			return Errors.CannotOverwriteBuiltin(reference.Name);
 
-		data.Memory = this;
-		return reference.SetData(data);
+		//data.Memory = this; // this might have served a purpose but comment it once i figure out what it was
+		return reference.SetData(this, data);
 	}
 
 	public Data NewType(Type type) {

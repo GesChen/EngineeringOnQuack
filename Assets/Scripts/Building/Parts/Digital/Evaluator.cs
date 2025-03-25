@@ -162,7 +162,7 @@ public class Evaluator : MonoBehaviour {
 	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
 
-		Data declChecks = DeclarationChecks(line.Tokens, memory);
+		Data declChecks = DeclarationChecks(line.Tokens);
 		if (declChecks is Error ||
 			declChecks.Flags != Flags.None) // check passed
 			return declChecks;
@@ -285,7 +285,7 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 
-	private Data DeclarationChecks(List<Token> tokens, Memory memory) {
+	private Data DeclarationChecks(List<Token> tokens) {
 		// check for function, inline function, or class
 
 		(int colonIndex, _) = FindAndCountOperator(tokens, Operator.Ops.Colon);
@@ -638,7 +638,7 @@ public class Evaluator : MonoBehaviour {
 						foreach (Data key in (evalList as Primitive.List).Value) {
 							Data trygetvalue = Interpreter.RunFunction(
 								memory,
-								new Primitive.Function(Primitive.Dict.get),
+								new Primitive.Function("get", Primitive.Dict.get),
 								leftAsDict,
 								new() { key });
 							if (trygetvalue is Error) return trygetvalue;
@@ -694,7 +694,9 @@ public class Evaluator : MonoBehaviour {
 
 		List<Data> args = (evalArgs as Primitive.List).Value;
 
-		Data run = Interpreter.RunFunction(leftRef.ThisReference.Memory, func, leftRef.ThisReference, args, retainMemory: true); // might change this retian later 
+		Memory context = leftRef.IsInstanceVariable ? leftRef.ParentReference.Memory : memory;
+
+		Data run = Interpreter.RunFunction(context, func, leftRef.ParentReference, args, retainMemory: true); // might change this retian later 
 		run.ClearFlags();
 		return run;
 	}

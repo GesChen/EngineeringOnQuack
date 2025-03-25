@@ -36,15 +36,21 @@ public class Interpreter : Part {
 		int depth = 0,
 		bool retainMemory = false) {
 
+		if (LanguageConfig.DEBUG) HF.LogColor($"Running function {function.Name}", Color.yellow);
+
 		// handle different function types
 		switch (function.FunctionType) {
 			case Primitive.Function.FunctionTypeEnum.Internal:
 				return function.InternalFunction.Invoke(thisReference, args);
 
 			case Primitive.Function.FunctionTypeEnum.Constructor:
+				if (LanguageConfig.DEBUG) HF.LogColor($"Constructing {function.TypeFor.Name}", Color.yellow);
+
 				Data newObject = new(function.TypeFor) {
 					Memory = new(memory.InterpreterCC, "object memory")
 				};
+				Memory originalUse = Data.currentUseMemory;
+				Data.currentUseMemory = newObject.Memory;
 
 				// DONT INFINITE RECURSE!!!
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.UserDefined;
@@ -57,9 +63,12 @@ public class Interpreter : Part {
 					depth + 1,
 					true);
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.Constructor;
+				Data.currentUseMemory = originalUse;
 
 				if (runConstructor is Error)
 					return runConstructor;
+
+				if (LanguageConfig.DEBUG) HF.LogColor($"Constructed new {function.TypeFor.Name} object: {newObject}", Color.yellow);
 
 				return newObject;
 		}
@@ -125,6 +134,8 @@ public class Interpreter : Part {
 		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
 			return Errors.RecursionLimitReached();
 
+		if (LanguageConfig.DEBUG) HF.LogColor($"--Running {section}", Color.yellow);
+
 		Line[] lines = section.Lines;
 		InternalState state = new();
 
@@ -132,7 +143,7 @@ public class Interpreter : Part {
 		while (i < lines.Length) {
 			Line line = lines[i];
 
-			if (LanguageConfig.DEBUG) HF.LogColor($"{i} running {line} ", Color.cyan);
+			if (LanguageConfig.DEBUG) HF.LogColor($"{depth}.{i} running {line} ", Color.cyan);
 
 			#region prechecks
 			// line type check
@@ -283,7 +294,7 @@ public class Interpreter : Part {
 					int functionDefStartIndex = (int)(formattedOutput[2] as Primitive.Number).Value;
 					Token[] functionDef = line.Tokens.Skip(functionDefStartIndex).ToArray();
 
-					memory.Set(name, new Primitive.Function(newparams, functionDef));
+					memory.Set(name, new Primitive.Function(name, newparams, functionDef));
 				}
 				else if (CheckFlag(nFlags, Flags.MakeClass)) {
 					string name = (output as Primitive.String).Value;
@@ -322,13 +333,15 @@ public class Interpreter : Part {
 					state.ForLoopNext = false;
 				}
 				else if (state.MakeFunction) {
-					Primitive.Function newFunction = new(state.NewFuncParams, line.Section);
+					Primitive.Function newFunction = new(state.NewName, state.NewFuncParams, line.Section);
 					Data trySet = memory.Set(state.NewName, newFunction);
 					if (trySet is Error) return trySet;
 
 					state.MakeFunction = false;
 				}
 				else if (state.MakeClass) {
+					if (LanguageConfig.DEBUG) HF.LogColor($"Constructing class {state.NewName}", Color.yellow);
+
 					Memory originallyUsing = Data.currentUseMemory;
 					Memory classMemory = new (memory.InterpreterCC, "class init memory");
 					Data.currentUseMemory = classMemory;
@@ -340,6 +353,7 @@ public class Interpreter : Part {
 					// check if constructor was defined when it ran
 					if (classMemory.Get(state.NewName) is Primitive.Function tryGetConstructor) {
 						Primitive.Function constructor = new(
+							state.NewName,
 							tryGetConstructor.Parameters,
 							tryGetConstructor.Script,
 							newType);
@@ -347,8 +361,11 @@ public class Interpreter : Part {
 					}
 
 					Data makeNewType = memory.NewType(newType);
+					if (LanguageConfig.DEBUG) HF.LogColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);
 
 					Data.currentUseMemory = originallyUsing;
+
+					state.MakeClass = false;
 				}
 				else { // run once
 					Data trySection = RunSection(memory, line.Section, depth);
