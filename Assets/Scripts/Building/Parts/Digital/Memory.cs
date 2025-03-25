@@ -4,6 +4,8 @@ using UnityEngine;
 using static Token;
 
 public class Memory {
+	public string Nick; // nickname for debugging, remove in final
+
 	public CableConnection InterpreterCC;
 	public Interpreter GetInterpreter()
 		=> InterpreterCC.Cable.OtherCC(InterpreterCC).Part as Interpreter;
@@ -49,14 +51,16 @@ public class Memory {
 		foreach (Data d in Data.Values) d.Memory = this;
 	}
 
-	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types) {
+	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types, string nick) {
 		Data = data;
 		Types = types;
+		Nick = nick;
 	}
-	public Memory(CableConnection interpreterCC) {
+	public Memory(CableConnection interpreterCC, string nick) {
 		Data = new();
 		Types = new();
 		InterpreterCC = interpreterCC;
+		Nick = nick;
 	}
 	public Memory(Memory original) {
 
@@ -65,7 +69,8 @@ public class Memory {
 	public Memory Copy() {
 		return new(
 			new Dictionary<string, Data>(Data),
-			new Dictionary<string, Type>(Types)
+			new Dictionary<string, Type>(Types),
+			$"copy of {Nick}"
 			);
 	}
 
@@ -77,6 +82,8 @@ public class Memory {
 	/// Returns data value if found, otherwise error
 	/// </summary>
 	public Data Get(string name) {
+		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: getting {name}", Color.yellow);
+
 		if (StaticData.ContainsKey(name)) {
 			Data staticCopy = StaticData[name].Copy();
 			staticCopy.Memory = this;
@@ -90,6 +97,8 @@ public class Memory {
 	}
 
 	public Data Set(string name, Data data) {
+		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: setting {name} {data}", Color.yellow);
+
 		if (StaticData.ContainsKey(name))
 			return Errors.CannotSetBuiltin("value", name);
 		if (StaticTypes.ContainsKey(name))
@@ -97,13 +106,14 @@ public class Memory {
 		if (Types.ContainsKey(name))
 			return Errors.CannotSetType(name);
 
-		if (LanguageConfig.DEBUG) Debug.Log($"data set {name} {data}");
 		Data[name] = data;
 
 		return global::Data.Success;
 	}
 
 	public Data Set(Reference reference, Data data) {
+		if (LanguageConfig.DEBUG) HF.LogColor($"{Nick}: setting {reference.Name} {data}", Color.yellow);
+
 		if (reference.Name == "")
 			return Errors.CannotSetLiteral();
 		if (StaticTypes.ContainsKey(reference.Name))

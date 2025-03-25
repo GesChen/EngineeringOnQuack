@@ -22,7 +22,7 @@ public class Data : Token {
 	}
 	public Data(Type type) {
 		Type				= type;
-		Memory				= new(currentUseMemory?.InterpreterCC);
+		Memory				= new(currentUseMemory?.InterpreterCC, "data's memory");
 		Flags				= Flags.None;
 	}
 	public Data(Data original) { // copy constructor

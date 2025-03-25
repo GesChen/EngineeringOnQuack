@@ -139,7 +139,7 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	public Data Evaluate(Line line, Memory memory, bool makeCopy = true, int depth = 0) {
-		if (LanguageConfig.DEBUG) Debug.Log($"Evaluating {line.TokenList()}");
+		if (LanguageConfig.DEBUG) HF.LogColor($"Evaluating {line.TokenList()}", Color.green);
 
 		if (makeCopy)
 			line = line.DeepCopy();
@@ -228,7 +228,7 @@ public class Evaluator : MonoBehaviour {
 				
 				// decimal / member handling
 				case Actions.DotOperator:
-					Data tryHandleDotOperator = HandleDotOperator(localActionContext);
+						Data tryHandleDotOperator = HandleDotOperator(localActionContext);
 					if (tryHandleDotOperator is Error) return tryHandleDotOperator;
 					break;
 
@@ -694,7 +694,7 @@ public class Evaluator : MonoBehaviour {
 
 		List<Data> args = (evalArgs as Primitive.List).Value;
 
-		Data run = Interpreter.RunFunction(memory, func, leftRef.ParentReference, args);
+		Data run = Interpreter.RunFunction(leftRef.ThisReference.Memory, func, leftRef.ThisReference, args, retainMemory: true); // might change this retian later 
 		run.ClearFlags();
 		return run;
 	}
@@ -826,7 +826,8 @@ public class Evaluator : MonoBehaviour {
 		Data runFunction = Interpreter.RunFunction(
 			memory, 
 			F, 
-			left, new() { right }
+			left, 
+			new() { right }
 		);
 		return runFunction;
 	}
@@ -953,7 +954,7 @@ public class Evaluator : MonoBehaviour {
 		return Data.Success;
 	}
 
-	private Data HandleKeywords	(ref List<Token> tokens, Keyword kw) {
+	private Data HandleKeywords		(ref List<Token> tokens, Keyword kw) {
 		return kw.Value switch {
 			Keyword.Kws.If			=> HandleIf			(ref tokens),
 			Keyword.Kws.Else		=> HandleElse		(ref tokens),
@@ -994,7 +995,7 @@ public class Evaluator : MonoBehaviour {
 								Flags.Fail
 								);
 	}
-	private Data HandleElse		(ref List<Token> tokens) {
+	private Data HandleElse			(ref List<Token> tokens) {
 		// check if this is else if
 		if (tokens.Count > 1 &&
 			tokens[1] is Keyword kw && kw.Value == Keyword.Kws.If)
@@ -1033,7 +1034,7 @@ public class Evaluator : MonoBehaviour {
 								Flags.Fail
 								);
 	}
-	private Data HandleFor		(ref List<Token> tokens) {
+	private Data HandleFor			(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 3 ||
 			!(tokens[1] is Reference R &&
@@ -1070,14 +1071,14 @@ public class Evaluator : MonoBehaviour {
 
 		return Data.Fail.CopyWithFlags(Flags.Break);
 	}
-	private Data HandleContinue	(ref List<Token> tokens) {
+	private Data HandleContinue		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
 			return Errors.BadSyntaxFor("continue statement");
 
 		return Data.Success.CopyWithFlags(Flags.Continue);
 	}
-	private Data HandlePass		(ref List<Token> tokens) {
+	private Data HandlePass			(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
 			return Errors.BadSyntaxFor("pass statement");
@@ -1095,7 +1096,7 @@ public class Evaluator : MonoBehaviour {
 
 		return R.ThisReference.CopyWithFlags(Flags.Return);
 	}
-	private Data HandleTry		(ref List<Token> tokens) {
+	private Data HandleTry			(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
@@ -1111,7 +1112,7 @@ public class Evaluator : MonoBehaviour {
 
 		return Data.Success.CopyWithFlags(Flags.Except);
 	}
-	private Data HandleFinally	(ref List<Token> tokens) {
+	private Data HandleFinally		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))

@@ -33,7 +33,8 @@ public class Interpreter : Part {
 		Primitive.Function function,
 		Data thisReference,
 		List<Data> args,
-		int depth = 0) {
+		int depth = 0,
+		bool retainMemory = false) {
 
 		// handle different function types
 		switch (function.FunctionType) {
@@ -41,17 +42,22 @@ public class Interpreter : Part {
 				return function.InternalFunction.Invoke(thisReference, args);
 
 			case Primitive.Function.FunctionTypeEnum.Constructor:
-				Data newObject = new(function.TypeFor);
+				Data newObject = new(function.TypeFor) {
+					Memory = new(memory.InterpreterCC, "object memory")
+				};
 
-				// DONT INFINITE RECUSE!!!
-				function.FunctionType = Primitive.Function.FunctionTypeEnum.UserDefined; 
+				// DONT INFINITE RECURSE!!!
+				function.FunctionType = Primitive.Function.FunctionTypeEnum.UserDefined;
 
 				Data runConstructor = RunFunction(
 					newObject.Memory,
 					function,
 					newObject,
 					args,
-					depth + 1);
+					depth + 1,
+					true);
+				function.FunctionType = Primitive.Function.FunctionTypeEnum.Constructor;
+
 				if (runConstructor is Error)
 					return runConstructor;
 
@@ -65,7 +71,8 @@ public class Interpreter : Part {
 		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
 
 		Data trySet;
-		Memory memoryCopy = memory.Copy();
+		Memory memoryCopy = retainMemory ? memory : memory.Copy();
+
 		for (int a = 0; a < args.Count; a++) {
 			trySet = memoryCopy.Set(function.Parameters[a], args[a]);
 			if (trySet is Error) return trySet;
@@ -125,7 +132,7 @@ public class Interpreter : Part {
 		while (i < lines.Length) {
 			Line line = lines[i];
 
-			if (LanguageConfig.DEBUG) Debug.Log($"{i} running {line} ");
+			if (LanguageConfig.DEBUG) HF.LogColor($"{i} running {line} ", Color.cyan);
 
 			#region prechecks
 			// line type check
@@ -322,13 +329,16 @@ public class Interpreter : Part {
 					state.MakeFunction = false;
 				}
 				else if (state.MakeClass) {
-					Memory copyForRun = memory.Copy();
-					Data trySection = RunSection(copyForRun, line.Section, depth);
-					
-					Type newType = new(state.NewName, copyForRun);
+					Memory originallyUsing = Data.currentUseMemory;
+					Memory classMemory = new (memory.InterpreterCC, "class init memory");
+					Data.currentUseMemory = classMemory;
+
+					Data trySection = RunSection(classMemory, line.Section, depth);
+
+					Type newType = new(state.NewName, classMemory);
 					
 					// check if constructor was defined when it ran
-					if (copyForRun.Get(state.NewName) is Primitive.Function tryGetConstructor) {
+					if (classMemory.Get(state.NewName) is Primitive.Function tryGetConstructor) {
 						Primitive.Function constructor = new(
 							tryGetConstructor.Parameters,
 							tryGetConstructor.Script,
@@ -337,6 +347,8 @@ public class Interpreter : Part {
 					}
 
 					Data makeNewType = memory.NewType(newType);
+
+					Data.currentUseMemory = originallyUsing;
 				}
 				else { // run once
 					Data trySection = RunSection(memory, line.Section, depth);

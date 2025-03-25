@@ -23,7 +23,7 @@ public class ScriptSaveLoad : MonoBehaviour
 		//public bool IsInstanceVariable;
 		//public bool IsListItem;
 
-		[JsonProperty("N")] public string Name;
+		//[JsonProperty("N")] public string Name;
 		[JsonProperty("TR")] public sData ThisReference;
 		//public sData ParentReference;
 		//public int ListIndex;
@@ -128,7 +128,6 @@ public class ScriptSaveLoad : MonoBehaviour
 
 						newToken.Type = 3;
 						newToken.ReferenceValue = new() {
-							Name = d.Name,
 							ThisReference = newData
 						};
 					}

@@ -50,6 +50,9 @@ public partial class Token {
 		public static Reference ExistingGlobalReference(string name, Data data)
 			=> new(true, false, false, name, data, null, -1);
 
+		public static Reference ExistingGlobalReference(Data data)
+			=> new(true, false, false, "", data, null, -1);
+
 		public static Reference NewGlobalReference(string name)
 			=> new(false, false, false, name, null, null, -1);
 

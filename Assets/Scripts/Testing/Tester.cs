@@ -14,6 +14,8 @@ public class Tester : MonoBehaviour {
 	public bool usefp1;
 	public string filepath1;
 	public string filepath2;
+	public string logpath1;
+	public string logpath2;
 	[TextArea]
 	public List<string> testCases = new();
 	public int useTestCase;
@@ -84,6 +86,14 @@ public class Tester : MonoBehaviour {
 				if (output is Error) print(output);
 				script = scriptOut;
 
+				if (script != null) {
+					using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
+					{
+						string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
+						sw.Write(json);
+					}
+				}
+
 				HF.LogColor($"test updated to testcase file", colors[1]);
 				print($"updated script: \n{script}");
 			}
@@ -108,22 +118,10 @@ public class Tester : MonoBehaviour {
 	}
 	void ToTest() {
 
-		print(ScriptSaveLoad.ConvertScriptToJson(script, false));
-
-		string json = ScriptSaveLoad.ConvertScriptToString(script);
-		print(json);
-
-		Script s = ScriptSaveLoad.ConvertStringToScript(json);
-
-		string jsonagain = ScriptSaveLoad.ConvertScriptToString(s);
-		print(jsonagain);
-
-		print(json == jsonagain);
-
-		/*	Data run = interpreter.Run(memory.component, script);
+		Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)
 			print($"run out:" + run);
-*/
+
 	}
 
 	/*

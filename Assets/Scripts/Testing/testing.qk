@@ -7,9 +7,9 @@ test:
         print("constructed " + str(x))
 
     something(y):
-        breakpoint()
         print(a + y)
         print("nuts")
 
+breakpoint()
 thing = test(1)
 thing.something(2)

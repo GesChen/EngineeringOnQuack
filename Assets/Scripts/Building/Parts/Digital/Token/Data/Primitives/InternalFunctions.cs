@@ -105,7 +105,7 @@ public static class InternalFunctions
 	}
 
 	public static Data breakpoint(Data _, List<Data> __) {
-		Debug.Log("[INTERNAL] breakpoint hit");
+		Debug.Log(	"[INTERNAL] breakpoint hit");
 		return Data.Success;
 	}
 }
