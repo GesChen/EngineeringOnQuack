@@ -8,6 +8,8 @@ using System;
 using System.Runtime.InteropServices;
 
 public class Tester : MonoBehaviour {
+	public bool boo;
+
 	public bool testFile;
 	public bool usefp1;
 	public string filepath1;
@@ -106,8 +108,17 @@ public class Tester : MonoBehaviour {
 	}
 	void ToTest() {
 
-		ScriptSaveLoad.sScript s = ScriptSaveLoad.ConvertScriptToStruct(script);
-		print(s);
+		print(ScriptSaveLoad.ConvertScriptToJson(script, false));
+
+		string json = ScriptSaveLoad.ConvertScriptToString(script);
+		print(json);
+
+		Script s = ScriptSaveLoad.ConvertStringToScript(json);
+
+		string jsonagain = ScriptSaveLoad.ConvertScriptToString(s);
+		print(jsonagain);
+
+		print(json == jsonagain);
 
 		/*	Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)

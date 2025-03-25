@@ -33,6 +33,12 @@ public class Line
 		LineType = LineTypeEnum.Section;
 		Section = section;
 	}
+	public Line() {
+		RealLineNumber = -1;
+		OriginalString = "";
+		LineType = LineTypeEnum.Line;
+		Section = null;
+	}
 
 	public Line CopyWithNewTokens(List<Token> newTokens) {
 		return new(
