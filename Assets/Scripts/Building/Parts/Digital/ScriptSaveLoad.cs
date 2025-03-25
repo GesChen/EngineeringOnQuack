@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Linq;
 
 public class ScriptSaveLoad : MonoBehaviour
 {
@@ -222,6 +223,66 @@ public class ScriptSaveLoad : MonoBehaviour
 		}
 
 		return new(lines.ToArray());
+	}
+
+	#endregion
+
+	#region Reconstruction (for fun)
+
+	public static string ReconstructString(string str) {
+		return ReconstructScript(ConvertStringToScript(str));
+	}
+	public static string ReconstructJson(string json) {
+		return ReconstructScript(ConvertJsonToScript(json));
+	}
+	public static string ReconstructScript(Script script) {
+		return ReconstructStruct(ConvertScriptToStruct(script));
+	}
+	public static string ReconstructStruct(sScript script) {
+		List<string> reconstructedLines = ReconstructSection(script.Contents);
+
+		return string.Join('\n', reconstructedLines);
+	}
+	public static List<string> ReconstructSection(sSection section) {
+		List<string> strings = new();
+
+		foreach (sLine sl in section.Lines) {
+			if (sl.Type == 0) {
+				string line = "";
+				
+				for (int s = 0; s < sl.Tokens.Length; s++) {
+					sToken st = sl.Tokens[s];
+
+					static bool space(string op) => op switch { "." or "(" or ")" or ":" => false, _ => true };
+
+					// ive seen worse code
+					bool addspace =
+						(s != sl.Tokens.Length - 1 && sl.Tokens[s + 1].Type == 0 && space(sl.Tokens[s + 1].StringValue)) ||
+						(st.Type == 0 && space(st.StringValue));
+
+					line += st.Type switch {
+						0 or 1 or 2 => st.StringValue,
+						3 => st.ReferenceValue.ThisReference.PrimitiveType == 0 ?
+							st.ReferenceValue.ThisReference.NumberValue.ToString() :
+							'"' + st.ReferenceValue.ThisReference.StringValue + '"',
+						_ => ""
+					} + (addspace ? " " : "");
+				}
+
+				strings.Add(line);
+			}
+			else {
+				List<string> subSection = ReconstructSection(sl.Section);
+
+				// indent section
+				subSection = subSection.Select(s => new string(' ', LanguageConfig.SpacesPerTab) + s).ToList();
+
+				// add to end
+				strings.AddRange(subSection);
+			}
+		}
+
+		return strings;
 	}
 
 	#endregion
