@@ -1,12 +1,16 @@
 public static class Errors {
 	public static Error Custom(string message)
 		=> new(message);
+	public static Error NoScriptLoaded()
+		=> new($"[INTERNAL] No script loaded");
 	public static Error InvalidArgumentCount(string funcName, int expected, int got)
 		=> new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got)
 		=> new($"Function \"{funcName}\" expects {expected} in argument {index}, got {got} instead");
-	public static Error UnknownVariable(string name)
-		=> new($"Unknown variable \"{name}\"");
+	public static Error UnknownName(Token.Reference reference)
+		=> new($"Unknown name \"{reference.Name}\"");
+	public static Error UnknownName(string name)
+		=>	new($"Unknown name \"{name}\"");
 	public static Error InvalidCast(string from, string to)
 		=> new($"Cannot cast a {from} to a {to}");
 	public static Error CannotParseValueAs(string value, string @as)
@@ -23,12 +27,20 @@ public static class Errors {
 		=> new($"Cannot index with {type}, must be whole numbers");
 	public static Error IndexOutOfRange(int attempt)
 		=> new($"Index out of range: {attempt}");
-	public static Error CannotSetMemberOfPrimitive(string membername)
-		=> new($"Cannot set a member of a primitive value: {membername}");
+	public static Error CannotSetMemberOfBuiltin(string membername)
+		=> new($"Cannot set a member of a builtin type: {membername}");
+	public static Error CannotOverwriteBuiltin(string name)
+		=> new($"Cannot overwrite builtin type {name}");
+	public static Error CannotSetLiteral()
+		=> new($"Cannot set a literal to another value");
+	public static Error CannotSetBuiltin(string thing, string name)
+		=> new($"Cannot set a builtin {thing} ({name}) to a value");
+	public static Error CannotSetType(string name)
+		=> new($"Cannot set a type ({name}) to another value");
 	public static Error InvalidUseOfOperator(string op)
 		=> new($"Invalid use of operator {op}");
 	public static Error InvalidCharacter(char c)
-		=> new($"Invalid character {HF.GetStringRepresentation(c.ToString())}");
+		=> new($"Invalid character {HF.Repr(c.ToString())}");
 	public static Error MismatchedSomething(string mismatched)
 		=> new($"Mismatched {mismatched}");
 	public static Error VarNameCannotStartWithNum()
@@ -57,6 +69,18 @@ public static class Errors {
 		=> new($"Division by zero");
 	public static Error Expected(string what, string where)
 		=> new($"Expected {what} {where}");
+	public static Error Expected(string what)
+		=> new($"Expected {what}");
+	public static Error Unexpected(string what, string where)
+		=> new($"Unexpected {what} {where}");
+	public static Error Unexpected(string what)
+		=> new($"Unexpected {what}");
+	public static Error WhileLoopLimitReached()
+		=> new($"While loop iterations limit reached: {LanguageConfig.MaxWhileLoopIters}");
+	public static Error RecursionLimitReached()
+		=> new($"Recursion depth limit reached: {LanguageConfig.RecursionDepthLimit}");
+	public static Error TypeCannotBeUsedAsVariable(string name)
+		=> new($"Type {name}cannot be used as variable");
 	public static Error template()
 		=> new($"");
 }

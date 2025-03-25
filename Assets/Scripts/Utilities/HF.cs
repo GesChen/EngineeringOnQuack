@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -29,8 +30,15 @@ public static class HF {
 		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 	#endregion
 
-	public static void LogColor(string str, Color color) {
+	private static void OldLogColor(string str, Color color) {
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
+	}
+
+	public static void LogColor(string str, Color color) {
+		string colorTag = string.Format("<color=#{0:X2}{1:X2}{2:X2}>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f));
+		string[] lines = str.Split('\n');
+		string coloredText = string.Join("\n", lines.Select(line => colorTag + line + "</color>"));
+		Debug.Log(coloredText);
 	}
 
 	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices) {
@@ -132,20 +140,18 @@ public static class HF {
 		originalList.InsertRange(startIndexInc, replacementList);
 	}
 
-	public static bool VariableNameIsValid(string name) {
-		/* naming convention:
-		 - starts either with letter or _
-		 - following characters can be letter, number or _
-		 - variable names are case sensitive
-		*/
-		if (string.IsNullOrWhiteSpace(name)) return false;
-		if (!(char.IsLetter(name[0]) || name[0] == '_')) return false;
+	/*public static List<T> FasterReplaceRange<T>(List<T> values, int startIndexInc, int endIndexInc, T[] replacement) {
+		if (endIndexInc < startIndexInc) throw new("End index cannot be before start");
+		int count = endIndexInc - startIndexInc + 1;
 
-		foreach (char c in name)
-			if (!(char.IsLetter(c) || char.IsDigit(c) || c == '_')) return false;
+		T[] original = values.ToArray();
+		T[] replaced = new T[values.Count - count + replacement.Length];
+		Array.Copy(original, replaced, startIndexInc - 1);
+		Array.Copy(replacement, 0, replaced, startIndexInc, replacement.Length);
+		Array.Copy(original, endIndexInc + 1, replaced, startIndexInc + replacement.Length, original.Length - endIndexInc);
 
-		return true;
-	}
+		return replaced.ToList();
+	}*/
 
 	public static bool FasterStartsWith(string target, string prefix) {
 		if (target == null || prefix == null) return false;
@@ -157,14 +163,13 @@ public static class HF {
 		return true;
 	}
 
-	public static string GetStringRepresentation(string input) {
+	public static string Repr(string input) {
 		return input
 			.Replace("\t", @"\t")
 			.Replace("\n", @"\n")
 			.Replace("\r", @"\r")
 			.Replace("\v", @"\v")
 			.Replace("\f", @"\f")
-			.Replace("\0", @"\0")
-			.Replace(" ", @"\u0020");
+			.Replace("\0", @"\0");
 	}
 }

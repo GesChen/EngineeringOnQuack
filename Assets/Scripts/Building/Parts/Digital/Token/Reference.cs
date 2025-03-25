@@ -36,8 +36,22 @@ public partial class Token {
 			ListIndex = listIndex;
 		}
 
+		public Reference Copy() {
+			return new(
+				Exists,
+				IsInstanceVariable,
+				IsListItem,
+				Name,
+				ThisReference,
+				ParentReference,
+				ListIndex);
+		}
+
 		public static Reference ExistingGlobalReference(string name, Data data)
 			=> new(true, false, false, name, data, null, -1);
+
+		public static Reference ExistingGlobalReference(Data data)
+			=> new(true, false, false, "", data, null, -1);
 
 		public static Reference NewGlobalReference(string name)
 			=> new(false, false, false, name, null, null, -1);
@@ -53,7 +67,7 @@ public partial class Token {
 
 		public Data GetData() {
 			if (!Exists)
-				return Errors.UnknownVariable(Name);
+				return Errors.UnknownName(Name);
 
 			if (IsListItem) {
 				if (ParentReference is not Primitive.List parentList)
@@ -67,7 +81,7 @@ public partial class Token {
 			return ThisReference;
 		}
 
-		public Data SetData(Data data) {
+		public Data SetData(Memory memory, Data data) {
 			if (IsListItem) {
 				if (ParentReference is not Primitive.List parentList)
 					return Errors.CannotIndex(ParentReference.Type.Name);
@@ -84,9 +98,11 @@ public partial class Token {
 			}
 
 			else { // global variable
-				data.Memory.Set(Name, data); // set the name in the memory where the data is from, might help?
+				Data trySet = memory.Set(Name, data); // set the name in the memory where the data is from, might help?
+				if (trySet is Error) return trySet;
 			}
 
+			Exists = true;
 			ThisReference = data; // re reference the new data object
 			return ThisReference;
 		}

@@ -61,7 +61,7 @@ public partial class Token {
 		{
 			".",
 			",",
-			"...",
+			"..",
 			":"
 		};
 		public static readonly List<string> AllOperatorStrings			= new()
@@ -333,7 +333,7 @@ public partial class Token {
 				"}"		=> Ops.CloseBrace			,
 				"."		=> Ops.Dot					,
 				","		=> Ops.Comma				,
-				"..."	=> Ops.Ellipsis				,
+				".."	=> Ops.Ellipsis				,
 				":"		=> Ops.Colon				,
 				_		=> Ops.None
 			};

@@ -21,10 +21,42 @@ public partial class Token {
 		};
 		public static readonly HashSet<string> KeywordsHashSet = new(Keywords);
 
+		public enum Kws {
+			None,
+			If,
+			Else,
+			For,
+			While,
+			Break,
+			Continue,
+			Pass,
+			Return,
+			Try,
+			Except,
+			Finally,
+			Raise,
+		}
+
+		public Kws Value;
 		public string StringValue;
 
 		public Keyword(string keyword) {
 			StringValue = keyword;
+			Value = keyword switch {
+				"if"		=> Kws.If,
+				"else"		=> Kws.Else,
+				"for"		=> Kws.For,
+				"while"		=> Kws.While,
+				"break"		=> Kws.Break,
+				"continue"	=> Kws.Continue,
+				"pass"		=> Kws.Pass,
+				"return"	=> Kws.Return,
+				"try"		=> Kws.Try,
+				"except"	=> Kws.Except,
+				"finally"	=> Kws.Finally,
+				"raise"		=> Kws.Raise,
+				_ => Kws.None
+			};
 		}
 
 		public override string ToString() {

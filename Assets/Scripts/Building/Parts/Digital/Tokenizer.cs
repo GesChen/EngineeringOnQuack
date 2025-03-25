@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using System.Linq;
-using System.Drawing;
 
 public class Tokenizer {
 	public string RemoveComments(string lines) {
@@ -55,23 +54,8 @@ public class Tokenizer {
 		'=', '!', '>', '<',						   // comparison
 		'&', '|',								  // logic
 		'(', ')', '[', ']', '{', '}',			 // region
-		'.', ',', ':'							// special
+		'.', ',', ':'                           // special
 	};
-	/*static readonly char singlequote = @"'"[0];
-	static readonly HashSet<char> regionchars = new() {
-		'(', ')', '[', ']', '{', '}', '"', singlequote
-	};
-	static readonly Dictionary<char, char> regionpairs = new() {
-		{'(' , ')'}, {'[', ']'}, {'{' , '}'}, {'"' , '"'}, {singlequote , singlequote}
-	};
-	string regionName(char c) => c switch {
-		'(' => "parentheses",
-		'[' => "brackets",
-		'{' => "braces",
-		'"' or '\'' => "quotes",
-		_ => ""
-	};*/
-
 	public (List<Token>, Data) TokenizeLine(string line) {
 		// line has been stripped and preprocessed already
 
@@ -160,49 +144,6 @@ public class Tokenizer {
 			}
 			if (c != ' ') sb.Append(c); // add char to sb after and if its not space
 
-			// old code for region symbol custom processing, no more subexpressions now
-			/*// c is region symbol -> find entire region and process as own token
-			if (type == 3) {
-				sb.Clear(); // reset sb
-
-				int start = i;
-				char lookfor = regionpairs[c]; // determine end char
-				i++;
-				while (i < line.Length && line[i] != lookfor) i++; // increase i until eol or end char
-				if (i == line.Length) // eol, mismatched
-					return (null, Errors.MismatchedSomething(regionName(c)));
-				i++;
-
-				string region = line[start..i];
-				region = region[1..^1]; // trim off ends
-
-				switch (c) {
-					case '(':
-					case '[':
-					case '{':
-						// add subexp wih proper source
-						(List<Token> subtokens, Data output) = TokenizeLine(region);
-						if (output is Error) return (null, output);
-
-						tokens.Add(new Token.SubExpression(subtokens,
-							c switch {
-								'(' => Token.SubExpression.Source.Parentheses,
-								'[' => Token.SubExpression.Source.Brackets,
-								'{' => Token.SubExpression.Source.Braces,
-								_ => Token.SubExpression.Source.Parentheses // idk how to error here :(
-							}));
-						break;
-
-					case '"':
-					case '\'':
-						// add string primitive
-
-						tokens.Add(new Primitive.String(region));
-						break;
-				}
-			}
-*/
-			
 			// still need custom string processing or else string contents get tokenized too
 			if (type == chartypes.str) {
 				sb.Clear(); // dont include ' in sb
@@ -283,40 +224,43 @@ public class Tokenizer {
 		while (i < lines.Length) {
 			string line = PreProcessLine(lines[i]);
 
-			if (string.IsNullOrEmpty(line)) { i++; continue; }
+			if (string.IsNullOrWhiteSpace(line)) { i++; continue; }
 
 			if (indentation(i) > startIndentation) {
 				List<string> subSecStrings = new();
-				int n = i; // get entire chunk of indented text
-				while (n < lines.Length && indentation(n) > startIndentation) {
-					subSecStrings.Add(lines[n]);
-					n++;
+				while (i < lines.Length && 
+					(indentation(i) > startIndentation || string.IsNullOrWhiteSpace(lines[i]))) {
+					subSecStrings.Add(lines[i]);
+					i++;
 				}
+				i--; // dont go into the next token
 
 				// recurse deeper sections, give starting index
-				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray(), n);
+				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray(), i);
 				if (output is Error) return (null, output);
 
-				sectionLines.Add(new(startLineNum + i, line, subsection)); // add a subsection
+				sectionLines.Add(new(startLineNum + i + 1, line, subsection)); // add a subsection
 			}
 			else {
 				(List<Token> tokens, Data output) = TokenizeLine(line);
 				if (output is Error) return (null, output);
 
-				sectionLines.Add(new(startLineNum + i, line, tokens));
+				sectionLines.Add(new(startLineNum + i + 1, line, tokens));
 			}
 
 			i++;
 		}
-		return (new(sectionLines), Data.Success);
+		return (new(sectionLines.ToArray()), Data.Success);
 	}
 
-	public (Section, Data) Tokenize(string lines) {
-		lines = RemoveComments(lines);
+	public (Script, Data) Tokenize(string text) {
+		text = RemoveComments(text);
 
-		(Section split, Data result) = SplitSection(lines.Split('\n'), 0);
+		(Section split, Data result) = SplitSection(text.Split('\n'), 0);
 		if (result is Error) return (null, result);
 
-		return (split, Data.Success);
+		Script newScript = new(split, text);
+
+		return (newScript, Data.Success);
 	}
 }

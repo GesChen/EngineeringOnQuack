@@ -14,7 +14,7 @@ public static class InternalFunctions
 		Data tryCast = args[0].Cast(Primitive.String.InternalType);
 		if (tryCast is Error) return tryCast;
 
-		Debug.Log((tryCast as Primitive.String).Value);
+		Debug.Log((tryCast as Primitive.String).Value); // lol dont delete this debug log LMAO
 		return Data.Success;
 	}
 
@@ -102,5 +102,10 @@ public static class InternalFunctions
 			min = Math.Min(min, n.Value);
 		}
 		return new Primitive.Number(min);
+	}
+
+	public static Data breakpoint(Data _, List<Data> __) {
+		Debug.Log(	"[INTERNAL] breakpoint hit");
+		return Data.Success;
 	}
 }

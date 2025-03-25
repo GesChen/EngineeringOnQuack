@@ -13,7 +13,7 @@ public class Type {
 
 	public Type(string name, Dictionary<string, Data> data) { // should be used for the primitives
 		Name = name;
-		Snapshot = new(data, null, null);
+		Snapshot = new(data, new(), "type snapshot");
 	}
 
 	public override string ToString() {

@@ -5,48 +5,56 @@ using System;
 
 public abstract partial class Primitive : Data {
 	public partial class String : Primitive {
+		public static String Default = new();
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("String", new Dictionary<string, Data>() {
-			{ "eq"			, new Function(eq)			},
-			{ "lt"			, new Function(lt)			},
-			{ "ad"			, new Function(ad)			},
-			{ "mu"			, new Function(mu)			},
-			{ "tostring"	, new Function(tostring)	},
-			{ "upper"		, new Function(upper)		},
-			{ "lower"		, new Function(lower)		},
-			{ "count"		, new Function(count)		},
-			{ "contains"	, new Function(contains)	},
-			{ "startswith"	, new Function(startswith)	},
-			{ "endswith"	, new Function(endswith)	},
-			{ "find"		, new Function(find)		},
-			{ "allletters"	, new Function(allletters)	},
-			{ "allnumbers"	, new Function(allnumbers)	},
-			{ "allsymbols"	, new Function(allsymbols)	},
-			{ "alllower"	, new Function(alllower)	},
-			{ "allupper"	, new Function(allupper)	},
-			{ "allspace"	, new Function(allspace)	},
-			{ "trimleft"	, new Function(trimleft)	},
-			{ "trimright"	, new Function(trimright)	},
-			{ "trim"		, new Function(trim)		},
-			{ "stripleft"	, new Function(stripleft)	},
-			{ "stripright"	, new Function(stripright)	},
-			{ "strip"		, new Function(strip)		},
-			{ "replace"		, new Function(replace)		},
-			{ "split"		, new Function(split)		}
+			{ "eq"			, new Function("eq"			, eq)			},
+			{ "lt"			, new Function("lt"			, lt)			},
+			{ "ad"			, new Function("ad"			, ad)			},
+			{ "mu"			, new Function("mu"			, mu)			},
+			{ "tostring"	, new Function("tostring"	, tostring)		},
+			{ "upper"		, new Function("upper"		, upper)		},
+			{ "lower"		, new Function("lower"		, lower)		},
+			{ "count"		, new Function("count"		, count)		},
+			{ "contains"	, new Function("contains"	, contains)		},
+			{ "startswith"	, new Function("startswith"	, startswith)	},
+			{ "endswith"	, new Function("endswith"	, endswith)		},
+			{ "find"		, new Function("find"		, find)			},
+			{ "allletters"	, new Function("allletters"	, allletters)	},
+			{ "allnumbers"	, new Function("allnumbers"	, allnumbers)	},
+			{ "allsymbols"	, new Function("allsymbols"	, allsymbols)	},
+			{ "alllower"	, new Function("alllower"	, alllower)		},
+			{ "allupper"	, new Function("allupper"	, allupper)		},
+			{ "allspace"	, new Function("allspace"	, allspace)		},
+			{ "trimleft"	, new Function("trimleft"	, trimleft)		},
+			{ "trimright"	, new Function("trimright"	, trimright)	},
+			{ "trim"		, new Function("trim"		, trim)			},
+			{ "stripleft"	, new Function("stripleft"	, stripleft)	},
+			{ "stripright"	, new Function("stripright"	, stripright)	},
+			{ "strip"		, new Function("strip"		, strip)		},
+			{ "replace"		, new Function("replace"	, replace)		},
+			{ "split"		, new Function("split"		, split)		}
 		});
-
-		public static String Default = new("");
-
 
 		public string Value; // internal value
 
 		public String(string value) : base(InternalType) { // default constructor
 			Value = value;
 		}
+		public String(String original) : base(original) {
+			Value = original.Value;
+		}
+		public String() : base(InternalType) {
+			Value = "";
+		}
 
 		public override string ToString() {
 			return (tostring(this, new()) as String).Value;
+		}
+
+		public override Data Copy() {
+			return new String(this);
 		}
 
 		#region methods
@@ -98,7 +106,7 @@ public abstract partial class Primitive : Data {
 		public static Data tostring(Data thisRef, List<Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
 
-			return thisRef;
+			return new String((thisRef as String).Value); // make sure its copied
 		}
 
 		public static Data upper(Data thisRef, List<Data> args) {

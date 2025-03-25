@@ -13,7 +13,7 @@ public class MemoryPart : Part {
 	public void Initialize(CableConnection interpreterCC) {
 		InterpreterCC = interpreterCC;
 
-		component = new(InterpreterCC);
+		component = new(InterpreterCC, "main memory");
 		component.Initialize();
 	}
 }

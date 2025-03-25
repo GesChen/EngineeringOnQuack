@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Line
 {
@@ -32,6 +33,12 @@ public class Line
 		LineType = LineTypeEnum.Section;
 		Section = section;
 	}
+	public Line() {
+		RealLineNumber = -1;
+		OriginalString = "";
+		LineType = LineTypeEnum.Line;
+		Section = null;
+	}
 
 	public Line CopyWithNewTokens(List<Token> newTokens) {
 		return new(
@@ -42,9 +49,12 @@ public class Line
 
 	public override string ToString() {
 		if (LineType == LineTypeEnum.Line)
-			return $"Line ({Tokens.Count}): {OriginalString}";
+			return $"Line {RealLineNumber} ({Tokens.Count}): {OriginalString}";
 		else
-			return $"SubSection: {Section}";
+			return $"Sub{Section}";
+	}
+	public string TokenList() {
+		return string.Join(" ", Tokens.Select(c=>$"<{c}>"));
 	}
 
 	public Line DeepCopy() {

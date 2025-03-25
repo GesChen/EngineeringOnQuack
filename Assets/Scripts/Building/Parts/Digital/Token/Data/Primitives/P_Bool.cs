@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 public abstract partial class Primitive : Data {
 	public partial class Bool : Primitive {
-		public static Bool Default = new(false);
+		public static Bool Default = new();
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("Bool", new Dictionary<string, Data>() {
-			{ "eq"			, new Function(eq)			},
-			{ "lt"			, new Function(lt)			},
-			{ "mu"			, new Function(mu)			},
-			{ "tostring"	, new Function(tostring)	}
+			{ "eq"			, new Function("eq", eq)			},
+			{ "lt"			, new Function("lt", lt)			},
+			{ "mu"			, new Function("mu", mu)			},
+			{ "tostring"	, new Function("tostring", tostring)	}
 		});
 
 		public bool Value; // internal value
@@ -18,9 +18,19 @@ public abstract partial class Primitive : Data {
 		public Bool(bool value) : base(InternalType) { // default constructor
 			Value = value;
 		}
+		public Bool(Bool original) : base(original) {
+			Value = original.Value;
+		}
+		public Bool() : base(InternalType) {
+			Value = false;
+		}
 
 		public override string ToString() {
 			return (tostring(this, new()) as String).Value;
+		}
+
+		public override Data Copy() {
+			return new Bool(this);
 		}
 
 		#region methods

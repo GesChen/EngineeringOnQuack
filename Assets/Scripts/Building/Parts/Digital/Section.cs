@@ -1,17 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Section
 {
-	public List<Line> Lines;
+	public Line[] Lines;
 
-	public Section(List<Line> lines)
+	public Section(Line[] lines)
 	{
 		Lines = lines;
 	}
+	public Section() {
+		Lines = new Line[0];
+	}
 
 	public override string ToString() {
-		return $"Section: {string.Join('\n', Lines)}";
+		// shitfuck linq magic
+		return $"Section ({Lines.Length}): {{\n{string.Join('\n', Lines.Select(L=>" "+L.ToString()).ToList())}\n}}";
 	}
 }

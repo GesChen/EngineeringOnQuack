@@ -1,23 +1,24 @@
 using System;
 
 [Flags]
-public enum Flags
-{
-	InLoop				= 1 << 0,
-	ExpectSectionNext	= 1 << 1,
-	ReturnData			= 1 << 2,
-	DontRunNextLine		= 1 << 3,
-	IfSucceeded			= 1 << 4,
-	IfFailed			= 1 << 5,
-	Error				= 1 << 6,
-	EnterFor			= 1 << 7,
-	EnterWhile			= 1 << 8,
-	Try					= 1 << 9,
-	TrySucceded			= 1 << 10,
-	TryFailed			= 1 << 11,
-	MakeFunction		= 1 << 12,
-	MakeClass			= 1 << 13,
-	SkipToEnd			= 1 << 14,
-	Break				= 1 << 15,
-	Continue			= 1 << 16
+public enum Flags {
+	None			= 1 << 0,
+	Success			= None			<< 1,
+	Fail			= Success		<< 1,
+	If				= Fail			<< 1,
+	Else			= If			<< 1,
+	For				= Else			<< 1,
+	While			= For			<< 1,
+	Break			= While			<< 1,
+	Continue		= Break			<< 1,
+	Pass			= Continue		<< 1,
+	Return			= Pass			<< 1,
+	Try				= Return		<< 1,
+	Except			= Try			<< 1,
+	Finally			= Except		<< 1,
+	Raise			= Finally		<< 1,
+
+	MakeFunction	= Raise			<< 1,
+	MakeInline		= MakeFunction	<< 1,
+	MakeClass		= MakeInline	<< 1,
 }

@@ -10,30 +10,33 @@ public abstract partial class Primitive : Data {
 
 		// defines internal type with name and memory
 		public static Type InternalType = new("List", new Dictionary<string, Data>() {
-			{ "eq"			, new Function(eq)			},
-			{ "lt"			, new Function(lt)			},
-			{ "ad"			, new Function(ad)			},
-			{ "mu"			, new Function(mu)			},
-			{ "tostring"	, new Function(tostring)	},
-			{ "todict"		, new Function(todict)		},
-			{ "add"			, new Function(add)			},
-			{ "clear"		, new Function(clear)		},
-			{ "contains"	, new Function(contains)	},
-			{ "count"		, new Function(count)		},
-			{ "extend"		, new Function(extend)		},
-			{ "find"		, new Function(find)		},
-			{ "inject"		, new Function(inject)		},
-			{ "insert"		, new Function(insert)		},
-			{ "remove"		, new Function(remove)		},
-			{ "removeall"	, new Function(removeall)	},
-			{ "removeindex"	, new Function(removeindex)	},
-			{ "reverse"		, new Function(reverse)		}
+			{ "eq"			, new Function("eq"				, eq)			},
+			{ "lt"			, new Function("lt"				, lt)			},
+			{ "ad"			, new Function("ad"				, ad)			},
+			{ "mu"			, new Function("mu"				, mu)			},
+			{ "tostring"	, new Function("tostring"		, tostring)		},
+			{ "todict"		, new Function("todict"			, todict)		},
+			{ "add"			, new Function("add"			, add)			},
+			{ "clear"		, new Function("clear"			, clear)		},
+			{ "contains"	, new Function("contains"		, contains)		},
+			{ "count"		, new Function("count"			, count)		},
+			{ "extend"		, new Function("extend"			, extend)		},
+			{ "find"		, new Function("find"			, find)			},
+			{ "inject"		, new Function("inject"			, inject)		},
+			{ "insert"		, new Function("insert"			, insert)		},
+			{ "remove"		, new Function("remove"			, remove)		},
+			{ "removeall"	, new Function("removeall"		, removeall)	},
+			{ "removeindex"	, new Function("removeindex"	, removeindex)	},
+			{ "reverse"		, new Function("reverse"		, reverse)		}
 		});
 
 		public List<Data> Value; // internal value
 
 		public List(List<Data> value) : base(InternalType) { // default constructor
 			Value = value;
+		}
+		public List(List original) : base(original) {
+			Value = original.Value;
 		}
 		public List() : base(InternalType) { // default constructor
 			Value = new();
@@ -45,6 +48,10 @@ public abstract partial class Primitive : Data {
 				return "List object";
 
 			return (tryInternal as String).Value;
+		}
+
+		public override Data Copy() {
+			return new List(this);
 		}
 
 		// methods
@@ -125,9 +132,12 @@ public abstract partial class Primitive : Data {
 				// try to cast the data at i to a string
 				Data casted = d.Cast(String.InternalType) as String;
 				if (casted is Error) return casted;
+				string castedString = (casted as String).Value;
+				if (d is String)
+					castedString = $"\"{castedString}\"";
 
 				// add the new string
-				builder.Append((casted as String).Value);
+				builder.Append(castedString);
 
 				if (i != L.Count - 1) builder.Append(", ");
 
@@ -197,7 +207,7 @@ public abstract partial class Primitive : Data {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("extend", 1, args.Count);
 
 			if (args[0] is not List extension) // make sure extension is a list so addrange works
-				extension = new(new() { args[0] });
+				extension = new(new List<Data>() { args[0] });
 
 			(thisRef as List).Value.AddRange(extension.Value);
 			return thisRef;
@@ -225,7 +235,7 @@ public abstract partial class Primitive : Data {
 			if (index.Value != Math.Round(index.Value)) return Errors.InvalidArgumentType("inject", 0, "whole number", "decimal");
 
 			if (args[1] is not List extension)
-				extension = new(new() { args[1] });
+				extension = new(new List<Data>() { args[1] });
 
 			(thisRef as List).Value.InsertRange((int)index.Value, extension.Value); // safety cast even tho already checked
 			return thisRef;

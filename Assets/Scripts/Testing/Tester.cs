@@ -5,15 +5,22 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using System;
+using System.Runtime.InteropServices;
 
 public class Tester : MonoBehaviour {
-	//public string expr;
+	public bool boo;
+
+	public bool testFile;
+	public bool usefp1;
+	public string filepath1;
+	public string filepath2;
+	public string logpath1;
+	public string logpath2;
+	[TextArea]
 	public List<string> testCases = new();
 	public int useTestCase;
 	public List<Color> colors;
 
-	public bool debug;
-	public bool testTime;
 	public int iters;
 	public MemoryPart memory;
 	public Interpreter interpreter;
@@ -22,7 +29,7 @@ public class Tester : MonoBehaviour {
 	public Cable IEcable;
 	public Cable IMcable;
 
-	Section section;
+	Script script;
 	void Start() {
 		BeforeTesting();
 		Updatetest();
@@ -53,10 +60,10 @@ public class Tester : MonoBehaviour {
 		sw.Stop();
 
 		double ns = sw.ElapsedTicks * 100;
-		HF.LogColor($"{ns} ns",													colors[0]);
-		HF.LogColor($"{ns / 1e6} ms",											colors[0]);
-		HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each",	colors[0]);
-		HF.LogColor($"{(int)(iters / (ns / 1e9))} / second",					colors[0]);
+		HF.LogColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
+
+		if (iters > 1)
+			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
 	}
 
 	void BeforeTesting() {
@@ -68,25 +75,55 @@ public class Tester : MonoBehaviour {
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
-		(Section secout, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+		if (testFile) {
+			string path = usefp1 ? filepath1 : filepath2;
+			if (File.Exists(path)) {
+				string contents = File.ReadAllText(path);
 
-		if (output is Error)
-			print(output);
-		section = secout;
+				print($"tokenizing {contents}");
+				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
-		HF.LogColor($"test updated to {testCases[useTestCase]}", colors[1]);
+				if (output is Error) print(output);
+				script = scriptOut;
+
+				if (script != null) {
+					using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
+					{
+						string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
+						sw.Write(json);
+					}
+				}
+
+				HF.LogColor($"test updated to testcase file", colors[1]);
+				print($"updated script: \n{script}");
+			}
+		}
+		else {
+
+			(Script scriptOut, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+
+			if (output is Error) print(output);
+			script = scriptOut;
+
+			HF.LogColor($"test updated to {HF.Repr(testCases[useTestCase])}", colors[1]);
+		}
+
 	}
 	void TestOnce() {
-		Memory before = memory.component.Copy();
-		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
-		memory.component = before; // make sure no changes are made to memory in the testonce
-		print(eval);
+		if (iters == 1) return;
+
+		Memory copy = memory.component.Copy();
+		Data run = interpreter.Run(copy, script);
+		print(run);
 	}
 	void ToTest() {
-		// TODO: FIX RANGE LIST! no work 
-		Data eval = evaluator.Evaluate(0, section.Lines[0].DeepCopy());
-		int i = 0;
+
+		Data run = interpreter.Run(memory.component, script);
+		if (iters == 1)
+			print($"run out:" + run);
+
 	}
+
 	/*
 	// conect i and e
 	(CableConnection onItoECC, CableConnection onEtoICC) = IEcable.Connect(interpreter, evaluator);

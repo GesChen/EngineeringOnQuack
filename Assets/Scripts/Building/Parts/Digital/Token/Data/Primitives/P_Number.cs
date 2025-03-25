@@ -4,19 +4,19 @@ using System;
 
 public abstract partial class Primitive : Data {
 	public partial class Number : Primitive {
-		public static Number Default = new(0);
+		public static Number Default = new();
 		
 		// defines internal type with name and memory
 		public static Type InternalType = new("Number", new Dictionary<string, Data>() {
-			{ "eq",			new Function(eq)		},
-			{ "lt",			new Function(lt)		},
-			{ "ad",			new Function(ad)		},
-			{ "su",			new Function(su)		},
-			{ "mu",			new Function(mu)		},
-			{ "di",			new Function(di)		},
-			{ "mo",			new Function(mo)		},
-			{ "po",			new Function(po)		},
-			{ "tostring",	new Function(tostring)	}
+			{ "eq",			new Function("eq", eq)		},
+			{ "lt",			new Function("lt", lt)		},
+			{ "ad",			new Function("ad", ad)		},
+			{ "su",			new Function("su", su)		},
+			{ "mu",			new Function("mu", mu)		},
+			{ "di",			new Function("di", di)		},
+			{ "mo",			new Function("mo", mo)		},
+			{ "po",			new Function("po", po)		},
+			{ "tostring",	new Function("tostring", tostring)	}
 		});
 
 		public double Value; // internal value
@@ -24,11 +24,19 @@ public abstract partial class Primitive : Data {
 		public Number(double value) : base(InternalType) { // default constructor
 			Value = value;
 		}
-
+		public Number(Number original) : base(original) {
+			Value = original.Value;
+		}
+		public Number() : base(InternalType) {
+			Value = 0;
+		}
 		public override string ToString() {
 			return (tostring(this, new()) as String).Value;
 		}
 
+		public override Data Copy() {
+			return new Number(this);
+		}
 
 		#region methods
 		public static Data eq(Data thisRef, List<Data> args) {
