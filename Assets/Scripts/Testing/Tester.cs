@@ -8,17 +8,12 @@ using System;
 using System.Runtime.InteropServices;
 
 public class Tester : MonoBehaviour {
-	public bool boo;
 
-	public bool testFile;
 	public bool usefp1;
 	public string filepath1;
 	public string filepath2;
 	public string logpath1;
 	public string logpath2;
-	[TextArea]
-	public List<string> testCases = new();
-	public int useTestCase;
 	public List<Color> colors;
 
 	public int iters;
@@ -85,42 +80,30 @@ public class Tester : MonoBehaviour {
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
-		if (testFile) {
-			string path = usefp1 ? filepath1 : filepath2;
-			if (File.Exists(path)) {
-				string contents = File.ReadAllText(path);
+		string path = usefp1 ? filepath1 : filepath2;
+		if (File.Exists(path)) {
+			string contents = File.ReadAllText(path);
 
-				HF.WarnColor($"tokenizing {contents}", colors[1]);
-				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
-
-				if (output is Error) print(output);
-				script = scriptOut;
-
-				if (script != null) {
-					using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
-					{
-						string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
-						//sw.Write(json);
-
-						string reconstructed = ScriptSaveLoad.ReconstructJson(json);
-						sw.Write(reconstructed);
-					}
-				}
-
-				HF.WarnColor($"test updated to testcase file", colors[1]);
-				HF.WarnColor($"updated script: \n{script}", colors[1]);
-			}
-		}
-		else {
-
-			(Script scriptOut, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+			HF.WarnColor($"tokenizing {contents}", colors[1]);
+			(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
 			if (output is Error) print(output);
 			script = scriptOut;
 
-			HF.WarnColor($"test updated to {HF.Repr(testCases[useTestCase])}", colors[1]);
-		}
+			if (script != null) {
+				using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
+				{
+					string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
+					//sw.Write(json);
 
+					string reconstructed = ScriptSaveLoad.ReconstructJson(json);
+					sw.Write(reconstructed);
+				}
+			}
+
+			HF.WarnColor($"test updated to testcase file", colors[1]);
+			HF.WarnColor($"updated script: \n{script}", colors[1]);
+		}
 	}
 	void TestOnce() {
 		if (iters == 1) return;

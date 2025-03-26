@@ -3,6 +3,8 @@ public static class Errors {
 		=> new(message);
 	public static Error NoScriptLoaded()
 		=> new($"[INTERNAL] No script loaded");
+	public static Error BadCode()
+		=> new($"[INTERNAL] How did this happen?");
 	public static Error InvalidArgumentCount(string funcName, int expected, int got)
 		=> new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got)
@@ -80,7 +82,7 @@ public static class Errors {
 	public static Error RecursionLimitReached()
 		=> new($"Recursion depth limit reached: {LanguageConfig.RecursionDepthLimit}");
 	public static Error TypeCannotBeUsedAsVariable(string name)
-		=> new($"Type {name}cannot be used as variable");
+		=> new($"Type {name} cannot be used as variable");
 	public static Error template()
 		=> new($"");
 }

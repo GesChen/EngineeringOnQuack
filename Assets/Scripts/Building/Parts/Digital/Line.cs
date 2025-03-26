@@ -54,7 +54,7 @@ public class Line
 			return $"Sub{Section}";
 	}
 	public string TokenList() {
-		return string.Join(" ", Tokens.Select(c=>$"<{c}>"));
+		return string.Join(" ", Tokens.Select(c => $"<{c}>"));
 	}
 
 	public Line DeepCopy() {

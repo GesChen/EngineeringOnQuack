@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using System.Linq;
+using static Token;
 
+// might make into static class?
 public class Tokenizer {
 	public string RemoveComments(string lines) {
 		int opstate = 0; // 0-looking for comment, 1-in oneline comment, 2-in multiline comment
@@ -107,8 +109,8 @@ public class Tokenizer {
 					tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
 			}
 			else if (tokenString.All(c => opchars.Contains(c))) { // all operator symbols
-				if (Token.Operator.AllOperatorStringsHashSet.Contains(tokenString))
-					tokens.Add(new Token.Operator(tokenString));
+				if (Operator.AllOperatorStringsHashSet.Contains(tokenString))
+					tokens.Add(new Operator(tokenString));
 				else
 					return Errors.UnknownOperator(tokenString);
 			}
@@ -149,13 +151,33 @@ public class Tokenizer {
 				sb.Clear(); // dont include ' in sb
 
 				int start = i;
-				i++;
-				while (i < line.Length && line[i] != c) i++; // increase i until eol or end char
+				int depth = 0;
+				for (i++; i < line.Length; i++) { // inc i by 1 at start to avoid original quote
+					char t = line[i];
+
+					switch (t) {
+						case ')':
+						case ']':
+						case '}':
+							depth--;
+							break;
+					}
+
+					if (t == c && depth == 0) break;
+
+					switch (t) {
+						case '(':
+						case '[':
+						case '{':
+							depth++;
+							break;
+					}
+				}
 				if (i == line.Length) // eol, mismatched
 					return (null, Errors.MismatchedSomething("quotes"));
 				//i++;
 
-				string str = line[start..(i + 1)];
+				string str = line[start..(i + 1)]; // get actual string chunk	
 				str = str[1..^1]; // trim off quotes
 
 				tokens.Add(new Primitive.String(str));

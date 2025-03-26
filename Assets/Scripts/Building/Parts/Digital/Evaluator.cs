@@ -84,6 +84,7 @@ public class Evaluator : MonoBehaviour {
 
 	enum Actions {
 		None,
+		FString,
 		Data,
 		Name,
 		DotOperator,
@@ -139,7 +140,6 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	public Data Evaluate(Line line, Memory memory, bool makeCopy = true, int depth = 0) {
-		if (LanguageConfig.DEBUG) HF.WarnColor($"Evaluating {line.TokenList()}", Color.green);
 
 		if (makeCopy)
 			line = line.DeepCopy();
@@ -161,6 +161,7 @@ public class Evaluator : MonoBehaviour {
 
 	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
+		if (LanguageConfig.DEBUG) HF.WarnColor($"Evaluating {line.TokenList()}", Color.green);
 
 		Data declChecks = DeclarationChecks(line.Tokens);
 		if (declChecks is Error ||
@@ -207,6 +208,15 @@ public class Evaluator : MonoBehaviour {
 			);
 
 			switch (highestAction) {
+				// handle f strings
+				case Actions.FString:
+					Data parseFString = ParseFString((remaining[highestIndex + 1] as Primitive.String).Value, localActionContext);
+					HF.ReplaceRange(remaining, highestIndex, highestIndex + 1, 
+						new() { Reference.ExistingGlobalReference(
+							parseFString
+					) });
+					break;
+
 				// D -> R
 				case Actions.Data:
 					Data data = highestToken as Data;
@@ -381,14 +391,23 @@ public class Evaluator : MonoBehaviour {
 			bool isOp = token is Operator;
 			Operator op = isOp ? token as Operator : null;
 
+			// f-strings
+			if (token is Name N &&
+				N.Value == "f" &&
+				i != remaining.Count - 1 &&
+				remaining[i + 1] is Data) {
+				precedence = 25;
+				action = Actions.FString;
+			}
+
 			// D -> R
-			if (token is Data) {
+			else if (token is Data) {
 				precedence = 20;
 				action = Actions.Data;
 			}
 
 			// N -> R
-			if (token is Name) {
+			else if (token is Name) {
 				precedence = 15;
 				action = Actions.Name;
 			}
@@ -444,6 +463,58 @@ public class Evaluator : MonoBehaviour {
 		}
 	}
 
+	private Data ParseFString(string s, ActionContext AC) {
+		#region unpack AC
+		Line line = AC.line;
+		Memory memory = AC.memory;
+		#endregion
+
+		if (LanguageConfig.DEBUG) HF.LogColor($"Parsing f string {s}", Color.yellow);
+
+		StringBuilder sb = new();
+
+		int depth = 0;
+		for (int i = 0; i < s.Length; i++) {
+			char c = s[i];
+
+			if (c == '}') depth--;
+
+			else if (c == '{') {
+				if (depth == 0) {
+					int startIndex = i;
+
+					while (i < s.Length) { // get braces chunk
+						c = s[i];
+						if (c == '{') depth++;
+						else if (c == '}') depth--;
+						if (depth == 0) break;
+						i++;
+					}
+
+					string expression = s[(startIndex + 1)..i];
+					Tokenizer tokenizer = new();
+					(List<Token> tokens, Data tryTokenize) = tokenizer.TokenizeLine(expression);
+					if (tryTokenize is Error) return tryTokenize;
+
+					Data tryEval = EvaluateInternal(line.CopyWithNewTokens(tokens), memory);
+					if (tryEval is Error) return tryEval;
+
+					Data tryCast = tryEval.Cast(Primitive.String.InternalType);
+					if (tryCast is Error) return tryCast;
+					if (tryCast is not Primitive.String S) return Errors.BadCode();
+
+					sb.Append(S.Value);
+				}
+
+				depth++;
+			}
+			else
+				sb.Append(c);
+		}
+
+		return new Primitive.String(sb.ToString());
+	}
+
 	private Data HandleDotOperator(in ActionContext AC) {
 		#region unpack AC
 		List<Token> remaining		= AC.remaining;
@@ -470,9 +541,10 @@ public class Evaluator : MonoBehaviour {
 			double fractionalPart = rightNum * Math.Pow(10, Math.Floor(Math.Log10(rightNum)) - 1);
 			double realValue = leftNum + fractionalPart;
 
-			HF.ReplaceRange(remaining, replaceStart, replaceEnd,	  // replace those tokens with the value
-				new() { Reference.ExistingGlobalReference("",		 // turn value into ref
-				new Primitive.Number(realValue)) });				// actual value
+			HF.ReplaceRange(remaining, replaceStart, replaceEnd,					  // replace those tokens with the value
+				new() { Reference.ExistingGlobalReference(new Primitive.Number(		 // turn value into ref
+					realValue														// actual value
+			))});
 		}
 
 		// normal member syntax, expect existing reference on left
@@ -570,13 +642,19 @@ public class Evaluator : MonoBehaviour {
 					Data run = RunFunction(AC, regionTokens);
 					if (run is Error) return run;
 
-					HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, new() { run });
+					HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, 
+						new() { Reference.ExistingGlobalReference(
+							run
+					) });
 				}
 				else {
 					Data evalSubexp = Evaluate(line.CopyWithNewTokens(regionTokens), memory);
 					if (evalSubexp is Error) return evalSubexp;
 
-					HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalSubexp });
+					HF.ReplaceRange(remaining, highestIndex, pairIndex, 
+						new() { Reference.ExistingGlobalReference(
+							evalSubexp
+					) });
 				}
 				break;
 
@@ -626,7 +704,9 @@ public class Evaluator : MonoBehaviour {
 								indexed.Add(leftAsList.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
 
 							HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-								new() { new Primitive.List(indexed) });
+								new() { Reference.ExistingGlobalReference(new Primitive.List(
+									indexed
+							)) });
 						}
 						else { // left is string
 							StringBuilder sb = new();
@@ -634,7 +714,9 @@ public class Evaluator : MonoBehaviour {
 								sb.Append(leftAsString.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
 
 							HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-								new() { new Primitive.String(sb.ToString()) });
+								new() { Reference.ExistingGlobalReference(new Primitive.String(
+									sb.ToString()
+							)) });
 						}
 					}
 					else { // dict key get
@@ -655,14 +737,19 @@ public class Evaluator : MonoBehaviour {
 							values[0];
 
 						HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-							new() { res });
+							new() { Reference.ExistingGlobalReference(
+								res
+						) });
 					}
 				}
 				else { // normal list
 					Data evalList = EvaluateList(line.CopyWithNewTokens(regionTokens), memory);
 					if (evalList is Error) return evalList;
 
-					HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalList });
+					HF.ReplaceRange(remaining, highestIndex, pairIndex, 
+						new() { Reference.ExistingGlobalReference(
+							evalList
+					) });
 				}
 				break;
 
@@ -670,7 +757,10 @@ public class Evaluator : MonoBehaviour {
 				Data evalDict = EvaluateDict(line.CopyWithNewTokens(regionTokens), memory);
 				if (evalDict is Error) return evalDict;
 
-				HF.ReplaceRange(remaining, highestIndex, pairIndex, new() { evalDict });
+				HF.ReplaceRange(remaining, highestIndex, pairIndex, 
+					new() { Reference.ExistingGlobalReference(
+						evalDict
+				) });
 				break;
 		}
 
@@ -729,7 +819,9 @@ public class Evaluator : MonoBehaviour {
 			double value = (castToNumber as Primitive.Number).Value;
 			// use a copy of the number i guess
 			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
-				new() { new Primitive.Number(value * (thisOp.Value == Operator.Ops.Minus ? -1 : 1)) });
+				new() { Reference.ExistingGlobalReference(new Primitive.Number(
+					value * (thisOp.Value == Operator.Ops.Minus ? -1 : 1
+				))) });
 		}
 		else { // !
 			Data castToBool = rightRef.ThisReference.Cast(Primitive.Bool.InternalType);
@@ -739,7 +831,9 @@ public class Evaluator : MonoBehaviour {
 
 			// use a copy of the bool
 			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
-				new() { new Primitive.Bool(!value) });
+				new() { Reference.ExistingGlobalReference(new Primitive.Bool(
+					!value
+				)) });
 		}
 
 		return Data.Success;
@@ -795,7 +889,10 @@ public class Evaluator : MonoBehaviour {
 		Data perform = PerformOperation(op, leftData, rightData, leftRef, rightRef, memory);
 		if (perform is Error) return perform;
 
-		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { perform });
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
+			new() { Reference.ExistingGlobalReference(
+				perform
+		) });
 
 		return Data.Success;
 	}
@@ -857,7 +954,10 @@ public class Evaluator : MonoBehaviour {
 		Data compare = Compare(leftData, rightData, op, memory);
 		if (compare is Error) return compare;
 
-		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { compare });
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
+			new() { Reference.ExistingGlobalReference(
+				compare
+		) });
 
 		return Data.Success;
 	}
@@ -895,7 +995,9 @@ public class Evaluator : MonoBehaviour {
 		};
 
 		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
-			new() { new Primitive.Bool(result) });
+			new() { Reference.ExistingGlobalReference(new Primitive.Bool(
+				result
+		)) });
 
 		return Data.Success;
 	}

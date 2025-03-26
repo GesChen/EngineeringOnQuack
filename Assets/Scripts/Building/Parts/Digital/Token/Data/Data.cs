@@ -158,7 +158,7 @@ public class Data : Token {
 	#endregion
 
 	public override string ToString() {
-		return $"[DATA DEFAULT TS] Type {Type.Name} object \"{Name}\"";
+		return $"Object \"{Name}\" of type {Type.Name}";
 	}
 
 	#endregion
