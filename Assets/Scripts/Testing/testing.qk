@@ -1,13 +1,16 @@
 test:
-    a = 0
     print("innit")
 
+    property = "blah"
+
     test(x):
-        a = x
+        this.a = x
         print("constructed " + str(x))
 
     something(y):
-        print(a + y)
+        print("this is "+this.property)
+        print("found a to be " + str(this.a))
+        print(this.a + y)
         print("nuts")
 
 breakpoint()
@@ -17,3 +20,8 @@ thing.something(2)
 fed = "test"
 print(fed)
 print(fed.upper())
+
+upperized = fed.upper()
+lowered = upperized.lower()
+
+print("stuff "+lowered)

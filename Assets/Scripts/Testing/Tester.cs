@@ -42,11 +42,21 @@ public class Tester : MonoBehaviour {
 		if (Input.GetKeyDown("r"))
 			BeforeTesting();
 
-		if (Input.GetKeyDown("e"))
+		if (Input.GetKeyDown("e")) {
+			script = null;
+			BeforeTesting();
+			Updatetest();
+
 			Test();
+		}
 
 		if (Input.GetKey("q"))
 			Test();
+
+		if (Input.GetKeyDown("z")) {
+			script = null;
+			print("script nulled");
+		}
 	}
 	void Test() {
 		TestOnce();
@@ -60,10 +70,10 @@ public class Tester : MonoBehaviour {
 		sw.Stop();
 
 		double ns = sw.ElapsedTicks * 100;
-		HF.LogColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
+		HF.WarnColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
 
 		if (iters > 1)
-			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
+			HF.WarnColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
 	}
 
 	void BeforeTesting() {
@@ -71,7 +81,7 @@ public class Tester : MonoBehaviour {
 		interpreter.MemoryCC = onItoMCC;
 		memory.InterpreterCC = onMtoICC;
 		memory.Initialize(onMtoICC);
-		HF.LogColor($"memory initialized", colors[1]);
+		HF.WarnColor($"memory initialized", colors[1]);
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
@@ -80,7 +90,7 @@ public class Tester : MonoBehaviour {
 			if (File.Exists(path)) {
 				string contents = File.ReadAllText(path);
 
-				print($"tokenizing {contents}");
+				HF.WarnColor($"tokenizing {contents}", colors[1]);
 				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
 				if (output is Error) print(output);
@@ -97,8 +107,8 @@ public class Tester : MonoBehaviour {
 					}
 				}
 
-				HF.LogColor($"test updated to testcase file", colors[1]);
-				print($"updated script: \n{script}");
+				HF.WarnColor($"test updated to testcase file", colors[1]);
+				HF.WarnColor($"updated script: \n{script}", colors[1]);
 			}
 		}
 		else {
@@ -108,7 +118,7 @@ public class Tester : MonoBehaviour {
 			if (output is Error) print(output);
 			script = scriptOut;
 
-			HF.LogColor($"test updated to {HF.Repr(testCases[useTestCase])}", colors[1]);
+			HF.WarnColor($"test updated to {HF.Repr(testCases[useTestCase])}", colors[1]);
 		}
 
 	}
@@ -123,7 +133,7 @@ public class Tester : MonoBehaviour {
 
 		Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)
-			print($"run out:" + run);
+			HF.WarnColor($"run out:" + run, colors[1]);
 
 	}
 

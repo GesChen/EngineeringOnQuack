@@ -139,7 +139,7 @@ public class Evaluator : MonoBehaviour {
 	}
 
 	public Data Evaluate(Line line, Memory memory, bool makeCopy = true, int depth = 0) {
-		if (LanguageConfig.DEBUG) HF.LogColor($"Evaluating {line.TokenList()}", Color.green);
+		if (LanguageConfig.DEBUG) HF.WarnColor($"Evaluating {line.TokenList()}", Color.green);
 
 		if (makeCopy)
 			line = line.DeepCopy();
@@ -191,7 +191,7 @@ public class Evaluator : MonoBehaviour {
 			Reference rightRef			= right as Reference;
 			bool rightIsRefAndExists	= rightRef != null && rightRef.Exists;
 
-			ActionContext localActionContext = new (
+			ActionContext localActionContext = new(
 				line,
 				memory,
 				depth,
@@ -212,23 +212,23 @@ public class Evaluator : MonoBehaviour {
 					Data data = highestToken as Data;
 					remaining[highestIndex] = Reference.ExistingGlobalReference("", data);
 					break;
-				
+
 				// N -> R 
 				case Actions.Name:
 					// check memory for name 
 					string name = (highestToken as Name).Value;
-					Data get = memory.Get(name); 
+					Data get = memory.Get(name);
 					// dont return error again LMAO
 
 					// replace name token with reference token
 					remaining[highestIndex] = (get is not Error) ?
-						Reference.ExistingGlobalReference(name, get) :	 // make existing if data exists
-						Reference.NewGlobalReference(name);				// or make new
+						Reference.ExistingGlobalReference(name, get) :   // make existing if data exists
+						Reference.NewGlobalReference(name);             // or make new
 					break;
-				
+
 				// decimal / member handling
 				case Actions.DotOperator:
-						Data tryHandleDotOperator = HandleDotOperator(localActionContext);
+					Data tryHandleDotOperator = HandleDotOperator(localActionContext);
 					if (tryHandleDotOperator is Error) return tryHandleDotOperator;
 					break;
 
@@ -254,7 +254,7 @@ public class Evaluator : MonoBehaviour {
 					Data tryHandleComparison = HandleComparison(localActionContext);
 					if (tryHandleComparison is Error) return tryHandleComparison;
 					break;
-				
+
 				case Actions.Logical:
 					Data tryHandleLogical = HandleLogical(localActionContext);
 					if (tryHandleLogical is Error) return tryHandleLogical;
@@ -279,8 +279,12 @@ public class Evaluator : MonoBehaviour {
 		}
 
 		// return data if thats what it collapses to
-		if (remaining.Count == 1 && remaining[0] is Reference r)
+		if (remaining.Count == 1 && remaining[0] is Reference r) {
+			if (!r.Exists)
+				return Errors.UnknownName(r);
+
 			return r.ThisReference;
+		}
 
 		return Data.Success;
 	}
@@ -694,9 +698,10 @@ public class Evaluator : MonoBehaviour {
 
 		List<Data> args = (evalArgs as Primitive.List).Value;
 
-		Memory context = leftRef.IsInstanceVariable ? leftRef.ParentReference.Memory : memory;
+		//Memory context = leftRef.IsInstanceVariable ? leftRef.ParentReference.Memory : memory;
+		Memory context = memory;
 
-		Data run = Interpreter.RunFunction(context, func, leftRef.ParentReference, args, retainMemory: true); // might change this retian later 
+		Data run = Interpreter.RunFunction(context, func, leftRef.ParentReference, args); // might change this retian later 
 		run.ClearFlags();
 		return run;
 	}
@@ -1141,7 +1146,7 @@ public class Evaluator : MonoBehaviour {
 		// expects unsurrounded list, just tokens and commas
 		List<Token> tokens = line.Tokens;
 		if (tokens.Count == 0) return new Primitive.List();
-		
+
 		// identify list type
 		bool rangeList = false;
 

@@ -33,10 +33,9 @@ public class Interpreter : Part {
 		Primitive.Function function,
 		Data thisReference,
 		List<Data> args,
-		int depth = 0,
-		bool retainMemory = false) {
+		int depth = 0) {
 
-		if (LanguageConfig.DEBUG) HF.LogColor($"Running function {function.Name}", Color.yellow);
+		if (LanguageConfig.DEBUG) HF.WarnColor($"Running function {function.Name}", Color.yellow);
 
 		// handle different function types
 		switch (function.FunctionType) {
@@ -44,7 +43,7 @@ public class Interpreter : Part {
 				return function.InternalFunction.Invoke(thisReference, args);
 
 			case Primitive.Function.FunctionTypeEnum.Constructor:
-				if (LanguageConfig.DEBUG) HF.LogColor($"Constructing {function.TypeFor.Name}", Color.yellow);
+				if (LanguageConfig.DEBUG) HF.WarnColor($"Constructing {function.TypeFor.Name}", Color.yellow);
 
 				Data newObject = new(function.TypeFor) {
 					Memory = new(memory.InterpreterCC, "object memory")
@@ -60,15 +59,14 @@ public class Interpreter : Part {
 					function,
 					newObject,
 					args,
-					depth + 1,
-					true);
+					depth + 1);
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.Constructor;
 				Data.currentUseMemory = originalUse;
 
 				if (runConstructor is Error)
 					return runConstructor;
 
-				if (LanguageConfig.DEBUG) HF.LogColor($"Constructed new {function.TypeFor.Name} object: {newObject}", Color.yellow);
+				if (LanguageConfig.DEBUG) HF.WarnColor($"Constructed new {function.TypeFor.Name} object: {newObject}", Color.yellow);
 
 				return newObject;
 		}
@@ -80,7 +78,7 @@ public class Interpreter : Part {
 		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
 
 		Data trySet;
-		Memory memoryCopy = retainMemory ? memory : memory.Copy();
+		Memory memoryCopy = memory.Copy();
 
 		for (int a = 0; a < args.Count; a++) {
 			trySet = memoryCopy.Set(function.Parameters[a], args[a]);
@@ -134,7 +132,7 @@ public class Interpreter : Part {
 		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
 			return Errors.RecursionLimitReached();
 
-		if (LanguageConfig.DEBUG) HF.LogColor($"--Running {section}", Color.yellow);
+		if (LanguageConfig.DEBUG) HF.WarnColor($"--Running {section}", Color.yellow);
 
 		Line[] lines = section.Lines;
 		InternalState state = new();
@@ -143,7 +141,7 @@ public class Interpreter : Part {
 		while (i < lines.Length) {
 			Line line = lines[i];
 
-			if (LanguageConfig.DEBUG) HF.LogColor($"{depth}.{i} running {line} ", Color.cyan);
+			if (LanguageConfig.DEBUG) HF.WarnColor($"{depth}.{i} running {line} ", Color.cyan);
 
 			#region prechecks
 			// line type check
@@ -340,7 +338,7 @@ public class Interpreter : Part {
 					state.MakeFunction = false;
 				}
 				else if (state.MakeClass) {
-					if (LanguageConfig.DEBUG) HF.LogColor($"Constructing class {state.NewName}", Color.yellow);
+					if (LanguageConfig.DEBUG) HF.WarnColor($"Constructing class {state.NewName}", Color.yellow);
 
 					Memory originallyUsing = Data.currentUseMemory;
 					Memory classMemory = new (memory.InterpreterCC, "class init memory");
@@ -361,7 +359,7 @@ public class Interpreter : Part {
 					}
 
 					Data makeNewType = memory.NewType(newType);
-					if (LanguageConfig.DEBUG) HF.LogColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);
+					if (LanguageConfig.DEBUG) HF.WarnColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);
 
 					Data.currentUseMemory = originallyUsing;
 

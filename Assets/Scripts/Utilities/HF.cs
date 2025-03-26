@@ -40,6 +40,12 @@ public static class HF {
 		string coloredText = string.Join("\n", lines.Select(line => colorTag + line + "</color>"));
 		Debug.Log(coloredText);
 	}
+	public static void WarnColor(string str, Color color) {
+		string colorTag = string.Format("<color=#{0:X2}{1:X2}{2:X2}>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f));
+		string[] lines = str.Split('\n');
+		string coloredText = string.Join("\n", lines.Select(line => colorTag + line + "</color>"));
+		Debug.LogWarning(coloredText);
+	}
 
 	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices) {
 		float minDistance = float.MaxValue;
