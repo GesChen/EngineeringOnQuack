@@ -7,6 +7,13 @@ using static Token;
 
 // might make into static class?
 public class Tokenizer {
+	
+	// intermediary format for lines that contains their line num
+	public struct iLine {
+		public string content;
+		public int lineNum;
+	}
+
 	public string RemoveComments(string lines) {
 		int opstate = 0; // 0-looking for comment, 1-in oneline comment, 2-in multiline comment
 		int i = 0;
@@ -226,11 +233,11 @@ public class Tokenizer {
 		return sb.ToString();
 	}
 
-	public (Section, Data) SplitSection(string[] lines, int startLineNum) {
+	public (Section, Data) SplitSection(iLine[] lines) {
 		List<Line> sectionLines = new();
 
 		int indentation(int linenum) {
-			string line = lines[linenum];
+			string line = lines[linenum].content;
 			int n = 0;
 			int indentation = 0;
 			while (n < line.Length && char.IsWhiteSpace(line[n])) {
@@ -244,30 +251,31 @@ public class Tokenizer {
 		int startIndentation = indentation(0);
 		int i = 0;
 		while (i < lines.Length) {
-			string line = PreProcessLine(lines[i]);
+			iLine iLine = lines[i];
+			string line = PreProcessLine(iLine.content);
 
 			if (string.IsNullOrWhiteSpace(line)) { i++; continue; }
 
-			if (indentation(i) > startIndentation) {
-				List<string> subSecStrings = new();
+			if (indentation(i) > startIndentation) { // tokenize section
+				List<iLine> subSecStrings = new();
 				while (i < lines.Length && 
-					(indentation(i) > startIndentation || string.IsNullOrWhiteSpace(lines[i]))) {
+					(indentation(i) > startIndentation || string.IsNullOrWhiteSpace(lines[i].content))) {
 					subSecStrings.Add(lines[i]);
 					i++;
 				}
 				i--; // dont go into the next token
 
 				// recurse deeper sections, give starting index
-				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray(), i);
+				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray());
 				if (output is Error) return (null, output);
 
-				sectionLines.Add(new(startLineNum + i + 1, line, subsection)); // add a subsection
+				sectionLines.Add(new(iLine.lineNum , line, subsection)); // add a subsection
 			}
-			else {
+			else { // tokenize line
 				(List<Token> tokens, Data output) = TokenizeLine(line);
 				if (output is Error) return (null, output);
 
-				sectionLines.Add(new(startLineNum + i + 1, line, tokens));
+				sectionLines.Add(new(iLine.lineNum, line, tokens));
 			}
 
 			i++;
@@ -276,9 +284,18 @@ public class Tokenizer {
 	}
 
 	public (Script, Data) Tokenize(string text) {
-		text = RemoveComments(text);
+		string preprocessed = RemoveComments(text);
 
-		(Section split, Data result) = SplitSection(text.Split('\n'), 0);
+		string[] lineStrings = preprocessed.Split('\n');
+		List<iLine> iLines = new();
+		for (int i = 0; i < lineStrings.Length; i++) {
+			iLines.Add(new() {
+				content = lineStrings[i],
+				lineNum = i + 1
+			});
+		}
+
+		(Section split, Data result) = SplitSection(iLines.ToArray());
 		if (result is Error) return (null, result);
 
 		Script newScript = new(split, text);

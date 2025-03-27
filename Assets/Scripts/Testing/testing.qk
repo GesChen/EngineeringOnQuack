@@ -1,7 +1,7 @@
 a = 100
 print(f"test {a} {(a + 5) + " thing"}")
 
----
+
 test:
     print("innit")
 

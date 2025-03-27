@@ -1,2 +1,979 @@
-a = 100
-print(f"test {a} {(a + 5) + " thing"}")
+{
+  "Name": "",
+  "OriginalText": "a = 100\r\nprint(f\"test {a} {(a + 5) + \" thing\"}\")\r\n\r\n\r\ntest:\r\n    print(\"innit\")\r\n\r\n    property = \"blah\"\r\n\r\n    test(x):\r\n        this.a = x\r\n        print(\"constructed \" + str(x))\r\n\r\n    something(y):\r\n        print(\"this is \"+this.property)\r\n        print(\"found a to be \" + str(this.a))\r\n        print(this.a + y)\r\n        print(\"nuts\")\r\n\r\n        this.another(this.a, 2, y)\r\n        print(\"its something \"+str(this.fab)+\" with pro \"+this.property)\r\n    \r\n    another(a,b,c):\r\n        this.fab = a + b + c\r\n        print(this.fab)\r\n\r\nbreakpoint()\r\nthing = test(1)\r\nthing.something(2)\r\n\r\nfed = \"test\"\r\nprint(fed)\r\nprint(fed.upper())\r\n\r\nupperized = fed.upper()\r\nlowered = upperized.lower()\r\n\r\nprint(\"stuff \"+lowered)",
+  "Version": "1.0.0",
+  "Contents": {
+    "Lines": [
+      {
+        "RLN": 1,
+        "OS": "a = 100",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "a"
+          },
+          {
+            "T": 0,
+            "SV": "="
+          },
+          {
+            "T": 3,
+            "RV": {
+              "PT": 0,
+              "NV": 100.0
+            }
+          }
+        ]
+      },
+      {
+        "RLN": 2,
+        "OS": "print(f\"test {a} {(a + 5) + \" thing\"}\")",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "print"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 1,
+            "SV": "f"
+          },
+          {
+            "T": 3,
+            "RV": {
+              "PT": 1,
+              "SV": "test {a} {(a + 5) + \" thing\"}"
+            }
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 5,
+        "OS": "test:",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "test"
+          },
+          {
+            "T": 0,
+            "SV": ":"
+          }
+        ]
+      },
+      {
+        "RLN": 6,
+        "OS": "print(\"innit\")",
+        "T": 1,
+        "S": {
+          "Lines": [
+            {
+              "RLN": 6,
+              "OS": "print(\"innit\")",
+              "T": 0,
+              "L": [
+                {
+                  "T": 1,
+                  "SV": "print"
+                },
+                {
+                  "T": 0,
+                  "SV": "("
+                },
+                {
+                  "T": 3,
+                  "RV": {
+                    "PT": 1,
+                    "SV": "innit"
+                  }
+                },
+                {
+                  "T": 0,
+                  "SV": ")"
+                }
+              ]
+            },
+            {
+              "RLN": 8,
+              "OS": "property = \"blah\"",
+              "T": 0,
+              "L": [
+                {
+                  "T": 1,
+                  "SV": "property"
+                },
+                {
+                  "T": 0,
+                  "SV": "="
+                },
+                {
+                  "T": 3,
+                  "RV": {
+                    "PT": 1,
+                    "SV": "blah"
+                  }
+                }
+              ]
+            },
+            {
+              "RLN": 10,
+              "OS": "test(x):",
+              "T": 0,
+              "L": [
+                {
+                  "T": 1,
+                  "SV": "test"
+                },
+                {
+                  "T": 0,
+                  "SV": "("
+                },
+                {
+                  "T": 1,
+                  "SV": "x"
+                },
+                {
+                  "T": 0,
+                  "SV": ")"
+                },
+                {
+                  "T": 0,
+                  "SV": ":"
+                }
+              ]
+            },
+            {
+              "RLN": 11,
+              "OS": "this.a = x",
+              "T": 1,
+              "S": {
+                "Lines": [
+                  {
+                    "RLN": 11,
+                    "OS": "this.a = x",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "a"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "="
+                      },
+                      {
+                        "T": 1,
+                        "SV": "x"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 12,
+                    "OS": "print(\"constructed \" + str(x))",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 1,
+                          "SV": "constructed "
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "str"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 1,
+                        "SV": "x"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "RLN": 14,
+              "OS": "something(y):",
+              "T": 0,
+              "L": [
+                {
+                  "T": 1,
+                  "SV": "something"
+                },
+                {
+                  "T": 0,
+                  "SV": "("
+                },
+                {
+                  "T": 1,
+                  "SV": "y"
+                },
+                {
+                  "T": 0,
+                  "SV": ")"
+                },
+                {
+                  "T": 0,
+                  "SV": ":"
+                }
+              ]
+            },
+            {
+              "RLN": 15,
+              "OS": "print(\"this is \"+this.property)",
+              "T": 1,
+              "S": {
+                "Lines": [
+                  {
+                    "RLN": 15,
+                    "OS": "print(\"this is \"+this.property)",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 1,
+                          "SV": "this is "
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "property"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 16,
+                    "OS": "print(\"found a to be \" + str(this.a))",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 1,
+                          "SV": "found a to be "
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "str"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "a"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 17,
+                    "OS": "print(this.a + y)",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "a"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "y"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 18,
+                    "OS": "print(\"nuts\")",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 1,
+                          "SV": "nuts"
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 20,
+                    "OS": "this.another(this.a, 2, y)",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "another"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "a"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ","
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 0,
+                          "NV": 2.0
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": ","
+                      },
+                      {
+                        "T": 1,
+                        "SV": "y"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 21,
+                    "OS": "print(\"its something \"+str(this.fab)+\" with pro \"+this.property)",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 1,
+                          "SV": "its something "
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "str"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "fab"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 3,
+                        "RV": {
+                          "PT": 1,
+                          "SV": " with pro "
+                        }
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "property"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "RLN": 23,
+              "OS": "another(a,b,c):",
+              "T": 0,
+              "L": [
+                {
+                  "T": 1,
+                  "SV": "another"
+                },
+                {
+                  "T": 0,
+                  "SV": "("
+                },
+                {
+                  "T": 1,
+                  "SV": "a"
+                },
+                {
+                  "T": 0,
+                  "SV": ","
+                },
+                {
+                  "T": 1,
+                  "SV": "b"
+                },
+                {
+                  "T": 0,
+                  "SV": ","
+                },
+                {
+                  "T": 1,
+                  "SV": "c"
+                },
+                {
+                  "T": 0,
+                  "SV": ")"
+                },
+                {
+                  "T": 0,
+                  "SV": ":"
+                }
+              ]
+            },
+            {
+              "RLN": 24,
+              "OS": "this.fab = a + b + c",
+              "T": 1,
+              "S": {
+                "Lines": [
+                  {
+                    "RLN": 24,
+                    "OS": "this.fab = a + b + c",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "fab"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "="
+                      },
+                      {
+                        "T": 1,
+                        "SV": "a"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "b"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "+"
+                      },
+                      {
+                        "T": 1,
+                        "SV": "c"
+                      }
+                    ]
+                  },
+                  {
+                    "RLN": 25,
+                    "OS": "print(this.fab)",
+                    "T": 0,
+                    "L": [
+                      {
+                        "T": 1,
+                        "SV": "print"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "("
+                      },
+                      {
+                        "T": 1,
+                        "SV": "this"
+                      },
+                      {
+                        "T": 0,
+                        "SV": "."
+                      },
+                      {
+                        "T": 1,
+                        "SV": "fab"
+                      },
+                      {
+                        "T": 0,
+                        "SV": ")"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "RLN": 27,
+        "OS": "breakpoint()",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "breakpoint"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 28,
+        "OS": "thing = test(1)",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "thing"
+          },
+          {
+            "T": 0,
+            "SV": "="
+          },
+          {
+            "T": 1,
+            "SV": "test"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 3,
+            "RV": {
+              "PT": 0,
+              "NV": 1.0
+            }
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 29,
+        "OS": "thing.something(2)",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "thing"
+          },
+          {
+            "T": 0,
+            "SV": "."
+          },
+          {
+            "T": 1,
+            "SV": "something"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 3,
+            "RV": {
+              "PT": 0,
+              "NV": 2.0
+            }
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 31,
+        "OS": "fed = \"test\"",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": "="
+          },
+          {
+            "T": 3,
+            "RV": {
+              "PT": 1,
+              "SV": "test"
+            }
+          }
+        ]
+      },
+      {
+        "RLN": 32,
+        "OS": "print(fed)",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "print"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 33,
+        "OS": "print(fed.upper())",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "print"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": "."
+          },
+          {
+            "T": 1,
+            "SV": "upper"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 35,
+        "OS": "upperized = fed.upper()",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "upperized"
+          },
+          {
+            "T": 0,
+            "SV": "="
+          },
+          {
+            "T": 1,
+            "SV": "fed"
+          },
+          {
+            "T": 0,
+            "SV": "."
+          },
+          {
+            "T": 1,
+            "SV": "upper"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 36,
+        "OS": "lowered = upperized.lower()",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "lowered"
+          },
+          {
+            "T": 0,
+            "SV": "="
+          },
+          {
+            "T": 1,
+            "SV": "upperized"
+          },
+          {
+            "T": 0,
+            "SV": "."
+          },
+          {
+            "T": 1,
+            "SV": "lower"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      },
+      {
+        "RLN": 38,
+        "OS": "print(\"stuff \"+lowered)",
+        "T": 0,
+        "L": [
+          {
+            "T": 1,
+            "SV": "print"
+          },
+          {
+            "T": 0,
+            "SV": "("
+          },
+          {
+            "T": 3,
+            "RV": {
+              "PT": 1,
+              "SV": "stuff "
+            }
+          },
+          {
+            "T": 0,
+            "SV": "+"
+          },
+          {
+            "T": 1,
+            "SV": "lowered"
+          },
+          {
+            "T": 0,
+            "SV": ")"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -3,11 +3,13 @@ public class Script
 	public string Name;
 	public Section Contents;
 	public string OriginalText;
+	public string Version;
 
-	public Script(string name, Section contents, string originalText) {
+	public Script(string name, Section contents, string originalText, string version) {
 		Name = name;
 		Contents = contents;
 		OriginalText = originalText;
+		Version = version;
 	}
 	public Script(Section contents, string originalText) {
 		Name = "";
@@ -18,6 +20,7 @@ public class Script
 		Name = "";
 		Contents = new();
 		OriginalText = "";
+		Version = LanguageConfig.VERSION;
 	}
 
 	public override string ToString() {

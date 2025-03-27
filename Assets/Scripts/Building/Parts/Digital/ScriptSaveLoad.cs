@@ -8,7 +8,19 @@ public class ScriptSaveLoad : MonoBehaviour
 {
 
 	// commented out ones are ones that tokenizer likely wont init
-	public class sData {
+	/*public class sData {
+
+	}*/
+	public class sReference {
+
+/*		[JsonProperty("E")] public bool Exists; // ?
+		public bool IsInstanceVariable;
+		public bool IsListItem;
+
+		[JsonProperty("N")] public string Name;
+		[JsonProperty("TR")] public sData ThisReference;
+*/
+		// ----- ThisReference Section (Data representation, no other values, just put it in here --------
 		[JsonProperty("PT")] public int PrimitiveType; // 0-number, 1-string
 
 		[JsonProperty("NV")] public double NumberValue;
@@ -18,16 +30,12 @@ public class ScriptSaveLoad : MonoBehaviour
 
 		public bool ShouldSerializeNumberValue() => PrimitiveType == 0;
 		public bool ShouldSerializeStringValue() => PrimitiveType == 1;
-	}
-	public class sReference {
-		//[JsonProperty("E")] public bool Exists; // ?
-		//public bool IsInstanceVariable;
-		//public bool IsListItem;
 
-		//[JsonProperty("N")] public string Name;
-		[JsonProperty("TR")] public sData ThisReference;
-		//public sData ParentReference;
-		//public int ListIndex;
+		// ----------------------------------------------------------------------------------------------
+/*
+		public sData ParentReference;
+		public int ListIndex;
+*/
 	}
 	public class sToken {
 		/* 0 - operator
@@ -58,8 +66,10 @@ public class ScriptSaveLoad : MonoBehaviour
 	}
 	public class sScript {
 		public string Name;
-		public sSection Contents;
 		public string OriginalText;
+		public string Version;
+
+		public sSection Contents;
 	}
 
 	#region Serialize
@@ -80,11 +90,12 @@ public class ScriptSaveLoad : MonoBehaviour
 	// consider making these private
 	public static sScript ConvertScriptToStruct(Script original) {
 		sSection structSection = SectionToStruct(original.Contents);
-
+		
 		sScript structScript = new() {
 			Name = original.Name,
 			Contents = structSection,
-			OriginalText = original.OriginalText
+			OriginalText = original.OriginalText,
+			Version = LanguageConfig.VERSION
 		};
 
 		return structScript;
@@ -117,20 +128,18 @@ public class ScriptSaveLoad : MonoBehaviour
 						newToken.StringValue = kw.StringValue;
 					}
 					else if (oToken is Data d) {
-						sData newData = new();
+						sReference newRef = new();
 						if (d is Primitive.Number num) {
-							newData.PrimitiveType = 0;
-							newData.NumberValue = num.Value;
+							newRef.PrimitiveType = 0;
+							newRef.NumberValue = num.Value;
 						}
 						else if (d is Primitive.String str) {
-							newData.PrimitiveType = 1;
-							newData.StringValue = str.Value;
+							newRef.PrimitiveType = 1;
+							newRef.StringValue = str.Value;
 						};
 
 						newToken.Type = 3;
-						newToken.ReferenceValue = new() {
-							ThisReference = newData
-						};
+						newToken.ReferenceValue = newRef;
 					}
 
 					tokens.Add(newToken);
@@ -177,9 +186,10 @@ public class ScriptSaveLoad : MonoBehaviour
 		Script script = new() {
 			Name = structed.Name,
 			Contents = section,
-			OriginalText = structed.OriginalText
+			OriginalText = structed.OriginalText,
+			Version = structed.Version
 		};
-
+		
 		return script;
 	}
 
@@ -200,9 +210,9 @@ public class ScriptSaveLoad : MonoBehaviour
 						0 => new Token.Operator(sToken.StringValue),
 						1 => new Token.Name(sToken.StringValue),
 						2 => new Token.Keyword(sToken.StringValue),
-						3 => sToken.ReferenceValue.ThisReference.PrimitiveType == 0 ?
-								new Primitive.Number(sToken.ReferenceValue.ThisReference.NumberValue) :
-								new Primitive.String(sToken.ReferenceValue.ThisReference.StringValue),
+						3 => sToken.ReferenceValue.PrimitiveType == 0 ?
+								new Primitive.Number(sToken.ReferenceValue.NumberValue) :
+								new Primitive.String(sToken.ReferenceValue.StringValue),
 						_ => new Token()
 					};
 
@@ -262,9 +272,9 @@ public class ScriptSaveLoad : MonoBehaviour
 
 					line += st.Type switch {
 						0 or 1 or 2 => st.StringValue,
-						3 => st.ReferenceValue.ThisReference.PrimitiveType == 0 ?
-							st.ReferenceValue.ThisReference.NumberValue.ToString() :
-							'"' + st.ReferenceValue.ThisReference.StringValue + '"',
+						3 => st.ReferenceValue.PrimitiveType == 0 ?
+							st.ReferenceValue.NumberValue.ToString() :
+							'"' + st.ReferenceValue.StringValue + '"',
 						_ => ""
 					} + (addspace ? " " : "");
 				}
