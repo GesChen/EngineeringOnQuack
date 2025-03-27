@@ -1,0 +1,16 @@
+{
+    "name": "ScriptEditorAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a0b4ecb31e3d1a34ca598cf584203deb"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -7,13 +7,47 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
+public class PUIPanel {
+	public string PanelTitle;
+	public bool AddTitle;
+	public Canvas Canvas;
+	public List<PUIComponent> Components;
+
+	public PUIPanel(
+		string panelTitle, 
+		bool addTitle, 
+		Canvas canvas, 
+		List<PUIComponent> components) {
+		
+		PanelTitle = panelTitle;
+		AddTitle = addTitle;
+		Canvas = canvas;
+		Components = components;
+	}
+
+	public ProceduralUI Realise(GameObject main) {
+		ProceduralUI newComponent = main.AddComponent(typeof(ProceduralUI)) as ProceduralUI;
+
+		newComponent.panelTitle = PanelTitle;
+		newComponent.addTitle = AddTitle;
+		newComponent.canvas = Canvas;
+
+		// recursively realise dropdownmenus
+
+
+		newComponent.components = Components;
+
+		return newComponent;
+	}
+}
+
 public class ProceduralUI : MonoBehaviour
 {
-	public string menuTitle;
+	public string panelTitle;
 	public bool addTitle = true;
 
 	public Canvas canvas;
-	public List<ProceduralUIComponent> components = new();
+	public List<PUIComponent> components = new();
 
 	[Space]
 	[HideInNormalInspector] public bool mouseOver;
@@ -27,7 +61,7 @@ public class ProceduralUI : MonoBehaviour
 
 	private RectTransform panelTransform;
 	private GridLayoutGroup grid;
-	
+
 	void Start()
 	{
 		// generate everything and then hide it
@@ -43,7 +77,7 @@ public class ProceduralUI : MonoBehaviour
 			//if (Controls.mousePos != Controls.lastMousePos || Mouse.current.rightButton.isPressed) {
 			MouseUpdate();
 
-			foreach (ProceduralUIComponent component in components)
+			foreach (PUIComponent component in components)
 			{
 				component.Update();
 			}
@@ -75,9 +109,9 @@ public class ProceduralUI : MonoBehaviour
 	{
 		if (inRange) return;
 
-		foreach (ProceduralUIComponent component in procedural.components)
+		foreach (PUIComponent component in procedural.components)
 		{
-			if (component.Type == UIComponentType.dropdown && component.DropdownMenu.visible)
+			if (component.Type == PUIComponent.ComponentType.dropdown && component.DropdownMenu.visible)
 			{
 				if (component.DropdownMenu.mouseInRange)
 				{
@@ -111,7 +145,7 @@ public class ProceduralUI : MonoBehaviour
 	{
 		// create the panel
 		GameObject panel = Instantiate(Config.UI.PanelPrefab, canvas.transform);
-		panel.name = $"Panel ({menuTitle})";
+		panel.name = $"Panel ({panelTitle})";
 		panelTransform = panel.GetComponent<RectTransform>();
 		panel.GetComponent<Image>().color = Config.UI.BackgroundColor;
 
@@ -123,20 +157,16 @@ public class ProceduralUI : MonoBehaviour
 		// add title
 		if (addTitle)
 		{
-			ProceduralUIComponent titleComponent = new()
-			{
-				Text = menuTitle,
-				Type = UIComponentType.text
-			};
+			PUIComponent titleComponent = PUIComponent.NewText(panelTitle, "");
 			components.Insert(0, titleComponent);
 		}
 
 		// create all the items
 		for (int i = 0; i < components.Count; i++)
 		{
-			ProceduralUIComponent component = components[i];
+			PUIComponent component = components[i];
 			GenerateUIComponent(ref component);
-			if (component.Type == UIComponentType.dropdown && component.DropdownMenu == null)
+			if (component.Type == PUIComponent.ComponentType.dropdown && component.DropdownMenu == null)
 			{
 				Debug.LogError($"Dropdown {component.Text} has no required menu component");
 			}
@@ -148,11 +178,11 @@ public class ProceduralUI : MonoBehaviour
 		// setup the panel
 		// width is based off the longest text in the menu
 		float longestTextWidth = Mathf.NegativeInfinity;
-		foreach (ProceduralUIComponent component in components)
+		foreach (PUIComponent component in components)
 		{
-			if (component.Type == UIComponentType.text || 
-				component.Type == UIComponentType.button || 
-				component.Type == UIComponentType.dropdown)
+			if (component.Type == PUIComponent.ComponentType.text || 
+				component.Type == PUIComponent.ComponentType.button || 
+				component.Type == PUIComponent.ComponentType.dropdown)
 			{
 				float textwidth = TextWidthApproximation(component.Text, Config.UI.FontAsset, Config.UI.FontSize) + 20;
 				longestTextWidth = Mathf.Max(longestTextWidth, textwidth);
@@ -221,7 +251,7 @@ public class ProceduralUI : MonoBehaviour
 		return width;
 	}
 
-	public void GenerateUIComponent(ref ProceduralUIComponent component)
+	public void GenerateUIComponent(ref PUIComponent component)
 	{
 		GameObject newObj = Instantiate(Config.UI.ComponentPrefab);
 		newObj.name = $"Item ({component.Text})";
@@ -229,7 +259,7 @@ public class ProceduralUI : MonoBehaviour
 		TextMeshProUGUI text = null;
 		Button button = null;
 
-		if (component.Type == UIComponentType.dropdown || component.Type == UIComponentType.button ||  component.Type == UIComponentType.text)
+		if (component.Type == PUIComponent.ComponentType.dropdown || component.Type == PUIComponent.ComponentType.button ||  component.Type == PUIComponent.ComponentType.text)
 		{
 			text = Instantiate(Config.UI.TextPrefab, newObj.transform).GetComponent<TextMeshProUGUI>();
 			text.text = component.Text;
@@ -240,8 +270,8 @@ public class ProceduralUI : MonoBehaviour
 
 		switch (component.Type)
 		{
-			case UIComponentType.dropdown:
-			case UIComponentType.button:
+			case PUIComponent.ComponentType.dropdown:
+			case PUIComponent.ComponentType.button:
 				image.color = Color.white; // button colors control it, white so they display correctly
 
 				button = newObj.AddComponent<Button>();
@@ -256,17 +286,17 @@ public class ProceduralUI : MonoBehaviour
 				button.navigation = new() { mode = Navigation.Mode.None };
 
 				break;
-			case UIComponentType.text:
+			case PUIComponent.ComponentType.text:
 				image.color = Config.UI.BackgroundColor;
 
 				break;
-			case UIComponentType.divider:
+			case PUIComponent.	ComponentType.divider:
 				image.color = Config.UI.BackgroundColor;
 				Instantiate(Config.UI.DividerPrefab, newObj.transform);
 
 				break;
 		}
-		if (component.Type == UIComponentType.text || component.Type == UIComponentType.button || component.Type == UIComponentType.dropdown)
+		if (component.Type == PUIComponent.ComponentType.text || component.Type == PUIComponent.ComponentType.button || component.Type == PUIComponent.ComponentType.dropdown)
 		{ // add text padding
 			float leftOffset = Config.UI.InsidePadding * 3 + Config.UI.IconSize;
 			float rightOffset = Config.UI.InsidePadding * 3 + Config.UI.DropDownArrowSize;
@@ -285,7 +315,7 @@ public class ProceduralUI : MonoBehaviour
 			iconRect.sizeDelta = Config.UI.IconSize * Vector2.one;
 		}
 
-		if (component.Type == UIComponentType.dropdown)
+		if (component.Type == PUIComponent.ComponentType.dropdown)
 		{
 			GameObject dropdownIconObj = Instantiate(Config.UI.DropDownArrow, newObj.transform);
 			Image iconComponent = dropdownIconObj.GetComponent<Image>();
@@ -317,16 +347,16 @@ public class ProceduralUI : MonoBehaviour
 
 	public void HideAllDropdowns()
 	{
-		foreach(ProceduralUIComponent component in components)
+		foreach(PUIComponent component in components)
 		{
-			if (component.Type == UIComponentType.dropdown)
+			if (component.Type == PUIComponent.ComponentType.dropdown)
 			{
 				component.HideDropdown();
 			}
 		}
 	}
 
-	public void PrimeDescription(ProceduralUIComponent component)
+	public void PrimeDescription(PUIComponent component)
 	{
 		// generate description object
 		Image descriptionBackground = description.mainObject.GetComponent<Image>();

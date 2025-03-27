@@ -6,22 +6,29 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-public enum UIComponentType
-{
-	text,
-	button,
-	dropdown,
-	divider
-}
 
 [Serializable]
-public class ProceduralUIComponent // general container for components, doesnt actually do anything itself
+public class PUIComponent // general container for components, doesnt actually do anything itself
 {
-	public UIComponentType Type;
+	[Serializable]
+	public struct IconNamePair {
+		public string Name;
+		public Sprite Icon;
+	}
+
+	public enum ComponentType {
+		text,
+		button,
+		dropdown,
+		divider
+	}
+
+	public ComponentType Type;
 	public string Text;
 	public string Description;
-	public Sprite icon;
+	public Sprite icon; // rename this once ported over
 	public ProceduralUI DropdownMenu;
+	public PUIPanel DropdownMenuPanel; // must be realised into dropdownmenu 
 	public Button.ButtonClickedEvent OnClick = new();
 
 	[HideInNormalInspector] public bool mouseOver;
@@ -58,7 +65,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 			// all other dropdowns in the parent should hide
 			main.HideAllDropdowns();
 
-			if (Type == UIComponentType.dropdown)
+			if (Type == ComponentType.dropdown)
 				DisplayDropdown(main);
 		}
 		if (!string.IsNullOrWhiteSpace(Description))
@@ -72,7 +79,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 				HideDescription();
 		}
 
-		if (Type == UIComponentType.dropdown)
+		if (Type == ComponentType.dropdown)
 		{
 			DropdownMenu.dropdownOverride = mouseOver;
 
@@ -87,7 +94,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 
 	public void DisplayDropdown(ProceduralUI main)
 	{
-		if (Type == UIComponentType.dropdown && DropdownMenu != null)
+		if (Type == ComponentType.dropdown && DropdownMenu != null)
 		{
 			Vector3[] corners = new Vector3[4];
 			rectTransform.GetWorldCorners(corners);
@@ -113,7 +120,7 @@ public class ProceduralUIComponent // general container for components, doesnt a
 
 	public void HideDropdown()
 	{
-		if (Type == UIComponentType.dropdown &&
+		if (Type == ComponentType.dropdown &&
 			DropdownMenu != null)
 		{
 			DropdownMenu.Hide();
@@ -137,4 +144,36 @@ public class ProceduralUIComponent // general container for components, doesnt a
 	{
 		description.any[descriptionBoollistIndex] = false;
 	}
+
+	#region constructors
+	public PUIComponent(
+		ComponentType type, 
+		string text, 
+		string desc, 
+		Sprite icon, 
+		PUIPanel dropdown, 
+		Button.ButtonClickedEvent onClick) {
+
+		Type = type;
+		Text = text;
+		Description = desc;
+		this.icon = icon;
+		DropdownMenuPanel = dropdown;
+		OnClick = onClick;
+	}
+	public static PUIComponent NewText(string text, string desc, Sprite icon = null) {
+		return new(ComponentType.text, text, desc, icon, null, null);
+	}
+	public static PUIComponent NewButton(string text, string desc, Button.ButtonClickedEvent onClick, Sprite icon = null) {
+		return new(ComponentType.button, text, desc, icon, null, onClick);
+	}
+	public static PUIComponent NewDropdown(string text, string desc, PUIPanel dropdown, Sprite icon = null) {
+		return new(ComponentType.dropdown, text, desc, icon, dropdown, null);
+	}
+	public static PUIComponent NewDivider() {
+		return new(ComponentType.divider, "", "", null, null, null);
+	}
+	
+		
+	#endregion
 }
