@@ -3,14 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class EditingNormal : MonoBehaviour
+public class EditingNormal : PUIPanelHead
 {
-	public Canvas canvas;
-	public List<PUIComponent.IconNamePair> icons;
-
-	Sprite Icon(string name) => icons.Find(i => i.Name == name).Icon;
-
-	void Start() {
+	void Awake() {
 		PUIPanel digital = new(
 			"digital", false, canvas, new() {
 				PUIComponent.NewButton("cpu",		"",	null,	Icon("cpu")),
@@ -47,12 +42,12 @@ public class EditingNormal : MonoBehaviour
 
 		PUIPanel mainPanel = new(
 			"Editing", true, canvas, new() {
-				PUIComponent.NewDropdown("new part",	"makes a new part",	newPart, Icon("new part")),
+				PUIComponent.NewDropdown("new part",	"makes a new part",	newPart, Icon("plus")),
 				PUIComponent.NewButton("clean up",	"",	null,	Icon("clean up")),
 				PUIComponent.NewButton("undo",		"",	null,	Icon("undo")),
 				PUIComponent.NewButton("redo",		"",	null,	Icon("redo"))
 			});
 
-		mainPanel.Realise(gameObject);
+		main = mainPanel.Realise(gameObject);
 	}
 }

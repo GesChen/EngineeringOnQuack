@@ -2,7 +2,9 @@
     "name": "ScriptEditorAssembly",
     "rootNamespace": "",
     "references": [
-        "GUID:a0b4ecb31e3d1a34ca598cf584203deb"
+        "GUID:a0b4ecb31e3d1a34ca598cf584203deb",
+        "GUID:59682221470403d43bb2c1120cdbc4b3",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

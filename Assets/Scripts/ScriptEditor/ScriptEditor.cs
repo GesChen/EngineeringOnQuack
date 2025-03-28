@@ -3,17 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using TMPro;
 
 public class ScriptEditor : MonoBehaviour
 {
 	public List<string> Contents;
 
-	[Serializable]
-	public struct Config {
-		
-	}
-
-	public Config CurrentConfig;
+	public float fontSize;
+	public GameObject linePrefab;
 
 	public void LoadString(string str) {
 		Contents = str.Split('\n').Select(s => s.TrimEnd()).ToList();

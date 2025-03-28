@@ -9,7 +9,7 @@ public class RightClick : MonoBehaviour
 	[Serializable]
 	public struct Head
 	{
-		public ProceduralUI panel;
+		public PUIPanelHead panel;
 		public Context.ContextType context;
 	}
 
@@ -42,15 +42,7 @@ public class RightClick : MonoBehaviour
 		if (currentPanel != null)
 			currentPanel.Hide();
 
-		ProceduralUI panel = null;
-		foreach (Head head in heads)
-		{
-			if (head.context == Context.Current)
-			{
-				panel = head.panel;
-				break;
-			}
-		}
+		ProceduralUI panel = heads.Find(head => head.context == Context.Current).panel.main;
 
 		if (panel == null)
 			Debug.LogWarning($"no panel defined for context {Context.Current}");

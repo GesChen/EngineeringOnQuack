@@ -1,45 +1,12 @@
 //#define DEBUGMODE
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-
-public class PUIPanel {
-	public string PanelTitle;
-	public bool AddTitle;
-	public Canvas Canvas;
-	public List<PUIComponent> Components;
-
-	public PUIPanel(
-		string panelTitle, 
-		bool addTitle, 
-		Canvas canvas, 
-		List<PUIComponent> components) {
-		
-		PanelTitle = panelTitle;
-		AddTitle = addTitle;
-		Canvas = canvas;
-		Components = components;
-	}
-
-	public ProceduralUI Realise(GameObject main) {
-		ProceduralUI newComponent = main.AddComponent(typeof(ProceduralUI)) as ProceduralUI;
-
-		newComponent.panelTitle = PanelTitle;
-		newComponent.addTitle = AddTitle;
-		newComponent.canvas = Canvas;
-
-		// recursively realise dropdownmenus
-
-
-		newComponent.components = Components;
-
-		return newComponent;
-	}
-}
 
 public class ProceduralUI : MonoBehaviour
 {
