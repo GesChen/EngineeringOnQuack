@@ -1212,7 +1212,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""Left"",
                     ""type"": ""Button"",
                     ""id"": ""8003c41a-5d2a-4114-a173-4ef1d543a76e"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1391,6 +1391,154 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""TextEditor"",
+            ""id"": ""77842c35-44f9-40cb-bdab-f38997357467"",
+            ""actions"": [
+                {
+                    ""name"": ""LeftClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""714b66db-8cbe-4453-aabb-51df3a6cf93f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""20f31ab6-f0b2-4c65-bd32-6d7c7cc85100"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""MiddleClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""bf49013c-4df3-4d3a-b250-08b2d4087a1c"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Ctrl"",
+                    ""type"": ""Button"",
+                    ""id"": ""b0136dcb-db16-4f52-abe7-cd6c3a7841c5"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Shift"",
+                    ""type"": ""Button"",
+                    ""id"": ""745bbb49-107d-4b43-aa2e-89b8a955f504"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Alt"",
+                    ""type"": ""Button"",
+                    ""id"": ""4efd7639-6cf7-499d-baa4-ff440dff1799"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Scroll"",
+                    ""type"": ""Value"",
+                    ""id"": ""69af3937-ac69-4d33-aa8d-83bdde7cf980"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c5976752-0227-4248-a1f2-0fef5beda45d"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LeftClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""21ab7b9c-b62b-4f44-ae20-45ffb5564d48"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8c329dbf-6984-4cf2-8d57-60263426c8bc"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MiddleClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b81a180e-27c2-4a8e-8d07-7e1cf7d7d7ca"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Ctrl"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""06c774c8-0fbb-4762-b15d-ded2492a930f"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Shift"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b3488399-9a83-4c3a-beaf-99376c3fdbbf"",
+                    ""path"": ""<Keyboard>/alt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Alt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""11832599-a7f6-453a-9754-9c57b0f3dc77"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Scroll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -1506,6 +1654,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Mouse_Position = m_Mouse.FindAction("Position", throwIfNotFound: true);
         m_Mouse_Delta = m_Mouse.FindAction("Delta", throwIfNotFound: true);
         m_Mouse_Scroll = m_Mouse.FindAction("Scroll", throwIfNotFound: true);
+        // TextEditor
+        m_TextEditor = asset.FindActionMap("TextEditor", throwIfNotFound: true);
+        m_TextEditor_LeftClick = m_TextEditor.FindAction("LeftClick", throwIfNotFound: true);
+        m_TextEditor_RightClick = m_TextEditor.FindAction("RightClick", throwIfNotFound: true);
+        m_TextEditor_MiddleClick = m_TextEditor.FindAction("MiddleClick", throwIfNotFound: true);
+        m_TextEditor_Ctrl = m_TextEditor.FindAction("Ctrl", throwIfNotFound: true);
+        m_TextEditor_Shift = m_TextEditor.FindAction("Shift", throwIfNotFound: true);
+        m_TextEditor_Alt = m_TextEditor.FindAction("Alt", throwIfNotFound: true);
+        m_TextEditor_Scroll = m_TextEditor.FindAction("Scroll", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -1516,6 +1673,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Transform.enabled, "This will cause a leak and performance issues, InputMaster.Transform.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Selection.enabled, "This will cause a leak and performance issues, InputMaster.Selection.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Mouse.enabled, "This will cause a leak and performance issues, InputMaster.Mouse.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_TextEditor.enabled, "This will cause a leak and performance issues, InputMaster.TextEditor.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -2105,6 +2263,100 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         }
     }
     public MouseActions @Mouse => new MouseActions(this);
+
+    // TextEditor
+    private readonly InputActionMap m_TextEditor;
+    private List<ITextEditorActions> m_TextEditorActionsCallbackInterfaces = new List<ITextEditorActions>();
+    private readonly InputAction m_TextEditor_LeftClick;
+    private readonly InputAction m_TextEditor_RightClick;
+    private readonly InputAction m_TextEditor_MiddleClick;
+    private readonly InputAction m_TextEditor_Ctrl;
+    private readonly InputAction m_TextEditor_Shift;
+    private readonly InputAction m_TextEditor_Alt;
+    private readonly InputAction m_TextEditor_Scroll;
+    public struct TextEditorActions
+    {
+        private @InputMaster m_Wrapper;
+        public TextEditorActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @LeftClick => m_Wrapper.m_TextEditor_LeftClick;
+        public InputAction @RightClick => m_Wrapper.m_TextEditor_RightClick;
+        public InputAction @MiddleClick => m_Wrapper.m_TextEditor_MiddleClick;
+        public InputAction @Ctrl => m_Wrapper.m_TextEditor_Ctrl;
+        public InputAction @Shift => m_Wrapper.m_TextEditor_Shift;
+        public InputAction @Alt => m_Wrapper.m_TextEditor_Alt;
+        public InputAction @Scroll => m_Wrapper.m_TextEditor_Scroll;
+        public InputActionMap Get() { return m_Wrapper.m_TextEditor; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(TextEditorActions set) { return set.Get(); }
+        public void AddCallbacks(ITextEditorActions instance)
+        {
+            if (instance == null || m_Wrapper.m_TextEditorActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_TextEditorActionsCallbackInterfaces.Add(instance);
+            @LeftClick.started += instance.OnLeftClick;
+            @LeftClick.performed += instance.OnLeftClick;
+            @LeftClick.canceled += instance.OnLeftClick;
+            @RightClick.started += instance.OnRightClick;
+            @RightClick.performed += instance.OnRightClick;
+            @RightClick.canceled += instance.OnRightClick;
+            @MiddleClick.started += instance.OnMiddleClick;
+            @MiddleClick.performed += instance.OnMiddleClick;
+            @MiddleClick.canceled += instance.OnMiddleClick;
+            @Ctrl.started += instance.OnCtrl;
+            @Ctrl.performed += instance.OnCtrl;
+            @Ctrl.canceled += instance.OnCtrl;
+            @Shift.started += instance.OnShift;
+            @Shift.performed += instance.OnShift;
+            @Shift.canceled += instance.OnShift;
+            @Alt.started += instance.OnAlt;
+            @Alt.performed += instance.OnAlt;
+            @Alt.canceled += instance.OnAlt;
+            @Scroll.started += instance.OnScroll;
+            @Scroll.performed += instance.OnScroll;
+            @Scroll.canceled += instance.OnScroll;
+        }
+
+        private void UnregisterCallbacks(ITextEditorActions instance)
+        {
+            @LeftClick.started -= instance.OnLeftClick;
+            @LeftClick.performed -= instance.OnLeftClick;
+            @LeftClick.canceled -= instance.OnLeftClick;
+            @RightClick.started -= instance.OnRightClick;
+            @RightClick.performed -= instance.OnRightClick;
+            @RightClick.canceled -= instance.OnRightClick;
+            @MiddleClick.started -= instance.OnMiddleClick;
+            @MiddleClick.performed -= instance.OnMiddleClick;
+            @MiddleClick.canceled -= instance.OnMiddleClick;
+            @Ctrl.started -= instance.OnCtrl;
+            @Ctrl.performed -= instance.OnCtrl;
+            @Ctrl.canceled -= instance.OnCtrl;
+            @Shift.started -= instance.OnShift;
+            @Shift.performed -= instance.OnShift;
+            @Shift.canceled -= instance.OnShift;
+            @Alt.started -= instance.OnAlt;
+            @Alt.performed -= instance.OnAlt;
+            @Alt.canceled -= instance.OnAlt;
+            @Scroll.started -= instance.OnScroll;
+            @Scroll.performed -= instance.OnScroll;
+            @Scroll.canceled -= instance.OnScroll;
+        }
+
+        public void RemoveCallbacks(ITextEditorActions instance)
+        {
+            if (m_Wrapper.m_TextEditorActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(ITextEditorActions instance)
+        {
+            foreach (var item in m_Wrapper.m_TextEditorActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_TextEditorActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public TextEditorActions @TextEditor => new TextEditorActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -2204,6 +2456,16 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnPress(InputAction.CallbackContext context);
         void OnPosition(InputAction.CallbackContext context);
         void OnDelta(InputAction.CallbackContext context);
+        void OnScroll(InputAction.CallbackContext context);
+    }
+    public interface ITextEditorActions
+    {
+        void OnLeftClick(InputAction.CallbackContext context);
+        void OnRightClick(InputAction.CallbackContext context);
+        void OnMiddleClick(InputAction.CallbackContext context);
+        void OnCtrl(InputAction.CallbackContext context);
+        void OnShift(InputAction.CallbackContext context);
+        void OnAlt(InputAction.CallbackContext context);
         void OnScroll(InputAction.CallbackContext context);
     }
 }

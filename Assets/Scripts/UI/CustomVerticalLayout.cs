@@ -7,6 +7,7 @@ public class CustomVerticalLayout : MonoBehaviour
 	public float separation;
 	[HideInNormalInspector] public List<RectTransform> cells = new();
 	[HideInNormalInspector] public float totalHeight;
+	[HideInNormalInspector] public float maxWidth;
 
 	public delegate void ContentsChangedEvent();
 	public ContentsChangedEvent OnContentsChanged;
@@ -25,11 +26,14 @@ public class CustomVerticalLayout : MonoBehaviour
 
 		lastCount = cells.Count;
 
+		maxWidth = -1;
 		totalHeight = 0;
 		foreach (RectTransform t in cells)
 		{
 			t.localPosition = Vector2.up * totalHeight;
 			totalHeight -= t.rect.height + separation;
+
+			maxWidth = Mathf.Max(maxWidth, t.rect.width);
 		}
 		totalHeight *= -1;
 

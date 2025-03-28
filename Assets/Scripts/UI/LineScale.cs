@@ -6,11 +6,17 @@ using TMPro;
 
 public class LineScale : MonoBehaviour
 {
-	public RectTransform depend;
+	public List<RectTransform> dependencies;
+	public Vector2 extraSpace;
 	public void Start()
 	{		
 		Canvas.ForceUpdateCanvases();
 
-		GetComponent<RectTransform>().sizeDelta = new(depend.rect.width, depend.rect.height);
+		Vector2 size = extraSpace;
+		foreach (var rt in dependencies) {
+			size += new Vector2(rt.rect.width, rt.rect.height);
+		}
+
+		GetComponent<RectTransform>().sizeDelta = size;
 	}
 }

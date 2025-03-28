@@ -8,19 +8,27 @@ public class ScrollWindow : MonoBehaviour
 	public float sensitivity;
 
 	[Header("Bar")]
-	public RectTransform scrollbar;
-	public RectTransform barParent;
-	public float barwidth;
+	public RectTransform yScrollbar;
+	public RectTransform yBarParent;
+	public RectTransform xScrollbar;
+	public RectTransform xBarParent;
+	public float barSize;
 
 	RectTransform thisRect;
 	RectTransform contentsRect;
-	float scrollAmount;
-	float totalBarHeight;
+	float xScrollAmount;
+	float yScrollAmount;
+	float xTotalBarLength;
+	float yTotalBarLength;
+	float windowWidth;
 	float windowHeight;
-	float scrollableDist;
+	float xScrollableDist;
+	float yScrollableDist;
 
 	void Start() {
-		scrollAmount = 0;
+		xScrollAmount = 0;
+		yScrollAmount = 0;
+
 		thisRect = GetComponent<RectTransform>();
 		contentsRect = contents.GetComponent<RectTransform>();
 	}
@@ -29,40 +37,68 @@ public class ScrollWindow : MonoBehaviour
 		Recalculate();
 		HandleInput();
 		UpdateContentsPosition();
-		UpdateBar();
+		UpdateVertBar();
+		UpdateHorizBar();
 	}
 
 	void Recalculate() {
-		totalBarHeight = barParent.rect.height;
+		xTotalBarLength = xBarParent.rect.width;
+		yTotalBarLength = yBarParent.rect.height;
 
+		windowWidth = thisRect.rect.width;
 		windowHeight = thisRect.rect.height;
-		
-		scrollableDist = contents.totalHeight - windowHeight; // may be negative
+
+		xScrollableDist = contents.maxWidth - windowWidth; 
+		yScrollableDist = contents.totalHeight - windowHeight; // may be negative
 	}
 
 	void HandleInput() {
-		scrollAmount -= Controls.inputMaster.UI.ScrollWheel.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
-		scrollAmount = Mathf.Clamp(scrollAmount, 0, Mathf.Max(0, scrollableDist));
+		xScrollAmount += Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().x * sensitivity * Time.deltaTime;
+		
+		if (Controls.inputMaster.TextEditor.Shift.IsPressed())
+			xScrollAmount += Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
+		else
+			yScrollAmount -= Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
+		
+		xScrollAmount = Mathf.Clamp(xScrollAmount, 0, Mathf.Max(0, xScrollableDist));
+		yScrollAmount = Mathf.Clamp(yScrollAmount, 0, Mathf.Max(0, yScrollableDist));
 	}
 
 	void UpdateContentsPosition() {
-		contentsRect.localPosition = new(0, scrollAmount);
+		contentsRect.localPosition = new(-xScrollAmount, yScrollAmount);
 	}
 
-	void UpdateBar() {
-		barParent.gameObject.SetActive(contents.totalHeight > totalBarHeight);
+	void UpdateHorizBar() {
+		xBarParent.gameObject.SetActive(contents.maxWidth > windowWidth);
+
+		if (contents.maxWidth == 0) return;
+
+		float percent = xScrollAmount / xScrollableDist;
+		float barWidth = xTotalBarLength * (windowWidth / contents.maxWidth);
+		float x = (1 - percent) * (xTotalBarLength - barWidth);
+
+		float x1 = xTotalBarLength - x - barWidth;
+		float x2 = -x;
+
+		xBarParent.sizeDelta = new(yBarParent.sizeDelta.x, barSize);
+		xScrollbar.offsetMin = new(x1, xScrollbar.offsetMin.y);
+		xScrollbar.offsetMax = new(x2, xScrollbar.offsetMax.y);
+	}
+
+	void UpdateVertBar() {
+		yBarParent.gameObject.SetActive(contents.totalHeight > windowHeight);
 
 		if (contents.totalHeight == 0) return;
 
-		float percent = scrollAmount / scrollableDist;
-		float barHeight = totalBarHeight * (windowHeight / contents.totalHeight);
-		float y = percent * (totalBarHeight - barHeight);
+		float percent = yScrollAmount / yScrollableDist;
+		float barHeight = yTotalBarLength * (windowHeight / contents.totalHeight);
+		float y = percent * (yTotalBarLength - barHeight);
 
-		float y1 = totalBarHeight - y - barHeight;
+		float y1 = yTotalBarLength - y - barHeight;
 		float y2 = -y;
 
-		barParent.sizeDelta = new(barwidth, barParent.sizeDelta.y);
-		scrollbar.offsetMin = new(scrollbar.offsetMin.x, y1);
-		scrollbar.offsetMax = new(scrollbar.offsetMax.x, y2);
+		yBarParent.sizeDelta = new(barSize, yBarParent.sizeDelta.y);
+		yScrollbar.offsetMin = new(yScrollbar.offsetMin.x, y1);
+		yScrollbar.offsetMax = new(yScrollbar.offsetMax.x, y2);
 	}
 }
