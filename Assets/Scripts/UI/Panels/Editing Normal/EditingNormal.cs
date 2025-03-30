@@ -1,7 +1,8 @@
-using System.Collections;
+/*using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
 
 public class EditingNormal : PUIPanelHead
 {
@@ -51,3 +52,4 @@ public class EditingNormal : PUIPanelHead
 		main = mainPanel.Realise(gameObject);
 	}
 }
+*/

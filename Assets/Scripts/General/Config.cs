@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using TMPro;
-using UnityEngine.TextCore.Text;
 
 public class Config : MonoBehaviour
 {
 	[System.Serializable]
 	public struct UI
 	{
+		public Canvas _mainCanvas;
 		[Header("Controls")]
 		[Description("How many pixels the mouse can move away form the rect to still be considered as over")]
 		public int _mouseValidityMargin;
@@ -55,6 +55,7 @@ public class Config : MonoBehaviour
 		public Sprite _dropDownOpenedSprite;
 
 		#region statics
+		public static Canvas MainCanvas;
 		public static int MouseValidityMargin;
 		public static float MaxRightClickTime;
 		public static float MaxMovementAfterClick;
@@ -106,6 +107,7 @@ public class Config : MonoBehaviour
 
 	void UpdateStatics()
 	{
+		UI.MainCanvas					= UIConfig._mainCanvas;
 		UI.MouseValidityMargin			= UIConfig._mouseValidityMargin;
 		UI.MaxRightClickTime			= UIConfig._maxRightClickTime;
 		UI.MaxMovementAfterClick		= UIConfig._maxMovementAfterClick;

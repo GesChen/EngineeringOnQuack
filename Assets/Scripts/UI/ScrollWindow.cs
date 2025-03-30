@@ -56,7 +56,7 @@ public class ScrollWindow : MonoBehaviour
 		xScrollAmount += Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().x * sensitivity * Time.deltaTime;
 		
 		if (Controls.inputMaster.TextEditor.Shift.IsPressed())
-			xScrollAmount += Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
+			xScrollAmount -= Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
 		else
 			yScrollAmount -= Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
 		
@@ -70,6 +70,8 @@ public class ScrollWindow : MonoBehaviour
 
 	void UpdateHorizBar() {
 		xBarParent.gameObject.SetActive(contents.maxWidth > windowWidth);
+		if (yBarParent.gameObject.activeSelf)
+			xBarParent.offsetMax = new(-barSize, xBarParent.offsetMax.y);
 
 		if (contents.maxWidth == 0) return;
 
