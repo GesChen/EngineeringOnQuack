@@ -4,17 +4,21 @@ using UnityEditor;
 using UnityEngine;
 using System;
 
-public class PrefabLabels : MonoBehaviour
+public class Labels : MonoBehaviour
 {
 	[Serializable]
-	public struct PrefabLabel {
+	public struct Label {
 		public Component Component;
 		public string Name;
 	}
-	public List<PrefabLabel> chunks;
+	public List<Label> Items;
+
+	public void Set(Component component, string name) {
+		Items.Add(new() { Component = component, Name = name});
+	}
 
 	public T Get<T>(string name) where T : Component {
-		PrefabLabel item = chunks.Find(c => c.Name == name);
+		Label item = Items.Find(c => c.Name == name);
 		
 		if (item.Component is T)
 			return item.Component as T;
@@ -23,7 +27,7 @@ public class PrefabLabels : MonoBehaviour
 	}
 }
 
-[CustomPropertyDrawer(typeof(PrefabLabels.PrefabLabel))]
+[CustomPropertyDrawer(typeof(Labels.Label))]
 public class MyStructDrawer : PropertyDrawer {
 	public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
 		return EditorGUI.GetPropertyHeight(property, label, false); // Default height

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 
 public static class HF {
 	#region Base Class Extensions
@@ -177,5 +179,43 @@ public static class HF {
 			.Replace("\v", @"\v")
 			.Replace("\f", @"\f")
 			.Replace("\0", @"\0");
+	}
+
+	public static Vector2 TextWidthExact(string text, TextMeshProUGUI source) {
+		string originalText = source.text; // copy
+
+		source.text = text; // set new
+
+		source.ForceMeshUpdate(); // probably faster calculation instead of whole canvas update
+								  //Canvas.ForceUpdateCanvases(); // update
+
+		// get size
+		float preferredWidth = LayoutUtility.GetPreferredWidth(source.rectTransform);
+		float preferredHeight = LayoutUtility.GetPreferredHeight(source.rectTransform);
+		Vector2 preferredSize = new(preferredWidth, preferredHeight);
+
+		source.text = originalText; // reset
+
+		return preferredSize;
+	}
+
+	public static float TextWidthApproximation(string text, TMP_FontAsset fontAsset, int fontSize) {
+		// Compute scale of the target point size relative to the sampling point size of the font asset.
+		float pointSizeScale = fontSize / (fontAsset.faceInfo.pointSize * fontAsset.faceInfo.scale);
+		float emScale = fontSize * 0.01f;
+
+		float styleSpacingAdjustment = 0; // (style & FontStyles.Bold) == FontStyles.Bold ? fontAsset.boldSpacing : 0;
+		float normalSpacingAdjustment = fontAsset.normalSpacingOffset;
+
+		float width = 0;
+
+		for (int i = 0; i < text.Length; i++) {
+			char unicode = text[i];
+			// Make sure the given unicode exists in the font asset.
+			if (fontAsset.characterLookupTable.TryGetValue(unicode, out TMP_Character character))
+				width += character.glyph.metrics.horizontalAdvance * pointSizeScale + (styleSpacingAdjustment + normalSpacingAdjustment) * emScale;
+		}
+
+		return width;
 	}
 }
