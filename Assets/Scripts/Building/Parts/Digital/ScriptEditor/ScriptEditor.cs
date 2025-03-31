@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.Text;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<string> testStrings;
@@ -16,6 +17,13 @@ public class ScriptEditor : MonoBehaviour {
 	public TMP_FontAsset font;
 	public float fontSize;
 
+	[Header("also temporary colors")]
+	public Color keywordColor;
+	public Color nameColor;
+	public Color symbolColor;
+	public Color stringColor;
+	public Color numberColor;
+	
 	public static Line NewLine(string str) => new() { content = str };
 	public struct Line {
 		public int lineNumber;
@@ -27,9 +35,37 @@ public class ScriptEditor : MonoBehaviour {
 	float allLinesHeight;
 
 	void Start() {
-		lines = testStrings.Select(s => new Line() { content = s }).ToList();
+	}
+
+	public void Load(Script script) {
+		string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
+		Load(lines);
+	}
+
+	public void Load(string[] strLines) {
+		Clear();
+
+		lines = new();
+		for (int i = 0; i < strLines.Length; i++) {
+			lines.Add(new() {
+				content = strLines[i],
+				lineNumber = i + 1
+			});
+		}
 
 		Regenerate();
+	}
+
+	void Clear() {
+
+		// delete all existing lines
+
+		if (lines == null) return;
+
+		foreach (Line line in lines) {
+			if (line.components != null)
+				Destroy(line.components[0].gameObject);
+		}
 	}
 
 	void Regenerate() {
@@ -56,7 +92,7 @@ public class ScriptEditor : MonoBehaviour {
 		// make line container object
 		GameObject lineContainer = new($"Line {line.lineNumber}");
 		lineContainer.transform.SetParent(linesContainer.transform); // have to use transform cuz rt doesnt exist yet
-		if (!lineContainer.TryGetComponent<RectTransform>(out var LRect)) 
+		if (!lineContainer.TryGetComponent<RectTransform>(out var LRect))
 			LRect = lineContainer.AddComponent<RectTransform>();
 
 		// make line number object
@@ -68,16 +104,21 @@ public class ScriptEditor : MonoBehaviour {
 				TextAlignmentOptions.Right,
 				lineNumberWidth);
 
+		// convert tabs to aligned spaces (for tmpro, original is unchanged)
+		string processed = ConvertTabsToSpaces(line);
+
+		// colorize 
+
 		// make actual line content
 		(GameObject LCObj, TextMeshProUGUI LCText, RectTransform LCRect)
 			= NewText(
 				"Line Content",
-				line.content,
+				$"{processed}",
 				lineContainer.transform,
 				TextAlignmentOptions.Left,
 				0); // temp set width to zero, recalculate later
 
-		Vector2 LCSize = HF.TextWidthExact(line.content, LCText);
+		Vector2 LCSize = HF.TextWidthExact(processed, LCText);
 		LCRect.sizeDelta = new(LCSize.x, allLinesHeight);
 
 		// setup line container rect
@@ -95,6 +136,23 @@ public class ScriptEditor : MonoBehaviour {
 			LCText
 		};
 	}
+
+	string ConvertTabsToSpaces(Line line) {
+		string tabsToSpaces = line.content;
+		static int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, LanguageConfig.SpacesPerTab) + 1;
+		for (int i = 0; i < tabsToSpaces.Length; i++) {
+			char c = tabsToSpaces[i];
+			if (c == '\t') {
+				int num = tabIndexToSpaceCount(i);
+				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i, new string(' ', num));
+			}
+		}
+
+		return tabsToSpaces;
+	}
+
+	//string ColorizeLine(Line line) <- might have to make a custom tokenizer or somehow piggyback off
+	// existing tokenizer
 
 	void UpdateLineContents(Line line, string newContents) {
 		TextMeshProUGUI text = line.components[0] as TextMeshProUGUI;

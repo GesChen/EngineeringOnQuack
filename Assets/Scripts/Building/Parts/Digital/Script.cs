@@ -1,5 +1,4 @@
-public class Script
-{
+public class Script {
 	public string Name;
 	public Section Contents;
 	public string OriginalText;

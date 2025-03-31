@@ -24,6 +24,8 @@ public class Tester : MonoBehaviour {
 	public Cable IEcable;
 	public Cable IMcable;
 
+	public ScriptEditor editor;
+
 	Script script;
 	void Start() {
 		BeforeTesting();
@@ -100,11 +102,14 @@ public class Tester : MonoBehaviour {
 					//string reconstructed = ScriptSaveLoad.ReconstructJson(json);
 					//sw.Write(reconstructed);
 				}
+			
+				editor.Load(script);
 			}
 
 			HF.WarnColor($"test updated to testcase file", colors[1]);
 			HF.WarnColor($"updated script: \n{script}", colors[1]);
 		}
+
 	}
 	void TestOnce() {
 		if (iters == 1) return;
@@ -118,7 +123,6 @@ public class Tester : MonoBehaviour {
 		Data run = interpreter.Run(memory.component, script);
 		if (iters == 1)
 			HF.WarnColor($"run out:" + run, colors[1]);
-
 	}
 
 	/*

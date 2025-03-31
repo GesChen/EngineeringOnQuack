@@ -173,6 +173,7 @@ public static class HF {
 
 	public static string Repr(string input) {
 		return input
+			.Replace(' ', '_')
 			.Replace("\t", @"\t")
 			.Replace("\n", @"\n")
 			.Replace("\r", @"\r")
@@ -218,4 +219,8 @@ public static class HF {
 
 		return width;
 	}
+
+	public static float Mod(float a, float b) => (Mathf.Abs(a * b) + a) % b;
+	public static int Mod(int a, int b) => (Mathf.Abs(a * b) + a) % b;
+
 }

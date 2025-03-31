@@ -204,9 +204,13 @@ public class Tokenizer {
 	}
 
 	public string PreProcessLine(string line) {
+		// trim line
 		line = line.Trim();
-		StringBuilder sb = new();
 
+		// turn tabs to space
+		line = line.Replace('\t', ' ');
+
+		StringBuilder sb = new();
 		int i = 0;
 		bool inSpaces = false;
 		while (i < line.Length) {
