@@ -16,13 +16,6 @@ public class ScriptEditor : MonoBehaviour {
 	public float lineNumberToLineGap;
 	public TMP_FontAsset font;
 	public float fontSize;
-
-	[Header("also temporary colors")]
-	public Color keywordColor;
-	public Color nameColor;
-	public Color symbolColor;
-	public Color stringColor;
-	public Color numberColor;
 	
 	public static Line NewLine(string str) => new() { content = str };
 	public struct Line {
