@@ -1,7 +1,7 @@
 {
   "Name": "",
   "OriginalText": "a = 100\r\nprint(f\"test {a} {(a + 5) + \" thing\"}\")\r\n\r\n\tone tab\r\n    four space\r\n\r\ntest:\r\n\tprint(\"innit\")\r\n\r\n\tproperty = \"blah\"\r\n\r\n\ttest(x):\r\n\t\tthis.a = x\r\n\t\tprint(\"constructed \" + str(x))\ttest\r\n\r\n\tsomething(y):\t\t\t\t\t\ttest 2\r\n\t\tprint(\"this is \"+this.property)\r\n\t\tprint(\"found a to be \" + str(this.a))\r\n\t\tprint(this.a + y)\r\n\t\tprint(\"nuts\")\r\n\r\n\t\tthis.another(this.a, 2, y)\r\n\t\tprint(\"its something \"+str(this.fab)+\" with pro \"+this.property)\r\n\t\r\n\tanother(a,b,c):\r\n\t\tthis.fab = a + b + c\r\n\t\tprint(this.fab)\r\n\r\nbreakpoint()\r\nthing = test(1)\r\nthing.something(2)\r\n\r\nfed = \"test\"\r\nprint(fed)\r\nprint(fed.upper())\r\n\r\nupperized = fed.upper()\r\nlowered = upperized.lower()\r\n\r\nprint(\"stuff \"+lowered)",
-  "Version": "1.0.0",
+  "Version": "01",
   "Contents": {
     "Lines": [
       {

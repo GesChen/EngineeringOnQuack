@@ -1051,6 +1051,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1116476321}
   - component: {fileID: 1116476322}
+  - component: {fileID: 1116476324}
+  - component: {fileID: 1116476323}
   m_Layer: 5
   m_Name: procedural SE test
   m_TagString: Untagged
@@ -1099,11 +1101,37 @@ MonoBehaviour:
   lineNumberToLineGap: 10
   font: {fileID: 11400000, guid: f9ae5c2f5f64fad439ba828fc50a5a5a, type: 2}
   fontSize: 20
+--- !u!114 &1116476323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1116476320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7a62c0a9cf14ee46861d92ea0286ebb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sh: {fileID: 1116476324}
+  test: 'else if test5=="true":'
+--- !u!114 &1116476324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1116476320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2bfe13c1748b634394e9adf54a22eb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   keywordColor: {r: 0, g: 0, b: 0, a: 0}
+  existingColor: {r: 0, g: 0, b: 0, a: 0}
   nameColor: {r: 0, g: 0, b: 0, a: 0}
   symbolColor: {r: 0, g: 0, b: 0, a: 0}
-  stringColor: {r: 0, g: 0, b: 0, a: 0}
-  numberColor: {r: 0, g: 0, b: 0, a: 0}
+  literalColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1 &1122762102
 GameObject:
   m_ObjectHideFlags: 0
@@ -1819,8 +1847,8 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1863591928}
   - {fileID: 1116476321}
+  - {fileID: 1863591928}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

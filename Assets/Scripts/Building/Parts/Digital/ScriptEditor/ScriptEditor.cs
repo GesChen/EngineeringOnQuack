@@ -27,6 +27,30 @@ public class ScriptEditor : MonoBehaviour {
 	float lineNumberWidth;
 	float allLinesHeight;
 
+	[HideInInspector]
+	public static List<string> DefaultInternalFuncs() => new() {
+		"num",
+		"bool",
+		"str",
+		"list",
+		"dict",
+		"abs",
+		"sqrt",
+		"round",
+		"sum",
+		"max",
+		"min"
+	};
+	public class LocalContext {
+		public List<string> InternalFunctions;
+
+		public struct Variable {
+			public string Name;
+			public int Type; // 0-normal, 1-function or member
+		}
+		public List<Variable> Variables;
+	}
+
 	void Start() {
 	}
 
