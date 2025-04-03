@@ -1114,7 +1114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sh: {fileID: 1116476324}
-  test: 'else if test5=="true":'
+  test: 'else if test5=="true": --test comment'
 --- !u!114 &1116476324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1128,8 +1128,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   keywordColor: {r: 0, g: 0, b: 0, a: 0}
-  existingColor: {r: 0, g: 0, b: 0, a: 0}
-  nameColor: {r: 0, g: 0, b: 0, a: 0}
+  memberFunctionColor: {r: 0, g: 0, b: 0, a: 0}
+  variableColor: {r: 0, g: 0, b: 0, a: 0}
+  unknownColor: {r: 0, g: 0, b: 0, a: 0}
   symbolColor: {r: 0, g: 0, b: 0, a: 0}
   literalColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1 &1122762102

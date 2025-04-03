@@ -12,7 +12,11 @@ public class SHTest : MonoBehaviour
 			InternalFunctions = new(ScriptEditor.DefaultInternalFuncs()),
 			Variables = new() { new() { Name = "thing", Type = 0}, new() { Name = "foo", Type = 1 } }
 		};
-		var a = sh.LineColorTypesArray(test, lc);
+		
+		
+		
+		
+		var a = sh.LineColorTypesArray(test, ref lc);
 		print(sh.TypeArrayToString(a));
 	}
 }
