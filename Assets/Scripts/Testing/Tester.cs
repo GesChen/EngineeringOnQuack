@@ -4,8 +4,6 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
-using System;
-using System.Runtime.InteropServices;
 
 public class Tester : MonoBehaviour {
 

@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Diagnostics;
 
 public static class HF {
 	#region Base Class Extensions
@@ -223,4 +224,19 @@ public static class HF {
 	public static float Mod(float a, float b) => (Mathf.Abs(a * b) + a) % b;
 	public static int Mod(int a, int b) => (Mathf.Abs(a * b) + a) % b;
 
+	public static void Test(Action toTest, int iters) {
+		Stopwatch sw = new();
+		sw.Start();
+
+		for (int i = 0; i < iters; i++) {
+			toTest();
+		}
+		sw.Stop();
+
+		double ns = sw.ElapsedTicks * 100;
+		WarnColor($"{ns} ns ({ns / 1e6} ms)", MoreColors.Crimson);
+
+		if (iters > 1)
+			WarnColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", MoreColors.Crimson);
+	}
 }

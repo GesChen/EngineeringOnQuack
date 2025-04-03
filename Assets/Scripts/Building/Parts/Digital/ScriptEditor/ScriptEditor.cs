@@ -49,6 +49,7 @@ public class ScriptEditor : MonoBehaviour {
 			public int Type; // 0-normal, 1-function or member
 		}
 		public List<Variable> Variables;
+		public bool InComment;
 	}
 
 	void Start() {
