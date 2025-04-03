@@ -8,11 +8,11 @@ public class SHTest : MonoBehaviour
 	public string test;
 
 	void Start() {
-		ScriptEditor.LocalContext lc = new() {
+/*		ScriptEditor.LocalContext lc = new() {
 			InternalFunctions = new(ScriptEditor.DefaultInternalFuncs()),
 			Variables = new() { new() { Name = "thing", Type = 0}, new() { Name = "foo", Type = 1 } }
 		};
 		var a = sh.LineColorTypesArray(test, lc);
-		print(sh.TypeArrayToString(a));
+		print(sh.TypeArrayToString(a));*/
 	}
 }

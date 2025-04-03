@@ -22,6 +22,7 @@ public class UIHovers : MonoBehaviour
 	#endregion
 
 	public static List<Transform> hovers = new();
+	public List<Transform> hoversDebug;
 	private GraphicRaycaster graphicRaycaster;
 	private PointerEventData pointerEventData;
 	private EventSystem eventSystem;
@@ -50,6 +51,8 @@ public class UIHovers : MonoBehaviour
 
 	void Update() {
 		CheckUIRaycast();
+
+		hoversDebug = hovers;
 	}
 	void CheckUIRaycast() {
 		pointerEventData = new(eventSystem) {

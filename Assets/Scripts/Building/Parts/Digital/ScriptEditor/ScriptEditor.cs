@@ -100,7 +100,7 @@ public class ScriptEditor : MonoBehaviour {
 			Line line = lines[i];
 
 			List<Component> generatedLineComponents = GenerateLine(line);
-			line.components = generatedLineComponents;
+			lines[i].components = generatedLineComponents;
 		}
 	}
 
@@ -147,10 +147,16 @@ public class ScriptEditor : MonoBehaviour {
 		NRect.localPosition = Vector2.zero;
 		LCRect.localPosition = new(lineNumberWidth + lineNumberToLineGap, 0);
 
+		//Labels l = lineContainer.AddComponent<Labels>();
+		//l.Set(NRect, "name");
+		//l.Set(LCRect, "contents");
+
 		// return components
 		return new() {
 			lineContainer.transform,
-			LCText
+			LCText,
+			NRect,
+			LCRect
 		};
 	}
 
@@ -202,5 +208,21 @@ public class ScriptEditor : MonoBehaviour {
 		newRect.sizeDelta = new(width, allLinesHeight);
 
 		return (newObj, newText, newRect);
+	}
+
+	void Update() {
+		print(FindLineHoveringOver());
+	}
+
+	int FindLineHoveringOver() {
+		print(lines[0].components);
+		if (lines[0].components == null) return -1;
+
+		for (int i = 0; i < lines.Count; i++) {
+			RectTransform contents = lines[i].components[3] as RectTransform;
+			print(contents);
+			if (UIHovers.hovers.Contains(contents)) return i;
+		}
+		return -1;
 	}
 }

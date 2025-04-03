@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class ScrollWindow : MonoBehaviour
-{
+public class ScrollWindow : MonoBehaviour {
 	public CustomVerticalLayout contents;
 	public float sensitivity;
 
@@ -25,12 +22,16 @@ public class ScrollWindow : MonoBehaviour
 	float xScrollableDist;
 	float yScrollableDist;
 
+	bool parentCanvasIsScreenSpace;
+
 	void Start() {
 		xScrollAmount = 0;
 		yScrollAmount = 0;
 
 		thisRect = GetComponent<RectTransform>();
 		contentsRect = contents.GetComponent<RectTransform>();
+
+		parentCanvasIsScreenSpace = GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay;
 	}
 
 	void Update() {
@@ -48,18 +49,42 @@ public class ScrollWindow : MonoBehaviour
 		windowWidth = thisRect.rect.width;
 		windowHeight = thisRect.rect.height;
 
-		xScrollableDist = contents.maxWidth - windowWidth; 
+		xScrollableDist = contents.maxWidth - windowWidth;
 		yScrollableDist = contents.totalHeight - windowHeight; // may be negative
 	}
 
+	bool CheckMouse() {
+		return UIHovers.hovers.Contains(transform);
+
+		Vector3[] corners = new Vector3[4];
+		thisRect.GetWorldCorners(corners);
+
+		if (!parentCanvasIsScreenSpace) {
+			for (int i = 0; i < 4; i++) 
+				corners[i] = Camera.main.WorldToScreenPoint(corners[i]);
+		}
+
+		// should be all 2d now hopefully
+
+		Vector2 BL = corners[0];
+		Vector2 TR = corners[2];
+		Vector2 M = Controls.mousePos;
+
+		return
+			M.x > BL.x && M.x < TR.x &&
+			M.y > BL.y && M.y < TR.y;
+	}
+
 	void HandleInput() {
+		if (!CheckMouse()) return;
+
 		xScrollAmount += Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().x * sensitivity * Time.deltaTime;
-		
+
 		if (Controls.inputMaster.TextEditor.Shift.IsPressed())
 			xScrollAmount -= Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
 		else
 			yScrollAmount -= Controls.inputMaster.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
-		
+
 		xScrollAmount = Mathf.Clamp(xScrollAmount, 0, Mathf.Max(0, xScrollableDist));
 		yScrollAmount = Mathf.Clamp(yScrollAmount, 0, Mathf.Max(0, yScrollableDist));
 	}
