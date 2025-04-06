@@ -53,15 +53,12 @@ public class SyntaxHighlighter : MonoBehaviour {
 	/// <returns>Array of color types that correspond with each character in the string</returns>
 	public Types[] LineColorTypesArray(string line, ScriptEditor.LocalContext lcontext) {
 		Types[] colors = new Types[line.Length];
-		string lineNoSpaces = line.Replace(" ", "");
 
 		if (string.IsNullOrWhiteSpace(line)) return new Types[0];
 
-		print("vars: " + string.Join('\n', lcontext.Variables));
-
 		DeleteOutOfScope(line, lcontext, out int indent);
 
-		HighlightKSD(line, ref colors);
+		HighlightSymbolsDigits(line, ref colors);
 
 		// turn everything else into name ig? and then specify existing after
 		for (int i = 0; i < line.Length; i++)
@@ -142,30 +139,12 @@ public class SyntaxHighlighter : MonoBehaviour {
 		indent = i;
 	}
 
-	void HighlightKSD(string line, ref Types[] colors) {
-		StringBuilder sb = new(); // look for keywords
-		List<string> possibleKeywords = new(Token.Keyword.Keywords);
-
-		bool kwMatches(string kw) => kw[sb.Length - 1] == sb[^1];
+	void HighlightSymbolsDigits(string line, ref Types[] colors) {
 		for (int i = 0; i < line.Length; i++) {
 			char c = line[i];
 			if (c == ' ') { } // ignore spaces, leave as undef
 			else if (char.IsDigit(c)) colors[i] = Types.literal;
 			else if (!char.IsLetter(c)) colors[i] = Types.symbol;
-
-			if (i != 0) possibleKeywords = possibleKeywords.Where(k => kwMatches(k)).ToList();
-
-			bool highlightKw =
-				possibleKeywords.Count == 1 &&
-				sb.Length == possibleKeywords[0].Length;
-			if (highlightKw && (i == line.Length - 1 || line[i + 1] == ' ')) // found matching keyword
-				Array.Fill(colors, Types.keyword, i - sb.Length, sb.Length); // highlight the keyword
-
-			if (possibleKeywords.Count == 0 || highlightKw) { // no keywords match
-				sb.Clear(); // reset sb
-				possibleKeywords = new(Token.Keyword.Keywords); // start again
-			}
-			sb.Append(c);
 		}
 	}
 
@@ -401,16 +380,19 @@ public class SyntaxHighlighter : MonoBehaviour {
 			(exists && lcontext.Variables[findName].Type == ScriptEditor.LCVariable.Types.MembFunc) ||
 			Memory.AllInternalMethods.Contains(name);
 
+		bool isType = (exists && lcontext.Variables[findName].Type == ScriptEditor.LCVariable.Types.Type);
+
 		bool isLiteral = Memory.AllInternalLiterals.Contains(name);
 
-		bool isType = (exists && lcontext.Variables[findName].Type == ScriptEditor.LCVariable.Types.Type);
+		bool isKeyword = Token.Keyword.KeywordsHashSet.Contains(name);
 
 		// ordered by prececdence (lower is higher) also there has to be a better way of doing this man
 		Types toHighlight = Types.unknown;
-		if (exists || isMember)		toHighlight = Types.variable;
-		if (isFunction || isUnknownFunction) toHighlight = Types.func;
-		if (isType)					toHighlight = Types.type;
-		if (isLiteral)				toHighlight = Types.literal;
+		if (exists || isMember)					toHighlight = Types.variable;
+		if (isFunction || isUnknownFunction)	toHighlight = Types.func;
+		if (isType)								toHighlight = Types.type;
+		if (isLiteral)							toHighlight = Types.literal;
+		if (isKeyword)							toHighlight = Types.keyword;
 
 		Array.Fill(colors, toHighlight, i - name.Length, name.Length);
 	}
