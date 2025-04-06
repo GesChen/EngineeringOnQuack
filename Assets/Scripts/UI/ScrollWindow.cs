@@ -95,8 +95,9 @@ public class ScrollWindow : MonoBehaviour {
 
 	void UpdateHorizBar() {
 		xBarParent.gameObject.SetActive(contents.maxWidth > windowWidth);
-		if (yBarParent.gameObject.activeSelf)
-			xBarParent.offsetMax = new(-barSize, xBarParent.offsetMax.y);
+		
+		//if (yBarParent.gameObject.activeSelf)
+			//xBarParent.offsetMax = new(-barSize, xBarParent.offsetMax.y);
 
 		if (contents.maxWidth == 0) return;
 
