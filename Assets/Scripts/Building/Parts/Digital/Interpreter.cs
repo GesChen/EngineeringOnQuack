@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Resources;
-using System.Security.Policy;
 
 public class Interpreter : Part {
 	public Evaluator Evaluator;

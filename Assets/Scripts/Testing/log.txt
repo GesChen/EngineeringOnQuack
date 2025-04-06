@@ -1,6 +1,6 @@
 {
   "Name": "",
-  "OriginalText": "a = 100\r\nprint(f\"test {a} {(a + 5) + \" thing\"}\")\r\n\r\n\tone tab\r\n    four space\r\n\r\ntest:\r\n\tprint(\"innit\")\r\n\r\n\tproperty = \"blah\"\r\n\r\n\ttest(x):\r\n\t\tthis.a = x\r\n\t\tprint(\"constructed \" + str(x))\ttest\r\n\r\n\tsomething(y):\t\t\t\t\t\ttest 2\r\n\t\tprint(\"this is \"+this.property)\r\n\t\tprint(\"found a to be \" + str(this.a))\r\n\t\tprint(this.a + y)\r\n\t\tprint(\"nuts\")\r\n\r\n\t\tthis.another(this.a, 2, y)\r\n\t\tprint(\"its something \"+str(this.fab)+\" with pro \"+this.property)\r\n\t\r\n\tanother(a,b,c):\r\n\t\tthis.fab = a + b + c\r\n\t\tprint(this.fab)\r\n\r\nbreakpoint()\r\nthing = test(1)\r\nthing.something(2)\r\n\r\nfed = \"test\"\r\nprint(fed)\r\nprint(fed.upper())\r\n\r\nupperized = fed.upper()\r\nlowered = upperized.lower()\r\n\r\nprint(\"stuff \"+lowered)",
+  "OriginalText": "a = 100 \r\n\r\ntest:\r\n\tprint(\"innit\")\r\n\r\n\tproperty = \"blah\"\r\n\r\n\ttest(x):\r\n\t\tthis.a = x\r\n\t\tprint(\"constructed \" + str(x))\ttest\r\n\r\n\tsomething(y):\t\t\t\t\t\ttest 2\r\n\t\tprint(\"this is \"+this.property)\r\n\t\tprint(\"found a to be \" + str(this.a))\r\n\t\tprint(this.a + y)\r\n\t\tprint(\"nuts\")\r\n\r\n\t\tthis.another(this.a, 2, y)\r\n\t\tprint(\"its something \"+str(this.fab)+\" with pro \"+this.property)\r\n\t\r\n\tanother(a,b,c):\r\n\t\tthis.fab = a + b + c\r\n\t\tprint(this.fab)\r\n\r\nbreakpoint()\r\nthing = test(1)\r\nthing.something(2)\r\n\r\nfed = \"test\"\r\nprint(fed)\r\nprint(fed.upper())\r\n\r\nupperized = fed.upper()\r\nlowered = upperized.lower()\r\n\r\nprint(\"stuff \"+lowered)",
   "Version": "01",
   "Contents": {
     "Lines": [
@@ -27,76 +27,7 @@
         ]
       },
       {
-        "RLN": 2,
-        "OS": "print(f\"test {a} {(a + 5) + \" thing\"}\")",
-        "T": 0,
-        "L": [
-          {
-            "T": 1,
-            "SV": "print"
-          },
-          {
-            "T": 0,
-            "SV": "("
-          },
-          {
-            "T": 1,
-            "SV": "f"
-          },
-          {
-            "T": 3,
-            "RV": {
-              "PT": 1,
-              "SV": "test {a} {(a + 5) + \" thing\"}"
-            }
-          },
-          {
-            "T": 0,
-            "SV": ")"
-          }
-        ]
-      },
-      {
-        "RLN": 4,
-        "OS": "one tab",
-        "T": 1,
-        "S": {
-          "Lines": [
-            {
-              "RLN": 4,
-              "OS": "one tab",
-              "T": 0,
-              "L": [
-                {
-                  "T": 1,
-                  "SV": "one"
-                },
-                {
-                  "T": 1,
-                  "SV": "tab"
-                }
-              ]
-            },
-            {
-              "RLN": 5,
-              "OS": "four space",
-              "T": 0,
-              "L": [
-                {
-                  "T": 1,
-                  "SV": "four"
-                },
-                {
-                  "T": 1,
-                  "SV": "space"
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "RLN": 7,
+        "RLN": 3,
         "OS": "test:",
         "T": 0,
         "L": [
@@ -111,13 +42,13 @@
         ]
       },
       {
-        "RLN": 8,
+        "RLN": 4,
         "OS": "print(\"innit\")",
         "T": 1,
         "S": {
           "Lines": [
             {
-              "RLN": 8,
+              "RLN": 4,
               "OS": "print(\"innit\")",
               "T": 0,
               "L": [
@@ -143,7 +74,7 @@
               ]
             },
             {
-              "RLN": 10,
+              "RLN": 6,
               "OS": "property = \"blah\"",
               "T": 0,
               "L": [
@@ -165,7 +96,7 @@
               ]
             },
             {
-              "RLN": 12,
+              "RLN": 8,
               "OS": "test(x):",
               "T": 0,
               "L": [
@@ -192,13 +123,13 @@
               ]
             },
             {
-              "RLN": 13,
+              "RLN": 9,
               "OS": "this.a = x",
               "T": 1,
               "S": {
                 "Lines": [
                   {
-                    "RLN": 13,
+                    "RLN": 9,
                     "OS": "this.a = x",
                     "T": 0,
                     "L": [
@@ -225,7 +156,7 @@
                     ]
                   },
                   {
-                    "RLN": 14,
+                    "RLN": 10,
                     "OS": "print(\"constructed \" + str(x)) test",
                     "T": 0,
                     "L": [
@@ -278,7 +209,7 @@
               }
             },
             {
-              "RLN": 16,
+              "RLN": 12,
               "OS": "something(y): test 2",
               "T": 0,
               "L": [
@@ -316,13 +247,13 @@
               ]
             },
             {
-              "RLN": 17,
+              "RLN": 13,
               "OS": "print(\"this is \"+this.property)",
               "T": 1,
               "S": {
                 "Lines": [
                   {
-                    "RLN": 17,
+                    "RLN": 13,
                     "OS": "print(\"this is \"+this.property)",
                     "T": 0,
                     "L": [
@@ -364,7 +295,7 @@
                     ]
                   },
                   {
-                    "RLN": 18,
+                    "RLN": 14,
                     "OS": "print(\"found a to be \" + str(this.a))",
                     "T": 0,
                     "L": [
@@ -418,7 +349,7 @@
                     ]
                   },
                   {
-                    "RLN": 19,
+                    "RLN": 15,
                     "OS": "print(this.a + y)",
                     "T": 0,
                     "L": [
@@ -457,7 +388,7 @@
                     ]
                   },
                   {
-                    "RLN": 20,
+                    "RLN": 16,
                     "OS": "print(\"nuts\")",
                     "T": 0,
                     "L": [
@@ -483,7 +414,7 @@
                     ]
                   },
                   {
-                    "RLN": 22,
+                    "RLN": 18,
                     "OS": "this.another(this.a, 2, y)",
                     "T": 0,
                     "L": [
@@ -541,7 +472,7 @@
                     ]
                   },
                   {
-                    "RLN": 23,
+                    "RLN": 19,
                     "OS": "print(\"its something \"+str(this.fab)+\" with pro \"+this.property)",
                     "T": 0,
                     "L": [
@@ -625,7 +556,7 @@
               }
             },
             {
-              "RLN": 25,
+              "RLN": 21,
               "OS": "another(a,b,c):",
               "T": 0,
               "L": [
@@ -668,13 +599,13 @@
               ]
             },
             {
-              "RLN": 26,
+              "RLN": 22,
               "OS": "this.fab = a + b + c",
               "T": 1,
               "S": {
                 "Lines": [
                   {
-                    "RLN": 26,
+                    "RLN": 22,
                     "OS": "this.fab = a + b + c",
                     "T": 0,
                     "L": [
@@ -717,7 +648,7 @@
                     ]
                   },
                   {
-                    "RLN": 27,
+                    "RLN": 23,
                     "OS": "print(this.fab)",
                     "T": 0,
                     "L": [
@@ -754,7 +685,7 @@
         }
       },
       {
-        "RLN": 29,
+        "RLN": 25,
         "OS": "breakpoint()",
         "T": 0,
         "L": [
@@ -773,7 +704,7 @@
         ]
       },
       {
-        "RLN": 30,
+        "RLN": 26,
         "OS": "thing = test(1)",
         "T": 0,
         "L": [
@@ -807,7 +738,7 @@
         ]
       },
       {
-        "RLN": 31,
+        "RLN": 27,
         "OS": "thing.something(2)",
         "T": 0,
         "L": [
@@ -841,7 +772,7 @@
         ]
       },
       {
-        "RLN": 33,
+        "RLN": 29,
         "OS": "fed = \"test\"",
         "T": 0,
         "L": [
@@ -863,7 +794,7 @@
         ]
       },
       {
-        "RLN": 34,
+        "RLN": 30,
         "OS": "print(fed)",
         "T": 0,
         "L": [
@@ -886,7 +817,7 @@
         ]
       },
       {
-        "RLN": 35,
+        "RLN": 31,
         "OS": "print(fed.upper())",
         "T": 0,
         "L": [
@@ -925,7 +856,7 @@
         ]
       },
       {
-        "RLN": 37,
+        "RLN": 33,
         "OS": "upperized = fed.upper()",
         "T": 0,
         "L": [
@@ -960,7 +891,7 @@
         ]
       },
       {
-        "RLN": 38,
+        "RLN": 34,
         "OS": "lowered = upperized.lower()",
         "T": 0,
         "L": [
@@ -995,7 +926,7 @@
         ]
       },
       {
-        "RLN": 40,
+        "RLN": 36,
         "OS": "print(\"stuff \"+lowered)",
         "T": 0,
         "L": [

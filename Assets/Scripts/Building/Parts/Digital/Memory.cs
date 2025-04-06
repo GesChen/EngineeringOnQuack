@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 using static Token;
 
 public class Memory {
@@ -46,6 +47,11 @@ public class Memory {
 		{ "Function",	Primitive.Function.	InternalType },
 		{ "Error",				  Error.	InternalType }
 	};
+
+	public static readonly HashSet<string> AllInternalMethods =
+		StaticData.Where(d => d.Value is Primitive.Function).Select(d => d.Key).ToHashSet();
+	public static readonly HashSet<string> AllInternalLiterals = 
+		StaticData.Where(d => d.Value is not Primitive.Function).Select(d => d.Key).ToHashSet();
 
 	public void Initialize() {
 		foreach (Data d in Data.Values) d.Memory = this;

@@ -1,8 +1,4 @@
-a = 100
-print(f"test {a} {(a + 5) + " thing"}")
-
-	one tab
-    four space
+a = 100 
 
 test:
 	print("innit")

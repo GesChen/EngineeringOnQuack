@@ -100,8 +100,9 @@ public class Tester : MonoBehaviour {
 					//string reconstructed = ScriptSaveLoad.ReconstructJson(json);
 					//sw.Write(reconstructed);
 				}
-			
-				editor.Load(script);
+				
+				void load() => editor.Load(script);
+				HF.Test(load, 1);
 			}
 
 			HF.WarnColor($"test updated to testcase file", colors[1]);

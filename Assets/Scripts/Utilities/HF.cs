@@ -5,7 +5,6 @@ using System.Text;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using System.Diagnostics;
 
 public static class HF {
 	#region Base Class Extensions
@@ -225,7 +224,7 @@ public static class HF {
 	public static int Mod(int a, int b) => (Mathf.Abs(a * b) + a) % b;
 
 	public static void Test(Action toTest, int iters) {
-		Stopwatch sw = new();
+		System.Diagnostics.Stopwatch sw = new();
 		sw.Start();
 
 		for (int i = 0; i < iters; i++) {

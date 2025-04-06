@@ -6,11 +6,10 @@ using TMPro;
 using System.Text;
 
 public class ScriptEditor : MonoBehaviour {
-	public List<string> testStrings;
-
 	public List<Line> lines;
 	public ScrollWindow scroll;
 	public CustomVerticalLayout linesContainer;
+	public SyntaxHighlighter syntaxHighlighter;
 
 	[Header("temporary local config options, should move to global config soon")]
 	public float lineNumberToLineGap;
@@ -28,29 +27,32 @@ public class ScriptEditor : MonoBehaviour {
 	float allLinesHeight;
 
 	[HideInInspector]
-	public static List<string> DefaultInternalFuncs() => new() {
-		"num",
-		"bool",
-		"str",
-		"list",
-		"dict",
-		"abs",
-		"sqrt",
-		"round",
-		"sum",
-		"max",
-		"min"
-	};
-	public class LocalContext {
-		public List<string> InternalFunctions;
+	public struct LCVariable { // it would be inside localcontext if it wasnt so fucking deep
+		public string Name;
 
-		public struct Variable {
-			public string Name;
-			public int Type; // 0-normal, 1-function or member
+		public enum Types {
+			Normal,
+			MembFunc,
+			Type
 		}
-		public List<Variable> Variables;
-		public bool InComment;
+		public Types Type;
+		public int IndentLevel;
+
+		public override readonly string ToString() {
+			return $"% {Name} ({Type}) at {IndentLevel}";
+		}
 	}
+	public class LocalContext {
+		public List<LCVariable> Variables;
+		public bool InComment;
+
+		public LocalContext() {
+			Variables = new();
+			InComment = false;
+		}
+	}
+
+	LocalContext LC;
 
 	void Start() {
 	}
@@ -96,13 +98,21 @@ public class ScriptEditor : MonoBehaviour {
 		lineNumberWidth = numberSize.x;
 		allLinesHeight = numberSize.y;
 
+		LC = new() {
+			Variables = new(),
+			InComment = false,
+		};
+
 		// generate lines
 		for (int i = 0; i < lines.Count; i++) {
 			Line line = lines[i];
 
 			List<Component> generatedLineComponents = GenerateLine(line);
-			lines[i].components = generatedLineComponents;
+			line.components = generatedLineComponents;
+			lines[i] = line;
 		}
+
+		// scale all containers to max length
 	}
 
 	List<Component> GenerateLine(Line line) {
@@ -125,7 +135,11 @@ public class ScriptEditor : MonoBehaviour {
 		// convert tabs to aligned spaces (for tmpro, original is unchanged)
 		string processed = ConvertTabsToSpaces(line);
 
-		// colorize 
+		// colorize
+		var colors = syntaxHighlighter.LineColorTypesArray(processed, LC);
+		print(processed);
+		print(syntaxHighlighter.TypeArrayToString(colors));
+		processed = syntaxHighlighter.TagLine(processed, colors);
 
 		// make actual line content
 		(GameObject LCObj, TextMeshProUGUI LCText, RectTransform LCRect)
@@ -175,9 +189,6 @@ public class ScriptEditor : MonoBehaviour {
 		return tabsToSpaces;
 	}
 
-	//string ColorizeLine(Line line) <- might have to make a custom tokenizer or somehow piggyback off
-	// existing tokenizer
-
 	void UpdateLineContents(Line line, string newContents) {
 		TextMeshProUGUI text = line.components[0] as TextMeshProUGUI;
 		text.text = newContents;
@@ -211,17 +222,20 @@ public class ScriptEditor : MonoBehaviour {
 		return (newObj, newText, newRect);
 	}
 
+	bool lastMouseInContainer;
 	void Update() {
-		print(FindLineHoveringOver());
+		//print(FindLineHoveringOver());
+
+		bool mouseInContainer = UIHovers.hovers.Contains(linesContainer.transform);
+		// custom cursor code here?
+		lastMouseInContainer = mouseInContainer;
 	}
 
 	int FindLineHoveringOver() {
-		print(lines[0].components);
-		if (lines[0].components == null) return -1;
+		if (lines == null || lines[0].components == null) return -1;
 
 		for (int i = 0; i < lines.Count; i++) {
 			RectTransform contents = lines[i].components[3] as RectTransform;
-			print(contents);
 			if (UIHovers.hovers.Contains(contents)) return i;
 		}
 		return -1;
