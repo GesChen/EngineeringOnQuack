@@ -15,17 +15,22 @@ public class Tester : MonoBehaviour {
 	public List<Color> colors;
 
 	public int iters;
-	public MemoryPart memory;
+	public Memory memory;
 	public Interpreter interpreter;
 	public Evaluator evaluator;
-
-	public Cable IEcable;
-	public Cable IMcable;
 
 	public ScriptEditor editor;
 
 	Script script;
 	void Start() {
+		interpreter = new();
+		evaluator = new();
+		memory = new(interpreter, "main");
+
+		interpreter.Evaluator = evaluator;
+		interpreter.Memory = memory;
+		evaluator.Interpreter = interpreter;
+
 		BeforeTesting();
 		Updatetest();
 	}
@@ -72,10 +77,9 @@ public class Tester : MonoBehaviour {
 	}
 
 	void BeforeTesting() {
-		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
-		interpreter.MemoryCC = onItoMCC;
-		memory.InterpreterCC = onMtoICC;
-		memory.Initialize(onMtoICC);
+		interpreter.Memory = memory;
+		memory.Interpreter = interpreter;
+		memory.Initialize();
 		HF.WarnColor($"memory initialized", colors[1]);
 	}
 	void Updatetest() {
@@ -101,7 +105,9 @@ public class Tester : MonoBehaviour {
 					//sw.Write(reconstructed);
 				}
 				
-				void load() => editor.Load(script);
+				string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
+				print(lines.Length);
+				void load() => editor.Load(lines);
 				HF.Test(load, 1);
 			}
 
@@ -113,13 +119,13 @@ public class Tester : MonoBehaviour {
 	void TestOnce() {
 		if (iters == 1) return;
 
-		Memory copy = memory.component.Copy();
+		Memory copy = memory.Copy();
 		Data run = interpreter.Run(copy, script);
 		print(run);
 	}
 	void ToTest() {
 
-		Data run = interpreter.Run(memory.component, script);
+		Data run = interpreter.Run(memory, script);
 		if (iters == 1)
 			HF.WarnColor($"run out:" + run, colors[1]);
 	}

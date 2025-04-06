@@ -4,16 +4,8 @@ using UnityEngine;
 
 public class MemoryPart : Part {
 	public Memory component;
-	public CableConnection InterpreterCC;
 
-	private void Start() {
-		//Initialize(InterpreterCC);
-	}
-
-	public void Initialize(CableConnection interpreterCC) {
-		InterpreterCC = interpreterCC;
-
-		component = new(InterpreterCC, "main memory");
+	public void Initialize() {
 		component.Initialize();
 	}
 }
