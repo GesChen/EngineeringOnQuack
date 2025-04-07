@@ -3,16 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using System.Text;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
 	public ScrollWindow scroll;
-	public CustomVerticalLayout linesContainer;
+	public CustomVerticalLayout lineContentVerticalLayout;
+	public RectTransform lineContentContainer;
+	public CustomVerticalLayout lineNumbersVerticalLayout;
+	RectTransform lineNumbersRect;
 	public SyntaxHighlighter syntaxHighlighter;
 
 	[Header("temporary local config options, should move to global config soon")]
-	public float lineNumberToLineGap;
+	public float numberToContentSpace;
 	public TMP_FontAsset font;
 	public float fontSize;
 	
@@ -55,6 +57,7 @@ public class ScriptEditor : MonoBehaviour {
 	LocalContext LC;
 
 	void Start() {
+		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
 	}
 
 	public void Load(string[] strLines) {
@@ -78,21 +81,27 @@ public class ScriptEditor : MonoBehaviour {
 		if (lines == null) return;
 
 		foreach (Line line in lines) {
-			if (line.components != null)
-				Destroy(line.components[0].gameObject);
+			if (line.components != null) {
+				Destroy(line.components[0].gameObject); // line contents
+				Destroy(line.components[2].gameObject); // line number
+			}
 		}
 	}
 
 	void Regenerate() {
 
 		// recalculate max line number width
-		TextMeshProUGUI testingText = linesContainer.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
+		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
 		testingText.font = font;
 		testingText.fontSize = fontSize;
-		Vector2 numberSize = HF.TextWidthExact((lines.Count + 1).ToString(), testingText);
+		Vector2 numberSize = HF.TextWidthExact(lines.Count.ToString(), testingText);
 		lineNumberWidth = numberSize.x;
 		allLinesHeight = numberSize.y;
 
+		// fix container
+		lineContentContainer.offsetMin = new(lineNumberWidth + numberToContentSpace, 0);
+
+		// reset localcontext
 		LC = new() {
 			Variables = new(),
 			InComment = false,
@@ -111,19 +120,12 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	List<Component> GenerateLine(Line line) {
-
-		// make line container object
-		GameObject lineContainer = new($"Line {line.lineNumber}");
-		lineContainer.transform.SetParent(linesContainer.transform); // have to use transform cuz rt doesnt exist yet
-		if (!lineContainer.TryGetComponent<RectTransform>(out var LRect))
-			LRect = lineContainer.AddComponent<RectTransform>();
-
 		// make line number object
 		(GameObject NObj, TextMeshProUGUI NText, RectTransform NRect)
 			= NewText(
 				"Line Number",
 				line.lineNumber.ToString(),
-				lineContainer.transform,
+				lineNumbersVerticalLayout.transform,
 				TextAlignmentOptions.Right,
 				lineNumberWidth);
 
@@ -141,7 +143,7 @@ public class ScriptEditor : MonoBehaviour {
 			= NewText(
 				"Line Content",
 				$"{processed}",
-				lineContainer.transform,
+				lineContentVerticalLayout.transform,
 				TextAlignmentOptions.Left,
 				0); // temp set width to zero, recalculate later
 
@@ -149,13 +151,13 @@ public class ScriptEditor : MonoBehaviour {
 		LCRect.sizeDelta = new(LCSize.x, allLinesHeight);
 
 		// setup line container rect
-		LRect.anchorMin = new(0, 1);
-		LRect.anchorMax = new(0, 1);
-		LRect.pivot = new(0, 1);
-		LRect.sizeDelta = new(lineNumberWidth + lineNumberToLineGap + LCSize.x, allLinesHeight);
+		LCRect.anchorMin = new(0, 1);
+		LCRect.anchorMax = new(0, 1);
+		LCRect.pivot = new(0, 1);
+		LCRect.sizeDelta = new(lineNumberWidth + numberToContentSpace + LCSize.x, allLinesHeight);
 
 		NRect.localPosition = Vector2.zero;
-		LCRect.localPosition = new(lineNumberWidth + lineNumberToLineGap, 0);
+		LCRect.localPosition = new(lineNumberWidth + numberToContentSpace, 0);
 
 		//Labels l = lineContainer.AddComponent<Labels>();
 		//l.Set(NRect, "name");
@@ -163,10 +165,9 @@ public class ScriptEditor : MonoBehaviour {
 
 		// return components
 		return new() {
-			lineContainer.transform,
+			LCRect,
 			LCText,
-			NRect,
-			LCRect
+			NRect
 		};
 	}
 
@@ -184,6 +185,7 @@ public class ScriptEditor : MonoBehaviour {
 		return tabsToSpaces;
 	}
 
+	// TODO: do something with this
 	void UpdateLineContents(Line line, string newContents) {
 		TextMeshProUGUI text = line.components[0] as TextMeshProUGUI;
 		text.text = newContents;
@@ -221,7 +223,7 @@ public class ScriptEditor : MonoBehaviour {
 	void Update() {
 		//print(FindLineHoveringOver());
 
-		bool mouseInContainer = UIHovers.hovers.Contains(linesContainer.transform);
+		bool mouseInContainer = UIHovers.hovers.Contains(lineContentVerticalLayout.transform);
 		// custom cursor code here?
 		lastMouseInContainer = mouseInContainer;
 	}
@@ -230,7 +232,7 @@ public class ScriptEditor : MonoBehaviour {
 		if (lines == null || lines[0].components == null) return -1;
 
 		for (int i = 0; i < lines.Count; i++) {
-			RectTransform contents = lines[i].components[3] as RectTransform;
+			RectTransform contents = lines[i].components[0] as RectTransform;
 			if (UIHovers.hovers.Contains(contents)) return i;
 		}
 		return -1;

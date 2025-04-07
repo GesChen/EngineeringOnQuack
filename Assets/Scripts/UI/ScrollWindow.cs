@@ -11,16 +11,16 @@ public class ScrollWindow : MonoBehaviour {
 	public RectTransform xBarParent;
 	public float barSize;
 
-	RectTransform thisRect;
-	RectTransform contentsRect;
-	float xScrollAmount;
-	float yScrollAmount;
-	float xTotalBarLength;
-	float yTotalBarLength;
-	float windowWidth;
-	float windowHeight;
-	float xScrollableDist;
-	float yScrollableDist;
+	protected RectTransform thisRect;
+	protected RectTransform contentsRect;
+	protected float xScrollAmount;
+	protected float yScrollAmount;
+	protected float xTotalBarLength;
+	protected float yTotalBarLength;
+	protected float windowWidth;
+	protected float windowHeight;
+	protected float xScrollableDist;
+	protected float yScrollableDist;
 
 	bool parentCanvasIsScreenSpace;
 
@@ -89,7 +89,7 @@ public class ScrollWindow : MonoBehaviour {
 		yScrollAmount = Mathf.Clamp(yScrollAmount, 0, Mathf.Max(0, yScrollableDist));
 	}
 
-	void UpdateContentsPosition() {
+	public virtual void UpdateContentsPosition() {
 		contentsRect.localPosition = new(-xScrollAmount, yScrollAmount);
 	}
 
@@ -108,7 +108,7 @@ public class ScrollWindow : MonoBehaviour {
 		float x1 = xTotalBarLength - x - barWidth;
 		float x2 = -x;
 
-		xBarParent.sizeDelta = new(yBarParent.sizeDelta.x, barSize);
+		xBarParent.sizeDelta = new(xBarParent.sizeDelta.x, barSize);
 		xScrollbar.offsetMin = new(x1, xScrollbar.offsetMin.y);
 		xScrollbar.offsetMax = new(x2, xScrollbar.offsetMax.y);
 	}

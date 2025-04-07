@@ -9,15 +9,15 @@ using System;
 
 public class SyntaxHighlighter : MonoBehaviour {
 
-	[Header("temporary colors")]
-	[ColorUsage(false)] public Color keywordColor;
-	[ColorUsage(false)] public Color functionColor;
-	[ColorUsage(false)] public Color variableColor;
-	[ColorUsage(false)] public Color unknownColor;
-	[ColorUsage(false)] public Color symbolColor;
-	[ColorUsage(false)] public Color literalColor;
-	[ColorUsage(false)] public Color typeColor;
-	[ColorUsage(false)] public Color commentColor;
+	//[Header("temporary colors")]
+	//[ColorUsage(false)] public Color keywordColor;
+	//[ColorUsage(false)] public Color functionColor;
+	//[ColorUsage(false)] public Color variableColor;
+	//[ColorUsage(false)] public Color unknownColor;
+	//[ColorUsage(false)] public Color symbolColor;
+	//[ColorUsage(false)] public Color literalColor;
+	//[ColorUsage(false)] public Color typeColor;
+	//[ColorUsage(false)] public Color commentColor;
 
 	public enum Types {
 		unassigned,
@@ -35,14 +35,14 @@ public class SyntaxHighlighter : MonoBehaviour {
 	void Awake() {
 		TypeToHex = new() {
 			{ Types.unassigned , "#000" },
-			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(keywordColor)		},
-			{ Types.func	, ColorUtility.ToHtmlStringRGB(functionColor)	},
-			{ Types.variable	, ColorUtility.ToHtmlStringRGB(variableColor)		},
-			{ Types.unknown		, ColorUtility.ToHtmlStringRGB(unknownColor)		},
-			{ Types.symbol		, ColorUtility.ToHtmlStringRGB(symbolColor)			},
-			{ Types.literal		, ColorUtility.ToHtmlStringRGB(literalColor)		},
-			{ Types.type		, ColorUtility.ToHtmlStringRGB(typeColor)			},
-			{ Types.comment		, ColorUtility.ToHtmlStringRGB(commentColor)		}
+			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Keyword)	},
+			{ Types.func		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Function)	},
+			{ Types.variable	, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Variable)	},
+			{ Types.unknown		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Unknown)	},
+			{ Types.symbol		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Symbol)	},
+			{ Types.literal		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Literal)	},
+			{ Types.type		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Type)		},
+			{ Types.comment		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Comment)	}
 		};
 	}
 
