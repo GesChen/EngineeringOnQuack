@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.EventSystems;
+using System;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -28,6 +30,7 @@ public class ScriptEditor : MonoBehaviour {
 	float lineNumberWidth;
 	float allLinesHeight;
 
+	#region LocalContext
 	[HideInInspector]
 	public struct LCVariable { // it would be inside localcontext if it wasnt so fucking deep
 		public string Name;
@@ -55,9 +58,16 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	LocalContext LC;
+	#endregion
+
+	bool parentCanvasIsScreenSpace = false;
+
+	float charUVAmount;
 
 	void Start() {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
+
+		parentCanvasIsScreenSpace = GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay;
 	}
 
 	public void Load(string[] strLines) {
@@ -95,6 +105,7 @@ public class ScriptEditor : MonoBehaviour {
 		testingText.font = font;
 		testingText.fontSize = fontSize;
 		Vector2 numberSize = HF.TextWidthExact(lines.Count.ToString(), testingText);
+
 		lineNumberWidth = numberSize.x;
 		allLinesHeight = numberSize.y;
 
@@ -116,7 +127,29 @@ public class ScriptEditor : MonoBehaviour {
 			lines[i] = line;
 		}
 
-		// scale all containers to max length
+		// scale all containers to max width
+		float longestLineWidth = -1;
+		int longestLine = -1;
+		for (int i = 0; i < lines.Count; i++) {
+			float width = (lines[i].components[0] as RectTransform).rect.width;
+			if (width > longestLineWidth) {
+				longestLineWidth = width;
+				longestLine = i;
+			}
+		}
+
+		float maxWidth = Mathf.Max(
+			longestLineWidth, // widest of all components
+			lineContentContainer.rect.width); // must at minimum be as wide as the container
+
+		lines.ForEach(l => (l.components[0] as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth));
+
+		string lineContent = lines[longestLine].content;
+		int tabs = lineContent.Count(c => c == '\t'); // its just a for loop under the hood
+		int singleChars = (lineContent.Length - tabs) + (tabs * LanguageConfig.SpacesPerTab); // convert tabs to spaces
+
+		charUVAmount = 1 / singleChars;
+
 	}
 
 	List<Component> GenerateLine(Line line) {
@@ -219,22 +252,67 @@ public class ScriptEditor : MonoBehaviour {
 		return (newObj, newText, newRect);
 	}
 
-	bool lastMouseInContainer;
 	void Update() {
-		//print(FindLineHoveringOver());
+		(int line, int hoverIndex) = FindLineHoveringOver();
+		if (line != -1) {
+			RaycastResult result = UIHovers.results[hoverIndex];
+			Vector3 worldPosition = parentCanvasIsScreenSpace ?
+				result.screenPosition :
+				result.worldPosition;
 
-		bool mouseInContainer = UIHovers.hovers.Contains(lineContentVerticalLayout.transform);
-		// custom cursor code here?
-		lastMouseInContainer = mouseInContainer;
+			GetCharIndexAtWorldSpacePosition(line, worldPosition);
+		}
 	}
 
-	int FindLineHoveringOver() {
-		if (lines == null || lines[0].components == null) return -1;
+	// long ass name
+	int GetCharIndexAtWorldSpacePosition(int line, Vector3 point) {
+		RectTransform rt = lines[line].components[0] as RectTransform;
+
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		// hopefully this loop isnt too slow for being called once
+		// index = index of cursor location, basically 1 before the actual char
+		List<float> TtoIndex = new();
+		float pos = 0;
+		foreach (char c in lines[line].content) {
+			TtoIndex.Add(pos);
+
+			if (c == '\t') pos += charUVAmount * 4;
+			else pos += charUVAmount;
+		}
+		// pos isnt gonna be 1 but need to add it again to be able to select last item still
+		TtoIndex.Add(pos);
+
+		float t = UVAxis(corners[0], corners[3], point); // x uv
+
+		// determine which t is closest to real t
+		float closestDist = float.PositiveInfinity;
+		int charIndex = -1;
+		for (int i = 0; i < TtoIndex.Count; i++) {
+			float dist = MathF.Abs(TtoIndex[i] - t);
+			if (dist < closestDist) {
+				closestDist = dist;
+				charIndex = 
+			}
+		}
+
+
+		return 0;
+	}
+
+	float UVAxis(Vector3 origin, Vector3 directionVector, Vector3 point) {
+		return Vector3.Dot(point - origin, (directionVector - origin).normalized) / Vector3.Distance(origin, directionVector);
+	}
+
+	(int lineIndex, int hoverIndex) FindLineHoveringOver() {
+		if (lines == null || lines[0].components == null) return (-1, -1);
 
 		for (int i = 0; i < lines.Count; i++) {
 			RectTransform contents = lines[i].components[0] as RectTransform;
-			if (UIHovers.hovers.Contains(contents)) return i;
+			int index = UIHovers.hovers.IndexOf(contents);
+			if (index != -1) return (i, index);
 		}
-		return -1;
+		return (-1, -1);
 	}
 }

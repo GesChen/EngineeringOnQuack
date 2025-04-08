@@ -1908,7 +1908,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0.000030518, y: -20}
-  m_SizeDelta: {x: 879.125, y: 605.1872}
+  m_SizeDelta: {x: 800, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1116476322
 MonoBehaviour:
@@ -1927,7 +1927,7 @@ MonoBehaviour:
   lineContentContainer: {fileID: 369400723}
   lineNumbersVerticalLayout: {fileID: 1172439017}
   syntaxHighlighter: {fileID: 1116476324}
-  lineNumberToLineGap: 10
+  numberToContentSpace: 20
   font: {fileID: 11400000, guid: 30a8aabdcdf462d4ab6e381f98ac59c3, type: 2}
   fontSize: 20
 --- !u!114 &1116476324

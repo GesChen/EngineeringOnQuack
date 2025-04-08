@@ -22,6 +22,7 @@ public class UIHovers : MonoBehaviour
 	#endregion
 
 	public static List<Transform> hovers = new();
+	public static List<RaycastResult> results = new();
 	public List<Transform> hoversDebug;
 	private GraphicRaycaster graphicRaycaster;
 	private PointerEventData pointerEventData;
@@ -59,7 +60,7 @@ public class UIHovers : MonoBehaviour
 			position = Input.mousePosition
 		};
 
-		List<RaycastResult> results = new();
+		results.Clear();
 		graphicRaycaster.Raycast(pointerEventData, results);
 
 		if (results.Count > 0) {

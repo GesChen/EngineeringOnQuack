@@ -40,6 +40,8 @@ public class ScrollWindow : MonoBehaviour {
 		UpdateContentsPosition();
 		UpdateVertBar();
 		UpdateHorizBar();
+
+		HandleUnseenLines();
 	}
 
 	void Recalculate() {
@@ -128,5 +130,17 @@ public class ScrollWindow : MonoBehaviour {
 		yBarParent.sizeDelta = new(barSize, yBarParent.sizeDelta.y);
 		yScrollbar.offsetMin = new(yScrollbar.offsetMin.x, y1);
 		yScrollbar.offsetMax = new(yScrollbar.offsetMax.x, y2);
+	}
+
+	float unloadingTolerance = 10;
+
+	void HandleUnseenLines() {
+		foreach(RectTransform c in contents.cells) {
+			bool onScreen =
+				-c.localPosition.y + c.rect.height + unloadingTolerance > yScrollAmount &&
+				-c.localPosition.y - yScrollAmount - unloadingTolerance < windowHeight;
+
+			c.gameObject.SetActive(onScreen);
+		}
 	}
 }
