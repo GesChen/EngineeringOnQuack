@@ -5,24 +5,17 @@ public class ScrollWindow : MonoBehaviour {
 	public float sensitivity;
 
 	[Header("Bar")]
-	public RectTransform yScrollbar;
-	public RectTransform yBarParent;
-	public RectTransform xScrollbar;
-	public RectTransform xBarParent;
-	public float barSize;
+	public ScrollBar xBar;
+	public ScrollBar yBar;
 
 	protected RectTransform thisRect;
 	protected RectTransform contentsRect;
 	protected float xScrollAmount;
 	protected float yScrollAmount;
-	protected float xTotalBarLength;
-	protected float yTotalBarLength;
 	protected float windowWidth;
 	protected float windowHeight;
 	protected float xScrollableDist;
 	protected float yScrollableDist;
-
-	bool parentCanvasIsScreenSpace;
 
 	void Start() {
 		xScrollAmount = 0;
@@ -30,24 +23,18 @@ public class ScrollWindow : MonoBehaviour {
 
 		thisRect = GetComponent<RectTransform>();
 		contentsRect = contents.GetComponent<RectTransform>();
-
-		parentCanvasIsScreenSpace = GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay;
 	}
 
 	void Update() {
 		Recalculate();
 		HandleInput();
 		UpdateContentsPosition();
-		UpdateVertBar();
-		UpdateHorizBar();
 
-		HandleUnseenLines();
+		xBar.UpdateBar(xScrollAmount / xScrollableDist, windowWidth / contents.maxWidth, true);
+		yBar.UpdateBar(yScrollAmount / yScrollableDist, windowHeight / contents.totalHeight, false);
 	}
 
 	void Recalculate() {
-		xTotalBarLength = xBarParent.rect.width;
-		yTotalBarLength = yBarParent.rect.height;
-
 		windowWidth = thisRect.rect.width;
 		windowHeight = thisRect.rect.height;
 
@@ -57,24 +44,6 @@ public class ScrollWindow : MonoBehaviour {
 
 	bool CheckMouse() {
 		return UIHovers.hovers.Contains(transform);
-
-		Vector3[] corners = new Vector3[4];
-		thisRect.GetWorldCorners(corners);
-
-		if (!parentCanvasIsScreenSpace) {
-			for (int i = 0; i < 4; i++) 
-				corners[i] = Camera.main.WorldToScreenPoint(corners[i]);
-		}
-
-		// should be all 2d now hopefully
-
-		Vector2 BL = corners[0];
-		Vector2 TR = corners[2];
-		Vector2 M = Controls.mousePos;
-
-		return
-			M.x > BL.x && M.x < TR.x &&
-			M.y > BL.y && M.y < TR.y;
 	}
 
 	void HandleInput() {
@@ -93,54 +62,5 @@ public class ScrollWindow : MonoBehaviour {
 
 	public virtual void UpdateContentsPosition() {
 		contentsRect.localPosition = new(-xScrollAmount, yScrollAmount);
-	}
-
-	void UpdateHorizBar() {
-		xBarParent.gameObject.SetActive(contents.maxWidth > windowWidth);
-		
-		//if (yBarParent.gameObject.activeSelf)
-			//xBarParent.offsetMax = new(-barSize, xBarParent.offsetMax.y);
-
-		if (contents.maxWidth == 0) return;
-
-		float percent = xScrollAmount / xScrollableDist;
-		float barWidth = xTotalBarLength * (windowWidth / contents.maxWidth);
-		float x = (1 - percent) * (xTotalBarLength - barWidth);
-
-		float x1 = xTotalBarLength - x - barWidth;
-		float x2 = -x;
-
-		xBarParent.sizeDelta = new(xBarParent.sizeDelta.x, barSize);
-		xScrollbar.offsetMin = new(x1, xScrollbar.offsetMin.y);
-		xScrollbar.offsetMax = new(x2, xScrollbar.offsetMax.y);
-	}
-
-	void UpdateVertBar() {
-		yBarParent.gameObject.SetActive(contents.totalHeight > windowHeight);
-
-		if (contents.totalHeight == 0) return;
-
-		float percent = yScrollAmount / yScrollableDist;
-		float barHeight = yTotalBarLength * (windowHeight / contents.totalHeight);
-		float y = percent * (yTotalBarLength - barHeight);
-
-		float y1 = yTotalBarLength - y - barHeight;
-		float y2 = -y;
-
-		yBarParent.sizeDelta = new(barSize, yBarParent.sizeDelta.y);
-		yScrollbar.offsetMin = new(yScrollbar.offsetMin.x, y1);
-		yScrollbar.offsetMax = new(yScrollbar.offsetMax.x, y2);
-	}
-
-	float unloadingTolerance = 10;
-
-	void HandleUnseenLines() {
-		foreach(RectTransform c in contents.cells) {
-			bool onScreen =
-				-c.localPosition.y + c.rect.height + unloadingTolerance > yScrollAmount &&
-				-c.localPosition.y - yScrollAmount - unloadingTolerance < windowHeight;
-
-			c.gameObject.SetActive(onScreen);
-		}
 	}
 }
