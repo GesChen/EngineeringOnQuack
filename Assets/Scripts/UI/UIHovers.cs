@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -64,9 +65,7 @@ public class UIHovers : MonoBehaviour
 		graphicRaycaster.Raycast(pointerEventData, results);
 
 		if (results.Count > 0) {
-			hovers.Clear();
-			foreach (var result in results)
-				hovers.Add(result.gameObject.transform);
+			hovers = results.Select(r => r.gameObject.transform).ToList();
 		}
 	}
 }

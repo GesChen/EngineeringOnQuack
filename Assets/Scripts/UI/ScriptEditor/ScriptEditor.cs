@@ -266,12 +266,20 @@ public class ScriptEditor : MonoBehaviour {
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
 
-		RaycastResult result = UIHovers.results[hoverIndex];
-
+		RaycastResult result;
+		try { result = UIHovers.results[hoverIndex]; }
+		catch {
+			print($"fucking index error at {hoverIndex}");
+			print($"theres {UIHovers.results.Count} btw");
+			return -1;
+		}
+		
 		Vector2? uv = HF.UVOfHover(result);
-
+		if (!uv.HasValue) return -1;
+		float t = uv.Value.x;
 
 		// hopefully this loop isnt too slow for being called once
+		// can be precomputed if needed
 		// index = index of cursor location, basically 1 before the actual char
 		List<float> TtoIndex = new();
 		float pos = 0;
@@ -284,8 +292,6 @@ public class ScriptEditor : MonoBehaviour {
 		// pos isnt gonna be 1 but need to add it again to be able to select last item still
 		TtoIndex.Add(pos);
 
-		print(t);
-
 		// determine which t is closest to real t
 		float closestDist = float.PositiveInfinity;
 		int charIndex = -1;
@@ -296,8 +302,6 @@ public class ScriptEditor : MonoBehaviour {
 				charIndex = i;
 			}
 		}
-
-		print(charIndex);
 
 		return charIndex;
 	}

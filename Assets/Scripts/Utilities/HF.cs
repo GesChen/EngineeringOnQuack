@@ -6,6 +6,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public static class HF {
 	#region Base Class Extensions
@@ -254,6 +255,19 @@ public static class HF {
 		return UVOf3DPointOnQuad(corners[0], corners[3], corners[1], worldspaceHit.Value);
 	}
 
+	public static Vector2? RectScreenSpaceMouseUV(RectTransform rt) {
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		Vector2 screenSpaceMousePos = Mouse.current.position.value;
+
+		Vector3? planeIntersect = RayPlaneOfQuadIntersect(screenSpaceMousePos, Vector3.forward, corners);
+		if (!planeIntersect.HasValue) return null;
+
+		return UVOf3DPointOnQuad(corners[0], corners[3], corners[1], planeIntersect.Value);
+	}
+
+	// point must be on the plane of the quad
 	public static Vector2 UVOf3DPointOnQuad(Vector3 bottomLeft, Vector3 bottomRight, Vector3 topLeft, Vector3 point) {
 		return new(
 			UVAxis(bottomLeft, bottomRight, point),
@@ -264,9 +278,10 @@ public static class HF {
 		return Vector3.Dot(point - origin, (directionVector - origin).normalized) / Vector3.Distance(origin, directionVector);
 	}
 
-	public static Vector3? RayPlanarQuadIntersect(Vector3 rayOrigin, Vector3 rayDir, Vector3[] points) {
+	// just intersects with the plane, doesnt necessarily have to be in the quad
+	public static Vector3? RayPlaneOfQuadIntersect(Vector3 rayOrigin, Vector3 rayDir, Vector3[] points) {
 		// using unity's rect corners function ordering of points
-		
+
 		// Step 1: Calculate the normal of the plane
 		Vector3 v1 = points[1] - points[0];
 		Vector3 v2 = points[3] - points[0];
@@ -274,7 +289,7 @@ public static class HF {
 
 		// Step 2: Find intersection with the plane
 		float denom = Vector3.Dot(normal, rayDir);
-		if (Mathf.Abs(denom) < Mathf.Epsilon)  // Line is parallel to the plane
+		if (Mathf.Abs(denom) < Mathf.Epsilon) // Line is parallel to the plane
 			return null;
 
 		float t = Vector3.Dot(normal, points[0] - rayOrigin) / denom;
@@ -282,8 +297,18 @@ public static class HF {
 		// Step 3: Find the point of intersection on the line
 		Vector3 intersectionPoint = rayOrigin + t * rayDir;
 
+		return intersectionPoint;
+	}
+
+	// intersect the quad, return false if no intersect with the quad
+	public static Vector3? RayPlanarQuadIntersect(Vector3 rayOrigin, Vector3 rayDir, Vector3[] points) {
+		Vector3? intersectionPoint = RayPlaneOfQuadIntersect(rayOrigin, rayDir, points);
+
+		if (!intersectionPoint.HasValue)
+			return null;
+
 		// Step 4: Check if the intersection point is inside the quad
-		if (IsPointInQuad(intersectionPoint, points[0], points[1], points[2], points[3]))
+		if (IsPointInQuad(intersectionPoint.Value, points[0], points[1], points[2], points[3]))
 			return intersectionPoint;
 		
 		return null;

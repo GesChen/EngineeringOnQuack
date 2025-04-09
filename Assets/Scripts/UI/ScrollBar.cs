@@ -12,10 +12,10 @@ public class ScrollBar : MonoBehaviour {
 	Color barOriginalColor;
 	RectTransform thisRect;
 
-	[Header("also super temporary colors to move somewhere eventually")]
-	public Color hoverTint;
-	public Color pressedTint;
+	static Color hoverTint = new(1, 1, 1, .2f);
+	static Color pressedTint = new(1, 1, 1, .5f);
 
+	float totalLength;
 	float currentPercent;
 	float currentScale;
 	bool currentInversion;
@@ -36,12 +36,12 @@ public class ScrollBar : MonoBehaviour {
 		BarObject.gameObject.SetActive(!tooBig);
 		if (tooBig) return;
 
-		float totalLength =
+		totalLength =
 			Direction == Directions.Horizontal ?
 				thisRect.rect.width :
 				thisRect.rect.height;
 
-		if (invert) percent = (1 - percent);
+		if (invert) percent = 1 - percent;
 		float barLength = totalLength * scale;
 		float t = percent * (totalLength - barLength);
 
@@ -61,8 +61,11 @@ public class ScrollBar : MonoBehaviour {
 	bool lastHovered;
 	bool lastPressed;
 	bool dragging;
-	Vector2 dragStartMousePos;
-	Vector2 dragStartBarPos;
+	
+	float dragStartBarT;
+	float dragStartBackT;
+	float dragStartPercent;
+
 	void Update() {
 		bool hovered = UIHovers.hovers.Contains(BarObject);
 		bool pressed = Controls.inputMaster.Mouse.Left.IsPressed();
@@ -78,20 +81,52 @@ public class ScrollBar : MonoBehaviour {
 			dragging = true;
 
 			// assuming the canvas is screen space, if this somehow changes then well have to change it too. 
-			dragStartBarPos = BarObject.position;
-			dragStartMousePos = (Vector2) BarObject.position - Controls.mousePos;
+			dragStartBarT = BarT();
+			dragStartBackT = BackT();
+			dragStartPercent = currentPercent;
 		} else
 		if (!pressed) {
 			dragging = false;
 		}
 
 		if (dragging) {
-			Vector2 newCenter = Controls.mousePos - (dragStartMousePos - dragStartBarPos);
-			//float newPercent = 
+			float tOffset = TtoPercentUnclamped(dragStartBackT) - dragStartPercent;
+			//if (currentInversion) tOffset *= -1;
+			float curT = currentInversion ? BackT() : (1 - BackT());
+
+			print($"off {tOffset}");
+			print($"t {curT}");
+			print($"ut {BackT()}");
+
+			float newPercent = Mathf.Clamp01(TtoPercentUnclamped(curT) - tOffset);
+
+			print($"unc {TtoPercentUnclamped(BackT()) + tOffset}");
+			UpdateBar(newPercent, currentScale, currentInversion);
 		}
-	
+
 		lastHovered = hovered;
 		lastPressed = pressed;
 	}
 
+	float BarT() {
+		Vector2? barMouseUV = HF.RectScreenSpaceMouseUV(BarObject);
+		if (!barMouseUV.HasValue) return -1;
+
+		return Direction == Directions.Horizontal ?
+			barMouseUV.Value.x :
+			barMouseUV.Value.y ;
+	}
+
+	float BackT() {
+		Vector2? barMouseUV = HF.RectScreenSpaceMouseUV(Background);
+		if (!barMouseUV.HasValue) return -1;
+
+		return Direction == Directions.Horizontal ?
+			barMouseUV.Value.x :
+			barMouseUV.Value.y;
+	}
+
+	float TtoPercentUnclamped(float t) =>
+		(t - currentScale / 2) /
+		(1 - currentScale);
 }
