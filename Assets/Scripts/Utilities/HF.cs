@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public static class HF {
 	#region Base Class Extensions
@@ -128,7 +129,6 @@ public static class HF {
 		return Vector2InAABB(point, min, max);
 	}
 
-
 	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
 		=> Vector3.Dot(point - reference, direction);
 
@@ -237,5 +237,68 @@ public static class HF {
 
 		if (iters > 1)
 			WarnColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", MoreColors.Crimson);
+	}
+
+	public static Vector2? UVOfHover(RaycastResult result) {
+		RectTransform rt = result.gameObject.GetComponent<RectTransform>();
+
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		Vector3? worldspaceHit = 
+			RayPlanarQuadIntersect(result.screenPosition, Vector3.forward, corners);
+
+		if (!worldspaceHit.HasValue)
+			return null; // ray didn't actually hit
+
+		return UVOf3DPointOnQuad(corners[0], corners[3], corners[1], worldspaceHit.Value);
+	}
+
+	public static Vector2 UVOf3DPointOnQuad(Vector3 bottomLeft, Vector3 bottomRight, Vector3 topLeft, Vector3 point) {
+		return new(
+			UVAxis(bottomLeft, bottomRight, point),
+			UVAxis(bottomLeft, topLeft, point));
+	}
+
+	public static float UVAxis(Vector3 origin, Vector3 directionVector, Vector3 point) {
+		return Vector3.Dot(point - origin, (directionVector - origin).normalized) / Vector3.Distance(origin, directionVector);
+	}
+
+	public static Vector3? RayPlanarQuadIntersect(Vector3 rayOrigin, Vector3 rayDir, Vector3[] points) {
+		// using unity's rect corners function ordering of points
+		
+		// Step 1: Calculate the normal of the plane
+		Vector3 v1 = points[1] - points[0];
+		Vector3 v2 = points[3] - points[0];
+		Vector3 normal = Vector3.Cross(v1, v2);
+
+		// Step 2: Find intersection with the plane
+		float denom = Vector3.Dot(normal, rayDir);
+		if (Mathf.Abs(denom) < Mathf.Epsilon)  // Line is parallel to the plane
+			return null;
+
+		float t = Vector3.Dot(normal, points[0] - rayOrigin) / denom;
+
+		// Step 3: Find the point of intersection on the line
+		Vector3 intersectionPoint = rayOrigin + t * rayDir;
+
+		// Step 4: Check if the intersection point is inside the quad
+		if (IsPointInQuad(intersectionPoint, points[0], points[1], points[2], points[3]))
+			return intersectionPoint;
+		
+		return null;
+	}
+
+	public static bool IsPointInQuad(Vector3 point, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3) {
+		bool b0 = CrossProductSign(point, p0, p1) < 0.0f;
+		bool b1 = CrossProductSign(point, p1, p2) < 0.0f;
+		bool b2 = CrossProductSign(point, p2, p3) < 0.0f;
+		bool b3 = CrossProductSign(point, p3, p0) < 0.0f;
+
+		return (b0 == b1) && (b1 == b2) && (b2 == b3);
+	}
+
+	public static float CrossProductSign(Vector3 p1, Vector3 p2, Vector3 p3) {
+		return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
 	}
 }

@@ -148,7 +148,7 @@ public class ScriptEditor : MonoBehaviour {
 		int tabs = lineContent.Count(c => c == '\t'); // its just a for loop under the hood
 		int singleChars = (lineContent.Length - tabs) + (tabs * LanguageConfig.SpacesPerTab); // convert tabs to spaces
 
-		charUVAmount = 1 / singleChars;
+		charUVAmount = 1f / singleChars;
 
 	}
 
@@ -255,21 +255,21 @@ public class ScriptEditor : MonoBehaviour {
 	void Update() {
 		(int line, int hoverIndex) = FindLineHoveringOver();
 		if (line != -1) {
-			RaycastResult result = UIHovers.results[hoverIndex];
-			Vector3 worldPosition = parentCanvasIsScreenSpace ?
-				result.screenPosition :
-				result.worldPosition;
-
-			GetCharIndexAtWorldSpacePosition(line, worldPosition);
+			GetCharIndexAtWorldSpacePosition(line, hoverIndex);
 		}
 	}
 
 	// long ass name
-	int GetCharIndexAtWorldSpacePosition(int line, Vector3 point) {
+	int GetCharIndexAtWorldSpacePosition(int line, int hoverIndex) {
 		RectTransform rt = lines[line].components[0] as RectTransform;
 
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
+
+		RaycastResult result = UIHovers.results[hoverIndex];
+
+		Vector2? uv = HF.UVOfHover(result);
+
 
 		// hopefully this loop isnt too slow for being called once
 		// index = index of cursor location, basically 1 before the actual char
@@ -284,7 +284,7 @@ public class ScriptEditor : MonoBehaviour {
 		// pos isnt gonna be 1 but need to add it again to be able to select last item still
 		TtoIndex.Add(pos);
 
-		float t = UVAxis(corners[0], corners[3], point); // x uv
+		print(t);
 
 		// determine which t is closest to real t
 		float closestDist = float.PositiveInfinity;
@@ -293,16 +293,13 @@ public class ScriptEditor : MonoBehaviour {
 			float dist = MathF.Abs(TtoIndex[i] - t);
 			if (dist < closestDist) {
 				closestDist = dist;
-				charIndex = 
+				charIndex = i;
 			}
 		}
 
+		print(charIndex);
 
-		return 0;
-	}
-
-	float UVAxis(Vector3 origin, Vector3 directionVector, Vector3 point) {
-		return Vector3.Dot(point - origin, (directionVector - origin).normalized) / Vector3.Distance(origin, directionVector);
+		return charIndex;
 	}
 
 	(int lineIndex, int hoverIndex) FindLineHoveringOver() {

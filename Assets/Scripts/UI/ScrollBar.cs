@@ -16,6 +16,10 @@ public class ScrollBar : MonoBehaviour {
 	public Color hoverTint;
 	public Color pressedTint;
 
+	float currentPercent;
+	float currentScale;
+	bool currentInversion;
+
 	void Awake() {
 		thisRect = GetComponent<RectTransform>();
 		barImage = BarObject.GetComponent<Image>();
@@ -23,6 +27,10 @@ public class ScrollBar : MonoBehaviour {
 	}
 
 	public void UpdateBar(float percent, float scale, bool invert) {
+		currentPercent = percent;
+		currentScale = scale;
+		currentInversion = invert;
+
 		bool tooBig = scale > 1;
 		Background.gameObject.SetActive(!tooBig);
 		BarObject.gameObject.SetActive(!tooBig);
@@ -53,29 +61,37 @@ public class ScrollBar : MonoBehaviour {
 	bool lastHovered;
 	bool lastPressed;
 	bool dragging;
-	Vector2 dragStartPos;
+	Vector2 dragStartMousePos;
+	Vector2 dragStartBarPos;
 	void Update() {
-		bool hovered = UIHovers.hovers.Contains(transform);
-		bool pressed = hovered && Controls.inputMaster.Mouse.Left.IsPressed();
+		bool hovered = UIHovers.hovers.Contains(BarObject);
+		bool pressed = Controls.inputMaster.Mouse.Left.IsPressed();
 
 		Color tint = new(0, 0, 0, 0);
 		if (hovered) tint = hoverTint;
-		if (pressed) tint = pressedTint; // overrides hovertint
+		if (dragging) tint = pressedTint; // overrides hovertint
 
 		barImage.color = Color.Lerp(barOriginalColor, tint, tint.a);
 
 		if (hovered &&
-			(pressed != lastPressed && pressed)) { // mouse down while hovering
+			pressed != lastPressed && pressed) { // mouse down while hovering
 			dragging = true;
-			dragStartPos = Controls.inputMaster.Mouse.Position.ReadValue<Vector2>();
-		}else
+
+			// assuming the canvas is screen space, if this somehow changes then well have to change it too. 
+			dragStartBarPos = BarObject.position;
+			dragStartMousePos = (Vector2) BarObject.position - Controls.mousePos;
+		} else
 		if (!pressed) {
 			dragging = false;
+		}
+
+		if (dragging) {
+			Vector2 newCenter = Controls.mousePos - (dragStartMousePos - dragStartBarPos);
+			//float newPercent = 
 		}
 	
 		lastHovered = hovered;
 		lastPressed = pressed;
 	}
-
 
 }
