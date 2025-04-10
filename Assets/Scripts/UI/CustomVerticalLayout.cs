@@ -9,10 +9,12 @@ public class CustomVerticalLayout : MonoBehaviour
 	[HideInNormalInspector] public float totalHeight;
 	[HideInNormalInspector] public float maxWidth;
 
-	public delegate void ContentsChangedEvent();
-	public ContentsChangedEvent OnContentsChanged;
+	RectTransform rt;
 
-	int lastCount = 0;
+	void Start() {
+		rt = GetComponent<RectTransform>();
+	}
+
 	void Update()
 	{
 		cells = new();
@@ -20,11 +22,6 @@ public class CustomVerticalLayout : MonoBehaviour
 		{
 			cells.Add(child.GetComponent<RectTransform>());
 		}
-
-		if (cells.Count != lastCount)
-			OnContentsChanged?.Invoke();
-
-		lastCount = cells.Count;
 
 		maxWidth = -1;
 		totalHeight = 0;
@@ -37,5 +34,6 @@ public class CustomVerticalLayout : MonoBehaviour
 		}
 		totalHeight *= -1;
 
+		rt.sizeDelta = new(maxWidth, totalHeight);
 	}
 }

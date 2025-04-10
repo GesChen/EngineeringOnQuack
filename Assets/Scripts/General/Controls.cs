@@ -6,28 +6,23 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using System.Linq;
 
-public class Controls : MonoBehaviour
-{
+public class Controls : MonoBehaviour {
 	public static float clickMaxDist = 5;
 	public static float clickMaxTime = .1f;
 
 	public static InputMaster IM;
 
-	void Awake()
-	{
+	void Awake() {
 		IM = new InputMaster();
 	}
-	void OnEnable()
-	{
+	void OnEnable() {
 		IM ??= new InputMaster();
 		IM.Enable();
 	}
-	void OnDisable()
-	{
+	void OnDisable() {
 		IM.Disable();
 	}
-	public static Controls GetControls()
-	{
+	public static Controls GetControls() {
 		return FindObjectOfType<Controls>();
 	}
 
@@ -36,13 +31,11 @@ public class Controls : MonoBehaviour
 
 	public static Vector2 mousePos;
 	public static Vector2 lastMousePos;
-	void Update()
-	{
+	void Update() {
 		UpdateMouse();
 		UpdateKeyboard();
 	}
-	private void LateUpdate()
-	{
+	private void LateUpdate() {
 		lastMousePos = mousePos;
 	}
 

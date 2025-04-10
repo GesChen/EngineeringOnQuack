@@ -382,7 +382,7 @@ MonoBehaviour:
   sensitivity: 100
   xBar: {fileID: 1467639577}
   yBar: {fileID: 2096490601}
-  lineNumbersParent: {fileID: 1172439014}
+  ScriptEditor: {fileID: 1116476322}
 --- !u!114 &399913265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -720,9 +720,10 @@ MonoBehaviour:
   lineContentVerticalLayout: {fileID: 1736817128}
   lineContentContainer: {fileID: 369400723}
   lineNumbersVerticalLayout: {fileID: 1172439017}
+  lineNumbersRect: {fileID: 0}
   syntaxHighlighter: {fileID: 1116476324}
   numberToContentSpace: 20
-  font: {fileID: 11400000, guid: 30a8aabdcdf462d4ab6e381f98ac59c3, type: 2}
+  font: {fileID: 11400000, guid: f9ae5c2f5f64fad439ba828fc50a5a5a, type: 2}
   fontSize: 20
 --- !u!114 &1116476324
 MonoBehaviour:
@@ -748,9 +749,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5da2ce518487cf8408ae7cc8363b8b41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  head: {x: 0, y: 0}
+  main: {fileID: 1116476322}
+  head: {x: 2, y: 18}
   tail: {x: 0, y: 0}
-  selectionBoxes: []
+  tempwidth: 1
 --- !u!1 &1172439013
 GameObject:
   m_ObjectHideFlags: 0
@@ -841,7 +843,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831466c0a0bb4e74e93c2bfec35aba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  usefp1: 0
+  usefp1: 1
   filepath1: C:\CProjects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Testing\testing.qk
   filepath2: C:\Users\gesch\Tools\Unity\EngineeringOnQuack\Assets\Scripts\Testing\testing.qk
   logpath1: C:\CProjects\engineeringonquack\EngineeringOnQuack\Assets\Scripts\Testing\log.txt

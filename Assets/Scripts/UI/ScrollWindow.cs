@@ -44,7 +44,7 @@ public class ScrollWindow : MonoBehaviour {
 		UpdateContentsPosition();
 	}
 
-	void Recalculate() {
+	public virtual void Recalculate() {
 		windowWidth = thisRect.rect.width;
 		windowHeight = thisRect.rect.height;
 

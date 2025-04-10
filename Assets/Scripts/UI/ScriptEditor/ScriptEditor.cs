@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 using System;
 using static ScriptEditor;
 using Codice.Client.Common;
+using UnityEngine.UIElements;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -14,7 +15,7 @@ public class ScriptEditor : MonoBehaviour {
 	public CustomVerticalLayout lineContentVerticalLayout;
 	public RectTransform lineContentContainer;
 	public CustomVerticalLayout lineNumbersVerticalLayout;
-	RectTransform lineNumbersRect;
+	[HideInNormalInspector] public RectTransform lineNumbersRect;
 	public SyntaxHighlighter syntaxHighlighter;
 
 	[Header("temporary local config options, should move to global config soon")]
@@ -63,14 +64,10 @@ public class ScriptEditor : MonoBehaviour {
 	LocalContext LC;
 	#endregion
 
-	bool parentCanvasIsScreenSpace = false;
-
 	float charUVAmount;
 
 	void Start() {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
-
-		parentCanvasIsScreenSpace = GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay;
 	}
 
 	public void Load(string[] strLines) {
@@ -127,11 +124,6 @@ public class ScriptEditor : MonoBehaviour {
 
 			List<Component> generatedLineComponents = GenerateLine(line);
 			line.components = generatedLineComponents;
-
-			// calculate ts 
-			List<float> ts = CalculateTs(i);
-			line.IndexTs = ts;
-
 			lines[i] = line;
 		}
 
@@ -152,12 +144,18 @@ public class ScriptEditor : MonoBehaviour {
 
 		lines.ForEach(l => (l.components[0] as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth));
 
-		string lineContent = lines[longestLine].content;
-		int tabs = lineContent.Count(c => c == '\t'); // its just a for loop under the hood
-		int singleChars = (lineContent.Length - tabs) + (tabs * LanguageConfig.SpacesPerTab); // convert tabs to spaces
+		string longestConvertedTabs = ConvertTabsToSpaces(lines[longestLine].content);
 
-		charUVAmount = 1f / singleChars;
+		charUVAmount = 1f / longestConvertedTabs.Length;
 
+		// calculate ts (charuv must have a value)
+		for (int i = 0; i < lines.Count; i++) {
+			Line line = lines[i];
+			List<float> ts = CalculateTs(i);
+			line.IndexTs = ts;
+
+			lines[i] = line;
+		}
 	}
 
 	List<float> CalculateTs(int i) {
@@ -165,13 +163,13 @@ public class ScriptEditor : MonoBehaviour {
 		// can be precomputed if needed
 		// index = index of cursor location, basically 1 before the actual char
 
+		string content = ConvertTabsToSpaces(lines[i].content);
+
 		List<float> TtoIndex = new();
 		float pos = 0;
-		foreach (char c in lines[i].content) {
+		for (int n = 0; n < content.Length; n++){
 			TtoIndex.Add(pos);
-
-			if (c == '\t') pos += charUVAmount * LanguageConfig.SpacesPerTab;
-			else pos += charUVAmount;
+			pos += charUVAmount;
 		}
 		// pos isnt gonna be 1 but need to add it again to be able to select last item still
 		TtoIndex.Add(pos);
@@ -214,7 +212,7 @@ public class ScriptEditor : MonoBehaviour {
 		LCRect.anchorMin = new(0, 1);
 		LCRect.anchorMax = new(0, 1);
 		LCRect.pivot = new(0, 1);
-		LCRect.sizeDelta = new(lineNumberWidth + numberToContentSpace + LCSize.x, allLinesHeight);
+		LCRect.sizeDelta = new(LCSize.x, allLinesHeight);
 
 		NRect.localPosition = Vector2.zero;
 		LCRect.localPosition = new(lineNumberWidth + numberToContentSpace, 0);
@@ -232,7 +230,11 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	string ConvertTabsToSpaces(Line line) {
-		string tabsToSpaces = line.content;
+		return ConvertTabsToSpaces(line.content);
+	}
+
+	string ConvertTabsToSpaces(string line) {
+		string tabsToSpaces = line;
 		static int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, LanguageConfig.SpacesPerTab) + 1;
 		for (int i = 0; i < tabsToSpaces.Length; i++) {
 			char c = tabsToSpaces[i];
@@ -305,13 +307,12 @@ public class ScriptEditor : MonoBehaviour {
 		if (!uv.HasValue) return -1;
 		float t = uv.Value.x;
 
-		
-
 		// determine which t is closest to real t
+		List<float> ts = lines[line].IndexTs;
 		float closestDist = float.PositiveInfinity;
 		int charIndex = -1;
-		for (int i = 0; i < TtoIndex.Count; i++) {
-			float dist = MathF.Abs(TtoIndex[i] - t);
+		for (int i = 0; i < ts.Count; i++) {
+			float dist = MathF.Abs(ts[i] - t);
 			if (dist < closestDist) {
 				closestDist = dist;
 				charIndex = i;
@@ -333,7 +334,10 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public (RectTransform rt, float t) GetLocation(Vector2Int vec) {
-		RectTransform rect = lines[vec.y].components[0] as RectTransform;
-
+		return (
+			lines[vec.y].components[0] as RectTransform,
+			lines[vec.y].IndexTs[vec.x]);
 	}
+
+
 }

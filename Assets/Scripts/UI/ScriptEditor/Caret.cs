@@ -1,59 +1,47 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class Caret : MonoBehaviour {
-	public Vector2 head;
-	public Vector2 tail;
+	public ScriptEditor main;
 
-	static float DefaultRepeatDelayMs = 1000;
-	static float DefaultRepeatRateCPS = 31;
-	static float DefaultCursorBlinkRateMs = 530;
+	public Vector2Int head;
+	public Vector2Int tail;
+	public List<SelectionBox> boxes;
 
-	public void SetText(List<string> lines) {
+	public float tempwidth;
 
+	(RectTransform rt, Image im) headImageObject; // turn this kinda thing into a struct maybe 
+
+	private void Update() {
+		UpdateVisuals();
 	}
 
-	void Update() {
-		UpdateKeyHeldTimes();
-		List<Key> presses = GetRepeats().Union(Controls.AllPressedThisFrame).ToList();
-		
+	void UpdateVisuals() {
+		if (headImageObject.rt == null) {
+			GameObject newCaret = MakeNewCaret();
 
-		Debug.Log(string.Join(", ", presses));
+			headImageObject.rt = newCaret.GetComponent<RectTransform>();
+			headImageObject.im = newCaret.GetComponent<Image>();
+		}
+
+		(RectTransform headRT, float headT) = main.GetLocation(head);
+
+		headImageObject.rt.SetParent(headRT);
+		PutLeftMiddleCenterPivot(headImageObject.rt);
+
+		headImageObject.rt.sizeDelta = new(tempwidth, headRT.rect.height);
+		headImageObject.rt.localPosition = new(headT * headRT.rect.width, -headRT.rect.height / 2); // center 
 	}
 
-	// these two can be optimized away into one timer sort of thing if you want
-	Dictionary<Key, float> KeyHeldTimes = new();
-	Dictionary<Key, float> KeyLastRepeatTime = new();
-	void UpdateKeyHeldTimes() {
-		foreach (Key k in Controls.AllPressedThisFrame) {
-			KeyHeldTimes.Add(k, Time.time);
-			KeyLastRepeatTime.Add(k, Time.time);
-		}
-		foreach(Key k in Controls.AllReleasedThisFrame) {
-			KeyHeldTimes.Remove(k);
-			KeyLastRepeatTime.Remove(k);
-		}
+	void PutLeftMiddleCenterPivot(RectTransform RT) {
+		RT.anchorMin = new(0, .5f);
+		RT.anchorMax = new(0, .5f);
+		RT.pivot = new(.5f, .5f);
 	}
 
-	List<Key> GetRepeats() {
-		List<Key> keys = new();
-		foreach(KeyValuePair<Key, float> keytime in KeyHeldTimes) {
-			if (Time.time - keytime.Value > DefaultRepeatDelayMs / 1000 && // long enough held
-				Time.time - KeyLastRepeatTime[keytime.Key] > 1f / DefaultRepeatRateCPS) { // long enough since last repeat
-				keys.Add(keytime.Key);
-				KeyLastRepeatTime[keytime.Key] = Time.time;
-			}
-		}
-
-		return keys;
-	}
-
-	void HandleModifiers(List<Key> pressedKeys) {
-		if (pressedKeys.Contains(Key.LeftCtrl) || pressedKeys.Contains(Key.RightCtrl)) {
-
-		}
-		if (pressedKeys.Contains(Key.LeftAlt) || )
+	GameObject MakeNewCaret() {
+		return new("Caret", typeof(RectTransform), typeof(Image));
 	}
 }
