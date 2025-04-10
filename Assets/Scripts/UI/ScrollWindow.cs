@@ -27,11 +27,21 @@ public class ScrollWindow : MonoBehaviour {
 
 	void Update() {
 		Recalculate();
-		HandleInput();
-		UpdateContentsPosition();
 
-		xBar.UpdateBar(xScrollAmount / xScrollableDist, windowWidth / contents.maxWidth, true);
-		yBar.UpdateBar(yScrollAmount / yScrollableDist, windowHeight / contents.totalHeight, false);
+		if (!xBar.dragging && !yBar.dragging) {
+			HandleInput();
+
+			xBar.UpdateBar(xScrollAmount / xScrollableDist, windowWidth / contents.maxWidth, true);
+			yBar.UpdateBar(yScrollAmount / yScrollableDist, windowHeight / contents.totalHeight, false);
+		}
+		else {
+			if (xBar.dragging)
+				xScrollAmount = xBar.currentPercent * xScrollableDist;
+			if (yBar.dragging)
+				yScrollAmount = yBar.currentPercent * yScrollableDist;
+		}
+
+		UpdateContentsPosition();
 	}
 
 	void Recalculate() {

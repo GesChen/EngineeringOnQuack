@@ -16,7 +16,7 @@ public class ScrollBar : MonoBehaviour {
 	static Color pressedTint = new(1, 1, 1, .5f);
 
 	float totalLength;
-	float currentPercent;
+	[HideInInspector] public float currentPercent;
 	float currentScale;
 	bool currentInversion;
 
@@ -60,9 +60,8 @@ public class ScrollBar : MonoBehaviour {
 
 	bool lastHovered;
 	bool lastPressed;
-	bool dragging;
+	[HideInInspector] public bool dragging;
 	
-	float dragStartBarT;
 	float dragStartBackT;
 	float dragStartPercent;
 
@@ -81,7 +80,6 @@ public class ScrollBar : MonoBehaviour {
 			dragging = true;
 
 			// assuming the canvas is screen space, if this somehow changes then well have to change it too. 
-			dragStartBarT = BarT();
 			dragStartBackT = BackT();
 			dragStartPercent = currentPercent;
 		} else
@@ -90,18 +88,16 @@ public class ScrollBar : MonoBehaviour {
 		}
 
 		if (dragging) {
-			float tOffset = TtoPercentUnclamped(dragStartBackT) - dragStartPercent;
-			//if (currentInversion) tOffset *= -1;
-			float curT = currentInversion ? BackT() : (1 - BackT());
+			// i have no clue why this works so dont touch it. 
+			float tOffset = currentInversion ?
+				TtoPercentUnclamped(dragStartBackT) - dragStartPercent :
+				TtoPercentUnclamped(dragStartBackT) + dragStartPercent;
 
-			print($"off {tOffset}");
-			print($"t {curT}");
-			print($"ut {BackT()}");
+			float newPercent = currentInversion ?
+				TtoPercentUnclamped(BackT()) - tOffset :
+				tOffset - TtoPercentUnclamped(BackT());
 
-			float newPercent = Mathf.Clamp01(TtoPercentUnclamped(curT) - tOffset);
-
-			print($"unc {TtoPercentUnclamped(BackT()) + tOffset}");
-			UpdateBar(newPercent, currentScale, currentInversion);
+			UpdateBar(Mathf.Clamp01(newPercent), currentScale, currentInversion);
 		}
 
 		lastHovered = hovered;
