@@ -5,6 +5,8 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
 using System;
+using static ScriptEditor;
+using Codice.Client.Common;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -24,6 +26,7 @@ public class ScriptEditor : MonoBehaviour {
 	public struct Line {
 		public int lineNumber;
 		public string content;
+		public List<float> IndexTs;
 		public List<Component> components;
 	}
 
@@ -124,6 +127,11 @@ public class ScriptEditor : MonoBehaviour {
 
 			List<Component> generatedLineComponents = GenerateLine(line);
 			line.components = generatedLineComponents;
+
+			// calculate ts 
+			List<float> ts = CalculateTs(i);
+			line.IndexTs = ts;
+
 			lines[i] = line;
 		}
 
@@ -150,6 +158,25 @@ public class ScriptEditor : MonoBehaviour {
 
 		charUVAmount = 1f / singleChars;
 
+	}
+
+	List<float> CalculateTs(int i) {
+		// hopefully this loop isnt too slow for being called once
+		// can be precomputed if needed
+		// index = index of cursor location, basically 1 before the actual char
+
+		List<float> TtoIndex = new();
+		float pos = 0;
+		foreach (char c in lines[i].content) {
+			TtoIndex.Add(pos);
+
+			if (c == '\t') pos += charUVAmount * LanguageConfig.SpacesPerTab;
+			else pos += charUVAmount;
+		}
+		// pos isnt gonna be 1 but need to add it again to be able to select last item still
+		TtoIndex.Add(pos);
+
+		return TtoIndex;
 	}
 
 	List<Component> GenerateLine(Line line) {
@@ -278,19 +305,7 @@ public class ScriptEditor : MonoBehaviour {
 		if (!uv.HasValue) return -1;
 		float t = uv.Value.x;
 
-		// hopefully this loop isnt too slow for being called once
-		// can be precomputed if needed
-		// index = index of cursor location, basically 1 before the actual char
-		List<float> TtoIndex = new();
-		float pos = 0;
-		foreach (char c in lines[line].content) {
-			TtoIndex.Add(pos);
-
-			if (c == '\t') pos += charUVAmount * 4;
-			else pos += charUVAmount;
-		}
-		// pos isnt gonna be 1 but need to add it again to be able to select last item still
-		TtoIndex.Add(pos);
+		
 
 		// determine which t is closest to real t
 		float closestDist = float.PositiveInfinity;
@@ -315,5 +330,10 @@ public class ScriptEditor : MonoBehaviour {
 			if (index != -1) return (i, index);
 		}
 		return (-1, -1);
+	}
+
+	public (RectTransform rt, float t) GetLocation(Vector2Int vec) {
+		RectTransform rect = lines[vec.y].components[0] as RectTransform;
+
 	}
 }

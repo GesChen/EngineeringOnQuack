@@ -67,7 +67,7 @@ public class ScrollBar : MonoBehaviour {
 
 	void Update() {
 		bool hovered = UIHovers.hovers.Contains(BarObject);
-		bool pressed = Controls.inputMaster.Mouse.Left.IsPressed();
+		bool pressed = Controls.IM.Mouse.Left.IsPressed();
 
 		Color tint = new(0, 0, 0, 0);
 		if (hovered) tint = hoverTint;

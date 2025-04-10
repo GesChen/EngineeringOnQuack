@@ -675,6 +675,7 @@ GameObject:
   - component: {fileID: 1116476321}
   - component: {fileID: 1116476322}
   - component: {fileID: 1116476324}
+  - component: {fileID: 1116476325}
   m_Layer: 5
   m_Name: procedural SE test
   m_TagString: Untagged
@@ -735,6 +736,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2bfe13c1748b634394e9adf54a22eb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1116476325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1116476320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5da2ce518487cf8408ae7cc8363b8b41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  head: {x: 0, y: 0}
+  tail: {x: 0, y: 0}
+  selectionBoxes: []
 --- !u!1 &1172439013
 GameObject:
   m_ObjectHideFlags: 0
@@ -1333,6 +1349,8 @@ MonoBehaviour:
   Direction: 0
   Background: {fileID: 772403696}
   BarObject: {fileID: 205748630}
+  currentPercent: 0
+  dragging: 0
 --- !u!1 &1718956305
 GameObject:
   m_ObjectHideFlags: 0
@@ -1588,6 +1606,8 @@ MonoBehaviour:
   Direction: 1
   Background: {fileID: 1809378969}
   BarObject: {fileID: 1099308747}
+  currentPercent: 0
+  dragging: 0
 --- !u!1 &2130497306
 GameObject:
   m_ObjectHideFlags: 0

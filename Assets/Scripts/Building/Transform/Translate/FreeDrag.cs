@@ -16,8 +16,8 @@ public class FreeDrag : MonoBehaviour
 
 	void Update()
 	{
-		mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
-		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
+		mousePos = Controls.IM.Transform.MousePos.ReadValue<Vector2>();
+		mouseDown = Controls.IM.Transform.Drag.IsPressed();
 
 		if (mouseDown != lastMouseDown && mouseDown)
 			StartClicking();

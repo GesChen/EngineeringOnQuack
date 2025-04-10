@@ -3,26 +3,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using System.Linq;
 
 public class Controls : MonoBehaviour
 {
-    public static float clickMaxDist = 5;
-    public static float clickMaxTime = .1f;
+	public static float clickMaxDist = 5;
+	public static float clickMaxTime = .1f;
 
-	public static InputMaster inputMaster;
+	public static InputMaster IM;
 
 	void Awake()
 	{
-		inputMaster = new InputMaster();
+		IM = new InputMaster();
 	}
 	void OnEnable()
 	{
-		inputMaster ??= new InputMaster();
-		inputMaster.Enable();
+		IM ??= new InputMaster();
+		IM.Enable();
 	}
 	void OnDisable()
 	{
-		inputMaster.Disable();
+		IM.Disable();
 	}
 	public static Controls GetControls()
 	{
@@ -36,15 +38,45 @@ public class Controls : MonoBehaviour
 	public static Vector2 lastMousePos;
 	void Update()
 	{
-		mousePos = Mouse.current.position.value;
-		if (lastMousePos != mousePos)
-		{
-			//Debug.Log($"moved to {mousePos}");
-			OnMouseMove?.Invoke(mousePos);
-		}
+		UpdateMouse();
+		UpdateKeyboard();
 	}
 	private void LateUpdate()
 	{
 		lastMousePos = mousePos;
+	}
+
+	void UpdateMouse() {
+		mousePos = Mouse.current.position.value;
+		if (lastMousePos != mousePos) {
+			//Debug.Log($"moved to {mousePos}");
+			OnMouseMove?.Invoke(mousePos);
+		}
+	}
+
+	public static List<Key> AllLastPressed = new();
+	public static List<Key> AllPressedKeys;
+	public static List<Key> AllPressedThisFrame;
+	public static List<Key> AllReleasedThisFrame;
+	void UpdateKeyboard() {
+		AllPressedKeys = GetAllPressedKeys();
+
+		// might be kinda slow but idk
+		AllPressedThisFrame = AllPressedKeys.Except(AllLastPressed).ToList();
+		AllReleasedThisFrame = AllLastPressed.Except(AllPressedKeys).ToList();
+
+		AllLastPressed = AllPressedKeys;
+	}
+
+	// dw about speed, its doing like .05ms so 20k fps \_("/)_/
+	List<Key> GetAllPressedKeys() {
+		List<Key> pressed = new();
+
+		Keyboard k = Keyboard.current;
+		foreach (KeyControl kc in k.allKeys) {
+			if (kc.isPressed) pressed.Add(kc.keyCode);
+		}
+
+		return pressed;
 	}
 }
