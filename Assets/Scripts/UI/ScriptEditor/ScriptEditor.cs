@@ -163,13 +163,12 @@ public class ScriptEditor : MonoBehaviour {
 		// can be precomputed if needed
 		// index = index of cursor location, basically 1 before the actual char
 
-		string content = ConvertTabsToSpaces(lines[i].content);
-
 		List<float> TtoIndex = new();
 		float pos = 0;
-		for (int n = 0; n < content.Length; n++){
+		foreach (char c in lines[i].content) {
 			TtoIndex.Add(pos);
-			pos += charUVAmount;
+
+			pos += charUVAmount * (c == '\t' ? LanguageConfig.SpacesPerTab : 1);
 		}
 		// pos isnt gonna be 1 but need to add it again to be able to select last item still
 		TtoIndex.Add(pos);
