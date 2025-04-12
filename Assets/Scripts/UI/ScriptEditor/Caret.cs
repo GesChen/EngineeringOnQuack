@@ -3,23 +3,58 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Caret : MonoBehaviour {
+public class Caret {
 	public ScriptEditor main;
 
 	public Vector2Int head;
 	public Vector2Int tail;
 	public List<SelectionBox> boxes;
 
-	public float tempwidth;
+	public float tempwidth = 2;
 
+	float initTime;
 	RectTransform rt; // turn this kinda thing into a struct maybe 
-
 	(Vector2Int head, Vector2Int tail) lastState;
-	void Update() {
+
+	public Caret(ScriptEditor se, Vector2Int pos) {
+		Debug.Log("making new");
+		main = se;
+		head = pos;
+		tail = pos;
+	}
+
+	public void Initialize() {
+		initTime = Time.time;
+		rt = MakeNewCaret();
+	}
+
+	public void UpdatePos(Vector2Int pos) {
+		initTime = Time.time;
+		tail = pos;
+		head = pos;
+
+		Update();
+	}
+
+	public void Update() {
 		RenderCaret();
+		HandleSelections();
+	}
+
+	int lineChars(int line) =>
+			main.lines[line].content.Length;
+
+	void HandleSelections() {
+		if (tail == head) {
+			if (boxes != null && boxes.Count > 0) {
+				foreach (var box in boxes) box.Destroy();
+				boxes.Clear();
+			}
+			return;
+		}
 
 		if (lastState.head.y != head.y || lastState.tail.y != tail.y)
-			MakeSelectionBoxes();	
+			MakeSelectionBoxes();
 		else
 			UpdateSelectionBoxes();
 
@@ -27,14 +62,10 @@ public class Caret : MonoBehaviour {
 		lastState.tail = tail;
 	}
 
-	int lineChars(int line) =>
-			main.lines[line].content.Length;
-
 	void MakeSelectionBoxes() {
 		// reset
 		if (boxes != null && boxes.Count > 0)
-			foreach (var box in boxes) if (box.boxObject != null)
-				Destroy(box.boxObject.gameObject);
+			foreach (var box in boxes) box.Destroy();
 		boxes = new();
 
 		if (tail.y == head.y) {
@@ -86,14 +117,15 @@ public class Caret : MonoBehaviour {
 	}
 
 	void RenderCaret() {
-		if (rt == null) {
-			rt = MakeNewCaret();
-		}
-
 		(RectTransform RT, float t) = main.GetLocation(head);
 
 		rt.SetParent(RT);
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 
+
+		// blink
+		float rate = SEConfig.DefaultCursorBlinkRateMs / 1000;
+		rt.gameObject.SetActive(
+			(Time.time - initTime) % (2 * rate) < rate);
 	}
 
 	RectTransform MakeNewCaret() {
@@ -107,5 +139,10 @@ public class Caret : MonoBehaviour {
 		rt.sizeDelta = new(tempwidth, main.allLinesHeight);
 
 		return rt;
+	}
+
+	public void Destroy() {
+		if (rt != null)
+			Object.Destroy(rt.gameObject);
 	}
 }

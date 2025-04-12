@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 // might merge this into main or smth idk this kinda temporary
 public static class SEConfig {
 	public static readonly float DefaultRepeatDelayMs = 1000;

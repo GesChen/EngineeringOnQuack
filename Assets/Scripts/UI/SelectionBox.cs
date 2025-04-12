@@ -71,4 +71,9 @@ public class SelectionBox {
 
 		Update();
 	}
+
+	public void Destroy() {
+		if (boxObject != null)
+			Object.Destroy(boxObject.gameObject);
+	}
 }

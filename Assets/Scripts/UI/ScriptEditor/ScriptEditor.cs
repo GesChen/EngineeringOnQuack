@@ -17,6 +17,7 @@ public class ScriptEditor : MonoBehaviour {
 	public CustomVerticalLayout lineNumbersVerticalLayout;
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
 	public SyntaxHighlighter syntaxHighlighter;
+	public List<Caret> carets = new();
 
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
@@ -282,26 +283,59 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Update() {
+		HandleMouseInput();
+		UpdateCarets();
+	}
+
+	void HandleMouseInput() {
+		HandleSingleClicks();
+	}
+
+	void HandleSingleClicks() {
+		if (!Controls.IM.Mouse.Left.WasPressedThisFrame()) return;
+		
 		(int line, int hoverIndex) = FindLineHoveringOver();
-		if (line != -1) {
-			GetCharIndexAtWorldSpacePosition(line, hoverIndex);
+		if (hoverIndex == -1) return;
+		
+		int index = GetCharIndexAtWorldSpacePosition(line, hoverIndex);
+		if (index == -1) return;
+
+		Vector2Int pos = new(index, line);
+		print($"click at {pos}");
+
+		if (carets.Count != 1) {
+			foreach (var caret in carets)
+				caret.Destroy();
+			carets.Clear();
+
+			Caret singleCaret = new(this, pos);
+			singleCaret.Initialize();
+			carets.Add(singleCaret);
 		}
+		else {
+			carets[0].UpdatePos(pos);
+		}
+
+	}
+
+	void UpdateCarets() {
+		foreach (var caret in carets)
+			caret.Update();
 	}
 
 	// long ass name
 	int GetCharIndexAtWorldSpacePosition(int line, int hoverIndex) {
+
+		// not sure why this happens but it just does idk
+		if (hoverIndex >= UIHovers.results.Count)
+			return -1;
+
 		RectTransform rt = lines[line].components[0] as RectTransform;
 
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
 
-		RaycastResult result;
-		try { result = UIHovers.results[hoverIndex]; }
-		catch {
-			print($"fucking index error at {hoverIndex}");
-			print($"theres {UIHovers.results.Count} btw");
-			return -1;
-		}
+		RaycastResult result = UIHovers.results[hoverIndex];
 		
 		Vector2? uv = HF.UVOfHover(result);
 		if (!uv.HasValue) return -1;
@@ -338,6 +372,4 @@ public class ScriptEditor : MonoBehaviour {
 			lines[vec.y].components[0] as RectTransform,
 			lines[vec.y].IndexTs[vec.x]);
 	}
-
-
 }
