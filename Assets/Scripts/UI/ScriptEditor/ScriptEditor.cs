@@ -289,33 +289,53 @@ public class ScriptEditor : MonoBehaviour {
 
 	void HandleMouseInput() {
 		HandleSingleClicks();
+		HandleDrag();
 	}
 
 	void HandleSingleClicks() {
 		if (!Controls.IM.Mouse.Left.WasPressedThisFrame()) return;
-		
-		(int line, int hoverIndex) = FindLineHoveringOver();
-		if (hoverIndex == -1) return;
-		
-		int index = GetCharIndexAtWorldSpacePosition(line, hoverIndex);
-		if (index == -1) return;
 
-		Vector2Int pos = new(index, line);
-		print($"click at {pos}");
+		Vector2Int? pos = CurrentMouseHover();
+		if (!pos.HasValue) return;
 
+		SetSingleCaret(pos.Value, pos.Value);
+	}
+
+	bool dragging = false;
+	Vector2Int dragStart;
+	void HandleDrag() {
+		Vector2Int? pos = CurrentMouseHover();
+		if (Controls.IM.Mouse.Left.WasPressedThisFrame() &&
+			pos.HasValue) { // down && hovering
+			dragging = true;
+			dragStart = pos.Value;
+		} else
+		if (Controls.IM.Mouse.Left.WasReleasedThisFrame()) {
+			dragging = false;
+		}
+
+		if (dragging) {
+			// will have to add alt and shift and stuff soon
+			// for now this is just normal
+
+			if (pos.HasValue)
+				SetSingleCaret(pos.Value, dragStart);
+		}
+	}
+
+	void SetSingleCaret(Vector2Int head, Vector2Int tail) {
 		if (carets.Count != 1) {
 			foreach (var caret in carets)
 				caret.Destroy();
 			carets.Clear();
 
-			Caret singleCaret = new(this, pos);
+			Caret singleCaret = new(this, head, tail);
 			singleCaret.Initialize();
 			carets.Add(singleCaret);
 		}
 		else {
-			carets[0].UpdatePos(pos);
+			carets[0].UpdatePos(head, tail);
 		}
-
 	}
 
 	void UpdateCarets() {
@@ -354,6 +374,16 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		return charIndex;
+	}
+
+	Vector2Int? CurrentMouseHover() {
+		(int line, int hoverIndex) = FindLineHoveringOver();
+		if (hoverIndex == -1) return null;
+
+		int index = GetCharIndexAtWorldSpacePosition(line, hoverIndex);
+		if (index == -1) return null;
+
+		return new(index, line);
 	}
 
 	(int lineIndex, int hoverIndex) FindLineHoveringOver() {

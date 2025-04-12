@@ -17,10 +17,15 @@ public class Caret {
 	(Vector2Int head, Vector2Int tail) lastState;
 
 	public Caret(ScriptEditor se, Vector2Int pos) {
-		Debug.Log("making new");
 		main = se;
 		head = pos;
 		tail = pos;
+	}
+
+	public Caret(ScriptEditor se, Vector2Int head, Vector2Int tail) {
+		main = se;
+		this.head = head;
+		this.tail = tail;
 	}
 
 	public void Initialize() {
@@ -32,6 +37,14 @@ public class Caret {
 		initTime = Time.time;
 		tail = pos;
 		head = pos;
+
+		Update();
+	}
+
+	public void UpdatePos(Vector2Int newHead, Vector2Int newTail) {
+		initTime = Time.time;
+		tail = newTail;
+		head = newHead;
 
 		Update();
 	}
