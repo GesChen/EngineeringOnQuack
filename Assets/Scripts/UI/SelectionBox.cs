@@ -4,7 +4,6 @@ using System.Drawing.Printing;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
-using static ScriptEditor;
 
 public class SelectionBox {
 	public ScriptEditor main; // might remove later, might make static idk or singleton
@@ -13,8 +12,8 @@ public class SelectionBox {
 	public int start;
 	public int end;
 
-	public RectTransform image;
-	
+	public RectTransform boxObject;
+
 	public SelectionBox(
 		ScriptEditor se,
 		int line,
@@ -23,33 +22,53 @@ public class SelectionBox {
 
 		main = se;
 		this.line = line;
-		start = sI;
-		end = sE;
+		if (sI < sE) {
+			start = sI;
+			end = sE;
+		} else {
+			start = sE;
+			end = sI;
+		}
 	}
 
 	public RectTransform Realise(){
 		GameObject newImage = new("Selection", typeof(RectTransform), typeof(Image));
-		image = newImage.GetComponent<RectTransform>();
+		boxObject = newImage.GetComponent<RectTransform>();
+		newImage.GetComponent<Image>().color = main.selectionColor;
+
+		boxObject.anchorMin = Vector2.zero;
+		boxObject.anchorMax = Vector2.one;
+		boxObject.pivot = new(.5f, .5f);
 
 		Update();
 
-		return image;
+		return boxObject;
 	}
 
 	public void Update() {
 		(RectTransform lineRT, float sT) = main.GetLocation(new(start, line));
 		(RectTransform _, float eT) = main.GetLocation(new(end, line));
 
-		image.SetParent(lineRT);
-
-		image.anchorMin = Vector2.zero;
-		image.anchorMax = Vector2.one;
-		image.pivot = new(.5f, .5f);
+		boxObject.SetParent(lineRT);
 
 		float sX = sT * lineRT.rect.width;
 		float eX = eT * lineRT.rect.width;
 
-		image.offsetMin = new(sX, 0);
-		image.offsetMax = new(eX - lineRT.rect.width, 0);
+		boxObject.offsetMin = new(sX, 0);
+		boxObject.offsetMax = new(eX - lineRT.rect.width, 0);
+	}
+
+	public void Update(int line, int start, int end) {
+		this.line = line;
+
+		if (start < end) {
+			this.start = start;
+			this.end = end;
+		} else {
+			this.start = end;
+			this.end = start;
+		}
+
+		Update();
 	}
 }

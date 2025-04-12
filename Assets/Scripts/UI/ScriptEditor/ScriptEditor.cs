@@ -22,7 +22,8 @@ public class ScriptEditor : MonoBehaviour {
 	public float numberToContentSpace;
 	public TMP_FontAsset font;
 	public float fontSize;
-	
+	public Color selectionColor;
+
 	public static Line NewLine(string str) => new() { content = str };
 	public struct Line {
 		public int lineNumber;
@@ -31,8 +32,8 @@ public class ScriptEditor : MonoBehaviour {
 		public List<Component> components;
 	}
 
-	float lineNumberWidth;
-	float allLinesHeight;
+	[HideInNormalInspector] public float lineNumberWidth;
+	[HideInNormalInspector] public float allLinesHeight;
 
 	#region LocalContext
 	[HideInInspector]

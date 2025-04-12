@@ -12,24 +12,30 @@ public class Caret : MonoBehaviour {
 
 	public float tempwidth;
 
-	RectTransform headImageObject; // turn this kinda thing into a struct maybe 
-	RectTransform tailImageObject; 
+	RectTransform rt; // turn this kinda thing into a struct maybe 
 
+	(Vector2Int head, Vector2Int tail) lastState;
 	void Update() {
-		RenderCaret(ref headImageObject, head);
+		RenderCaret();
 
-		MakeSelectionBoxes();
+		if (lastState.head.y != head.y || lastState.tail.y != tail.y)
+			MakeSelectionBoxes();	
+		else
+			UpdateSelectionBoxes();
+
+		lastState.head = head;
+		lastState.tail = tail;
 	}
+
+	int lineChars(int line) =>
+			main.lines[line].content.Length;
 
 	void MakeSelectionBoxes() {
 		// reset
 		if (boxes != null && boxes.Count > 0)
-			foreach (var box in boxes) if (box.image != null)
-				Destroy(box.image.gameObject);
+			foreach (var box in boxes) if (box.boxObject != null)
+				Destroy(box.boxObject.gameObject);
 		boxes = new();
-
-		int lineChars(int line) =>
-			main.lines[line].content.Length;
 
 		if (tail.y == head.y) {
 			// only 1 that goes between them
@@ -67,33 +73,39 @@ public class Caret : MonoBehaviour {
 	}
 
 	void UpdateSelectionBoxes() {
-
+		if (tail.y == head.y) {
+			boxes[0].Update(head.y, tail.x, head.x);
+		} else
+		if (tail.y < head.y) {
+			boxes[0].Update(tail.y, tail.x, lineChars(tail.y));
+			boxes[^1].Update(head.y, 0, head.x);
+		} else {
+			boxes[0].Update(tail.y, 0, tail.x);
+			boxes[^1].Update(head.y, head.x, lineChars(head.y));
+		}
 	}
 
-	void RenderCaret(ref RectTransform rt, Vector2Int pos) {
+	void RenderCaret() {
 		if (rt == null) {
-			GameObject newCaret = MakeNewCaret();
-
-			rt = newCaret.GetComponent<RectTransform>();
-			//im = newCaret.GetComponent<Image>();
+			rt = MakeNewCaret();
 		}
 
-		(RectTransform RT, float t) = main.GetLocation(pos);
+		(RectTransform RT, float t) = main.GetLocation(head);
 
 		rt.SetParent(RT);
-		PutLeftMiddleCenterPivot(rt);
-
-		rt.sizeDelta = new(tempwidth, RT.rect.height);
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 
 	}
 
-	void PutLeftMiddleCenterPivot(RectTransform RT) {
-		RT.anchorMin = new(0, .5f);
-		RT.anchorMax = new(0, .5f);
-		RT.pivot = new(.5f, .5f);
-	}
+	RectTransform MakeNewCaret() {
+		GameObject newObj = new("Caret", typeof(RectTransform), typeof(Image));
+		RectTransform rt = newObj.GetComponent<RectTransform>();
 
-	GameObject MakeNewCaret() {
-		return new("Caret", typeof(RectTransform), typeof(Image));
+		rt.anchorMin = new(0, .5f);
+		rt.anchorMax = new(0, .5f);
+		rt.pivot = new(.5f, .5f);
+
+		rt.sizeDelta = new(tempwidth, main.allLinesHeight);
+
+		return rt;
 	}
 }
