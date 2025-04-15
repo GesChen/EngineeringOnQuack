@@ -63,7 +63,7 @@ public class Tokenizer {
 		'=', '!', '>', '<',						   // comparison
 		'&', '|',								  // logic
 		'(', ')', '[', ']', '{', '}',			 // region
-		'.', ',', ':'                           // special
+		'.', ',', ':'							// special
 	};
 	public (List<Token>, Data) TokenizeLine(string line) {
 		// line has been stripped and preprocessed already
@@ -78,10 +78,10 @@ public class Tokenizer {
 		};
 
 		int chartype(char c) {
-			if (c == ' ') return chartypes.space;					     // space
-			if (char.IsLetter(c) || c == '_') return chartypes.name;    // name
-			if (char.IsNumber(c)) return chartypes.number;			   // number
-			if (opchars.Contains(c)) return chartypes.op;			  // operator
+			if (c == ' ') return chartypes.space;					    // space
+			if (char.IsLetter(c) || c == '_') return chartypes.name;   // name
+			if (char.IsNumber(c)) return chartypes.number;			  // number
+			if (opchars.Contains(c)) return chartypes.op;			 // operator
 			if (c == '"' || c == '\'') return chartypes.str;		// string
 			return -1;
 		}

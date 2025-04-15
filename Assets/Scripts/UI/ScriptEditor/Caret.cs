@@ -28,9 +28,15 @@ public class Caret {
 		this.tail = tail;
 	}
 
+	public Caret(ScriptEditor se) {
+		main = se;
+	}
+
 	public void Initialize() {
 		initTime = Time.time;
 		rt = MakeNewCaret();
+
+		MakeSelectionBoxes();
 	}
 
 	public void UpdatePos(Vector2Int pos) {
@@ -43,6 +49,14 @@ public class Caret {
 
 	public void UpdatePos(Vector2Int newHead, Vector2Int newTail) {
 		initTime = Time.time;
+
+		bool fails(Vector2Int v) =>
+			v.y < 0 || v.y >= main.lines.Count ||
+			v.x < 0 || v.x >= main.lines[v.y].IndexTs.Count;
+
+		if (fails(newHead)) throw new($"bad cursor position at {newHead} have {main.lines[newHead.y].IndexTs.Count}, {main.lines.Count}");
+		if (fails(newTail)) throw new($"bad cursor position at {newTail} have {main.lines[newTail.y].IndexTs.Count}, {main.lines.Count}");
+
 		tail = newTail;
 		head = newHead;
 
@@ -55,7 +69,7 @@ public class Caret {
 	}
 
 	int lineChars(int line) =>
-			main.lines[line].content.Length;
+			main.lines[line].Content.Length;
 
 	void HandleSelections() {
 		if (tail == head) {
@@ -66,7 +80,7 @@ public class Caret {
 			return;
 		}
 
-		if (lastState.head.y != head.y || lastState.tail.y != tail.y)
+		if (lastState.head.y != head.y || lastState.tail.y != tail.y || boxes.Count == 0)
 			MakeSelectionBoxes();
 		else
 			UpdateSelectionBoxes();
@@ -136,7 +150,7 @@ public class Caret {
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 
 
 		// blink
-		float rate = SEConfig.DefaultCursorBlinkRateMs / 1000;
+		float rate = SEConfig.CursorBlinkRateMs / 1000;
 		rt.gameObject.SetActive(
 			(Time.time - initTime) % (2 * rate) < rate);
 	}

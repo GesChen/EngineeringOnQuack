@@ -30,8 +30,8 @@ public class KeyboardTextInput : MonoBehaviour {
 	List<Key> GetRepeats() {
 		List<Key> keys = new();
 		foreach (KeyValuePair<Key, float> keytime in KeyHeldTimes) {
-			if (Time.time - keytime.Value > SEConfig.DefaultRepeatDelayMs / 1000 && // long enough held
-				Time.time - KeyLastRepeatTime[keytime.Key] > 1f / SEConfig.DefaultRepeatRateCPS) { // long enough since last repeat
+			if (Time.time - keytime.Value > SEConfig.RepeatDelayMs / 1000 && // long enough held
+				Time.time - KeyLastRepeatTime[keytime.Key] > 1f / SEConfig.RepeatRateCPS) { // long enough since last repeat
 				keys.Add(keytime.Key);
 				KeyLastRepeatTime[keytime.Key] = Time.time;
 			}

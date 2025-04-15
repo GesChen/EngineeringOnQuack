@@ -5,9 +5,6 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
 using System;
-using static ScriptEditor;
-using Codice.Client.Common;
-using UnityEngine.UIElements;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -25,12 +22,14 @@ public class ScriptEditor : MonoBehaviour {
 	public float fontSize;
 	public Color selectionColor;
 
-	public static Line NewLine(string str) => new() { content = str };
-	public struct Line {
-		public int lineNumber;
-		public string content;
+	public static Line NewLine(string str) => new() { Content = str };
+	public class Line {
+		public int LineNumber;
+		public string Content;
 		public List<float> IndexTs;
-		public List<Component> components;
+		public List<Component> Components;
+		public SyntaxHighlighter.Types[] ColorsSpaces;
+		public SyntaxHighlighter.Types[] ColorsOriginal;
 	}
 
 	[HideInNormalInspector] public float lineNumberWidth;
@@ -78,8 +77,8 @@ public class ScriptEditor : MonoBehaviour {
 		lines = new();
 		for (int i = 0; i < strLines.Length; i++) {
 			lines.Add(new() {
-				content = strLines[i],
-				lineNumber = i + 1
+				Content = strLines[i],
+				LineNumber = i + 1
 			});
 		}
 
@@ -93,9 +92,9 @@ public class ScriptEditor : MonoBehaviour {
 		if (lines == null) return;
 
 		foreach (Line line in lines) {
-			if (line.components != null) {
-				Destroy(line.components[0].gameObject); // line contents
-				Destroy(line.components[2].gameObject); // line number
+			if (line.Components != null) {
+				Destroy(line.Components[0].gameObject); // line contents
+				Destroy(line.Components[2].gameObject); // line number
 			}
 		}
 	}
@@ -124,16 +123,14 @@ public class ScriptEditor : MonoBehaviour {
 		for (int i = 0; i < lines.Count; i++) {
 			Line line = lines[i];
 
-			List<Component> generatedLineComponents = GenerateLine(line);
-			line.components = generatedLineComponents;
-			lines[i] = line;
+			GenerateLine(line);
 		}
 
 		// scale all containers to max width
 		float longestLineWidth = -1;
 		int longestLine = -1;
 		for (int i = 0; i < lines.Count; i++) {
-			float width = (lines[i].components[0] as RectTransform).rect.width;
+			float width = (lines[i].Components[0] as RectTransform).rect.width;
 			if (width > longestLineWidth) {
 				longestLineWidth = width;
 				longestLine = i;
@@ -144,9 +141,9 @@ public class ScriptEditor : MonoBehaviour {
 			longestLineWidth, // widest of all components
 			lineContentContainer.rect.width); // must at minimum be as wide as the container
 
-		lines.ForEach(l => (l.components[0] as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth));
+		lines.ForEach(l => (l.Components[0] as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth));
 
-		string longestConvertedTabs = ConvertTabsToSpaces(lines[longestLine].content);
+		string longestConvertedTabs = ConvertTabsToSpaces(lines[longestLine]);
 
 		charUVAmount = 1f / longestConvertedTabs.Length;
 
@@ -167,7 +164,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		List<float> TtoIndex = new();
 		float pos = 0;
-		foreach (char c in lines[i].content) {
+		foreach (char c in lines[i].Content) {
 			TtoIndex.Add(pos);
 
 			pos += charUVAmount * (c == '\t' ? LanguageConfig.SpacesPerTab : 1);
@@ -178,12 +175,12 @@ public class ScriptEditor : MonoBehaviour {
 		return TtoIndex;
 	}
 
-	List<Component> GenerateLine(Line line) {
+	void GenerateLine(Line line) {
 		// make line number object
 		(GameObject NObj, TextMeshProUGUI NText, RectTransform NRect)
 			= NewText(
 				"Line Number",
-				line.lineNumber.ToString(),
+				line.LineNumber.ToString(),
 				lineNumbersVerticalLayout.transform,
 				TextAlignmentOptions.Right,
 				lineNumberWidth);
@@ -193,8 +190,15 @@ public class ScriptEditor : MonoBehaviour {
 
 		// colorize
 		var colors = syntaxHighlighter.LineColorTypesArray(processed, LC);
-		print(processed);
-		print(syntaxHighlighter.TypeArrayToString(colors));
+		line.ColorsSpaces = colors;
+
+		// need to store a usable copy based on tabs instead of spaces
+		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
+		line.ColorsOriginal = tabsConvertedBack;
+
+		//print(processed);
+		//print(syntaxHighlighter.TypeArrayToString(colors));
+		
 		processed = syntaxHighlighter.TagLine(processed, colors);
 
 		// make actual line content
@@ -222,8 +226,7 @@ public class ScriptEditor : MonoBehaviour {
 		//l.Set(NRect, "name");
 		//l.Set(LCRect, "contents");
 
-		// return components
-		return new() {
+		line.Components = new() {
 			LCRect,
 			LCText,
 			NRect
@@ -231,12 +234,12 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	string ConvertTabsToSpaces(Line line) {
-		return ConvertTabsToSpaces(line.content);
+		return ConvertTabsToSpaces(line.Content);
 	}
 
+	int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, LanguageConfig.SpacesPerTab) + 1;
 	string ConvertTabsToSpaces(string line) {
 		string tabsToSpaces = line;
-		static int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, LanguageConfig.SpacesPerTab) + 1;
 		for (int i = 0; i < tabsToSpaces.Length; i++) {
 			char c = tabsToSpaces[i];
 			if (c == '\t') {
@@ -248,9 +251,29 @@ public class ScriptEditor : MonoBehaviour {
 		return tabsToSpaces;
 	}
 
+	SyntaxHighlighter.Types[] RevertSpacesToTabs(
+		SyntaxHighlighter.Types[] colors, 
+		string convertedString, 
+		string originalString) {
+
+		var reconstructed = new SyntaxHighlighter.Types[originalString.Length];
+		int ci = 0;
+		int oi = 0;
+		while (ci < convertedString.Length) { // they should both each their ends at the same time idk
+			reconstructed[oi] = colors[ci];
+			if (originalString[oi] == '\t')
+				ci += tabIndexToSpaceCount(ci);
+			else
+				ci++;
+
+			oi++;
+		}
+		return reconstructed;
+	}
+
 	// TODO: do something with this
 	void UpdateLineContents(Line line, string newContents) {
-		TextMeshProUGUI text = line.components[0] as TextMeshProUGUI;
+		TextMeshProUGUI text = line.Components[0] as TextMeshProUGUI;
 		text.text = newContents;
 	}
 
@@ -288,27 +311,135 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void HandleMouseInput() {
-		HandleSingleClicks();
-		HandleDrag();
+		bool clickedThisFrame = Controls.IM.Mouse.Left.WasPressedThisFrame();
+		Vector2Int? mousePos = CurrentMouseHover();
+		if (!mousePos.HasValue) return;
+
+		DetectExtraClicks(clickedThisFrame, mousePos.Value);
+		//HandleSingleClick(clickedThisFrame, mousePos.Value);
+		//HandleDoubleClick(clickedThisFrame, mousePos.Value);
+		//HandleTripleClick(clickedThisFrame, mousePos.Value);
+		HandleDrag(clickedThisFrame, mousePos.Value);
 	}
 
-	void HandleSingleClicks() {
-		if (!Controls.IM.Mouse.Left.WasPressedThisFrame()) return;
+	void HandleSingleClick(bool clickedThisFrame,Vector2Int pos) {
+		if (!clickedThisFrame) return;
 
-		Vector2Int? pos = CurrentMouseHover();
-		if (!pos.HasValue) return;
+		SetSingleCaret(pos, pos);
+	}
 
-		SetSingleCaret(pos.Value, pos.Value);
+	float lastClickTime;
+	Vector2Int lastClickPos;
+	int clicksInARow = 0;
+	void DetectExtraClicks(bool clickedThisFrame, Vector2Int pos) {
+		if (clickedThisFrame) {
+			if (Time.time - lastClickTime < SEConfig.MultiClickThresholdMs / 1000 &&
+			lastClickPos == pos) {
+				clicksInARow++;
+			} else {
+				clicksInARow = 1;
+			}
+
+			lastClickTime = Time.time;
+			lastClickPos = pos;
+		}
+	}
+
+	void HandleDoubleClick(bool clickedThisFrame, Vector2Int pos) {
+		if (!clickedThisFrame) return;
+		if (clicksInARow == 2) {
+			(int start, int end) = DoubleClickWordAt(pos);
+
+			// gotta figure out shift soon
+			SetSingleCaret(new(end, pos.y), new(start, pos.y));
+		}
+	}
+
+	(int start, int end) DoubleClickWordAt(Vector2Int pos) {
+		if (string.IsNullOrWhiteSpace(lines[pos.y].Content)) return (0, 0); // index errors everywhere
+
+		var colors = lines[pos.y].ColorsOriginal; // does this store a reference to it or copy the array?
+		string line = lines[pos.y].Content;
+
+		static int chartype(char c) {
+			if (char.IsLetterOrDigit(c)) return 0;
+			if (char.IsSymbol(c)) return 1;
+			if (char.IsWhiteSpace(c)) return 2;
+			return -1;
+		}
+
+		var leftColorType = colors[pos.x - 1];
+		var rightColorType =
+			pos.x < colors.Length
+			? colors[pos.x]
+			: SyntaxHighlighter.Types.unassigned;
+
+		bool leftUnassigned = leftColorType == SyntaxHighlighter.Types.unassigned;
+		bool rightUnassigned = rightColorType == SyntaxHighlighter.Types.unassigned;
+
+		// funy rules
+		int findType = (leftUnassigned, rightUnassigned) switch {
+			(true, true) => 0,
+			(false, true) => 1,
+			(true, false) => 2,
+			(false, false) => 3
+		};
+
+		var findColorType = findType switch {
+			0 => SyntaxHighlighter.Types.unassigned, // both dont, take the space
+			1 => leftColorType, // only left, choose left
+			2 => rightColorType, // only right, choose right
+			3 => rightColorType, // both exist? default right
+			_ => SyntaxHighlighter.Types.unassigned
+		};
+
+		int leftCharType = chartype(line[pos.x - 1]);
+		int rightCharType =
+			pos.x < colors.Length
+			? chartype(line[pos.x])
+			: -1;
+
+		int findCharType = findType switch {
+			0 => 2,
+			1 => leftCharType,
+			2 => rightCharType,
+			3 => rightCharType,
+			_ => -1
+		};
+
+		// search
+		int left = pos.x - 1;
+		while (left > 0 && 
+			colors[left] == findColorType &&
+			chartype(line[left]) == findCharType) 
+			left--;
+		left++;
+
+		int right = pos.x;
+		while (right < colors.Length && 
+			colors[right] == findColorType &&
+			chartype(line[right]) == findCharType)
+			right++;
+		//if (right == colors.Length) right--;
+
+		return (left, right);
+	}
+
+	void HandleTripleClick(bool clickedThisFrame, Vector2Int pos) {
+		if (!clickedThisFrame) return;
+		if (clicksInARow >= 3) {
+			SetSingleCaret(
+				new(lines[pos.y].Content.Length, pos.y), 
+				new(0, pos.y));
+		}
 	}
 
 	bool dragging = false;
 	Vector2Int dragStart;
-	void HandleDrag() {
-		Vector2Int? pos = CurrentMouseHover();
-		if (Controls.IM.Mouse.Left.WasPressedThisFrame() &&
-			pos.HasValue) { // down && hovering
+	void HandleDrag(bool clickedThisFrame, Vector2Int pos) {
+		if (clickedThisFrame) { // down
 			dragging = true;
-			dragStart = pos.Value;
+			dragStart = pos;
 		} else
 		if (Controls.IM.Mouse.Left.WasReleasedThisFrame()) {
 			dragging = false;
@@ -318,8 +449,48 @@ public class ScriptEditor : MonoBehaviour {
 			// will have to add alt and shift and stuff soon
 			// for now this is just normal
 
-			if (pos.HasValue)
-				SetSingleCaret(pos.Value, dragStart);
+			if (clicksInARow == 1)
+				SetSingleCaret(pos, dragStart);
+			else if (clicksInARow == 2) {
+				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
+				(int deS, int deE) = DoubleClickWordAt(pos);
+
+				Vector2Int start;
+				Vector2Int end;
+
+				if (dragStart.y == pos.y) {
+					start = new(Mathf.Max(dsE, deE), pos.y);
+					end = new(Mathf.Min(dsS, deS), pos.y);
+
+					if (dragStart.x > pos.x) (start, end) = (end, start);
+				} else
+				if (dragStart.y < pos.y) {
+					start = new(deE, pos.y);
+					end = new(dsS, dragStart.y);
+				} else {
+					start = new(deS, pos.y);
+					end = new(dsE, dragStart.y);
+				}
+
+				SetSingleCaret(start, end);
+			} else {
+				Vector2Int start;
+				Vector2Int end;
+
+				if (dragStart.y == pos.y) {
+					start = new(lines[pos.y].Content.Length, pos.y);
+					end = new(0, pos.y);
+				} else
+				if (dragStart.y < pos.y) {
+					start = new(lines[pos.y].Content.Length, pos.y);
+					end = new(0, dragStart.y);
+				} else {
+					start = new(0, pos.y);
+					end = new(lines[dragStart.y].Content.Length, dragStart.y);
+				}
+
+				SetSingleCaret(start, end);
+			}
 		}
 	}
 
@@ -329,13 +500,12 @@ public class ScriptEditor : MonoBehaviour {
 				caret.Destroy();
 			carets.Clear();
 
-			Caret singleCaret = new(this, head, tail);
+			Caret singleCaret = new(this);
 			singleCaret.Initialize();
 			carets.Add(singleCaret);
 		}
-		else {
-			carets[0].UpdatePos(head, tail);
-		}
+
+		carets[0].UpdatePos(head, tail);
 	}
 
 	void UpdateCarets() {
@@ -350,7 +520,7 @@ public class ScriptEditor : MonoBehaviour {
 		if (hoverIndex >= UIHovers.results.Count)
 			return -1;
 
-		RectTransform rt = lines[line].components[0] as RectTransform;
+		RectTransform rt = lines[line].Components[0] as RectTransform;
 
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
@@ -376,6 +546,7 @@ public class ScriptEditor : MonoBehaviour {
 		return charIndex;
 	}
 
+	// returns in char space
 	Vector2Int? CurrentMouseHover() {
 		(int line, int hoverIndex) = FindLineHoveringOver();
 		if (hoverIndex == -1) return null;
@@ -387,10 +558,10 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	(int lineIndex, int hoverIndex) FindLineHoveringOver() {
-		if (lines == null || lines[0].components == null) return (-1, -1);
+		if (lines == null || lines[0].Components == null) return (-1, -1);
 
 		for (int i = 0; i < lines.Count; i++) {
-			RectTransform contents = lines[i].components[0] as RectTransform;
+			RectTransform contents = lines[i].Components[0] as RectTransform;
 			int index = UIHovers.hovers.IndexOf(contents);
 			if (index != -1) return (i, index);
 		}
@@ -399,7 +570,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	public (RectTransform rt, float t) GetLocation(Vector2Int vec) {
 		return (
-			lines[vec.y].components[0] as RectTransform,
+			lines[vec.y].Components[0] as RectTransform,
 			lines[vec.y].IndexTs[vec.x]);
 	}
 }
