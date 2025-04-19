@@ -3,18 +3,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
-using System;
+using JetBrains.Annotations;
+using PlasticPipe.PlasticProtocol.Messages;
+using log4net;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
+
 	public ScrollWindow scroll;
 	public CustomVerticalLayout lineContentVerticalLayout;
 	public RectTransform lineContentContainer;
 	public CustomVerticalLayout lineNumbersVerticalLayout;
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
+
 	public SyntaxHighlighter syntaxHighlighter;
 	public List<Caret> carets = new();
+	public int headCaretI = 0;
 
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
@@ -22,7 +28,6 @@ public class ScriptEditor : MonoBehaviour {
 	public float fontSize;
 	public Color selectionColor;
 
-	public static Line NewLine(string str) => new() { Content = str };
 	public class Line {
 		public int LineNumber;
 		public string Content;
@@ -65,11 +70,12 @@ public class ScriptEditor : MonoBehaviour {
 	LocalContext LC;
 	#endregion
 
-	float charUVAmount;
-
 	void Start() {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
 	}
+
+	#region Loading/Generation
+	float charUVAmount;
 
 	public void Load(string[] strLines) {
 		Clear();
@@ -167,9 +173,17 @@ public class ScriptEditor : MonoBehaviour {
 		foreach (char c in lines[i].Content) {
 			TtoIndex.Add(pos);
 
-			pos += charUVAmount * (c == '\t' ? LanguageConfig.SpacesPerTab : 1);
+			pos += charUVAmount * (c == '\t' ? Config.Language.SpacesPerTab : 1);
 		}
-		// pos isnt gonna be 1 but need to add it again to be able to select last item still
+
+		//// pos isnt gonna be 1 but need to add it again to be able to select last item still
+		//TtoIndex.Add(pos);
+
+		// experiment
+		while (pos < 1) {
+			TtoIndex.Add(pos);
+			pos += charUVAmount;
+		}
 		TtoIndex.Add(pos);
 
 		return TtoIndex;
@@ -237,7 +251,7 @@ public class ScriptEditor : MonoBehaviour {
 		return ConvertTabsToSpaces(line.Content);
 	}
 
-	int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, LanguageConfig.SpacesPerTab) + 1;
+	int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, Config.Language.SpacesPerTab) + 1;
 	string ConvertTabsToSpaces(string line) {
 		string tabsToSpaces = line;
 		for (int i = 0; i < tabsToSpaces.Length; i++) {
@@ -304,28 +318,60 @@ public class ScriptEditor : MonoBehaviour {
 
 		return (newObj, newText, newRect);
 	}
+	#endregion
 
 	void Update() {
 		HandleMouseInput();
+		HandleKeyboardInput();
 		UpdateCarets();
 	}
 
+	#region Caret Utilities
+	void SetCaretCount(int n) {
+		if (carets.Count != n) {
+			foreach (var caret in carets)
+				caret.Destroy();
+			carets.Clear();
+
+			for (int i = 0; i < n; i++) {
+				Caret singleCaret = new(this);
+				singleCaret.Initialize();
+				carets.Add(singleCaret);
+			}
+		}
+	}
+	void SetSingleCaret(Vector2Int head, Vector2Int tail) {
+		SetCaretCount(1);
+
+		carets[0].UpdatePos(head, tail);
+	}
+
+	void SetMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions, int headCaretIndex) {
+		SetCaretCount(positions.Count);
+
+		for (int i = 0; i < positions.Count; i++) {
+			carets[i].UpdatePos(positions[i].head, positions[i].tail);
+		}
+
+		headCaretI = headCaretIndex;
+	}
+
+	void UpdateCarets() {
+		foreach (var caret in carets)
+			caret.Update();
+	}
+
+	#endregion
+
+	#region Mouse Input
+
 	void HandleMouseInput() {
 		bool clickedThisFrame = Controls.IM.Mouse.Left.WasPressedThisFrame();
-		Vector2Int? mousePos = CurrentMouseHover();
+		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
 		if (!mousePos.HasValue) return;
 
 		DetectExtraClicks(clickedThisFrame, mousePos.Value);
-		//HandleSingleClick(clickedThisFrame, mousePos.Value);
-		//HandleDoubleClick(clickedThisFrame, mousePos.Value);
-		//HandleTripleClick(clickedThisFrame, mousePos.Value);
-		HandleDrag(clickedThisFrame, mousePos.Value);
-	}
-
-	void HandleSingleClick(bool clickedThisFrame,Vector2Int pos) {
-		if (!clickedThisFrame) return;
-
-		SetSingleCaret(pos, pos);
+		HandleDrag(clickedThisFrame, ClampPosition(mousePos.Value), mousePos.Value);
 	}
 
 	float lastClickTime;
@@ -333,7 +379,7 @@ public class ScriptEditor : MonoBehaviour {
 	int clicksInARow = 0;
 	void DetectExtraClicks(bool clickedThisFrame, Vector2Int pos) {
 		if (clickedThisFrame) {
-			if (Time.time - lastClickTime < SEConfig.MultiClickThresholdMs / 1000 &&
+			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000 &&
 			lastClickPos == pos) {
 				clicksInARow++;
 			} else {
@@ -345,21 +391,16 @@ public class ScriptEditor : MonoBehaviour {
 		}
 	}
 
-	void HandleDoubleClick(bool clickedThisFrame, Vector2Int pos) {
-		if (!clickedThisFrame) return;
-		if (clicksInARow == 2) {
-			(int start, int end) = DoubleClickWordAt(pos);
-
-			// gotta figure out shift soon
-			SetSingleCaret(new(end, pos.y), new(start, pos.y));
-		}
-	}
-
 	(int start, int end) DoubleClickWordAt(Vector2Int pos) {
 		if (string.IsNullOrWhiteSpace(lines[pos.y].Content)) return (0, 0); // index errors everywhere
 
 		var colors = lines[pos.y].ColorsOriginal; // does this store a reference to it or copy the array?
 		string line = lines[pos.y].Content;
+
+		// custom case for symbols
+		// returns just that symbol
+		if (pos.x < colors.Length && colors[pos.x] == SyntaxHighlighter.Types.symbol)
+			return (pos.x, pos.x);
 
 		static int chartype(char c) {
 			if (char.IsLetterOrDigit(c)) return 0;
@@ -368,7 +409,11 @@ public class ScriptEditor : MonoBehaviour {
 			return -1;
 		}
 
-		var leftColorType = colors[pos.x - 1];
+		var leftColorType = 
+			pos.x > 0 
+			? colors[pos.x - 1]
+			: SyntaxHighlighter.Types.unassigned;
+
 		var rightColorType =
 			pos.x < colors.Length
 			? colors[pos.x]
@@ -393,7 +438,11 @@ public class ScriptEditor : MonoBehaviour {
 			_ => SyntaxHighlighter.Types.unassigned
 		};
 
-		int leftCharType = chartype(line[pos.x - 1]);
+		int leftCharType = 
+			pos.x > 0 
+			? chartype(line[pos.x - 1])
+			: -1;
+
 		int rightCharType =
 			pos.x < colors.Length
 			? chartype(line[pos.x])
@@ -413,7 +462,7 @@ public class ScriptEditor : MonoBehaviour {
 			colors[left] == findColorType &&
 			chartype(line[left]) == findCharType) 
 			left--;
-		left++;
+		if (left != 0) left++;
 
 		int right = pos.x;
 		while (right < colors.Length && 
@@ -425,21 +474,17 @@ public class ScriptEditor : MonoBehaviour {
 		return (left, right);
 	}
 
-	void HandleTripleClick(bool clickedThisFrame, Vector2Int pos) {
-		if (!clickedThisFrame) return;
-		if (clicksInARow >= 3) {
-			SetSingleCaret(
-				new(lines[pos.y].Content.Length, pos.y), 
-				new(0, pos.y));
-		}
-	}
-
 	bool dragging = false;
 	Vector2Int dragStart;
-	void HandleDrag(bool clickedThisFrame, Vector2Int pos) {
+	Vector2Int dragStartUnclamped;
+	void HandleDrag(bool clickedThisFrame, Vector2Int pos, Vector2Int posUnclamped) {
 		if (clickedThisFrame) { // down
 			dragging = true;
-			dragStart = pos;
+
+			if (!Controls.Keyboard.Modifiers.Shift) {
+				dragStart = pos;
+				dragStartUnclamped = posUnclamped;
+			}
 		} else
 		if (Controls.IM.Mouse.Left.WasReleasedThisFrame()) {
 			dragging = false;
@@ -449,9 +494,35 @@ public class ScriptEditor : MonoBehaviour {
 			// will have to add alt and shift and stuff soon
 			// for now this is just normal
 
-			if (clicksInARow == 1)
-				SetSingleCaret(pos, dragStart);
-			else if (clicksInARow == 2) {
+			bool doubleClickCondition = Controls.Keyboard.Modifiers.Ctrl;
+
+			if (clicksInARow == 1 && !doubleClickCondition) {
+				if (!Controls.Keyboard.Modifiers.Alt) {
+					// normal dragging
+					SetSingleCaret(pos, dragStart);
+					carets[0].DesiredCol = ColumnOfPosition(pos);
+				} else {
+					int startLine = dragStartUnclamped.y;
+					int startCol = ColumnOfPosition(dragStartUnclamped);
+					
+					int endLine = posUnclamped.y;
+					int endCol = ColumnOfPosition(posUnclamped);
+
+					if (endLine < startLine)
+						(endLine, startLine) = (startLine, endLine);
+
+					List<(Vector2Int head, Vector2Int tail)> carets = new();
+					for (int i = startLine; i <= endLine; i++) {
+						Vector2Int head = new(PositionOfColumn(endCol, i), i);
+						Vector2Int tail = new(PositionOfColumn(startCol, i), i);
+
+						carets.Add((head, tail));
+					}
+
+					SetMultipleCarets(carets, carets.Count - 1);
+				}
+			} else 
+			if (clicksInARow == 2 || doubleClickCondition) {
 				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
 				(int deS, int deE) = DoubleClickWordAt(pos);
 
@@ -462,7 +533,8 @@ public class ScriptEditor : MonoBehaviour {
 					start = new(Mathf.Max(dsE, deE), pos.y);
 					end = new(Mathf.Min(dsS, deS), pos.y);
 
-					if (dragStart.x > pos.x) (start, end) = (end, start);
+					if (dragStart.x > pos.x)
+						(start, end) = (end, start); // lol theres gotta be a better way but it works
 				} else
 				if (dragStart.y < pos.y) {
 					start = new(deE, pos.y);
@@ -494,64 +566,16 @@ public class ScriptEditor : MonoBehaviour {
 		}
 	}
 
-	void SetSingleCaret(Vector2Int head, Vector2Int tail) {
-		if (carets.Count != 1) {
-			foreach (var caret in carets)
-				caret.Destroy();
-			carets.Clear();
-
-			Caret singleCaret = new(this);
-			singleCaret.Initialize();
-			carets.Add(singleCaret);
-		}
-
-		carets[0].UpdatePos(head, tail);
+	Vector2Int ClampPosition(Vector2Int pos) {
+		return new(Mathf.Clamp(pos.x, 0, lines[pos.y].Content.Length), pos.y);
 	}
-
-	void UpdateCarets() {
-		foreach (var caret in carets)
-			caret.Update();
-	}
-
-	// long ass name
-	int GetCharIndexAtWorldSpacePosition(int line, int hoverIndex) {
-
-		// not sure why this happens but it just does idk
-		if (hoverIndex >= UIHovers.results.Count)
-			return -1;
-
-		RectTransform rt = lines[line].Components[0] as RectTransform;
-
-		Vector3[] corners = new Vector3[4];
-		rt.GetWorldCorners(corners);
-
-		RaycastResult result = UIHovers.results[hoverIndex];
-		
-		Vector2? uv = HF.UVOfHover(result);
-		if (!uv.HasValue) return -1;
-		float t = uv.Value.x;
-
-		// determine which t is closest to real t
-		List<float> ts = lines[line].IndexTs;
-		float closestDist = float.PositiveInfinity;
-		int charIndex = -1;
-		for (int i = 0; i < ts.Count; i++) {
-			float dist = MathF.Abs(ts[i] - t);
-			if (dist < closestDist) {
-				closestDist = dist;
-				charIndex = i;
-			}
-		}
-
-		return charIndex;
-	}
-
+	
 	// returns in char space
-	Vector2Int? CurrentMouseHover() {
+	Vector2Int? CurrentMouseHoverUnclamped() {
 		(int line, int hoverIndex) = FindLineHoveringOver();
 		if (hoverIndex == -1) return null;
 
-		int index = GetCharIndexAtWorldSpacePosition(line, hoverIndex);
+		int index = GetCharIndexAtWorldSpacePositionUnclamped(line, hoverIndex);
 		if (index == -1) return null;
 
 		return new(index, line);
@@ -567,10 +591,129 @@ public class ScriptEditor : MonoBehaviour {
 		}
 		return (-1, -1);
 	}
+	
+	// long ass name
+	int GetCharIndexAtWorldSpacePositionUnclamped(int line, int hoverIndex) {
 
+		// not sure why this happens but it just does idk
+		if (hoverIndex >= UIHovers.results.Count)
+			return -1;
+
+		RectTransform rt = lines[line].Components[0] as RectTransform;
+
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		RaycastResult result = UIHovers.results[hoverIndex];
+
+		Vector2? uv = HF.UVOfHover(result);
+		if (!uv.HasValue) return -1;
+		float t = uv.Value.x;
+
+		// determine which t is closest to real t
+		List<float> ts = lines[line].IndexTs;
+		float closestDist = float.PositiveInfinity;
+		int charIndex = -1;
+		for (int i = 0; i < ts.Count; i++) {
+			float dist = Mathf.Abs(ts[i] - t);
+			if (dist < closestDist) {
+				closestDist = dist;
+				charIndex = i;
+			}
+		}
+
+		return charIndex;
+	}
+
+	#endregion
+
+	#region Keyboard Input
+
+	void HandleKeyboardInput() {
+		// normal arrow keys only for now, move to seperate if needed
+		Vector2Int movement = Vector2Int.zero;
+		if (Controls.IsUsed(Key.UpArrow)) movement.y--;
+		if (Controls.IsUsed(Key.DownArrow)) movement.y++;
+		if (Controls.IsUsed(Key.LeftArrow)) movement.x--;
+		if (Controls.IsUsed(Key.RightArrow)) movement.x++;
+
+		if (movement.sqrMagnitude == 0) return;
+
+		foreach(Caret c in carets) {
+			c.MoveHead(movement);
+
+			if (Controls.Keyboard.Modifiers.Ctrl) {
+				(int start, int end) = DoubleClickWordAt(c.head);
+
+				c.ResetBlink();
+				c.SetHead(new(movement.x > 0 ? end : start, c.head.y));
+				c.Update();
+			}
+
+			if (!Controls.Keyboard.Modifiers.Shift) {
+				c.MatchTail();
+			}
+		}
+	}
+
+	#endregion
+
+	#region Position Utils
 	public (RectTransform rt, float t) GetLocation(Vector2Int vec) {
 		return (
 			lines[vec.y].Components[0] as RectTransform,
 			lines[vec.y].IndexTs[vec.x]);
 	}
+
+	public int ColumnOfPosition(Vector2Int pos) {
+		string line = lines[pos.y].Content;
+		if (pos.x >= line.Length) 
+			return ColumnOfPositionOvershoot(pos);
+		
+		int col = 0;
+		for (int i = 0; i < pos.x; i++) {
+			if (line[i] == '\t') col += tabIndexToSpaceCount(col);
+			else col++;
+		}
+		return col;
+	}
+
+	public int ColumnOfPositionOvershoot(Vector2Int pos) {
+		string line = lines[pos.y].Content;
+		int col = 0;
+		foreach (char c in line) {
+			if (c == '\t') col += tabIndexToSpaceCount(col);
+			else col++; 
+		}
+
+		col += pos.x - line.Length;
+		return col;
+	}
+
+	public int PositionOfColumn(int col, int line) {
+		if (col == 0) return 0;
+
+		string content = lines[line].Content;
+		int pos = 0;
+		int testCol = 0;
+		while (pos < content.Length) {
+			if (content[pos] == '\t') {
+				testCol += tabIndexToSpaceCount(testCol);
+			} else {
+				testCol++;
+			}
+			pos++;
+
+			if (testCol >= col) return pos;
+		}
+
+		while (testCol < col) { // will = at the end
+			pos++;
+			testCol++;
+		}
+
+		return pos;
+	}
+
+	#endregion
 }

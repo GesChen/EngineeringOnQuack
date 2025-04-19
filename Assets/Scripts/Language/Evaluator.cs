@@ -161,7 +161,7 @@ public class Evaluator {
 
 	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
 		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
-		if (LanguageConfig.DEBUG) HF.WarnColor($"Evaluating {line.TokenList()}", Color.green);
+		if (Config.Language.DEBUG) HF.WarnColor($"Evaluating {line.TokenList()}", Color.green);
 
 		Data declChecks = DeclarationChecks(line.Tokens);
 		if (declChecks is Error ||
@@ -469,7 +469,7 @@ public class Evaluator {
 		Memory memory = AC.memory;
 		#endregion
 
-		if (LanguageConfig.DEBUG) HF.LogColor($"Parsing f string {s}", Color.yellow);
+		if (Config.Language.DEBUG) HF.LogColor($"Parsing f string {s}", Color.yellow);
 
 		StringBuilder sb = new();
 

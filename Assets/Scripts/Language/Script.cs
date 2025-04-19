@@ -19,7 +19,7 @@ public class Script {
 		Name = "";
 		Contents = new();
 		OriginalText = "";
-		Version = LanguageConfig.VERSION;
+		Version = Config.Language.VERSION;
 	}
 
 	public override string ToString() {

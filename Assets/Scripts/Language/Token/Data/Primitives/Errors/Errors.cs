@@ -78,9 +78,9 @@ public static class Errors {
 	public static Error Unexpected(string what)
 		=> new($"Unexpected {what}");
 	public static Error WhileLoopLimitReached()
-		=> new($"While loop iterations limit reached: {LanguageConfig.MaxWhileLoopIters}");
+		=> new($"While loop iterations limit reached: {Config.Language.MaxWhileLoopIters}");
 	public static Error RecursionLimitReached()
-		=> new($"Recursion depth limit reached: {LanguageConfig.RecursionDepthLimit}");
+		=> new($"Recursion depth limit reached: {Config.Language.RecursionDepthLimit}");
 	public static Error TypeCannotBeUsedAsVariable(string name)
 		=> new($"Type {name} cannot be used as variable");
 	public static Error template()

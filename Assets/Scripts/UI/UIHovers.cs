@@ -22,6 +22,8 @@ public class UIHovers : MonoBehaviour
 	}
 	#endregion
 
+	[HideInNormalInspector] public Canvas detectionCanvas;
+
 	public static List<Transform> hovers = new();
 	public static List<RaycastResult> results = new();
 	public List<Transform> hoversDebug;
@@ -30,15 +32,6 @@ public class UIHovers : MonoBehaviour
 	private EventSystem eventSystem;
 
 	public static bool Check(Transform t) {
-		if (Instance == null) {
-			Canvas canvas = Config.UI.MainCanvas;
-			if (canvas == null) {
-				Debug.LogError("No main canvas set");
-				return false;
-			}
-			UIHovers newHovers = canvas.gameObject.AddComponent<UIHovers>();
-			newHovers.UpdateSingleton();
-		}
 
 		return hovers.Contains(t);
 	}
@@ -47,6 +40,7 @@ public class UIHovers : MonoBehaviour
 	}
 
 	void Start() {
+		detectionCanvas = GetComponent<Canvas>();
 		graphicRaycaster = GetComponent<GraphicRaycaster>();
 		eventSystem = FindObjectOfType<EventSystem>();
 	}

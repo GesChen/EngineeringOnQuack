@@ -8,11 +8,12 @@ public class Caret {
 
 	public Vector2Int head;
 	public Vector2Int tail;
+	public int DesiredCol; 
 	public List<SelectionBox> boxes;
 
 	public float tempwidth = 2;
 
-	float initTime;
+	float blinkTimer;
 	RectTransform rt; // turn this kinda thing into a struct maybe 
 	(Vector2Int head, Vector2Int tail) lastState;
 
@@ -32,35 +33,116 @@ public class Caret {
 		main = se;
 	}
 
+	public void ResetBlink() {
+		blinkTimer = Time.time;
+	}
+
 	public void Initialize() {
-		initTime = Time.time;
+		ResetBlink();
 		rt = MakeNewCaret();
 
 		MakeSelectionBoxes();
 	}
 
 	public void UpdatePos(Vector2Int pos) {
-		initTime = Time.time;
+		ResetBlink();
 		tail = pos;
 		head = pos;
 
 		Update();
 	}
 
-	public void UpdatePos(Vector2Int newHead, Vector2Int newTail) {
-		initTime = Time.time;
-
-		bool fails(Vector2Int v) =>
+	bool PositionCheck(Vector2Int v) =>
 			v.y < 0 || v.y >= main.lines.Count ||
 			v.x < 0 || v.x >= main.lines[v.y].IndexTs.Count;
+	public void UpdatePos(Vector2Int newHead, Vector2Int newTail) {
+		ResetBlink();
 
-		if (fails(newHead)) throw new($"bad cursor position at {newHead} have {main.lines[newHead.y].IndexTs.Count}, {main.lines.Count}");
-		if (fails(newTail)) throw new($"bad cursor position at {newTail} have {main.lines[newTail.y].IndexTs.Count}, {main.lines.Count}");
-
-		tail = newTail;
-		head = newHead;
+		SetHead(newHead);
+		SetTail(newTail);
 
 		Update();
+	}
+
+	/// <summary>
+	/// Updates the head pos.
+	/// MUST MANUALLY RESET BLINK (BEFORE) AND UPDATE (AFTER)!!
+	/// </summary>
+	/// <param name="pos"></param>
+	public void SetHead(Vector2Int pos) {
+		if (PositionCheck(pos)) 
+			throw new($"bad cursor position at {pos} have {main.lines[pos.y].IndexTs.Count}, {main.lines.Count}");
+
+		head = pos;
+	}
+
+	public void SetTail(Vector2Int pos) {
+		if (PositionCheck(pos))
+			throw new($"bad cursor position at {pos} have {main.lines[pos.y].IndexTs.Count}, {main.lines.Count}");
+		
+		tail = pos;
+	}
+
+	public void MoveHead(Vector2Int v) {
+		// soley handle y
+		if (v.y != 0) {
+			// remember col of old head
+			int oldCol = main.ColumnOfPosition(head);
+			int oldLineLength = main.lines[head.y].Content.Length;
+
+			// move head y
+			head.y += v.y;
+
+			// set x
+			// if head x is longer than new line, set to end (keep desired)
+			head.x = main.PositionOfColumn(oldCol, head.y);
+
+			int newLineLength = main.lines[head.y].Content.Length;
+
+			if (oldLineLength < newLineLength) {
+				head.x = main.PositionOfColumn(DesiredCol, head.y);
+			}
+
+			if (head.x > newLineLength) { // too far
+				head.x = newLineLength;
+
+				// only set desired to old if old was at desired (??)
+				if (oldCol == DesiredCol)
+					DesiredCol = oldCol;
+			}
+		}
+
+		// handle x movement
+			head.x += v.x;
+		// wrap properly (?)
+		head = WrapCaretPos(head);
+
+		if (v.x != 0)
+			DesiredCol = main.ColumnOfPosition(head);
+
+		Update();
+		ResetBlink();
+	}
+
+	Vector2Int WrapCaretPos(Vector2Int pos) {
+		// assuming only 1 rollover, if ever more then add more
+		int x = pos.x;
+		int y = pos.y;
+
+		if (x < 0 && y > 0) {
+			y--;
+			x = main.lines[y].Content.Length;
+		} else
+		if (x > main.lines[y].Content.Length && y < main.lines.Count) {
+			x = 0;
+			y++;
+		}
+
+		return new(x, y);
+	}
+
+	public void MatchTail() {
+		tail = head;
 	}
 
 	public void Update() {
@@ -150,9 +232,9 @@ public class Caret {
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 
 
 		// blink
-		float rate = SEConfig.CursorBlinkRateMs / 1000;
+		float rate = Config.ScriptEditor.CursorBlinkRateMs / 1000;
 		rt.gameObject.SetActive(
-			(Time.time - initTime) % (2 * rate) < rate);
+			(Time.time - blinkTimer) % (2 * rate) < rate);
 	}
 
 	RectTransform MakeNewCaret() {
@@ -171,5 +253,9 @@ public class Caret {
 	public void Destroy() {
 		if (rt != null)
 			Object.Destroy(rt.gameObject);
+
+		foreach(var box in boxes) {
+			box.Destroy();
+		}
 	}
 }

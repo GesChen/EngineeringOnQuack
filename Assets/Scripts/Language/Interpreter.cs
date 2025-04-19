@@ -16,7 +16,7 @@ public class Interpreter {
 		List<Data> args,
 		int depth = 0) {
 
-		if (LanguageConfig.DEBUG) HF.WarnColor($"Running function {function.Name}", Color.yellow);
+		if (Config.Language.DEBUG) HF.WarnColor($"Running function {function.Name}", Color.yellow);
 
 		// handle different function types
 		switch (function.FunctionType) {
@@ -24,7 +24,7 @@ public class Interpreter {
 				return function.InternalFunction.Invoke(thisReference, args);
 
 			case Primitive.Function.FunctionTypeEnum.Constructor:
-				if (LanguageConfig.DEBUG) HF.WarnColor($"Constructing {function.TypeFor.Name}", Color.yellow);
+				if (Config.Language.DEBUG) HF.WarnColor($"Constructing {function.TypeFor.Name}", Color.yellow);
 
 				Data newObject = new(function.TypeFor) {
 					Memory = new(memory.Interpreter, "object memory")
@@ -47,7 +47,7 @@ public class Interpreter {
 				if (runConstructor is Error)
 					return runConstructor;
 
-				if (LanguageConfig.DEBUG) HF.WarnColor($"Constructed new {function.TypeFor.Name} object: {newObject}", Color.yellow);
+				if (Config.Language.DEBUG) HF.WarnColor($"Constructed new {function.TypeFor.Name} object: {newObject}", Color.yellow);
 
 				return newObject;
 		}
@@ -110,10 +110,10 @@ public class Interpreter {
 		=> (flags & check) != 0;
 
 	private Data RunSection(Memory memory, Section section, int depth) {
-		if (depth > LanguageConfig.RecursionDepthLimit) // check recursion depth
+		if (depth > Config.Language.RecursionDepthLimit) // check recursion depth
 			return Errors.RecursionLimitReached();
 
-		if (LanguageConfig.DEBUG) HF.WarnColor($"--Running {section}", Color.yellow);
+		if (Config.Language.DEBUG) HF.WarnColor($"--Running {section}", Color.yellow);
 
 		Line[] lines = section.Lines;
 		InternalState state = new();
@@ -122,7 +122,7 @@ public class Interpreter {
 		while (i < lines.Length) {
 			Line line = lines[i];
 
-			if (LanguageConfig.DEBUG) HF.WarnColor($"{depth}.{i} running {line} ", Color.cyan);
+			if (Config.Language.DEBUG) HF.WarnColor($"{depth}.{i} running {line} ", Color.cyan);
 
 			#region prechecks
 			// line type check
@@ -201,7 +201,7 @@ public class Interpreter {
 					state.LoopOver = lineCopy.Tokens[1] as Token.Reference;
 				}
 				else if (CheckFlag(nFlags, Flags.While)) {
-					if (state.WhileLoops > LanguageConfig.MaxWhileLoopIters)
+					if (state.WhileLoops > Config.Language.MaxWhileLoopIters)
 						return Errors.WhileLoopLimitReached();
 
 					state.ExpectingSection = true;
@@ -319,7 +319,7 @@ public class Interpreter {
 					state.MakeFunction = false;
 				}
 				else if (state.MakeClass) {
-					if (LanguageConfig.DEBUG) HF.WarnColor($"Constructing class {state.NewName}", Color.yellow);
+					if (Config.Language.DEBUG) HF.WarnColor($"Constructing class {state.NewName}", Color.yellow);
 
 					Memory originallyUsing = Data.currentUseMemory;
 					Memory classMemory = new (memory.Interpreter, "class init memory");
@@ -340,7 +340,7 @@ public class Interpreter {
 					}
 
 					Data makeNewType = memory.NewType(newType);
-					if (LanguageConfig.DEBUG) HF.WarnColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);
+					if (Config.Language.DEBUG) HF.WarnColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);
 
 					Data.currentUseMemory = originallyUsing;
 

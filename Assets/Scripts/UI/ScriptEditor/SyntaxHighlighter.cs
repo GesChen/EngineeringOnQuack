@@ -35,14 +35,14 @@ public class SyntaxHighlighter : MonoBehaviour {
 	void Awake() {
 		TypeToHex = new() {
 			{ Types.unassigned , "#000" },
-			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Keyword)	},
-			{ Types.func		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Function)	},
-			{ Types.variable	, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Variable)	},
-			{ Types.unknown		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Unknown)	},
-			{ Types.symbol		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Symbol)	},
-			{ Types.literal		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Literal)	},
-			{ Types.type		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Type)		},
-			{ Types.comment		, ColorUtility.ToHtmlStringRGB(LanguageConfig.Colors.Comment)	}
+			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Keyword)	},
+			{ Types.func		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Function)	},
+			{ Types.variable	, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Variable)	},
+			{ Types.unknown		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Unknown)	},
+			{ Types.symbol		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Symbol)	},
+			{ Types.literal		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Literal)	},
+			{ Types.type		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Type)		},
+			{ Types.comment		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Comment)	}
 		};
 	}
 
@@ -378,13 +378,13 @@ public class SyntaxHighlighter : MonoBehaviour {
 
 		bool isFunction =
 			(exists && lcontext.Variables[findName].Type == ScriptEditor.LCVariable.Types.MembFunc) ||
-			LanguageConfig.Internal.AllMethods.Contains(name);
+			Config.Language.Internal.AllMethods.Contains(name);
 
 		bool isType = (exists && lcontext.Variables[findName].Type == ScriptEditor.LCVariable.Types.Type);
 
-		bool isLiteral = LanguageConfig.Internal.AllLiterals.Contains(name);
+		bool isLiteral = Config.Language.Internal.AllLiterals.Contains(name);
 
-		bool isKeyword = LanguageConfig.Internal.AllKeywords.Contains(name);
+		bool isKeyword = Config.Language.Internal.AllKeywords.Contains(name);
 
 		// ordered by prececdence (lower is higher) also there has to be a better way of doing this man
 		Types toHighlight = Types.unknown;

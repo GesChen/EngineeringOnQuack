@@ -246,7 +246,7 @@ public class Tokenizer {
 			int indentation = 0;
 			while (n < line.Length && char.IsWhiteSpace(line[n])) {
 				if (line[n] == ' ') indentation += 1;
-				else if (line[n] == '\t') indentation += LanguageConfig.SpacesPerTab;
+				else if (line[n] == '\t') indentation += Config.Language.SpacesPerTab;
 				n++;
 			}
 			return indentation;

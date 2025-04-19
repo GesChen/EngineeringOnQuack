@@ -142,7 +142,7 @@ public abstract partial class Primitive : Data {
 				if (i != L.Count - 1) builder.Append(", ");
 
 				// don't let list get too long
-				if (builder.Length > LanguageConfig.MaxContainerSerializeLength)
+				if (builder.Length > Config.Language.MaxContainerSerializeLength)
 					return new String("List object"); // lists too long will just get defaulted
 			}
 			builder.Append("]");

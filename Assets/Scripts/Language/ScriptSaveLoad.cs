@@ -95,7 +95,7 @@ public class ScriptSaveLoad : MonoBehaviour
 			Name = original.Name,
 			Contents = structSection,
 			OriginalText = original.OriginalText,
-			Version = LanguageConfig.VERSION
+			Version = Config.Language.VERSION
 		};
 
 		return structScript;
@@ -285,7 +285,7 @@ public class ScriptSaveLoad : MonoBehaviour
 				List<string> subSection = ReconstructSection(sl.Section);
 
 				// indent section
-				subSection = subSection.Select(s => new string(' ', LanguageConfig.SpacesPerTab) + s).ToList();
+				subSection = subSection.Select(s => new string(' ', Config.Language.SpacesPerTab) + s).ToList();
 
 				// add to end
 				strings.AddRange(subSection);

@@ -84,7 +84,7 @@ public class Memory {
 	/// Returns data value if found, otherwise error
 	/// </summary>
 	public Data Get(string name) {
-		if (LanguageConfig.DEBUG) HF.WarnColor($"{Nick}: getting {name}\n{MemoryDump()}", Color.yellow);
+		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: getting {name}\n{MemoryDump()}", Color.yellow);
 
 		if (StaticData.ContainsKey(name)) {
 			Data staticCopy = StaticData[name].Copy();
@@ -99,7 +99,7 @@ public class Memory {
 	}
 
 	public Data Set(string name, Data data) {
-		if (LanguageConfig.DEBUG) HF.WarnColor($"{Nick}: name setting {name} {data}\n{MemoryDump()}", Color.yellow);
+		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: name setting {name} {data}\n{MemoryDump()}", Color.yellow);
 
 		if (StaticData.ContainsKey(name))
 			return Errors.CannotSetBuiltin("value", name);
@@ -114,7 +114,7 @@ public class Memory {
 	}
 
 	public Data Set(Reference reference, Data data) {
-		if (LanguageConfig.DEBUG) HF.WarnColor($"{Nick}: ref setting {reference.Name} {data}\n{MemoryDump()}", Color.yellow);
+		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: ref setting {reference.Name} {data}\n{MemoryDump()}", Color.yellow);
 
 		if (reference.Name == "")
 			return Errors.CannotSetLiteral();

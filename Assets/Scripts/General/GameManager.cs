@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
 
 	void Update()
 	{
-		Application.targetFrameRate = Config.FpsLimit;
+		Application.targetFrameRate = Config.FPS_LIMIT;
 	}
 
 	public void StartSimulating()

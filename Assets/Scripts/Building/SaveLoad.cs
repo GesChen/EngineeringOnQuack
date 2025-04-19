@@ -14,7 +14,7 @@ public class SaveLoad : MonoBehaviour
 	{
 		string serializedObject = Serializer(name, BuildingManager, precompute);
 
-		string assembliesDir = Path.Combine(Config.FileSaveLocation, "Assemblies");
+		string assembliesDir = Path.Combine(Config.tempfilesaveloc, "Assemblies");
 		if (!Directory.Exists(assembliesDir))
 			Directory.CreateDirectory(assembliesDir);
 
@@ -23,7 +23,7 @@ public class SaveLoad : MonoBehaviour
 
 	public void LoadFromFile(string filename)
 	{
-		string filePath = Path.Combine(Config.FileSaveLocation, "Assemblies", $"{filename}.assembly");
+		string filePath = Path.Combine(Config.tempfilesaveloc, "Assemblies", $"{filename}.assembly");
 
 		if (!File.Exists(filePath))
 			throw new($"couldn't load {filename} as it doesn't exist");
