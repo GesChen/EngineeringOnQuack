@@ -13,7 +13,7 @@ public class Caret {
 
 	public float tempwidth = 2;
 
-	float blinkTimer;
+	static float blinkTimer; // for lots of fun, make this not static ;)
 	RectTransform rt; // turn this kinda thing into a struct maybe 
 	(Vector2Int head, Vector2Int tail) lastState;
 
@@ -64,19 +64,26 @@ public class Caret {
 		Update();
 	}
 
-	/// <summary>
-	/// Updates the head pos.
-	/// MUST MANUALLY RESET BLINK (BEFORE) AND UPDATE (AFTER)!!
-	/// </summary>
-	/// <param name="pos"></param>
-	public void SetHead(Vector2Int pos) {
+	public void UpdateHead(Vector2Int pos) {
+		ResetBlink();
+		SetHead(pos);
+		Update();
+	}
+
+	public void UpdateTail(Vector2Int pos) {
+		ResetBlink();
+		SetTail(pos);
+		Update();
+	}
+
+	void SetHead(Vector2Int pos) {
 		if (PositionCheck(pos)) 
 			throw new($"bad cursor position at {pos} have {main.lines[pos.y].IndexTs.Count}, {main.lines.Count}");
 
 		head = pos;
 	}
 
-	public void SetTail(Vector2Int pos) {
+	void SetTail(Vector2Int pos) {
 		if (PositionCheck(pos))
 			throw new($"bad cursor position at {pos} have {main.lines[pos.y].IndexTs.Count}, {main.lines.Count}");
 		

@@ -5,9 +5,6 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
-using JetBrains.Annotations;
-using PlasticPipe.PlasticProtocol.Messages;
-using log4net;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -21,6 +18,7 @@ public class ScriptEditor : MonoBehaviour {
 	public SyntaxHighlighter syntaxHighlighter;
 	public List<Caret> carets = new();
 	public int headCaretI = 0;
+	public int tailCaretI = 0;
 
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
@@ -212,7 +210,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		//print(processed);
 		//print(syntaxHighlighter.TypeArrayToString(colors));
-		
+
 		processed = syntaxHighlighter.TagLine(processed, colors);
 
 		// make actual line content
@@ -266,8 +264,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	SyntaxHighlighter.Types[] RevertSpacesToTabs(
-		SyntaxHighlighter.Types[] colors, 
-		string convertedString, 
+		SyntaxHighlighter.Types[] colors,
+		string convertedString,
 		string originalString) {
 
 		var reconstructed = new SyntaxHighlighter.Types[originalString.Length];
@@ -309,7 +307,7 @@ public class ScriptEditor : MonoBehaviour {
 		newText.alignment = alignment;
 
 		// set up rt properly
-		if (!newObj.TryGetComponent<RectTransform>(out var newRect)) 
+		if (!newObj.TryGetComponent<RectTransform>(out var newRect))
 			newRect = newObj.AddComponent<RectTransform>();
 		newRect.anchorMin = new(0, 1);
 		newRect.anchorMax = new(0, 1);
@@ -327,33 +325,51 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	#region Caret Utilities
-	void SetCaretCount(int n) {
-		if (carets.Count != n) {
-			foreach (var caret in carets)
-				caret.Destroy();
-			carets.Clear();
+	void ResetCarets() {
+		if (carets.Count == 0) return; // prolly doesnt help lmao
 
-			for (int i = 0; i < n; i++) {
-				Caret singleCaret = new(this);
-				singleCaret.Initialize();
-				carets.Add(singleCaret);
-			}
-		}
-	}
-	void SetSingleCaret(Vector2Int head, Vector2Int tail) {
-		SetCaretCount(1);
-
-		carets[0].UpdatePos(head, tail);
+		foreach (var caret in carets)
+			caret.Destroy();
+		carets.Clear();
 	}
 
-	void SetMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions, int headCaretIndex) {
-		SetCaretCount(positions.Count);
+	Caret SetSingleCaret(Vector2Int head, Vector2Int tail) {
+		ResetCarets();
 
+		var newCaret = AddNewCaret(head, tail);
+
+		return newCaret;
+	}
+
+	List<Caret> SetMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
+		ResetCarets();
+
+		List<Caret> newCarets = new();
 		for (int i = 0; i < positions.Count; i++) {
-			carets[i].UpdatePos(positions[i].head, positions[i].tail);
+			var newCaret = AddNewCaret(positions[i].head, positions[i].tail);
+			newCarets.Add(newCaret);
 		}
 
-		headCaretI = headCaretIndex;
+		return newCarets;
+	}
+
+	Caret AddNewCaret(Vector2Int head, Vector2Int tail) {
+		Caret newCaret = new(this);
+		newCaret.Initialize();
+		newCaret.UpdatePos(head, tail);
+		carets.Add(newCaret);
+		return newCaret;
+	}
+
+	void RemoveCaret(int i) {
+		carets[i].Destroy();
+		carets.RemoveAt(i);
+	}
+
+	void AddMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
+		for (int i = 0; i < positions.Count; i++) {
+			AddNewCaret(positions[i].head, positions[i].tail);
+		}
 	}
 
 	void UpdateCarets() {
@@ -399,8 +415,8 @@ public class ScriptEditor : MonoBehaviour {
 
 		// custom case for symbols
 		// returns just that symbol
-		if (pos.x < colors.Length && colors[pos.x] == SyntaxHighlighter.Types.symbol)
-			return (pos.x, pos.x);
+		//if (pos.x < colors.Length && colors[pos.x] == SyntaxHighlighter.Types.symbol)
+		//	return (pos.x, pos.x + 1);
 
 		static int chartype(char c) {
 			if (char.IsLetterOrDigit(c)) return 0;
@@ -409,8 +425,8 @@ public class ScriptEditor : MonoBehaviour {
 			return -1;
 		}
 
-		var leftColorType = 
-			pos.x > 0 
+		var leftColorType =
+			pos.x > 0
 			? colors[pos.x - 1]
 			: SyntaxHighlighter.Types.unassigned;
 
@@ -438,8 +454,8 @@ public class ScriptEditor : MonoBehaviour {
 			_ => SyntaxHighlighter.Types.unassigned
 		};
 
-		int leftCharType = 
-			pos.x > 0 
+		int leftCharType =
+			pos.x > 0
 			? chartype(line[pos.x - 1])
 			: -1;
 
@@ -458,14 +474,14 @@ public class ScriptEditor : MonoBehaviour {
 
 		// search
 		int left = pos.x - 1;
-		while (left > 0 && 
+		while (left > 0 &&
 			colors[left] == findColorType &&
-			chartype(line[left]) == findCharType) 
+			chartype(line[left]) == findCharType)
 			left--;
 		if (left != 0) left++;
 
 		int right = pos.x;
-		while (right < colors.Length && 
+		while (right < colors.Length &&
 			colors[right] == findColorType &&
 			chartype(line[right]) == findCharType)
 			right++;
@@ -475,6 +491,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	bool dragging = false;
+	bool dragStartedWithAlt = false;
 	Vector2Int dragStart;
 	Vector2Int dragStartUnclamped;
 	void HandleDrag(bool clickedThisFrame, Vector2Int pos, Vector2Int posUnclamped) {
@@ -484,6 +501,19 @@ public class ScriptEditor : MonoBehaviour {
 			if (!Controls.Keyboard.Modifiers.Shift) {
 				dragStart = pos;
 				dragStartUnclamped = posUnclamped;
+
+				dragStartedWithAlt = Controls.Keyboard.Modifiers.Alt;
+			}
+
+			if (Controls.Keyboard.Modifiers.Ctrl && Controls.Keyboard.Modifiers.Alt) {
+				// add more carets
+				AddNewCaret(pos, pos);
+				headCaretI = carets.Count - 1;
+				tailCaretI = headCaretI;
+			} else { // single select
+				SetSingleCaret(pos, pos);
+				headCaretI = 0;
+				tailCaretI = 0;
 			}
 		} else
 		if (Controls.IM.Mouse.Left.WasReleasedThisFrame()) {
@@ -491,37 +521,50 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		if (dragging) {
-			// will have to add alt and shift and stuff soon
-			// for now this is just normal
+			if (Controls.Keyboard.Modifiers.Ctrl &&
+				Controls.Keyboard.Modifiers.Shift &&
+				Controls.Keyboard.Modifiers.Alt)
+				return; // do nothing with all 3 
 
-			bool doubleClickCondition = Controls.Keyboard.Modifiers.Ctrl;
+			bool doubleClickCondition = 
+				Controls.Keyboard.Modifiers.Ctrl && 
+				!Controls.Keyboard.Modifiers.Alt; // dont want during adding
 
-			if (clicksInARow == 1 && !doubleClickCondition) {
-				if (!Controls.Keyboard.Modifiers.Alt) {
-					// normal dragging
-					SetSingleCaret(pos, dragStart);
-					carets[0].DesiredCol = ColumnOfPosition(pos);
-				} else {
-					int startLine = dragStartUnclamped.y;
-					int startCol = ColumnOfPosition(dragStartUnclamped);
-					
-					int endLine = posUnclamped.y;
-					int endCol = ColumnOfPosition(posUnclamped);
+			if (Controls.Keyboard.Modifiers.Alt && 
+				!Controls.Keyboard.Modifiers.Ctrl) { // otherwise overrides ctrl alt adding news, TODO fix this later idk
+													 // alt dragging
+				Vector2Int boxStart =
+					dragStartedWithAlt
+					? dragStartUnclamped
+					: dragStart;
 
-					if (endLine < startLine)
-						(endLine, startLine) = (startLine, endLine);
+				int startLine = boxStart.y;
+				int startCol = ColumnOfPosition(boxStart);
 
-					List<(Vector2Int head, Vector2Int tail)> carets = new();
-					for (int i = startLine; i <= endLine; i++) {
-						Vector2Int head = new(PositionOfColumn(endCol, i), i);
-						Vector2Int tail = new(PositionOfColumn(startCol, i), i);
+				int endLine = posUnclamped.y;
+				int endCol = ColumnOfPosition(posUnclamped);
 
-						carets.Add((head, tail));
-					}
+				if (endLine < startLine)
+					(endLine, startLine) = (startLine, endLine);
 
-					SetMultipleCarets(carets, carets.Count - 1);
+				List<(Vector2Int head, Vector2Int tail)> carets = new();
+				for (int i = startLine; i <= endLine; i++) {
+					Vector2Int head = new(PositionOfColumn(endCol, i), i);
+					Vector2Int tail = new(PositionOfColumn(startCol, i), i);
+
+					carets.Add((head, tail));
 				}
-			} else 
+
+				SetMultipleCarets(carets);
+
+				tailCaretI = 0;
+				headCaretI = carets.Count - 1;
+			}
+			else if (clicksInARow == 1 && !doubleClickCondition) {
+				// normal dragging
+				SetCurrentCaret(pos, dragStart);
+				carets[0].DesiredCol = ColumnOfPosition(pos);
+			} else
 			if (clicksInARow == 2 || doubleClickCondition) {
 				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
 				(int deS, int deE) = DoubleClickWordAt(pos);
@@ -544,7 +587,7 @@ public class ScriptEditor : MonoBehaviour {
 					end = new(dsE, dragStart.y);
 				}
 
-				SetSingleCaret(start, end);
+				SetCurrentCaret(start, end);
 			} else {
 				Vector2Int start;
 				Vector2Int end;
@@ -561,15 +604,15 @@ public class ScriptEditor : MonoBehaviour {
 					end = new(lines[dragStart.y].Content.Length, dragStart.y);
 				}
 
-				SetSingleCaret(start, end);
+				SetCurrentCaret(start, end);
 			}
 		}
 	}
 
-	Vector2Int ClampPosition(Vector2Int pos) {
-		return new(Mathf.Clamp(pos.x, 0, lines[pos.y].Content.Length), pos.y);
+	void SetCurrentCaret(Vector2Int head, Vector2Int tail) {
+		carets[headCaretI].UpdatePos(head, tail);
 	}
-	
+
 	// returns in char space
 	Vector2Int? CurrentMouseHoverUnclamped() {
 		(int line, int hoverIndex) = FindLineHoveringOver();
@@ -639,19 +682,118 @@ public class ScriptEditor : MonoBehaviour {
 
 		if (movement.sqrMagnitude == 0) return;
 
-		foreach(Caret c in carets) {
+		bool boxCond1 =
+				Controls.Keyboard.Modifiers.Shift &&
+				Controls.Keyboard.Modifiers.Alt;
+		bool boxCond2 =
+			headCaretI != tailCaretI;
+
+		if (boxCond1 || boxCond2) { 
+			HandleKeyboardBox(movement);
+			return;
+		}
+		foreach (Caret c in carets) {
+			if (Controls.Keyboard.Modifiers.Ctrl && 
+				Controls.Keyboard.Modifiers.Shift &&
+				Controls.Keyboard.Modifiers.Alt)
+				continue; // do nothing with all 3
+
 			c.MoveHead(movement);
 
 			if (Controls.Keyboard.Modifiers.Ctrl) {
 				(int start, int end) = DoubleClickWordAt(c.head);
 
-				c.ResetBlink();
-				c.SetHead(new(movement.x > 0 ? end : start, c.head.y));
-				c.Update();
+				c.UpdateHead(new(
+					movement.x > 0 
+					? end 
+					: start, c.head.y));
+			} else // ctrl overrides alt 
+			if (Controls.Keyboard.Modifiers.Alt) {
+				int pos =
+					movement.x > 0
+					? lines[c.head.y].Content.Length // end if right
+					: 0; // start if left
+
+				c.UpdateHead(new(pos, c.head.y));
 			}
 
 			if (!Controls.Keyboard.Modifiers.Shift) {
 				c.MatchTail();
+			}
+		}
+	}
+
+	void HandleKeyboardBox(Vector2Int movement) {
+		Caret headCaret = carets[headCaretI];
+		Caret tailCaret = carets[tailCaretI];
+
+		int targetHeadCol = ColumnOfPosition(headCaret.head);
+		int targetTailCol = ColumnOfPosition(tailCaret.tail);
+
+		if (movement.x != 0) {
+			targetHeadCol = ColumnOfPosition(headCaret.head + movement);
+
+			foreach (Caret c in carets)
+				c.UpdateHead(new(
+					PositionOfColumn(targetHeadCol, c.head.y),
+					c.head.y));
+		}
+		
+		if (movement.y != 0) {
+			if (headCaret.head.y == lines.Count - 1) return;
+
+			int currentBoxVerticalDirection = // hope this is readable enough
+				headCaret.head.y == tailCaret.head.y
+				? 0
+				: (
+					headCaret.head.y < tailCaret.head.y
+					? -1
+					: 1
+				);
+
+			// simplify later, TODO DRY THIS!!!!!
+			if (movement.y > 0) { // going up
+				switch (currentBoxVerticalDirection) {
+					case 0: // add go up from head
+					case 1:
+						int newY = headCaret.head.y + movement.y;
+						Vector2Int head = new(
+							PositionOfColumn(targetHeadCol, newY),
+							newY);
+
+						Vector2Int tail = new(
+							PositionOfColumn(targetTailCol, newY),
+							newY);
+
+						AddNewCaret(head, tail);
+						headCaretI++;
+						break;
+					case -1: // remove head to go up
+						RemoveCaret(headCaretI);
+						headCaretI--;
+						break;
+				}
+			} else { // going down
+				switch (currentBoxVerticalDirection) {
+					case 0:
+					case -1:
+						int newY = headCaret.head.y + movement.y;
+						Vector2Int head = new(
+							PositionOfColumn(targetHeadCol, newY),
+							newY);
+
+						Vector2Int tail = new(
+							PositionOfColumn(targetTailCol, newY),
+							newY);
+
+						AddNewCaret(head, tail);
+						headCaretI++;
+						break;
+					case 1:
+						RemoveCaret(headCaretI);
+						headCaretI--;
+						break;
+				}
 			}
 		}
 	}
@@ -663,6 +805,10 @@ public class ScriptEditor : MonoBehaviour {
 		return (
 			lines[vec.y].Components[0] as RectTransform,
 			lines[vec.y].IndexTs[vec.x]);
+	}
+
+	Vector2Int ClampPosition(Vector2Int pos) {
+		return new(Mathf.Clamp(pos.x, 0, lines[pos.y].Content.Length), pos.y);
 	}
 
 	public int ColumnOfPosition(Vector2Int pos) {
