@@ -10,11 +10,16 @@ public class Caret {
 	public Vector2Int tail;
 	public int DesiredCol; 
 	public List<SelectionBox> boxes;
+	public bool isHeadCaret;
+
+	static Color headCaretColor;
+	static Color nonHeadCaretColor;
 
 	public float tempwidth = 2;
 
 	static float blinkTimer; // for lots of fun, make this not static ;)
-	RectTransform rt; // turn this kinda thing into a struct maybe 
+	RectTransform rt;
+	Image image;
 	(Vector2Int head, Vector2Int tail) lastState;
 
 	public Caret(ScriptEditor se, Vector2Int pos) {
@@ -242,11 +247,16 @@ public class Caret {
 		float rate = Config.ScriptEditor.CursorBlinkRateMs / 1000;
 		rt.gameObject.SetActive(
 			(Time.time - blinkTimer) % (2 * rate) < rate);
+
+		// color
+		//image.color = isHeadCaret ? headCaretColor : nonHeadCaretColor;
+		image.color = isHeadCaret ? Color.white : main.test;
 	}
 
 	RectTransform MakeNewCaret() {
 		GameObject newObj = new("Caret", typeof(RectTransform), typeof(Image));
 		RectTransform rt = newObj.GetComponent<RectTransform>();
+		image = newObj.GetComponent<Image>();
 
 		rt.anchorMin = new(0, .5f);
 		rt.anchorMax = new(0, .5f);

@@ -17,14 +17,15 @@ public class ScriptEditor : MonoBehaviour {
 
 	public SyntaxHighlighter syntaxHighlighter;
 	public List<Caret> carets = new();
-	public int headCaretI = 0;
-	public int tailCaretI = 0;
+	int headCaretI = 0;
+	int tailCaretI = 0;
 
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
 	public TMP_FontAsset font;
 	public float fontSize;
 	public Color selectionColor;
+	public Color test;
 
 	public class Line {
 		public int LineNumber;
@@ -373,8 +374,83 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void UpdateCarets() {
+		CheckForOverlaps();
+		PushTails();
+
 		foreach (var caret in carets)
 			caret.Update();
+
+		for (int i = 0; i < carets.Count; i++)
+			carets[i].isHeadCaret = i == headCaretI;
+	}
+
+	void CheckForOverlaps() {
+		var seen = new Dictionary<(Vector2Int, Vector2Int), int>();
+		var duplicateIndices = new List<int>();
+
+		for (int i = 0; i < carets.Count; i++) {
+			var key = (carets[i].head, carets[i].tail);
+
+			if (seen.ContainsKey(key)) {
+				duplicateIndices.Add(i);
+			} else {
+				seen[key] = i; // store index of first occurrence
+			}
+		}
+
+		duplicateIndices.Reverse();
+
+		foreach (int i in duplicateIndices) {
+			carets[i].Destroy();
+			carets.RemoveAt(i);
+
+			if (headCaretI >= i) headCaretI--;
+			if (tailCaretI >= i) tailCaretI--;
+		}
+	}
+
+	void PushTails() {
+		for (int i = 0; i < carets.Count; i++) {
+			Caret caret = carets[i];
+			for (int j = 0; j < carets.Count; j++) {
+				if (i == j) continue;
+
+				Caret check = carets[j];
+				if (PosInCaretSelection(caret.head, check)) {
+					check.tail = caret.head; // push
+				}
+			}
+		}
+	}
+
+	bool PosInCaretSelection(Vector2Int pos, Caret caret) {
+		if (caret.head == caret.tail) return false;
+		
+		bool tailBehind = caret.tail.y < caret.head.y ||
+			(caret.tail.y == caret.head.y && caret.tail.x < caret.head.x);
+
+		if (tailBehind
+			? (pos.y > caret.tail.y && pos.y < caret.head.y)
+			: (pos.y > caret.head.y && pos.y < caret.tail.y))
+			return true;
+
+		if (pos.y == caret.head.y && pos.y == caret.tail.y) {
+			if (tailBehind
+				? (pos.x >= caret.tail.x && pos.x <= caret.head.x)
+				: (pos.x <= caret.tail.x && pos.x >= caret.head.x))
+				return true;
+			return false;
+		}
+
+		if (pos.y == caret.tail.y &&
+			(tailBehind ? pos.x >= caret.tail.x : pos.x <= caret.tail.x))
+			return true;
+
+		if (pos.y == caret.head.y &&
+			(tailBehind ? pos.x <= caret.head.x : pos.x >= caret.head.x))
+			return true;
+
+		return false;
 	}
 
 	#endregion
@@ -544,7 +620,8 @@ public class ScriptEditor : MonoBehaviour {
 				int endLine = posUnclamped.y;
 				int endCol = ColumnOfPosition(posUnclamped);
 
-				if (endLine < startLine)
+				bool down = endLine < startLine;
+				if (down)
 					(endLine, startLine) = (startLine, endLine);
 
 				List<(Vector2Int head, Vector2Int tail)> carets = new();
@@ -557,8 +634,13 @@ public class ScriptEditor : MonoBehaviour {
 
 				SetMultipleCarets(carets);
 
-				tailCaretI = 0;
-				headCaretI = carets.Count - 1;
+				tailCaretI = carets.Count - 1;
+				headCaretI = 0;
+
+				if (!down)
+					(tailCaretI, headCaretI) = (headCaretI, tailCaretI);
+
+				boxEditing = true;
 			}
 			else if (clicksInARow == 1 && !doubleClickCondition) {
 				// normal dragging
