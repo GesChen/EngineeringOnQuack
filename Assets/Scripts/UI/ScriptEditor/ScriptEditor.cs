@@ -673,6 +673,9 @@ public class ScriptEditor : MonoBehaviour {
 	#region Keyboard Input
 
 	void HandleKeyboardInput() {
+		if (Controls.IsPressed(Key.Escape))
+			Escape();
+
 		// normal arrow keys only for now, move to seperate if needed
 		Vector2Int movement = Vector2Int.zero;
 		if (Controls.IsUsed(Key.UpArrow)) movement.y--;
@@ -721,6 +724,13 @@ public class ScriptEditor : MonoBehaviour {
 				c.MatchTail();
 			}
 		}
+	}
+
+	void Escape() {
+		Vector2Int headOfHead = carets[headCaretI].head;
+		SetSingleCaret(headOfHead, headOfHead);
+		headCaretI = 0;
+		tailCaretI = 0;
 	}
 
 	void HandleKeyboardBox(Vector2Int movement) {

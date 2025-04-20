@@ -698,10 +698,10 @@ RectTransform:
   - {fileID: 399913263}
   m_Father: {fileID: 1399160302}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000030518, y: -20}
-  m_SizeDelta: {x: 800, y: 600}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -200, y: -100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1116476322
 MonoBehaviour:
@@ -721,6 +721,8 @@ MonoBehaviour:
   lineNumbersVerticalLayout: {fileID: 1172439017}
   lineNumbersRect: {fileID: 0}
   syntaxHighlighter: {fileID: 1116476324}
+  headCaretI: 0
+  tailCaretI: 0
   numberToContentSpace: 20
   font: {fileID: 11400000, guid: f9ae5c2f5f64fad439ba828fc50a5a5a, type: 2}
   fontSize: 20
@@ -1061,6 +1063,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e2a734500381704dbd6dd89f5fb035d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  detectionCanvas: {fileID: 0}
   hoversDebug: []
 --- !u!1 &1448797772
 GameObject:
