@@ -563,7 +563,7 @@ public class ScriptEditor : MonoBehaviour {
 			else if (clicksInARow == 1 && !doubleClickCondition) {
 				// normal dragging
 				SetCurrentCaret(pos, dragStart);
-				carets[0].DesiredCol = ColumnOfPosition(pos);
+				carets[headCaretI].DesiredCol = ColumnOfPosition(pos);
 			} else
 			if (clicksInARow == 2 || doubleClickCondition) {
 				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
@@ -672,6 +672,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	#region Keyboard Input
 
+	bool boxEditing = false;
 	void HandleKeyboardInput() {
 		if (Controls.IsPressed(Key.Escape))
 			Escape();
@@ -685,13 +686,14 @@ public class ScriptEditor : MonoBehaviour {
 
 		if (movement.sqrMagnitude == 0) return;
 
-		bool boxCond1 =
-				Controls.Keyboard.Modifiers.Shift &&
-				Controls.Keyboard.Modifiers.Alt;
-		bool boxCond2 =
-			headCaretI != tailCaretI;
+		if (Controls.Keyboard.Modifiers.Shift &&
+			Controls.Keyboard.Modifiers.Alt)
+			boxEditing = true;
+		if (!Controls.Keyboard.Modifiers.Shift ||
+			Controls.Keyboard.Modifiers.Ctrl)
+			boxEditing = false;
 
-		if (boxCond1 || boxCond2) { 
+		if (boxEditing) { 
 			HandleKeyboardBox(movement);
 			return;
 		}
