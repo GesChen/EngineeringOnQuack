@@ -183,6 +183,7 @@ public static class HF {
 			.Replace("\0", @"\0");
 	}
 
+	// inheritly a very slow op, prepare for >.1 ms times
 	public static Vector2 TextWidthExact(string text, TextMeshProUGUI source) {
 		string originalText = source.text; // copy
 
@@ -233,11 +234,14 @@ public static class HF {
 		}
 		sw.Stop();
 
-		double ns = sw.ElapsedTicks * 100;
-		WarnColor($"{ns} ns ({ns / 1e6} ms)", MoreColors.Crimson);
+		double ms = sw.Elapsed.TotalMilliseconds;
+		double ns = ms * 1e6;
+		long fps = (long)(1e9 / ns);
+
+		WarnColor($"{toTest.Method.Name}: {ns} ns ({ms:F10} ms) ({fps} fps)", MoreColors.Crimson);
 
 		if (iters > 1)
-			WarnColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", MoreColors.Crimson);
+			WarnColor($"average {ns / iters} ns ({(ms / iters):F10} ms) ({(long)(1e9 / (ns / iters))}) each", MoreColors.Crimson);
 	}
 
 	public static Vector2? UVOfHover(RaycastResult result) {

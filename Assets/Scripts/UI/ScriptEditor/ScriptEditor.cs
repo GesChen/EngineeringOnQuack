@@ -5,6 +5,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -30,18 +31,21 @@ public class ScriptEditor : MonoBehaviour {
 	public class Line {
 		public int LineNumber;
 		public string Content;
+		public string ProcessedContent;
 		public List<float> IndexTs;
-		public List<Component> Components;
+		public (
+			RectTransform LineContent, 
+			TextMeshProUGUI LineText, 
+			RectTransform LineNumber) Components;
 		public SyntaxHighlighter.Types[] ColorsSpaces;
 		public SyntaxHighlighter.Types[] ColorsOriginal;
+		public Context ContextAfterLine; // context at the end of the line after everything is paresed
 	}
-
-	[HideInNormalInspector] public float lineNumberWidth;
-	[HideInNormalInspector] public float allLinesHeight;
 
 	#region LocalContext
 	[HideInInspector]
-	public struct LCVariable { // it would be inside localcontext if it wasnt so fucking deep
+	// changed to class so maybe each line's localcontext copy will reference the same variable objects
+	public class LCVariable { // it would be inside localcontext if it wasnt so fucking deep
 		public string Name;
 
 		public enum Types {
@@ -52,29 +56,52 @@ public class ScriptEditor : MonoBehaviour {
 		public Types Type;
 		public int IndentLevel;
 
-		public override readonly string ToString() {
+		public override string ToString() {
 			return $"% {Name} ({Type}) at {IndentLevel}";
 		}
 	}
-	public class LocalContext {
+	public class Context {
 		public List<LCVariable> Variables;
 		public bool InComment;
 
-		public LocalContext() {
+		public Context() {
 			Variables = new();
 			InComment = false;
 		}
+		public Context(Context original) {
+			Variables = original.Variables.ToList(); // copy individual items if needed
+			InComment = original.InComment;
+		}
 	}
+	public struct ContextSignature { // for faster comparison
+		public string VarNames;
+		public bool InComment;
+	}
+	public ContextSignature ContextToSignature(Context context) => new() {
+		VarNames = string.Join(' ', context.Variables.Select(v => v.Name)),
+		InComment = context.InComment
+	};
 
-	LocalContext LC;
+	Context LC;
 	#endregion
 
 	void Start() {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
 	}
+	
+	void Update() {
+		HandleMouseNavigation();
+		HandleKeyboardNavgation();
+		UpdateCarets();
+		HandleTyping();
+	}
 
 	#region Loading/Generation
+	float longestLineWidth;
+	int longestLine;
 	float charUVAmount;
+	float lineNumberWidth;
+	[HideInNormalInspector] public float allLinesHeight;
 
 	public void Load(string[] strLines) {
 		Clear();
@@ -87,7 +114,7 @@ public class ScriptEditor : MonoBehaviour {
 			});
 		}
 
-		Regenerate();
+		GenerateAllLines();
 	}
 
 	void Clear() {
@@ -97,14 +124,14 @@ public class ScriptEditor : MonoBehaviour {
 		if (lines == null) return;
 
 		foreach (Line line in lines) {
-			if (line.Components != null) {
-				Destroy(line.Components[0].gameObject); // line contents
-				Destroy(line.Components[2].gameObject); // line number
+			if (line.Components.LineContent != null) {
+				Destroy(line.Components.LineContent.gameObject); // line contents
+				Destroy(line.Components.LineNumber.gameObject); // line number
 			}
 		}
 	}
 
-	void Regenerate() {
+	void GenerateAllLines() {
 
 		// recalculate max line number width
 		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
@@ -127,38 +154,50 @@ public class ScriptEditor : MonoBehaviour {
 		// generate lines
 		for (int i = 0; i < lines.Count; i++) {
 			Line line = lines[i];
-
-			GenerateLine(line);
+			
+			GenerateNewLine(line);
 		}
 
 		// scale all containers to max width
-		float longestLineWidth = -1;
-		int longestLine = -1;
+		RecalculateLongest();
+		RecalculateCharUVA();
+		ScaleAllContainersToMax();
+
+		// calculate ts (charuv must have a value)
+		CalculateAllTs();
+	}
+
+	void RecalculateLongest() {
+		longestLineWidth = -1;
+		longestLine = -1;
 		for (int i = 0; i < lines.Count; i++) {
-			float width = (lines[i].Components[0] as RectTransform).rect.width;
+			Line line = lines[i];
+			float width = LineWidth(line);
+
 			if (width > longestLineWidth) {
 				longestLineWidth = width;
 				longestLine = i;
 			}
 		}
+	}
 
-		float maxWidth = Mathf.Max(
-			longestLineWidth, // widest of all components
-			lineContentContainer.rect.width); // must at minimum be as wide as the container
+	float LineWidth(Line line) {
+		line.Components.LineText.ForceMeshUpdate();
+		return LayoutUtility.GetPreferredWidth(line.Components.LineContent);
+	}
 
-		lines.ForEach(l => (l.Components[0] as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, maxWidth));
+	void RecalculateCharUVA() {
+		charUVAmount = 1f / lines[longestLine].ProcessedContent.Length;
+	}
 
-		string longestConvertedTabs = ConvertTabsToSpaces(lines[longestLine]);
+	void ScaleAllContainersToMax() {
+		lines.ForEach(l => l.Components.LineContent
+			.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, longestLineWidth));
+	}
 
-		charUVAmount = 1f / longestConvertedTabs.Length;
-
-		// calculate ts (charuv must have a value)
+	void CalculateAllTs() {
 		for (int i = 0; i < lines.Count; i++) {
-			Line line = lines[i];
-			List<float> ts = CalculateTs(i);
-			line.IndexTs = ts;
-
-			lines[i] = line;
+			lines[i].IndexTs = CalculateTs(i);
 		}
 	}
 
@@ -188,9 +227,9 @@ public class ScriptEditor : MonoBehaviour {
 		return TtoIndex;
 	}
 
-	void GenerateLine(Line line) {
+	void GenerateNewLine(Line line) { // ~1ms
 		// make line number object
-		(GameObject NObj, TextMeshProUGUI NText, RectTransform NRect)
+		(GameObject _, TextMeshProUGUI _, RectTransform NRect)
 			= NewText(
 				"Line Number",
 				line.LineNumber.ToString(),
@@ -200,22 +239,23 @@ public class ScriptEditor : MonoBehaviour {
 
 		// convert tabs to aligned spaces (for tmpro, original is unchanged)
 		string processed = ConvertTabsToSpaces(line);
+		line.ProcessedContent = processed;
 
 		// colorize
-		var colors = syntaxHighlighter.LineColorTypesArray(processed, LC);
+		var colors = syntaxHighlighter.ParseLineToColorList(processed, LC);
 		line.ColorsSpaces = colors;
+
+		// keep copy after execution for later use
+		line.ContextAfterLine = new(LC);
 
 		// need to store a usable copy based on tabs instead of spaces
 		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
 		line.ColorsOriginal = tabsConvertedBack;
 
-		//print(processed);
-		//print(syntaxHighlighter.TypeArrayToString(colors));
-
 		processed = syntaxHighlighter.TagLine(processed, colors);
 
 		// make actual line content
-		(GameObject LCObj, TextMeshProUGUI LCText, RectTransform LCRect)
+		(GameObject _, TextMeshProUGUI LCText, RectTransform LCRect)
 			= NewText(
 				"Line Content",
 				$"{processed}",
@@ -223,27 +263,73 @@ public class ScriptEditor : MonoBehaviour {
 				TextAlignmentOptions.Left,
 				0); // temp set width to zero, recalculate later
 
-		Vector2 LCSize = HF.TextWidthExact(processed, LCText);
-		LCRect.sizeDelta = new(LCSize.x, allLinesHeight);
-
 		// setup line container rect
 		LCRect.anchorMin = new(0, 1);
 		LCRect.anchorMax = new(0, 1);
 		LCRect.pivot = new(0, 1);
-		LCRect.sizeDelta = new(LCSize.x, allLinesHeight);
 
 		NRect.localPosition = Vector2.zero;
 		LCRect.localPosition = new(lineNumberWidth + numberToContentSpace, 0);
 
-		//Labels l = lineContainer.AddComponent<Labels>();
-		//l.Set(NRect, "name");
-		//l.Set(LCRect, "contents");
+		line.Components.LineContent = LCRect;
+		line.Components.LineText = LCText;
+		line.Components.LineNumber = NRect;
+	}
 
-		line.Components = new() {
-			LCRect,
-			LCText,
-			NRect
-		};
+	void UpdateLine(int lineIndex) {
+		Line line = lines[lineIndex];
+
+		Context context =
+			lineIndex == 0
+			? new()
+			: new(lines[lineIndex - 1].ContextAfterLine);
+
+		ContextSignature preRunSignature =
+			ContextToSignature(line.ContextAfterLine);
+
+		string processed = ConvertTabsToSpaces(line);
+		line.ProcessedContent = processed;
+
+		var colors = syntaxHighlighter.ParseLineToColorList(processed, context);
+		line.ColorsSpaces = colors;
+
+		// if the context has changed
+
+		print($"af {context.InComment} pre {preRunSignature.InComment} l {line.Content}");
+		if (!ContextToSignature(context).Equals(preRunSignature)) {
+			line.ContextAfterLine = context;
+
+			// then propgoate updates down the lines
+			if (lineIndex != lines.Count - 1)
+				UpdateLine(lineIndex + 1);
+		}
+
+		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
+		line.ColorsOriginal = tabsConvertedBack;
+
+		// tag line
+		processed = syntaxHighlighter.TagLine(processed, colors);
+		line.Components.LineText.text = processed;
+
+		// manually check if longer than longest
+		float width = LineWidth(line);
+		if (width > longestLineWidth) { // update everything if this is new longset
+			longestLine = lineIndex;
+			longestLineWidth = width;
+		
+			RecalculateCharUVA();
+			ScaleAllContainersToMax();
+
+			// recalculate all ts if uvamount changed
+			CalculateAllTs();
+		} else {
+			// SCALE TO MAX!!!
+			line.Components.LineContent
+				.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, longestLineWidth);
+
+			// otherwise just do this ones ts
+			line.IndexTs = CalculateTs(lineIndex);
+		}
 	}
 
 	string ConvertTabsToSpaces(Line line) {
@@ -284,12 +370,6 @@ public class ScriptEditor : MonoBehaviour {
 		return reconstructed;
 	}
 
-	// TODO: do something with this
-	void UpdateLineContents(Line line, string newContents) {
-		TextMeshProUGUI text = line.Components[0] as TextMeshProUGUI;
-		text.text = newContents;
-	}
-
 	(GameObject, TextMeshProUGUI, RectTransform) NewText(
 		string name,
 		string actualText,
@@ -318,12 +398,6 @@ public class ScriptEditor : MonoBehaviour {
 		return (newObj, newText, newRect);
 	}
 	#endregion
-
-	void Update() {
-		HandleMouseInput();
-		HandleKeyboardInput();
-		UpdateCarets();
-	}
 
 	#region Caret Utilities
 	void ResetCarets() {
@@ -424,7 +498,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	bool PosInCaretSelection(Vector2Int pos, Caret caret) {
-		if (caret.head == caret.tail) return false;
+		if (caret.HasSelection) return false;
 		
 		bool tailBehind = caret.tail.y < caret.head.y ||
 			(caret.tail.y == caret.head.y && caret.tail.x < caret.head.x);
@@ -457,8 +531,8 @@ public class ScriptEditor : MonoBehaviour {
 
 	#region Mouse Input
 
-	void HandleMouseInput() {
-		bool clickedThisFrame = Controls.IM.Mouse.Left.WasPressedThisFrame();
+	void HandleMouseNavigation() {
+		bool clickedThisFrame = Conatrols.IM.Mouse.Left.WasPressedThisFrame();
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
 		if (!mousePos.HasValue) return;
 
@@ -574,14 +648,14 @@ public class ScriptEditor : MonoBehaviour {
 		if (clickedThisFrame) { // down
 			dragging = true;
 
-			if (!Controls.Keyboard.Modifiers.Shift) {
+			if (!Conatrols.Keyboard.Modifiers.Shift) {
 				dragStart = pos;
 				dragStartUnclamped = posUnclamped;
 
-				dragStartedWithAlt = Controls.Keyboard.Modifiers.Alt;
+				dragStartedWithAlt = Conatrols.Keyboard.Modifiers.Alt;
 			}
 
-			if (Controls.Keyboard.Modifiers.Ctrl && Controls.Keyboard.Modifiers.Alt) {
+			if (Conatrols.Keyboard.Modifiers.Ctrl && Conatrols.Keyboard.Modifiers.Alt) {
 				// add more carets
 				AddNewCaret(pos, pos);
 				headCaretI = carets.Count - 1;
@@ -592,22 +666,22 @@ public class ScriptEditor : MonoBehaviour {
 				tailCaretI = 0;
 			}
 		} else
-		if (Controls.IM.Mouse.Left.WasReleasedThisFrame()) {
+		if (Conatrols.IM.Mouse.Left.WasReleasedThisFrame()) {
 			dragging = false;
 		}
 
 		if (dragging) {
-			if (Controls.Keyboard.Modifiers.Ctrl &&
-				Controls.Keyboard.Modifiers.Shift &&
-				Controls.Keyboard.Modifiers.Alt)
+			if (Conatrols.Keyboard.Modifiers.Ctrl &&
+				Conatrols.Keyboard.Modifiers.Shift &&
+				Conatrols.Keyboard.Modifiers.Alt)
 				return; // do nothing with all 3 
 
 			bool doubleClickCondition = 
-				Controls.Keyboard.Modifiers.Ctrl && 
-				!Controls.Keyboard.Modifiers.Alt; // dont want during adding
+				Conatrols.Keyboard.Modifiers.Ctrl && 
+				!Conatrols.Keyboard.Modifiers.Alt; // dont want during adding
 
-			if (Controls.Keyboard.Modifiers.Alt && 
-				!Controls.Keyboard.Modifiers.Ctrl) { // otherwise overrides ctrl alt adding news, TODO fix this later idk
+			if (Conatrols.Keyboard.Modifiers.Alt && 
+				!Conatrols.Keyboard.Modifiers.Ctrl) { // otherwise overrides ctrl alt adding news, TODO fix this later idk
 													 // alt dragging
 				Vector2Int boxStart =
 					dragStartedWithAlt
@@ -707,10 +781,10 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	(int lineIndex, int hoverIndex) FindLineHoveringOver() {
-		if (lines == null || lines[0].Components == null) return (-1, -1);
+		if (lines == null || lines[0].Components.LineContent == null) return (-1, -1);
 
 		for (int i = 0; i < lines.Count; i++) {
-			RectTransform contents = lines[i].Components[0] as RectTransform;
+			RectTransform contents = lines[i].Components.LineContent;
 			int index = UIHovers.hovers.IndexOf(contents);
 			if (index != -1) return (i, index);
 		}
@@ -724,7 +798,7 @@ public class ScriptEditor : MonoBehaviour {
 		if (hoverIndex >= UIHovers.results.Count)
 			return -1;
 
-		RectTransform rt = lines[line].Components[0] as RectTransform;
+		RectTransform rt = lines[line].Components.LineContent;
 
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
@@ -752,27 +826,27 @@ public class ScriptEditor : MonoBehaviour {
 
 	#endregion
 
-	#region Keyboard Input
+	#region Keyboard Navigation
 
 	bool boxEditing = false;
-	void HandleKeyboardInput() {
-		if (Controls.IsPressed(Key.Escape))
+	void HandleKeyboardNavgation() {
+		if (Conatrols.IsPressed(Key.Escape))
 			Escape();
 
 		// normal arrow keys only for now, move to seperate if needed
 		Vector2Int movement = Vector2Int.zero;
-		if (Controls.IsUsed(Key.UpArrow)) movement.y--;
-		if (Controls.IsUsed(Key.DownArrow)) movement.y++;
-		if (Controls.IsUsed(Key.LeftArrow)) movement.x--;
-		if (Controls.IsUsed(Key.RightArrow)) movement.x++;
+		if (Conatrols.IsUsed(Key.UpArrow)) movement.y--;
+		if (Conatrols.IsUsed(Key.DownArrow)) movement.y++;
+		if (Conatrols.IsUsed(Key.LeftArrow)) movement.x--;
+		if (Conatrols.IsUsed(Key.RightArrow)) movement.x++;
 
 		if (movement.sqrMagnitude == 0) return;
 
-		if (Controls.Keyboard.Modifiers.Shift &&
-			Controls.Keyboard.Modifiers.Alt)
+		if (Conatrols.Keyboard.Modifiers.Shift &&
+			Conatrols.Keyboard.Modifiers.Alt)
 			boxEditing = true;
-		if (!Controls.Keyboard.Modifiers.Shift ||
-			Controls.Keyboard.Modifiers.Ctrl)
+		if (!Conatrols.Keyboard.Modifiers.Shift ||
+			Conatrols.Keyboard.Modifiers.Ctrl)
 			boxEditing = false;
 
 		if (boxEditing) { 
@@ -780,14 +854,14 @@ public class ScriptEditor : MonoBehaviour {
 			return;
 		}
 		foreach (Caret c in carets) {
-			if (Controls.Keyboard.Modifiers.Ctrl && 
-				Controls.Keyboard.Modifiers.Shift &&
-				Controls.Keyboard.Modifiers.Alt)
+			if (Conatrols.Keyboard.Modifiers.Ctrl && 
+				Conatrols.Keyboard.Modifiers.Shift &&
+				Conatrols.Keyboard.Modifiers.Alt)
 				continue; // do nothing with all 3
 
 			c.MoveHead(movement);
 
-			if (Controls.Keyboard.Modifiers.Ctrl) {
+			if (Conatrols.Keyboard.Modifiers.Ctrl) {
 				(int start, int end) = DoubleClickWordAt(c.head);
 
 				c.UpdateHead(new(
@@ -795,7 +869,7 @@ public class ScriptEditor : MonoBehaviour {
 					? end 
 					: start, c.head.y));
 			} else // ctrl overrides alt 
-			if (Controls.Keyboard.Modifiers.Alt) {
+			if (Conatrols.Keyboard.Modifiers.Alt) {
 				int pos =
 					movement.x > 0
 					? lines[c.head.y].Content.Length // end if right
@@ -804,7 +878,7 @@ public class ScriptEditor : MonoBehaviour {
 				c.UpdateHead(new(pos, c.head.y));
 			}
 
-			if (!Controls.Keyboard.Modifiers.Shift) {
+			if (!Conatrols.Keyboard.Modifiers.Shift) {
 				c.MatchTail();
 			}
 		}
@@ -894,10 +968,47 @@ public class ScriptEditor : MonoBehaviour {
 
 	#endregion
 
+	#region Typing Input
+	void HandleTyping() {
+		foreach (Caret c in carets) {
+			HandleCaretTyping(c);
+		}
+	}
+
+	void HandleCaretTyping(Caret c) {
+		if (Conatrols.Keyboard.Presses.Count == 0) return;
+
+		// handle selection replacement later
+
+		string toType = "";
+		foreach (Key k in Conatrols.Keyboard.Presses) {
+			bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
+			bool keyIsTab = k == Key.Tab;
+			if (!(keyIsChar || keyIsTab)) continue;
+
+			if (Conatrols.Keyboard.Modifiers.Shift) {
+				toType += Conatrols.Keyboard.All.KeyShiftedMapping[k];
+			} else {
+				toType += Conatrols.Keyboard.All.KeyCharMapping[k];
+			}
+		}
+
+		if (toType.Length == 0) return;
+
+		// type it
+		Line line = lines[c.head.y];
+		line.Content = line.Content.Insert(c.head.x, toType);
+		UpdateLine(c.head.y);
+
+		c.head.x += toType.Length;
+		c.MatchTail();
+	}
+	#endregion
+
 	#region Position Utils
 	public (RectTransform rt, float t) GetLocation(Vector2Int vec) {
 		return (
-			lines[vec.y].Components[0] as RectTransform,
+			lines[vec.y].Components.LineContent,
 			lines[vec.y].IndexTs[vec.x]);
 	}
 

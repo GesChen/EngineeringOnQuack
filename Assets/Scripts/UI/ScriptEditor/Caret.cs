@@ -12,8 +12,8 @@ public class Caret {
 	public List<SelectionBox> boxes;
 	public bool isHeadCaret;
 
-	static Color headCaretColor;
-	static Color nonHeadCaretColor;
+	static Color headCaretColor		= new(1,1,1,1);
+	static Color nonHeadCaretColor	= new(.6f,.6f,.6f,1);
 
 	public float tempwidth = 2;
 
@@ -21,6 +21,8 @@ public class Caret {
 	RectTransform rt;
 	Image image;
 	(Vector2Int head, Vector2Int tail) lastState;
+
+	public bool HasSelection => head != tail;
 
 	public Caret(ScriptEditor se, Vector2Int pos) {
 		main = se;
@@ -166,7 +168,7 @@ public class Caret {
 			main.lines[line].Content.Length;
 
 	void HandleSelections() {
-		if (tail == head) {
+		if (!HasSelection) {
 			if (boxes != null && boxes.Count > 0) {
 				foreach (var box in boxes) box.Destroy();
 				boxes.Clear();
@@ -249,8 +251,7 @@ public class Caret {
 			(Time.time - blinkTimer) % (2 * rate) < rate);
 
 		// color
-		//image.color = isHeadCaret ? headCaretColor : nonHeadCaretColor;
-		image.color = isHeadCaret ? Color.white : main.test;
+		image.color = isHeadCaret ? headCaretColor : nonHeadCaretColor;
 	}
 
 	RectTransform MakeNewCaret() {

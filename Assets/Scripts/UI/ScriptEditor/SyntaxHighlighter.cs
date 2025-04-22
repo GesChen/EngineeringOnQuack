@@ -51,10 +51,11 @@ public class SyntaxHighlighter : MonoBehaviour {
 	/// This stupid function is probably more complicated than the actual tokenizer
 	/// </summary>
 	/// <returns>Array of color types that correspond with each character in the string</returns>
-	public Types[] LineColorTypesArray(string line, ScriptEditor.LocalContext lcontext) {
+	public Types[] ParseLineToColorList(string line, ScriptEditor.Context lcontext) {
 		Types[] colors = new Types[line.Length];
 
-		if (string.IsNullOrWhiteSpace(line)) return new Types[0];
+		if (string.IsNullOrWhiteSpace(line)) 
+			return Enumerable.Repeat(Types.unassigned, line.Length).ToArray();
 
 		DeleteOutOfScope(line, lcontext, out int indent);
 
@@ -81,7 +82,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 		return colors;
 	}
 
-	void DeleteOutOfScope(string line, ScriptEditor.LocalContext lcontext, out int indent) {
+	void DeleteOutOfScope(string line, ScriptEditor.Context lcontext, out int indent) {
 		// find current indentation
 		int i = 0;
 		while (i < line.Length && line[i] == ' ') i++;
@@ -154,18 +155,20 @@ public class SyntaxHighlighter : MonoBehaviour {
 			if (c == '"' || c == '\'') {
 				colors[i] = Types.literal; // a little repeating isnt too bad
 				i++;
-				while (line[i] != c) {
+				while (i < line.Length && line[i] != c) {
 					colors[i] = Types.literal;
 					i++;
 				}
-				colors[i] = Types.literal;
+
+				if (i < line.Length)
+					colors[i] = Types.literal;
 			}
 		}
 	}
 
 	void FindNewNames(
 		string line,
-		ScriptEditor.LocalContext lcontext,
+		ScriptEditor.Context lcontext,
 		Types[] colors,
 		int indent) {
 
@@ -178,7 +181,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 		FindNewTypes(line, lcontext, colors, indent);
 	}
 
-	bool FindNewVariables(string line, ScriptEditor.LocalContext lcontext, Types[] colors, int indent) {
+	bool FindNewVariables(string line, ScriptEditor.Context lcontext, Types[] colors, int indent) {
 		bool foundAnyVariables = false;
 
 		for (int i = line.Length - 1; i >= 0; i--) { // another goddamn loop. but backwards. 
@@ -214,7 +217,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 		return foundAnyVariables;
 	}
 
-	bool FindNewFunctions(string line, ScriptEditor.LocalContext lcontext, Types[] colors, int indent) {
+	bool FindNewFunctions(string line, ScriptEditor.Context lcontext, Types[] colors, int indent) {
 		for (int i = line.Length - 1; i > 0; i--) {
 			if (line[i] == ':' && colors[i] == Types.symbol &&
 				IsFunctionDeclaration(
@@ -290,7 +293,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 		return true;
 	}
 
-	bool FindNewTypes(string line, ScriptEditor.LocalContext lcontext, Types[] colors, int indent) {
+	bool FindNewTypes(string line, ScriptEditor.Context lcontext, Types[] colors, int indent) {
 		int i = line.Length - 1;
 		while (i > 0 && !(line[i] == ':' && colors[i] == Types.symbol)) i--;
 		if (i < 0) return false;
@@ -327,7 +330,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 
 	void HighlightExistingNames(
 		string line,
-		ScriptEditor.LocalContext lcontext,
+		ScriptEditor.Context lcontext,
 		ref Types[] colors) {
 
 		StringBuilder sb = new(); // reset sb
@@ -343,7 +346,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 
 	void CheckName(
 		string line,
-		ScriptEditor.LocalContext lcontext,
+		ScriptEditor.Context lcontext,
 		ref Types[] colors,
 		StringBuilder sb,
 		int i) {
@@ -399,26 +402,37 @@ public class SyntaxHighlighter : MonoBehaviour {
 
 	void HandleComments(
 		string line,
-		ScriptEditor.LocalContext lcontext,
+		ScriptEditor.Context lcontext,
 		ref Types[] colors) {
-
+		
 		int state = lcontext.InComment ? 2 : 0; // 0-normal, 1-in comment, 2-in multiline
+		print($"llol {line} star{state}");
+		
 		for (int i = 0; i < line.Length; i++) {
 			if (line[i] == '-' && colors[i] == Types.symbol) {
-				int count = 1;
-				while (++i < line.Length && line[i] == '-' && colors[i] == Types.symbol) count++; // reusing the old logic..
-
+				int count = 0;
+				while (i < line.Length) {
+					if (line[i] == '-' && colors[i] == Types.symbol)
+						count++;
+					else break;
+					
+					i++;
+				}
+				print($"l {line} c {count}");
 				// toggle comment states
-				if (count == 2) state = state == 1 ? 0 : 1;
+				if (count == 2) state = state == 1 ? 0 : // toggle state 1
+						(state == 2 ? 2 : 1); // maintain state 2, then switch to single
+
 				else if (count == 3) state = state == 2 ? 0 : 2;
 				// dont need to worry about long dashes
 
 				// comment out the dashes
-				Array.Fill(colors, Types.comment, i - count, count);
+				if (count > 1)
+					Array.Fill(colors, Types.comment, i - count, count);
 			}
 
 			lcontext.InComment = state != 0;
-			if (lcontext.InComment)
+			if (i < line.Length && lcontext.InComment)
 				colors[i] = Types.comment;
 		}
 		if (state != 2) lcontext.InComment = false; // reset unless in multiline
@@ -436,20 +450,23 @@ public class SyntaxHighlighter : MonoBehaviour {
 		Types last = Types.unassigned;
 		for (int i = 0; i < line.Length; i++) {
 			Types current = types[i];
-			if (current != last) {
+			if (current != last || i == 0) {
 				if (i != 0) sb.Append(endColor);
 
-				while (types[i] == Types.unassigned) {
+				while (i < line.Length && types[i] == Types.unassigned) {
 					sb.Append(line[i]);
 					i++;
 				}
 
-				current = types[i];
-				sb.Append(generateTag(current));
+				if (i < line.Length) {
+					current = types[i];
+					sb.Append(generateTag(current));
+				}
 			}
 			last = current;
 
-			sb.Append(line[i]);
+			if (i < line.Length)
+				sb.Append(line[i]);
 		}
 		return sb.ToString();
 	}

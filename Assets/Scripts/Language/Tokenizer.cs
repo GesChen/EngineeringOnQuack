@@ -15,7 +15,7 @@ public class Tokenizer {
 	}
 
 	public string RemoveComments(string lines) {
-		int opstate = 0; // 0-looking for comment, 1-in oneline comment, 2-in multiline comment
+		int state = 0; // 0-looking for comment, 1-in oneline comment, 2-in multiline comment
 		int i = 0;
 		StringBuilder sb = new();
 
@@ -32,23 +32,24 @@ public class Tokenizer {
 				jumped = true;
 				int count = searchAhead();
 				if (count == 2) { // -- single line start
-					opstate = opstate == 1 ? 0 : 1; // toggle state 1
+					state = state == 1 ? 0 : // toggle state 1
+						(state == 2 ? 2 : 1); // maintain state 2, then switch to single
 					i++;
 				}
 				else if (count == 3) { // --- multiline start
-					opstate = opstate == 2 ? 0 : 2; // toggle state 2
+					state = state == 2 ? 0 : 2; // toggle state 2
 					i += 2; // skip these
 				}
 				else if (count > 3) i += count; // big dash ----------- treated as one big comment
 				else
 					jumped = false;
 			}
-			else if (lines[i] == '\n' && opstate == 1) // end single line on newlines
-				opstate = 0;
+			else if (lines[i] == '\n' && state == 1) // end single line on newlines
+				state = 0;
 
 			if (i >= lines.Length) break;
 
-			if ((opstate == 0 && !jumped)
+			if ((state == 0 && !jumped)
 				|| lines[i] == '\n')
 				sb.Append(lines[i]);
 
