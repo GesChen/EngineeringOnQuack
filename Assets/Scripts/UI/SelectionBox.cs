@@ -46,6 +46,11 @@ public class SelectionBox {
 	}
 
 	public void Update() {
+		if (boxObject == null) {
+			Debug.Log($"ur dead bruh istg if u break again im crashing out");
+			return;
+		}
+
 		(RectTransform lineRT, float sT) = main.GetLocation(new(start, line));
 		(RectTransform _, float eT) = main.GetLocation(new(end, line));
 

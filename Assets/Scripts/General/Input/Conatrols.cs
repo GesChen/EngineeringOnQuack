@@ -54,7 +54,13 @@ public class Conatrols : MonoBehaviour {
 	}
 
 	#region Shortcut Methods
+	/// <summary>
+	/// Repeating
+	/// </summary>
 	public static bool IsUsed(Key key) => Keyboard.Presses.Contains(key);
+	/// <summary>
+	/// Non-Repeating
+	/// </summary>
 	public static bool IsPressed(Key key) => Keyboard.Pressed.Contains(key);
 	#endregion
 

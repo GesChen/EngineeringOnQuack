@@ -48,15 +48,7 @@ public class Caret {
 		ResetBlink();
 		rt = MakeNewCaret();
 
-		MakeSelectionBoxes();
-	}
-
-	public void UpdatePos(Vector2Int pos) {
-		ResetBlink();
-		tail = pos;
-		head = pos;
-
-		Update();
+		//MakeSelectionBoxes();
 	}
 
 	bool PositionCheck(Vector2Int v) =>
@@ -71,26 +63,14 @@ public class Caret {
 		Update();
 	}
 
-	public void UpdateHead(Vector2Int pos) {
-		ResetBlink();
-		SetHead(pos);
-		Update();
-	}
-
-	public void UpdateTail(Vector2Int pos) {
-		ResetBlink();
-		SetTail(pos);
-		Update();
-	}
-
-	void SetHead(Vector2Int pos) {
+	public void SetHead(Vector2Int pos) {
 		if (PositionCheck(pos)) 
 			throw new($"bad cursor position at {pos} have {main.lines[pos.y].IndexTs.Count}, {main.lines.Count}");
 
 		head = pos;
 	}
 
-	void SetTail(Vector2Int pos) {
+	public void SetTail(Vector2Int pos) {
 		if (PositionCheck(pos))
 			throw new($"bad cursor position at {pos} have {main.lines[pos.y].IndexTs.Count}, {main.lines.Count}");
 		
@@ -106,6 +86,7 @@ public class Caret {
 
 			// move head y
 			head.y += v.y;
+			head.y = Mathf.Clamp(head.y, 0, main.lines.Count - 1); // stoopid
 
 			// set x
 			// if head x is longer than new line, set to end (keep desired)
@@ -127,15 +108,16 @@ public class Caret {
 		}
 
 		// handle x movement
-			head.x += v.x;
+		head.x += v.x;
+
 		// wrap properly (?)
 		head = WrapCaretPos(head);
 
 		if (v.x != 0)
 			DesiredCol = main.ColumnOfPosition(head);
 
-		Update();
-		ResetBlink();
+		// clamp y AGAIN
+		head.y = Mathf.Clamp(head.y, 0, main.lines.Count - 1);
 	}
 
 	Vector2Int WrapCaretPos(Vector2Int pos) {
@@ -169,15 +151,12 @@ public class Caret {
 
 	void HandleSelections() {
 		if (!HasSelection) {
-			if (boxes != null && boxes.Count > 0) {
-				foreach (var box in boxes) box.Destroy();
-				boxes.Clear();
-			}
+			ClearBoxes();
 			return;
 		}
 
 		if (lastState.head.y != head.y || lastState.tail.y != tail.y || boxes.Count == 0)
-			MakeSelectionBoxes();
+			MakeNewSelectionBoxes();
 		else
 			UpdateSelectionBoxes();
 
@@ -185,11 +164,15 @@ public class Caret {
 		lastState.tail = tail;
 	}
 
-	void MakeSelectionBoxes() {
+	void ClearBoxes() {
 		// reset
 		if (boxes != null && boxes.Count > 0)
 			foreach (var box in boxes) box.Destroy();
 		boxes = new();
+	}
+
+	void MakeNewSelectionBoxes() {
+		ClearBoxes();
 
 		if (tail.y == head.y) {
 			// only 1 that goes between them

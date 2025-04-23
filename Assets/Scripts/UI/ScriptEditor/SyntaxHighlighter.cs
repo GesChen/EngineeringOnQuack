@@ -406,7 +406,6 @@ public class SyntaxHighlighter : MonoBehaviour {
 		ref Types[] colors) {
 		
 		int state = lcontext.InComment ? 2 : 0; // 0-normal, 1-in comment, 2-in multiline
-		print($"llol {line} star{state}");
 		
 		for (int i = 0; i < line.Length; i++) {
 			if (line[i] == '-' && colors[i] == Types.symbol) {
@@ -418,7 +417,6 @@ public class SyntaxHighlighter : MonoBehaviour {
 					
 					i++;
 				}
-				print($"l {line} c {count}");
 				// toggle comment states
 				if (count == 2) state = state == 1 ? 0 : // toggle state 1
 						(state == 2 ? 2 : 1); // maintain state 2, then switch to single

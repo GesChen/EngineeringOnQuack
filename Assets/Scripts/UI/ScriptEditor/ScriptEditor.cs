@@ -6,9 +6,11 @@ using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Text;
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
+	List<LineNumber> lineNumbers;
 
 	public ScrollWindow scroll;
 	public CustomVerticalLayout lineContentVerticalLayout;
@@ -29,17 +31,21 @@ public class ScriptEditor : MonoBehaviour {
 	public Color test;
 
 	public class Line {
-		public int LineNumber;
 		public string Content;
 		public string ProcessedContent;
 		public List<float> IndexTs;
 		public (
 			RectTransform LineContent, 
-			TextMeshProUGUI LineText, 
-			RectTransform LineNumber) Components;
+			TextMeshProUGUI LineText) Components;
+		public bool Realised;
 		public SyntaxHighlighter.Types[] ColorsSpaces;
 		public SyntaxHighlighter.Types[] ColorsOriginal;
 		public Context ContextAfterLine; // context at the end of the line after everything is paresed
+	}
+
+	public class LineNumber {
+		public int Number;
+		public RectTransform Rect;
 	}
 
 	#region LocalContext
@@ -106,38 +112,11 @@ public class ScriptEditor : MonoBehaviour {
 	public void Load(string[] strLines) {
 		Clear();
 
-		lines = new();
-		for (int i = 0; i < strLines.Length; i++) {
-			lines.Add(new() {
-				Content = strLines[i],
-				LineNumber = i + 1
-			});
-		}
-
-		GenerateAllLines();
-	}
-
-	void Clear() {
-
-		// delete all existing lines
-
-		if (lines == null) return;
-
-		foreach (Line line in lines) {
-			if (line.Components.LineContent != null) {
-				Destroy(line.Components.LineContent.gameObject); // line contents
-				Destroy(line.Components.LineNumber.gameObject); // line number
-			}
-		}
-	}
-
-	void GenerateAllLines() {
-
 		// recalculate max line number width
 		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
 		testingText.font = font;
 		testingText.fontSize = fontSize;
-		Vector2 numberSize = HF.TextWidthExact(lines.Count.ToString(), testingText);
+		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
 
 		lineNumberWidth = numberSize.x;
 		allLinesHeight = numberSize.y;
@@ -152,10 +131,15 @@ public class ScriptEditor : MonoBehaviour {
 		};
 
 		// generate lines
+		foreach (string line in strLines) {
+			Line newLine = GenerateNewLine(line);
+			lines.Add(newLine);
+		}
+
+		// generate line numbers
 		for (int i = 0; i < lines.Count; i++) {
-			Line line = lines[i];
-			
-			GenerateNewLine(line);
+			LineNumber newLN = GenerateNewNumber(i + 1);
+			lineNumbers.Add(newLN);
 		}
 
 		// scale all containers to max width
@@ -165,6 +149,28 @@ public class ScriptEditor : MonoBehaviour {
 
 		// calculate ts (charuv must have a value)
 		CalculateAllTs();
+	}
+
+	void Clear() {
+		// delete all existing lines
+
+		lines ??= new();
+		foreach (Line line in lines) {
+			if (line.Components.LineContent != null) {
+				Destroy(line.Components.LineContent.gameObject); // line contents
+			}
+		}
+
+		lineNumbers ??= new();
+		foreach (LineNumber ln in lineNumbers) {
+			if (ln.Rect != null)
+				Destroy(ln.Rect.gameObject);
+		}
+	}
+
+	void GenerateAllLines() {
+
+		
 	}
 
 	void RecalculateLongest() {
@@ -208,10 +214,15 @@ public class ScriptEditor : MonoBehaviour {
 
 		List<float> TtoIndex = new();
 		float pos = 0;
-		foreach (char c in lines[i].Content) {
+		int charPos = 0;
+
+		for (int l = 0; l < lines[i].Content.Length; l++) {
+			char c = lines[i].Content[l];
 			TtoIndex.Add(pos);
 
-			pos += charUVAmount * (c == '\t' ? Config.Language.SpacesPerTab : 1);
+			int charIncrease = c == '\t' ? TabIndexSpaceCount(charPos) : 1;
+			pos += charUVAmount * charIncrease;
+			charPos += charIncrease;
 		}
 
 		//// pos isnt gonna be 1 but need to add it again to be able to select last item still
@@ -227,15 +238,10 @@ public class ScriptEditor : MonoBehaviour {
 		return TtoIndex;
 	}
 
-	void GenerateNewLine(Line line) { // ~1ms
-		// make line number object
-		(GameObject _, TextMeshProUGUI _, RectTransform NRect)
-			= NewText(
-				"Line Number",
-				line.LineNumber.ToString(),
-				lineNumbersVerticalLayout.transform,
-				TextAlignmentOptions.Right,
-				lineNumberWidth);
+	Line GenerateNewLine(string content) { // ~1ms
+		Line line = new() {
+			Content = content
+		};
 
 		// convert tabs to aligned spaces (for tmpro, original is unchanged)
 		string processed = ConvertTabsToSpaces(line);
@@ -268,12 +274,30 @@ public class ScriptEditor : MonoBehaviour {
 		LCRect.anchorMax = new(0, 1);
 		LCRect.pivot = new(0, 1);
 
-		NRect.localPosition = Vector2.zero;
 		LCRect.localPosition = new(lineNumberWidth + numberToContentSpace, 0);
 
 		line.Components.LineContent = LCRect;
 		line.Components.LineText = LCText;
-		line.Components.LineNumber = NRect;
+
+		line.Realised = true;
+
+		return line;
+	}
+
+	LineNumber GenerateNewNumber(int number) {
+		(GameObject _, TextMeshProUGUI _, RectTransform NRect)
+			= NewText(
+				$"Line Number  ({number})",
+				number.ToString(),
+				lineNumbersVerticalLayout.transform,
+				TextAlignmentOptions.Right,
+				lineNumberWidth);
+		NRect.localPosition = Vector2.zero;
+
+		return new() {
+			Number = number,
+			Rect = NRect
+		};
 	}
 
 	void UpdateLine(int lineIndex) {
@@ -295,7 +319,6 @@ public class ScriptEditor : MonoBehaviour {
 
 		// if the context has changed
 
-		print($"af {context.InComment} pre {preRunSignature.InComment} l {line.Content}");
 		if (!ContextToSignature(context).Equals(preRunSignature)) {
 			line.ContextAfterLine = context;
 
@@ -332,17 +355,29 @@ public class ScriptEditor : MonoBehaviour {
 		}
 	}
 
+	void DeleteLine(int index) {
+		Line line = lines[index];
+
+		// destroy the line
+		Destroy(line.Components.LineContent.gameObject);
+		lines.RemoveAt(index);
+
+		// decrement a line number
+		Destroy(lineNumbers[^1].Rect.gameObject);
+		lineNumbers.RemoveAt(lineNumbers.Count - 1);
+	}
+
 	string ConvertTabsToSpaces(Line line) {
 		return ConvertTabsToSpaces(line.Content);
 	}
 
-	int tabIndexToSpaceCount(int i) => HF.Mod(-i - 1, Config.Language.SpacesPerTab) + 1;
+	int TabIndexSpaceCount(int i) => HF.Mod(-i - 1, Config.Language.SpacesPerTab) + 1;
 	string ConvertTabsToSpaces(string line) {
 		string tabsToSpaces = line;
 		for (int i = 0; i < tabsToSpaces.Length; i++) {
 			char c = tabsToSpaces[i];
 			if (c == '\t') {
-				int num = tabIndexToSpaceCount(i);
+				int num = TabIndexSpaceCount(i);
 				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i, new string(' ', num));
 			}
 		}
@@ -361,7 +396,7 @@ public class ScriptEditor : MonoBehaviour {
 		while (ci < convertedString.Length) { // they should both each their ends at the same time idk
 			reconstructed[oi] = colors[ci];
 			if (originalString[oi] == '\t')
-				ci += tabIndexToSpaceCount(ci);
+				ci += TabIndexSpaceCount(ci);
 			else
 				ci++;
 
@@ -557,7 +592,7 @@ public class ScriptEditor : MonoBehaviour {
 		}
 	}
 
-	(int start, int end) DoubleClickWordAt(Vector2Int pos) {
+	(int startInc, int endExc) DoubleClickWordAt(Vector2Int pos) {
 		if (string.IsNullOrWhiteSpace(lines[pos.y].Content)) return (0, 0); // index errors everywhere
 
 		var colors = lines[pos.y].ColorsOriginal; // does this store a reference to it or copy the array?
@@ -575,52 +610,15 @@ public class ScriptEditor : MonoBehaviour {
 			return -1;
 		}
 
-		var leftColorType =
-			pos.x > 0
-			? colors[pos.x - 1]
-			: SyntaxHighlighter.Types.unassigned;
-
-		var rightColorType =
+		var findColorType =
 			pos.x < colors.Length
 			? colors[pos.x]
 			: SyntaxHighlighter.Types.unassigned;
 
-		bool leftUnassigned = leftColorType == SyntaxHighlighter.Types.unassigned;
-		bool rightUnassigned = rightColorType == SyntaxHighlighter.Types.unassigned;
-
-		// funy rules
-		int findType = (leftUnassigned, rightUnassigned) switch {
-			(true, true) => 0,
-			(false, true) => 1,
-			(true, false) => 2,
-			(false, false) => 3
-		};
-
-		var findColorType = findType switch {
-			0 => SyntaxHighlighter.Types.unassigned, // both dont, take the space
-			1 => leftColorType, // only left, choose left
-			2 => rightColorType, // only right, choose right
-			3 => rightColorType, // both exist? default right
-			_ => SyntaxHighlighter.Types.unassigned
-		};
-
-		int leftCharType =
-			pos.x > 0
-			? chartype(line[pos.x - 1])
-			: -1;
-
-		int rightCharType =
+		int findCharType =
 			pos.x < colors.Length
 			? chartype(line[pos.x])
 			: -1;
-
-		int findCharType = findType switch {
-			0 => 2,
-			1 => leftCharType,
-			2 => rightCharType,
-			3 => rightCharType,
-			_ => -1
-		};
 
 		// search
 		int left = pos.x - 1;
@@ -628,7 +626,10 @@ public class ScriptEditor : MonoBehaviour {
 			colors[left] == findColorType &&
 			chartype(line[left]) == findCharType)
 			left--;
-		if (left != 0) left++;
+
+		// honestly idk either its just made to work
+		if (left < 0 || 
+			left != 0 && chartype(line[left]) != findCharType) left++;
 
 		int right = pos.x;
 		while (right < colors.Length &&
@@ -862,9 +863,9 @@ public class ScriptEditor : MonoBehaviour {
 			c.MoveHead(movement);
 
 			if (Conatrols.Keyboard.Modifiers.Ctrl) {
-				(int start, int end) = DoubleClickWordAt(c.head);
+				(int start, int end) = DoubleClickWordAt(c.head - (movement.x > 0 ? 1 : 0) * Vector2Int.right);
 
-				c.UpdateHead(new(
+				c.SetHead(new(
 					movement.x > 0 
 					? end 
 					: start, c.head.y));
@@ -875,12 +876,15 @@ public class ScriptEditor : MonoBehaviour {
 					? lines[c.head.y].Content.Length // end if right
 					: 0; // start if left
 
-				c.UpdateHead(new(pos, c.head.y));
+				c.SetHead(new(pos, c.head.y));
 			}
 
 			if (!Conatrols.Keyboard.Modifiers.Shift) {
 				c.MatchTail();
 			}
+
+			c.Update();
+			c.ResetBlink();
 		}
 	}
 
@@ -902,7 +906,7 @@ public class ScriptEditor : MonoBehaviour {
 			targetHeadCol = ColumnOfPosition(headCaret.head + movement);
 
 			foreach (Caret c in carets)
-				c.UpdateHead(new(
+				c.SetHead(new(
 					PositionOfColumn(targetHeadCol, c.head.y),
 					c.head.y));
 		}
@@ -964,6 +968,11 @@ public class ScriptEditor : MonoBehaviour {
 				}
 			}
 		}
+
+		foreach (Caret c in carets) {
+			c.ResetBlink();
+			c.Update();
+		}
 	}
 
 	#endregion
@@ -977,32 +986,143 @@ public class ScriptEditor : MonoBehaviour {
 
 	void HandleCaretTyping(Caret c) {
 		if (Conatrols.Keyboard.Presses.Count == 0) return;
+		Line line = lines[c.head.y];
+		string contentBefore = line.Content;
 
 		// handle selection replacement later
 
-		string toType = "";
-		foreach (Key k in Conatrols.Keyboard.Presses) {
-			bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
-			bool keyIsTab = k == Key.Tab;
-			if (!(keyIsChar || keyIsTab)) continue;
+		if (Conatrols.IsUsed(Key.Backspace))
+			Backspace(c, line);
+		else if (Conatrols.IsUsed(Key.Delete))
+			Delete(c, line);
+		else if (Conatrols.IsUsed(Key.Tab))
+			Tab(c, line);
+		else {
+			string toType = "";
+			foreach (Key k in Conatrols.Keyboard.Presses) {
+				bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
+				if (!keyIsChar) continue;
 
-			if (Conatrols.Keyboard.Modifiers.Shift) {
-				toType += Conatrols.Keyboard.All.KeyShiftedMapping[k];
-			} else {
-				toType += Conatrols.Keyboard.All.KeyCharMapping[k];
+				if (Conatrols.Keyboard.Modifiers.Shift) {
+					toType += Conatrols.Keyboard.All.KeyShiftedMapping[k];
+				} else {
+					toType += Conatrols.Keyboard.All.KeyCharMapping[k];
+				}
 			}
+
+			if (toType.Length == 0) return;
+
+			// type it
+			TypeAt(c, line, toType);
 		}
 
-		if (toType.Length == 0) return;
+		if (line.Content == contentBefore) return; // dont waste time
 
-		// type it
-		Line line = lines[c.head.y];
-		line.Content = line.Content.Insert(c.head.x, toType);
 		UpdateLine(c.head.y);
 
-		c.head.x += toType.Length;
+		c.ResetBlink();
 		c.MatchTail();
+		c.Update();
 	}
+
+	void TypeAt(Caret c, Line line, string toType) {
+		if (c.head.x < line.Content.Length) {
+			line.Content = line.Content.Insert(c.head.x, toType);
+			c.head.x += toType.Length;
+		} else {
+			PadToCaret(c, line);
+			line.Content += toType;
+
+			c.head.x = line.Content.Length;
+		}
+	}
+
+	void PadToCaret(Caret c, Line line) {
+		int spacesToAdd = c.head.x - line.Content.Length;
+		line.Content += new string(' ', spacesToAdd);
+	}
+
+	void Backspace(Caret c, Line line) {
+		if (c.head.x == 0) { // delete line
+			// might switch to a SMARTER SYSTEM if it is needed later
+			// maybe with actual newlines idk
+			
+			int num = c.head.y;
+			if (num == 0) return;
+
+			// put the caret
+			c.head.y--;
+			c.head.x = lines[num - 1].Content.Length;
+			c.MatchTail();
+			c.Update(); // force update before the line gets deleted
+			
+			// append whatevers on this line onto previous
+			lines[num - 1].Content += line.Content;
+
+			// then delete the line
+			DeleteLine(num);
+
+			// before line needs to update
+			UpdateLine(num - 1);
+
+			return;
+		}
+
+		if (c.head.x >= line.Content.Length)
+			PadToCaret(c, line);
+
+		if (Conatrols.Keyboard.Modifiers.Ctrl) {
+			(int start, int end) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
+			end = c.head.x;
+			int length = end - start;
+			line.Content = line.Content.Remove(start, length);
+			c.head.x -= length;
+		} else {
+			line.Content = line.Content.Remove(c.head.x - 1, 1);
+			c.head.x--;
+		}
+	}
+
+	void Delete(Caret c, Line line) {
+		if (c.head.x >= line.Content.Length) { // delete line
+
+			int num = c.head.y;
+			if (num == lines.Count - 1) return;
+
+			// append prev line onto this
+			line.Content += lines[num + 1].Content;
+
+			// then delete the next line
+			DeleteLine(num + 1);
+			return;
+		}
+
+		if (Conatrols.Keyboard.Modifiers.Ctrl) {
+			(int start, int end) = DoubleClickWordAt(c.head);
+			start = c.head.x;
+			int length = end - start;
+			line.Content = line.Content.Remove(start, length);
+		} else {
+			line.Content = line.Content.Remove(c.head.x, 1);
+		}
+	}
+
+	void Tab(Caret c, Line line) {
+		if (Conatrols.Keyboard.Modifiers.Shift) {
+			// dedent entire line
+			string spaceIndent = new(' ', Config.Language.SpacesPerTab);
+
+			if (line.Content.StartsWith('\t'))
+				line.Content = line.Content[1..]; // tab dedent
+			else if (line.Content.StartsWith(spaceIndent))
+				line.Content = line.Content[Config.Language.SpacesPerTab..]; // spaces dedent
+
+		} else {
+			// normal add tab
+			TypeAt(c, line, "\t");
+		}
+	}
+
 	#endregion
 
 	#region Position Utils
@@ -1023,7 +1143,7 @@ public class ScriptEditor : MonoBehaviour {
 		
 		int col = 0;
 		for (int i = 0; i < pos.x; i++) {
-			if (line[i] == '\t') col += tabIndexToSpaceCount(col);
+			if (line[i] == '\t') col += TabIndexSpaceCount(col);
 			else col++;
 		}
 		return col;
@@ -1033,7 +1153,7 @@ public class ScriptEditor : MonoBehaviour {
 		string line = lines[pos.y].Content;
 		int col = 0;
 		foreach (char c in line) {
-			if (c == '\t') col += tabIndexToSpaceCount(col);
+			if (c == '\t') col += TabIndexSpaceCount(col);
 			else col++; 
 		}
 
@@ -1049,7 +1169,7 @@ public class ScriptEditor : MonoBehaviour {
 		int testCol = 0;
 		while (pos < content.Length) {
 			if (content[pos] == '\t') {
-				testCol += tabIndexToSpaceCount(testCol);
+				testCol += TabIndexSpaceCount(testCol);
 			} else {
 				testCol++;
 			}
@@ -1067,4 +1187,13 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	#endregion
+	
+	void DebugLines() {
+		StringBuilder sb = new();
+		for (int i = 0; i < lines.Count; i++) {
+			Line line = lines[i];
+			sb.Append($"Line {i} real {line.Realised} __ {line.ProcessedContent}\n");
+		}
+		print(sb.ToString());
+	}
 }
