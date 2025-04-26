@@ -273,6 +273,10 @@ public class ScriptEditor : MonoBehaviour {
 		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
 		line.ColorsOriginal = tabsConvertedBack;
 
+		// represent tabs and spaces
+		//processed = MakeWhiteSpaceVisible(processed);
+
+		// tag line
 		processed = syntaxHighlighter.TagLine(processed, colors);
 
 		// make actual line content
@@ -401,6 +405,24 @@ public class ScriptEditor : MonoBehaviour {
 		return tabsToSpaces;
 	}
 
+	string MakeWhiteSpaceVisible(string original) {
+
+		StringBuilder sb = new();
+		
+		for (int i = 0; i < original.Length; i++) {
+			char c = original[i];
+			if (c == ' ') {
+				sb.Append('•');
+			} else 
+			if (c == '\t') {
+			} else {
+				sb.Append(c);
+			}
+		}
+
+		return sb.ToString();
+	}
+	
 	SyntaxHighlighter.Types[] RevertSpacesToTabs(
 		SyntaxHighlighter.Types[] colors,
 		string convertedString,
@@ -542,7 +564,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	bool PosInCaretSelection(Vector2Int pos, Caret caret) {
-		if (caret.HasSelection) return false;
+		if (!caret.HasSelection) return false;
 		
 		bool tailBehind = caret.tail.y < caret.head.y ||
 			(caret.tail.y == caret.head.y && caret.tail.x < caret.head.x);
@@ -888,7 +910,9 @@ public class ScriptEditor : MonoBehaviour {
 			c.MoveHead(movement);
 
 			if (Conatrols.Keyboard.Modifiers.Ctrl) {
-				(int start, int end) = DoubleClickWordAt(c.head - (movement.x > 0 ? 1 : 0) * Vector2Int.right);
+				(int start, int end) = DoubleClickWordAt(new(
+					Mathf.Max(0, c.head.x - (movement.x > 0 ? 1 : 0)), 
+					c.head.y));
 
 				c.SetHead(new(
 					movement.x > 0 
@@ -1050,7 +1074,15 @@ public class ScriptEditor : MonoBehaviour {
 			int end = Mathf.Max(c.head.x, c.tail.x);
 
 			if (start >= line.Content.Length) {
-				PadToIndex(start, c.head.y, line);
+				//PadToIndex(start, c.head.y, line);
+				// ok so this is kinda useless and breaks shitfuck everything. lets not use it? maybe?
+				
+				// js set the position and match gng :(
+				c.head.x = start;
+				c.MatchTail();
+
+				return;
+
 			} else if (end >= line.Content.Length) {
 				line.Content = HF.RemoveSection(line.Content, start, line.Content.Length);
 			} else {
@@ -1129,7 +1161,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void TypeAt(Caret c, Line line, string toType) {
-		if (c.head.x < line.Content.Length) {
+		if (c.head.x <= line.Content.Length) {
 			line.Content = line.Content.Insert(c.head.x, toType);
 			c.head.x += toType.Length;
 		} else {
@@ -1141,7 +1173,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void PadToIndex(int index, int lineNum, Line line) {
-		bool useTabs = false; // TODO: figure this out sometime 
+		bool useTabs = true; // TODO: figure this out sometime 
 
 		// actual TODO: figure out this stupid tabs thing? cuz i just cant figure out whats 
 		// wrong with it and spaces work just fine so
@@ -1151,24 +1183,7 @@ public class ScriptEditor : MonoBehaviour {
 			// i had a way smarter thing than this but it kept dying
 			// so i just went dumb
 
-			int col = ColumnOfPosition(new(index, lineNum));
-			int tabs = 0;
-			int pos = line.ProcessedContent.Length;
-			int count = 0;
-			while (pos < col) {
-				count = TabIndexToSpaceCount(pos);
-				pos += count;
-				tabs++;
-			}
-
-			pos -= count;
-			tabs--;
-
-			int extraSpaces = 0;
-			while (pos < col) {
-				pos++;
-				extraSpaces++;
-			}
+			(int tabs, int extraSpaces) = IndentToPos(line.Content.Length, index, lineNum);
 
 			line.Content += new string('\t', tabs);
 			line.Content += new string(' ', extraSpaces);
@@ -1424,8 +1439,25 @@ public class ScriptEditor : MonoBehaviour {
 		return pos;
 	}
 
-	public (int tabs, int spaces) IndentToPos(int startIndex, int endIndex) {
-		return (0, 0);
+	public (int tabs, int spaces) IndentToPos(int startIndex, int endIndex, int line) {
+		int startCol = ColumnOfPosition(new(startIndex, line));
+		int endCol = ColumnOfPosition(new(endIndex, line));
+
+		int tabs = 0;
+		int pos = startCol;
+		while (pos < endCol) {
+			int amount = TabIndexToSpaceCount(pos);
+			pos += amount;
+			if (pos >= endCol) {
+				pos -= amount;
+				break;
+			}
+			tabs++;
+		}
+
+		int extraSpaces = endCol - pos;
+
+		return (tabs, extraSpaces);
 	}
 	#endregion
 	
