@@ -112,8 +112,8 @@ public class Conatrols : MonoBehaviour {
 		}
 
 		// these two can be optimized away into one timer sort of thing if you want
-		Dictionary<Key, float> KeyHeldTimes = new();
-		Dictionary<Key, float> KeyLastRepeatTime = new();
+		readonly Dictionary<Key, float> KeyHeldTimes = new();
+		readonly Dictionary<Key, float> KeyLastRepeatTime = new();
 		void UpdateKeyHeldTimes() {
 			foreach (Key k in PressedThisFrame) {
 				KeyHeldTimes.Add(k, Time.time);
@@ -152,7 +152,7 @@ public class Conatrols : MonoBehaviour {
 		}
 
 		public static class All {
-			public static readonly List<Key> ModifierKeys = new() {
+			public static readonly HashSet<Key> Modifiers = new() {
 				Key.LeftCtrl,
 				Key.RightCtrl,
 				Key.LeftAlt,
@@ -161,7 +161,7 @@ public class Conatrols : MonoBehaviour {
 				Key.RightShift
 			};
 
-			public static readonly List<Key> Alphabetical = new() {
+			public static readonly HashSet<Key> Alphabetical = new() {
 				Key.A,
 				Key.B,
 				Key.C,
@@ -190,7 +190,7 @@ public class Conatrols : MonoBehaviour {
 				Key.Z
 			};
 
-			public static readonly List<Key> Numerical = new() {
+			public static readonly HashSet<Key> Numerical = new() {
 				Key.Digit1,
 				Key.Digit2,
 				Key.Digit3,
@@ -203,7 +203,7 @@ public class Conatrols : MonoBehaviour {
 				Key.Digit0
 			};
 
-			public static readonly List<Key> NumericalNumpad = new() {
+			public static readonly HashSet<Key> NumericalNumpad = new() {
 				Key.Numpad1,
 				Key.Numpad2,
 				Key.Numpad3,
@@ -216,7 +216,7 @@ public class Conatrols : MonoBehaviour {
 				Key.Numpad0
 			};
 
-			public static readonly List<Key> Symbolic = new() {
+			public static readonly HashSet<Key> Symbolic = new() {
 				Key.Backquote,
 				Key.Minus,
 				Key.Equals,
@@ -230,68 +230,28 @@ public class Conatrols : MonoBehaviour {
 				Key.Slash
 			};
 
-			// could also just try to find a key in the keycharmapping dict but whatever
-			public static readonly HashSet<Key> CharacterKeys = new() {
-				Key.Backquote,
-				Key.Digit1,
-				Key.Digit2,
-				Key.Digit3,
-				Key.Digit4,
-				Key.Digit5,
-				Key.Digit6,
-				Key.Digit7,
-				Key.Digit8,
-				Key.Digit9,
-				Key.Digit0,
-				Key.Minus,
-				Key.Equals,
-				Key.Q,
-				Key.W,
-				Key.E,
-				Key.R,
-				Key.T,
-				Key.Y,
-				Key.U,
-				Key.I,
-				Key.O,
-				Key.P,
-				Key.LeftBracket,
-				Key.RightBracket,
-				Key.Backslash,
-				Key.A,
-				Key.S,
-				Key.D,
-				Key.F,
-				Key.G,
-				Key.H,
-				Key.J,
-				Key.K,
-				Key.L,
-				Key.Semicolon,
-				Key.Quote,
-				Key.Z,
-				Key.X,
-				Key.C,
-				Key.V,
-				Key.B,
-				Key.N,
-				Key.M,
-				Key.Comma,
-				Key.Period,
-				Key.Slash,
-				Key.Space,
+			// all keys used in actual text editing (includes enter 
+			public static readonly HashSet<Key> TextKeys =
+						Alphabetical
+				.Concat(Numerical)
+				.Concat(NumericalNumpad)
+				.Concat(Symbolic)
+				.Concat(new Key[] { 
+						Key.Space,
+						Key.Backspace,
+						Key.Delete,
+						Key.Enter,
+						Key.Tab})
+				.ToHashSet();
 
-				Key.Numpad1,
-				Key.Numpad2,
-				Key.Numpad3,
-				Key.Numpad4,
-				Key.Numpad5,
-				Key.Numpad6,
-				Key.Numpad7,
-				Key.Numpad8,
-				Key.Numpad9,
-				Key.Numpad0
-			};
+			// could also just try to find a key in the keycharmapping dict but whatever
+			public static readonly HashSet<Key> CharacterKeys =
+				Alphabetical
+				.Concat(Numerical)
+				.Concat(NumericalNumpad)
+				.Concat(Symbolic)
+				.Concat(new Key[] { Key.Space })
+				.ToHashSet();
 
 			public static readonly Dictionary<Key, char> KeyCharMapping = new() {
 				{ Key.Backquote,	'`' },
@@ -416,6 +376,49 @@ public class Conatrols : MonoBehaviour {
 				{ Key.Numpad9,		'9'},
 				{ Key.Numpad0,		'0'}
 			};
+
+/* dont have to solve this problem
+			public enum Keys {
+				Escape,
+				F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+				Delete,
+				Backquote,
+				D1, D2, D3, D4, D5, D6, D7, D8, D9, D0,
+				Minus, 
+				Equals, 
+				Backspace,
+				A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+				Tab,
+				CapsLock,
+				Leftbracket, Rightbracket,
+				Backslash,
+				Semicolon,
+				Quote,
+				Enter,
+				Comma,
+				Period,
+				Slash,
+				Shift, Alt, Ctrl, Meta,
+				Contextmenu,
+				Space,
+
+				LeftArrow, RightArrow, UpArrow, DownArrow,
+				
+				PrintScreen,
+				ScrollLock,
+				Pause,
+
+				Insert,
+				Home,
+				PageUp, 
+				End,
+				PageDown, 
+
+				NumLock,
+				NEnter, NDivide, NMultiply, NPlus, NMinus, NPeriod, NEquals,
+				N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,
+			}
+*/
 		}
 	}
 }

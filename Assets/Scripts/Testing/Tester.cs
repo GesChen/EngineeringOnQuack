@@ -36,7 +36,7 @@ public class Tester : MonoBehaviour {
 	}
 
 	private void Update() {
-		if (!Input.GetKey(KeyCode.LeftAlt)) return;
+		if (!(Input.GetKey(KeyCode.LeftControl) && Input.GetKey(KeyCode.LeftShift))) return;
 
 		if (Input.GetKeyDown("w"))
 			Updatetest();

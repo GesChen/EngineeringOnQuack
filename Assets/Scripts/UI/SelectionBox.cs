@@ -12,13 +12,16 @@ public class SelectionBox {
 	public int start;
 	public int end;
 
+	public bool fullLine;
+
 	public RectTransform boxObject;
 
 	public SelectionBox(
 		ScriptEditor se,
 		int line,
 		int sI,
-		int sE) {
+		int sE,
+		bool full) {
 
 		main = se;
 		this.line = line;
@@ -29,6 +32,8 @@ public class SelectionBox {
 			start = sE;
 			end = sI;
 		}
+
+		fullLine = full;
 	}
 
 	public RectTransform Realise(){

@@ -9,7 +9,7 @@ public class Caret {
 	public Vector2Int head;
 	public Vector2Int tail;
 	public int DesiredCol; 
-	public List<SelectionBox> boxes;
+	public List<SelectionBox> boxes; // should always be in up to down order hopefully
 	public bool isHeadCaret;
 
 	static Color headCaretColor		= new(1,1,1,1);
@@ -23,6 +23,7 @@ public class Caret {
 	(Vector2Int head, Vector2Int tail) lastState;
 
 	public bool HasSelection => head != tail;
+	public bool IsSingleWholeLine => boxes.Count == 1 && boxes[0].fullLine;
 
 	public Caret(ScriptEditor se, Vector2Int pos) {
 		main = se;
@@ -48,7 +49,7 @@ public class Caret {
 		ResetBlink();
 		rt = MakeNewCaret();
 
-		//MakeSelectionBoxes();
+		boxes = new(); // it keeps breaking everything man
 	}
 
 	bool PositionCheck(Vector2Int v) =>
@@ -176,32 +177,30 @@ public class Caret {
 
 		if (tail.y == head.y) {
 			// only 1 that goes between them
-			boxes.Add(new(main, head.y, tail.x, head.x));
-		}
-		else
-		if (tail.y < head.y) {
+			boxes.Add(new(main, head.y, tail.x, head.x, false));
+		} else
+		if (tail.y < head.y) { // tail higher
 			// make one that goes from tail to its line end
-			boxes.Add(new(main, tail.y, tail.x, lineChars(tail.y)));
+			boxes.Add(new(main, tail.y, tail.x, lineChars(tail.y), false));
 
 			// make full line ones in between
 			for (int l = tail.y + 1; l < head.y; l++) {
-				boxes.Add(new(main, l, 0, lineChars(l)));
+				boxes.Add(new(main, l, 0, lineChars(l), true));
 			}
 
 			// make last one that goes to head from start on its line
-			boxes.Add(new(main, head.y, 0, head.x));
-		}
-		else {
-			// make one that goes from tail to its start
-			boxes.Add(new(main, tail.y, 0, tail.x));
+			boxes.Add(new(main, head.y, 0, head.x, false));
+		} else { // head higher
+			// make last one that goes to head from end
+			boxes.Add(new(main, head.y, head.x, lineChars(head.y), false));
 
 			// make full line ones in between
-			for (int l = tail.y - 1; l > head.y; l--) {
-				boxes.Add(new(main, l, 0, lineChars(l)));
+			for (int l = head.y + 1; l < tail.y; l++) {
+				boxes.Add(new(main, l, 0, lineChars(l), true));
 			}
 
-			// make last one that goes to head from end
-			boxes.Add(new(main, head.y, head.x, lineChars(head.y)));
+			// make one that goes from tail to its start
+			boxes.Add(new(main, tail.y, 0, tail.x, false));
 		}
 
 		// realise boxes
@@ -217,8 +216,8 @@ public class Caret {
 			boxes[0].Update(tail.y, tail.x, lineChars(tail.y));
 			boxes[^1].Update(head.y, 0, head.x);
 		} else {
-			boxes[0].Update(tail.y, 0, tail.x);
-			boxes[^1].Update(head.y, head.x, lineChars(head.y));
+			boxes[0].Update(head.y, head.x, lineChars(head.y));
+			boxes[^1].Update(tail.y, 0, tail.x);
 		}
 	}
 

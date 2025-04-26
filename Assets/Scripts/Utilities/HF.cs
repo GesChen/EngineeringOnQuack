@@ -141,8 +141,14 @@ public static class HF {
 		return point - dist * planeNormal;
 	}
 
+	/// <summary>
+	/// Replaces section of string with another, chars at start and end index are both replaced too
+	/// </summary>
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
+
+	public static string RemoveSection(string original, int start, int end)
+		=> original.Remove(start, end - start);
 
 	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
 		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);

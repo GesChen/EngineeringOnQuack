@@ -7,6 +7,15 @@ using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Text;
+using UnityEditor;
+using UnityEngine.UIElements;
+// is this too many usings?
+// answer: yea prolly
+
+// look i KNOW its a god class but i literally can NOT figure out
+// how to separate them without making each separate class have to reference 
+// main. for every single use of lines or carets or whatever OK
+// "ill fix it later" 4-23-25 
 
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
@@ -23,6 +32,8 @@ public class ScriptEditor : MonoBehaviour {
 	int headCaretI = 0;
 	int tailCaretI = 0;
 
+	public List<string> Clipboard = new();
+
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
 	public TMP_FontAsset font;
@@ -30,6 +41,7 @@ public class ScriptEditor : MonoBehaviour {
 	public Color selectionColor;
 	public Color test;
 
+	#region Line Classes
 	public class Line {
 		public string Content;
 		public string ProcessedContent;
@@ -47,8 +59,9 @@ public class ScriptEditor : MonoBehaviour {
 		public int Number;
 		public RectTransform Rect;
 	}
+	#endregion
 
-	#region LocalContext
+	#region Context Classes
 	[HideInInspector]
 	// changed to class so maybe each line's localcontext copy will reference the same variable objects
 	public class LCVariable { // it would be inside localcontext if it wasnt so fucking deep
@@ -117,6 +130,7 @@ public class ScriptEditor : MonoBehaviour {
 		testingText.font = font;
 		testingText.fontSize = fontSize;
 		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
+		Destroy(testingText);
 
 		lineNumberWidth = numberSize.x;
 		allLinesHeight = numberSize.y;
@@ -142,6 +156,10 @@ public class ScriptEditor : MonoBehaviour {
 			lineNumbers.Add(newLN);
 		}
 
+		RecalculateAll();
+	}
+
+	void RecalculateAll() {
 		// scale all containers to max width
 		RecalculateLongest();
 		RecalculateCharUVA();
@@ -160,17 +178,14 @@ public class ScriptEditor : MonoBehaviour {
 				Destroy(line.Components.LineContent.gameObject); // line contents
 			}
 		}
+		lines.Clear();
 
 		lineNumbers ??= new();
 		foreach (LineNumber ln in lineNumbers) {
 			if (ln.Rect != null)
 				Destroy(ln.Rect.gameObject);
 		}
-	}
-
-	void GenerateAllLines() {
-
-		
+		lineNumbers.Clear();
 	}
 
 	void RecalculateLongest() {
@@ -220,7 +235,7 @@ public class ScriptEditor : MonoBehaviour {
 			char c = lines[i].Content[l];
 			TtoIndex.Add(pos);
 
-			int charIncrease = c == '\t' ? TabIndexSpaceCount(charPos) : 1;
+			int charIncrease = c == '\t' ? TabIndexToSpaceCount(charPos) : 1;
 			pos += charUVAmount * charIncrease;
 			charPos += charIncrease;
 		}
@@ -300,7 +315,7 @@ public class ScriptEditor : MonoBehaviour {
 		};
 	}
 
-	void UpdateLine(int lineIndex) {
+	void UpdateLine(int lineIndex, bool forceUpdateNextToo = true) {
 		Line line = lines[lineIndex];
 
 		Context context =
@@ -319,12 +334,13 @@ public class ScriptEditor : MonoBehaviour {
 
 		// if the context has changed
 
-		if (!ContextToSignature(context).Equals(preRunSignature)) {
+		if (!ContextToSignature(context).Equals(preRunSignature) ||
+			forceUpdateNextToo) {
 			line.ContextAfterLine = context;
 
 			// then propgoate updates down the lines
 			if (lineIndex != lines.Count - 1)
-				UpdateLine(lineIndex + 1);
+				UpdateLine(lineIndex + 1, false);
 		}
 
 		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
@@ -371,13 +387,13 @@ public class ScriptEditor : MonoBehaviour {
 		return ConvertTabsToSpaces(line.Content);
 	}
 
-	int TabIndexSpaceCount(int i) => HF.Mod(-i - 1, Config.Language.SpacesPerTab) + 1;
+	int TabIndexToSpaceCount(int i) => HF.Mod(-i - 1, Config.Language.SpacesPerTab) + 1;
 	string ConvertTabsToSpaces(string line) {
 		string tabsToSpaces = line;
 		for (int i = 0; i < tabsToSpaces.Length; i++) {
 			char c = tabsToSpaces[i];
 			if (c == '\t') {
-				int num = TabIndexSpaceCount(i);
+				int num = TabIndexToSpaceCount(i);
 				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i, new string(' ', num));
 			}
 		}
@@ -396,7 +412,7 @@ public class ScriptEditor : MonoBehaviour {
 		while (ci < convertedString.Length) { // they should both each their ends at the same time idk
 			reconstructed[oi] = colors[ci];
 			if (originalString[oi] == '\t')
-				ci += TabIndexSpaceCount(ci);
+				ci += TabIndexToSpaceCount(ci);
 			else
 				ci++;
 
@@ -451,8 +467,7 @@ public class ScriptEditor : MonoBehaviour {
 		return newCaret;
 	}
 
-	List<Caret> SetMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
-		ResetCarets();
+	List<Caret> AddMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
 
 		List<Caret> newCarets = new();
 		for (int i = 0; i < positions.Count; i++) {
@@ -474,12 +489,6 @@ public class ScriptEditor : MonoBehaviour {
 	void RemoveCaret(int i) {
 		carets[i].Destroy();
 		carets.RemoveAt(i);
-	}
-
-	void AddMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
-		for (int i = 0; i < positions.Count; i++) {
-			AddNewCaret(positions[i].head, positions[i].tail);
-		}
 	}
 
 	void UpdateCarets() {
@@ -645,6 +654,7 @@ public class ScriptEditor : MonoBehaviour {
 	bool dragStartedWithAlt = false;
 	Vector2Int dragStart;
 	Vector2Int dragStartUnclamped;
+	bool boxCleared = false;
 	void HandleDrag(bool clickedThisFrame, Vector2Int pos, Vector2Int posUnclamped) {
 		if (clickedThisFrame) { // down
 			dragging = true;
@@ -681,9 +691,22 @@ public class ScriptEditor : MonoBehaviour {
 				Conatrols.Keyboard.Modifiers.Ctrl && 
 				!Conatrols.Keyboard.Modifiers.Alt; // dont want during adding
 
-			if (Conatrols.Keyboard.Modifiers.Alt && 
-				!Conatrols.Keyboard.Modifiers.Ctrl) { // otherwise overrides ctrl alt adding news, TODO fix this later idk
-													 // alt dragging
+			bool boxCondition =	// otherwise overrides ctrl alt adding news, TODO fix this later idk
+				Conatrols.Keyboard.Modifiers.Alt && // alt dragging
+				!Conatrols.Keyboard.Modifiers.Ctrl;
+
+			if (!boxCondition && !boxCleared) {
+				// box stop
+				SetSingleCaret(pos, dragStart);
+				headCaretI = 0;
+				tailCaretI = 0;
+
+				boxCleared = true;
+			}
+
+			if (boxCondition) {
+				ResetCarets();
+
 				Vector2Int boxStart =
 					dragStartedWithAlt
 					? dragStartUnclamped
@@ -699,17 +722,19 @@ public class ScriptEditor : MonoBehaviour {
 				if (down)
 					(endLine, startLine) = (startLine, endLine);
 
-				List<(Vector2Int head, Vector2Int tail)> carets = new();
+				List<(Vector2Int head, Vector2Int tail)> newCarets = new();
 				for (int i = startLine; i <= endLine; i++) {
 					Vector2Int head = new(PositionOfColumn(endCol, i), i);
 					Vector2Int tail = new(PositionOfColumn(startCol, i), i);
 
-					carets.Add((head, tail));
+					newCarets.Add((head, tail));
 				}
 
-				SetMultipleCarets(carets);
+				boxCleared = false;
 
-				tailCaretI = carets.Count - 1;
+				AddMultipleCarets(newCarets);
+
+				tailCaretI = newCarets.Count - 1;
 				headCaretI = 0;
 
 				if (!down)
@@ -978,6 +1003,7 @@ public class ScriptEditor : MonoBehaviour {
 	#endregion
 
 	#region Typing Input
+	// aw hell nah i really need to get this into a separate class :((((((((((
 	void HandleTyping() {
 		foreach (Caret c in carets) {
 			HandleCaretTyping(c);
@@ -987,37 +1013,114 @@ public class ScriptEditor : MonoBehaviour {
 	void HandleCaretTyping(Caret c) {
 		if (Conatrols.Keyboard.Presses.Count == 0) return;
 		Line line = lines[c.head.y];
-		string contentBefore = line.Content;
 
-		// handle selection replacement later
+		// has to be a text key pressed (incs backspace etc)
+		if (!Conatrols.Keyboard.Pressed.Any(k => Conatrols.Keyboard.All.TextKeys.Contains(k)))
+			return;
 
-		if (Conatrols.IsUsed(Key.Backspace))
+		// force stop dragging;
+		dragging = false;
+		
+		// deleters
+		if (c.HasSelection)
+			DeleteSelection(c, line);
+
+		else if (Conatrols.IsUsed(Key.Backspace))
 			Backspace(c, line);
+
 		else if (Conatrols.IsUsed(Key.Delete))
 			Delete(c, line);
+
+		// adders
+		if (Conatrols.IsUsed(Key.Enter))
+			Enter(c, line);
+
 		else if (Conatrols.IsUsed(Key.Tab))
 			Tab(c, line);
-		else {
-			string toType = "";
-			foreach (Key k in Conatrols.Keyboard.Presses) {
-				bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
-				if (!keyIsChar) continue;
 
-				if (Conatrols.Keyboard.Modifiers.Shift) {
-					toType += Conatrols.Keyboard.All.KeyShiftedMapping[k];
-				} else {
-					toType += Conatrols.Keyboard.All.KeyCharMapping[k];
-				}
+		else
+			NormallyType(c, line);
+	}
+
+	void DeleteSelection(Caret c, Line line) {
+		// removes the selection. 
+
+		if (c.head.y == c.tail.y) {
+			int start = Mathf.Min(c.head.x, c.tail.x);
+			int end = Mathf.Max(c.head.x, c.tail.x);
+
+			if (start >= line.Content.Length) {
+				PadToIndex(start, c.head.y, line);
+			} else if (end >= line.Content.Length) {
+				line.Content = HF.RemoveSection(line.Content, start, line.Content.Length);
+			} else {
+				line.Content = HF.RemoveSection(line.Content, start, end);
 			}
 
-			if (toType.Length == 0) return;
+			c.head.x = start;
 
-			// type it
-			TypeAt(c, line, toType);
+		} else {
+			var boxes = c.boxes; // this MIGHT just help IDK
+
+			// remove first line end
+			Line sLine = lines[boxes[0].line];
+			sLine.Content = HF.RemoveSection(sLine.Content, boxes[0].start, boxes[0].end);
+
+			// remove last line start 
+			Line eLine = lines[boxes[^1].line];
+			eLine.Content = HF.RemoveSection(eLine.Content, boxes[^1].start, boxes[^1].end);
+
+
+			// put cursor in right place
+			c.SetHead(new(lines[boxes[0].line].Content.Length, boxes[0].line));
+
+			// add end to start
+			lines[boxes[0].line].Content +=
+				lines[boxes[^1].line].Content;
+
+			// delete the floating last line 
+			DeleteLine(boxes[^1].line);
+
+			// delete in between contents 
+			for (int i = boxes.Count - 1; i >= 0; i--) {
+				var box = boxes[i];
+
+				if (box.fullLine) {
+					DeleteLine(box.line);
+				}
+			}
 		}
+
+		UpdateLine(c.head.y);
+
+		c.ResetBlink();
+		c.MatchTail();
+		c.Update();
+	}
+
+	void NormallyType(Caret c, Line line) {
+		string contentBefore = line.Content;
+
+		string toType = "";
+		foreach (Key k in Conatrols.Keyboard.Presses) {
+			bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
+			if (!keyIsChar) continue;
+
+			if (Conatrols.Keyboard.Modifiers.Shift) {
+				toType += Conatrols.Keyboard.All.KeyShiftedMapping[k];
+			} else {
+				toType += Conatrols.Keyboard.All.KeyCharMapping[k];
+			}
+		}
+
+		if (toType.Length == 0) return;
+
+		// type it
+		TypeAt(c, line, toType);
 
 		if (line.Content == contentBefore) return; // dont waste time
 
+		// update
 		UpdateLine(c.head.y);
 
 		c.ResetBlink();
@@ -1030,19 +1133,70 @@ public class ScriptEditor : MonoBehaviour {
 			line.Content = line.Content.Insert(c.head.x, toType);
 			c.head.x += toType.Length;
 		} else {
-			PadToCaret(c, line);
+			PadToIndex(c.head.x, c.head.y, line);
 			line.Content += toType;
 
 			c.head.x = line.Content.Length;
 		}
 	}
 
-	void PadToCaret(Caret c, Line line) {
-		int spacesToAdd = c.head.x - line.Content.Length;
-		line.Content += new string(' ', spacesToAdd);
+	void PadToIndex(int index, int lineNum, Line line) {
+		bool useTabs = false; // TODO: figure this out sometime 
+
+		// actual TODO: figure out this stupid tabs thing? cuz i just cant figure out whats 
+		// wrong with it and spaces work just fine so
+		// im gonna keep using them 
+
+		if (useTabs) {
+			// i had a way smarter thing than this but it kept dying
+			// so i just went dumb
+
+			int col = ColumnOfPosition(new(index, lineNum));
+			int tabs = 0;
+			int pos = line.ProcessedContent.Length;
+			int count = 0;
+			while (pos < col) {
+				count = TabIndexToSpaceCount(pos);
+				pos += count;
+				tabs++;
+			}
+
+			pos -= count;
+			tabs--;
+
+			int extraSpaces = 0;
+			while (pos < col) {
+				pos++;
+				extraSpaces++;
+			}
+
+			line.Content += new string('\t', tabs);
+			line.Content += new string(' ', extraSpaces);
+		} else {
+			int spacesToAdd = index - line.Content.Length;
+			line.Content += new string(' ', spacesToAdd);
+		}
+	}
+
+	void DeleteWholeLine(Caret c) {
+		int num = c.head.y;
+
+		DeleteLine(num);
+		UpdateLine(num - 1);
+
+		c.head.x = 0;
+		c.MatchTail();
+		c.Update();
+
+		return;
 	}
 
 	void Backspace(Caret c, Line line) {
+		if (c.IsSingleWholeLine) {
+			DeleteWholeLine(c);
+			return;
+		}
+
 		if (c.head.x == 0) { // delete line
 			// might switch to a SMARTER SYSTEM if it is needed later
 			// maybe with actual newlines idk
@@ -1052,7 +1206,7 @@ public class ScriptEditor : MonoBehaviour {
 
 			// put the caret
 			c.head.y--;
-			c.head.x = lines[num - 1].Content.Length;
+			c.head.x = lines[c.head.y].Content.Length;
 			c.MatchTail();
 			c.Update(); // force update before the line gets deleted
 			
@@ -1062,14 +1216,14 @@ public class ScriptEditor : MonoBehaviour {
 			// then delete the line
 			DeleteLine(num);
 
-			// before line needs to update
+			// this line needs to update
 			UpdateLine(num - 1);
 
 			return;
 		}
 
 		if (c.head.x >= line.Content.Length)
-			PadToCaret(c, line);
+			PadToIndex(c.head.x, c.head.y, line);
 
 		if (Conatrols.Keyboard.Modifiers.Ctrl) {
 			(int start, int end) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
@@ -1081,19 +1235,39 @@ public class ScriptEditor : MonoBehaviour {
 			line.Content = line.Content.Remove(c.head.x - 1, 1);
 			c.head.x--;
 		}
+
+		// update
+		UpdateLine(c.head.y);
+
+		c.ResetBlink();
+		c.MatchTail();
+		c.Update();
 	}
 
 	void Delete(Caret c, Line line) {
+		if (c.IsSingleWholeLine) {
+			DeleteWholeLine(c);
+			return;
+		}
+
 		if (c.head.x >= line.Content.Length) { // delete line
 
 			int num = c.head.y;
 			if (num == lines.Count - 1) return;
+
+			// pad to the caret since it might be past
+			PadToIndex(c.head.x, c.head.y, line);
 
 			// append prev line onto this
 			line.Content += lines[num + 1].Content;
 
 			// then delete the next line
 			DeleteLine(num + 1);
+
+			// update
+			UpdateLine(c.head.y);
+			c.ResetBlink();
+
 			return;
 		}
 
@@ -1105,6 +1279,63 @@ public class ScriptEditor : MonoBehaviour {
 		} else {
 			line.Content = line.Content.Remove(c.head.x, 1);
 		}
+
+		// update
+		UpdateLine(c.head.y);
+		c.ResetBlink();
+	}
+
+	void Enter(Caret c, Line line) {
+		bool splitText = true;
+		bool addDownwards = true;
+
+		if (Conatrols.Keyboard.Modifiers.Ctrl &&
+			Conatrols.Keyboard.Modifiers.Shift) {
+			splitText = true;
+			addDownwards = false;
+		} else
+		if (Conatrols.Keyboard.Modifiers.Ctrl) {
+			splitText = false;
+			addDownwards = false;
+		} else
+		if (Conatrols.Keyboard.Modifiers.Shift) {
+			splitText = false;
+			addDownwards = true;
+		}
+
+		// determine end contents and split
+		string endContents = "";
+		if (splitText) {
+			if (c.head.x >= line.Content.Length) {
+				PadToIndex(c.head.x, c.head.y, line);
+			} else {
+				endContents = line.Content[c.head.x..];
+				line.Content = line.Content[..c.head.x];
+			}
+			UpdateLine(c.head.y);
+		}
+
+		Line newLine = GenerateNewLine(endContents); // match indentation later;
+
+		// place cursor
+		if (addDownwards) c.head.y++;
+		c.head.x = newLine.Content.Length - endContents.Length;
+
+		// set the indexes
+		lines.Insert(c.head.y, newLine);
+		newLine.Components.LineContent.transform.SetSiblingIndex(c.head.y);
+
+		// add ln
+		LineNumber newLN = GenerateNewNumber(lines.Count);
+		lineNumbers.Add(newLN);
+
+		UpdateLine(c.head.y);
+
+		RecalculateAll();
+
+		c.ResetBlink();
+		c.MatchTail();
+		c.Update();
 	}
 
 	void Tab(Caret c, Line line) {
@@ -1121,6 +1352,13 @@ public class ScriptEditor : MonoBehaviour {
 			// normal add tab
 			TypeAt(c, line, "\t");
 		}
+
+		// update
+		UpdateLine(c.head.y);
+
+		c.ResetBlink();
+		c.MatchTail();
+		c.Update();
 	}
 
 	#endregion
@@ -1143,7 +1381,7 @@ public class ScriptEditor : MonoBehaviour {
 		
 		int col = 0;
 		for (int i = 0; i < pos.x; i++) {
-			if (line[i] == '\t') col += TabIndexSpaceCount(col);
+			if (line[i] == '\t') col += TabIndexToSpaceCount(col);
 			else col++;
 		}
 		return col;
@@ -1153,7 +1391,7 @@ public class ScriptEditor : MonoBehaviour {
 		string line = lines[pos.y].Content;
 		int col = 0;
 		foreach (char c in line) {
-			if (c == '\t') col += TabIndexSpaceCount(col);
+			if (c == '\t') col += TabIndexToSpaceCount(col);
 			else col++; 
 		}
 
@@ -1169,7 +1407,7 @@ public class ScriptEditor : MonoBehaviour {
 		int testCol = 0;
 		while (pos < content.Length) {
 			if (content[pos] == '\t') {
-				testCol += TabIndexSpaceCount(testCol);
+				testCol += TabIndexToSpaceCount(testCol);
 			} else {
 				testCol++;
 			}
@@ -1186,6 +1424,9 @@ public class ScriptEditor : MonoBehaviour {
 		return pos;
 	}
 
+	public (int tabs, int spaces) IndentToPos(int startIndex, int endIndex) {
+		return (0, 0);
+	}
 	#endregion
 	
 	void DebugLines() {
@@ -1194,6 +1435,29 @@ public class ScriptEditor : MonoBehaviour {
 			Line line = lines[i];
 			sb.Append($"Line {i} real {line.Realised} __ {line.ProcessedContent}\n");
 		}
-		print(sb.ToString());
+		print(sb.ToString()); // In this economy??? 
 	}
+
+	#region Clipboard
+
+	List<string> clipboard = new();
+	void Copy() {
+		
+	}
+	void Cut() {
+
+	}
+	void Paste() {
+
+	}
+	
+	#endregion
+
+	#region Exposed
+
+	public void C_Copy() { Copy(); }
+	public void C_Cut() { Cut(); }
+	public void C_Paste() { Paste(); }
+
+	#endregion
 }
