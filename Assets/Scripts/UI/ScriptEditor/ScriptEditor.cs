@@ -8,7 +8,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Text;
 using UnityEditor;
-using UnityEngine.UIElements;
 // is this too many usings?
 // answer: yea prolly
 
@@ -598,10 +597,10 @@ public class ScriptEditor : MonoBehaviour {
 	#region Mouse Input
 
 	void HandleMouseNavigation() {
-		bool clickedThisFrame = Conatrols.IM.Mouse.Left.WasPressedThisFrame();
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
 		if (!mousePos.HasValue) return;
 
+		bool clickedThisFrame = Conatrols.IM.Mouse.Left.WasPressedThisFrame();
 		DetectExtraClicks(clickedThisFrame, mousePos.Value);
 		HandleDrag(clickedThisFrame, ClampPosition(mousePos.Value), mousePos.Value);
 	}
@@ -659,8 +658,7 @@ public class ScriptEditor : MonoBehaviour {
 			left--;
 
 		// honestly idk either its just made to work
-		if (left < 0 || 
-			left != 0 && chartype(line[left]) != findCharType) left++;
+		if (left < 0 || chartype(line[left]) != findCharType) left++;
 
 		int right = pos.x;
 		while (right < colors.Length &&
@@ -819,31 +817,31 @@ public class ScriptEditor : MonoBehaviour {
 
 	// returns in char space
 	Vector2Int? CurrentMouseHoverUnclamped() {
-		(int line, int hoverIndex) = FindLineHoveringOver();
-		if (hoverIndex == -1) return null;
+		int line = FindLineHoveringOver();
+		if (line == -1) return null;
 
-		int index = GetCharIndexAtWorldSpacePositionUnclamped(line, hoverIndex);
+		int index = GetCharIndexAtWorldSpacePositionUnclamped(line);
 		if (index == -1) return null;
 
 		return new(index, line);
 	}
 
-	(int lineIndex, int hoverIndex) FindLineHoveringOver() {
-		if (lines == null || lines[0].Components.LineContent == null) return (-1, -1);
+	int FindLineHoveringOver() {
+		if (lines == null || lines[0].Components.LineContent == null) return -1;
 
 		for (int i = 0; i < lines.Count; i++) {
 			RectTransform contents = lines[i].Components.LineContent;
-			int index = UIHovers.hovers.IndexOf(contents);
-			if (index != -1) return (i, index);
+			if (UIHovers.CheckStrictlyFirst(contents)) 
+				return i;
 		}
-		return (-1, -1);
+		return -1;
 	}
 	
 	// long ass name
-	int GetCharIndexAtWorldSpacePositionUnclamped(int line, int hoverIndex) {
+	int GetCharIndexAtWorldSpacePositionUnclamped(int line) {
 
 		// not sure why this happens but it just does idk
-		if (hoverIndex >= UIHovers.results.Count)
+		if (!UIHovers.CheckStrictlyFirst(lines[line].Components.LineContent))
 			return -1;
 
 		RectTransform rt = lines[line].Components.LineContent;
@@ -851,7 +849,7 @@ public class ScriptEditor : MonoBehaviour {
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
 
-		RaycastResult result = UIHovers.results[hoverIndex];
+		RaycastResult result = UIHovers.results[0];
 
 		Vector2? uv = HF.UVOfHover(result);
 		if (!uv.HasValue) return -1;
@@ -1069,14 +1067,20 @@ public class ScriptEditor : MonoBehaviour {
 	void DeleteSelection(Caret c, Line line) {
 		// removes the selection. 
 
+		if (c.IsSingleWholeLine) {
+			DeleteWholeLine(c);
+			return;
+		} else
 		if (c.head.y == c.tail.y) {
+
+
 			int start = Mathf.Min(c.head.x, c.tail.x);
 			int end = Mathf.Max(c.head.x, c.tail.x);
 
 			if (start >= line.Content.Length) {
 				//PadToIndex(start, c.head.y, line);
 				// ok so this is kinda useless and breaks shitfuck everything. lets not use it? maybe?
-				
+
 				// js set the position and match gng :(
 				c.head.x = start;
 				c.MatchTail();
@@ -1133,6 +1137,10 @@ public class ScriptEditor : MonoBehaviour {
 	void NormallyType(Caret c, Line line) {
 		string contentBefore = line.Content;
 
+		// no ctrl or alt!! commands... and and idk
+		if (Conatrols.Keyboard.Modifiers.Ctrl ||
+			Conatrols.Keyboard.Modifiers.Alt) return;
+
 		string toType = "";
 		foreach (Key k in Conatrols.Keyboard.Presses) {
 			bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
@@ -1180,13 +1188,9 @@ public class ScriptEditor : MonoBehaviour {
 		// im gonna keep using them 
 
 		if (useTabs) {
-			// i had a way smarter thing than this but it kept dying
-			// so i just went dumb
+			string extraIndent = IndentToPosString(line.Content.Length, index, lineNum);
 
-			(int tabs, int extraSpaces) = IndentToPos(line.Content.Length, index, lineNum);
-
-			line.Content += new string('\t', tabs);
-			line.Content += new string(' ', extraSpaces);
+			line.Content += extraIndent;
 		} else {
 			int spacesToAdd = index - line.Content.Length;
 			line.Content += new string(' ', spacesToAdd);
@@ -1196,10 +1200,15 @@ public class ScriptEditor : MonoBehaviour {
 	void DeleteWholeLine(Caret c) {
 		int num = c.head.y;
 
+		c.head.y++;
+		c.Update();
+
 		DeleteLine(num);
 		UpdateLine(num - 1);
 
+		c.head.y--;
 		c.head.x = 0;
+		c.ResetBlink();
 		c.MatchTail();
 		c.Update();
 
@@ -1207,11 +1216,6 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Backspace(Caret c, Line line) {
-		if (c.IsSingleWholeLine) {
-			DeleteWholeLine(c);
-			return;
-		}
-
 		if (c.head.x == 0) { // delete line
 			// might switch to a SMARTER SYSTEM if it is needed later
 			// maybe with actual newlines idk
@@ -1260,11 +1264,6 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Delete(Caret c, Line line) {
-		if (c.IsSingleWholeLine) {
-			DeleteWholeLine(c);
-			return;
-		}
-
 		if (c.head.x >= line.Content.Length) { // delete line
 
 			int num = c.head.y;
@@ -1330,11 +1329,19 @@ public class ScriptEditor : MonoBehaviour {
 			UpdateLine(c.head.y);
 		}
 
-		Line newLine = GenerateNewLine(endContents); // match indentation later;
+		endContents = endContents.TrimStart(); // no spaces before
+
+		// match indent (uugh have to add smart block indents and stuff later with if and whatevnlksghlfk;sjg
+		int indentSpaces = IndentSpacesOfLine(line);
+		//print($"FUCK YOU {indentSpaces}");
+		string startIndent = IndentToColumnString(0, indentSpaces, c.head.y + 1);
+		endContents = endContents.Insert(0, startIndent);
+
+		Line newLine = GenerateNewLine(endContents); 
 
 		// place cursor
 		if (addDownwards) c.head.y++;
-		c.head.x = newLine.Content.Length - endContents.Length;
+		c.head.x = newLine.Content.Length - endContents.Length + startIndent.Length;
 
 		// set the indexes
 		lines.Insert(c.head.y, newLine);
@@ -1439,9 +1446,30 @@ public class ScriptEditor : MonoBehaviour {
 		return pos;
 	}
 
-	public (int tabs, int spaces) IndentToPos(int startIndex, int endIndex, int line) {
+	public int IndentSpacesOfLine(Line line) {
+		int pos = 0;
+		int i = 0;
+		while (i < line.Content.Length) {
+			char c = line.Content[i];
+			if (!char.IsWhiteSpace(c)) break;
+			pos += c switch {
+				'\t' => TabIndexToSpaceCount(pos),
+				_ => 1
+			};
+			i++;
+		}
+		return pos;
+	}
+
+	public (int tabs, int spaces) IndentToPosCharsCount(int startIndex, int endIndex, int line) {
 		int startCol = ColumnOfPosition(new(startIndex, line));
 		int endCol = ColumnOfPosition(new(endIndex, line));
+
+		return IndentToPosColumn(startCol, endCol, line);
+	}
+
+	public (int tabs, int spaces) IndentToPosColumn(int startCol, int endCol, int line) {
+		//print($"s {startCol} e {endCol}");
 
 		int tabs = 0;
 		int pos = startCol;
@@ -1455,12 +1483,29 @@ public class ScriptEditor : MonoBehaviour {
 			tabs++;
 		}
 
+
 		int extraSpaces = endCol - pos;
+		// im so tired of this fuckking method
+		if (extraSpaces == Config.Language.SpacesPerTab) {
+			extraSpaces = 0;
+			tabs++;
+		}
+
+		//print($"t {tabs} p {pos} e {extraSpaces}");
 
 		return (tabs, extraSpaces);
 	}
+
+	public string IndentToPosString(int startIndex, int endIndex, int line) {
+		(int tabs, int spaces) = IndentToPosCharsCount(startIndex, endIndex, line);
+		return new string('\t', tabs) + new string(' ', spaces);
+	}
+	public string IndentToColumnString(int startCol, int endCol, int line) {
+		(int tabs, int spaces) = IndentToPosColumn(startCol, endCol, line);
+		return new string('\t', tabs) + new string(' ', spaces);
+	}
 	#endregion
-	
+
 	void DebugLines() {
 		StringBuilder sb = new();
 		for (int i = 0; i < lines.Count; i++) {
@@ -1474,7 +1519,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	List<string> clipboard = new();
 	void Copy() {
-		
+		print("copying");
 	}
 	void Cut() {
 

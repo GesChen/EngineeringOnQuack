@@ -5,8 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIHovers : MonoBehaviour
-{
+public class UIHovers : MonoBehaviour {
 	#region singleton
 	private static UIHovers _instance;
 	public static UIHovers Instance { get { return _instance; } }
@@ -15,8 +14,7 @@ public class UIHovers : MonoBehaviour
 	void UpdateSingleton() {
 		if (_instance != null && _instance != this) {
 			Destroy(this);
-		}
-		else {
+		} else {
 			_instance = this;
 		}
 	}
@@ -31,12 +29,29 @@ public class UIHovers : MonoBehaviour
 	private PointerEventData pointerEventData;
 	private EventSystem eventSystem;
 
-	public static bool Check(Transform t) {
-
+	public static bool CheckIgnoreOrder(Transform t) {
 		return hovers.Contains(t);
 	}
-	public static bool Check(RectTransform rt) {
-		return Check(rt.transform);
+
+	public static bool CheckStrictlyFirst(Transform t) {
+		if (hovers.Count == 0) return false;
+
+		return hovers[0] == t;
+	}
+
+	// thx chatgpt i was too lazy to do this myself
+	public static bool CheckFirstAllowing(Transform t, params Transform[] allowedInFront) {
+		if (hovers.Count == 0) return false;
+
+		foreach (var hover in hovers) {
+			if (hover == t)
+				return true;
+
+			if (!allowedInFront.Any(t => hover.IsChildOf(t)))
+				return false;
+		}
+
+		return false; // t wasn't found at all
 	}
 
 	void Start() {
@@ -60,6 +75,8 @@ public class UIHovers : MonoBehaviour
 
 		if (results.Count > 0) {
 			hovers = results.Select(r => r.gameObject.transform).ToList();
+		} else {
+			hovers.Clear();
 		}
 	}
 }

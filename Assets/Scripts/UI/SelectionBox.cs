@@ -12,7 +12,7 @@ public class SelectionBox {
 	public int start;
 	public int end;
 
-	public bool fullLine;
+	public bool fullLine => start == 0 && end == main.lines[line].Content.Length;
 
 	public RectTransform boxObject;
 
@@ -20,8 +20,7 @@ public class SelectionBox {
 		ScriptEditor se,
 		int line,
 		int sI,
-		int sE,
-		bool full) {
+		int sE) {
 
 		main = se;
 		this.line = line;
@@ -32,8 +31,6 @@ public class SelectionBox {
 			start = sE;
 			end = sI;
 		}
-
-		fullLine = full;
 	}
 
 	public RectTransform Realise(){

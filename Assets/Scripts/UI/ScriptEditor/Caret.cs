@@ -8,12 +8,12 @@ public class Caret {
 
 	public Vector2Int head;
 	public Vector2Int tail;
-	public int DesiredCol; 
+	public int DesiredCol;
 	public List<SelectionBox> boxes; // should always be in up to down order hopefully
 	public bool isHeadCaret;
 
-	static Color headCaretColor		= new(1,1,1,1);
-	static Color nonHeadCaretColor	= new(.6f,.6f,.6f,1);
+	static Color headCaretColor = new(1, 1, 1, 1);
+	static Color nonHeadCaretColor = new(.6f, .6f, .6f, 1);
 
 	public float tempwidth = 2;
 
@@ -143,7 +143,7 @@ public class Caret {
 	}
 
 	public void Update() {
-		RenderCaret();
+		RenderCaret();	
 		HandleSelections();
 	}
 
@@ -177,30 +177,30 @@ public class Caret {
 
 		if (tail.y == head.y) {
 			// only 1 that goes between them
-			boxes.Add(new(main, head.y, tail.x, head.x, false));
+			boxes.Add(new(main, head.y, tail.x, head.x));
 		} else
 		if (tail.y < head.y) { // tail higher
 			// make one that goes from tail to its line end
-			boxes.Add(new(main, tail.y, tail.x, lineChars(tail.y), false));
+			boxes.Add(new(main, tail.y, tail.x, lineChars(tail.y)));
 
 			// make full line ones in between
 			for (int l = tail.y + 1; l < head.y; l++) {
-				boxes.Add(new(main, l, 0, lineChars(l), true));
+				boxes.Add(new(main, l, 0, lineChars(l)));
 			}
 
 			// make last one that goes to head from start on its line
-			boxes.Add(new(main, head.y, 0, head.x, false));
+			boxes.Add(new(main, head.y, 0, head.x));
 		} else { // head higher
 			// make last one that goes to head from end
-			boxes.Add(new(main, head.y, head.x, lineChars(head.y), false));
+			boxes.Add(new(main, head.y, head.x, lineChars(head.y)));
 
 			// make full line ones in between
 			for (int l = head.y + 1; l < tail.y; l++) {
-				boxes.Add(new(main, l, 0, lineChars(l), true));
+				boxes.Add(new(main, l, 0, lineChars(l)));
 			}
 
 			// make one that goes from tail to its start
-			boxes.Add(new(main, tail.y, 0, tail.x, false));
+			boxes.Add(new(main, tail.y, 0, tail.x));
 		}
 
 		// realise boxes
@@ -223,6 +223,8 @@ public class Caret {
 
 	void RenderCaret() {
 		(RectTransform RT, float t) = main.GetLocation(head);
+
+		if (!image.enabled) Debug.LogWarning("cursor image is disabled agian iditio");
 
 		rt.SetParent(RT);
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 

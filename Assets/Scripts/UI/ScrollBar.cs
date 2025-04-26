@@ -8,6 +8,8 @@ public class ScrollBar : MonoBehaviour {
 	public Directions Direction;
 	public RectTransform Background;
 	public RectTransform BarObject;
+	public RectTransform OptionalOtherBar;
+
 	Image barImage;
 	Color barOriginalColor;
 	RectTransform thisRect;
@@ -16,7 +18,7 @@ public class ScrollBar : MonoBehaviour {
 	static Color pressedTint = new(1, 1, 1, .5f);
 
 	float totalLength;
-	[HideInInspector] public float currentPercent;
+	[HideInNormalInspector] public float currentPercent;
 	float currentScale;
 	bool currentInversion;
 
@@ -26,47 +28,20 @@ public class ScrollBar : MonoBehaviour {
 		barOriginalColor = barImage.color;
 	}
 
-	public void UpdateBar(float percent, float scale, bool invert) {
-		currentPercent = percent;
-		currentScale = scale;
-		currentInversion = invert;
-
-		bool tooBig = scale > 1;
-		Background.gameObject.SetActive(!tooBig);
-		BarObject.gameObject.SetActive(!tooBig);
-		if (tooBig) return;
-
-		totalLength =
-			Direction == Directions.Horizontal ?
-				thisRect.rect.width :
-				thisRect.rect.height;
-
-		if (invert) percent = 1 - percent;
-		float barLength = totalLength * scale;
-		float t = percent * (totalLength - barLength);
-
-		float t1 = totalLength - t - barLength;
-		float t2 = -t;
-
-		//yBarParent.sizeDelta = new(barSize, yBarParent.sizeDelta.y); // for script width control
-		if (Direction == Directions.Horizontal) {
-			BarObject.offsetMin = new(t1, BarObject.offsetMin.y);
-			BarObject.offsetMax = new(t2, BarObject.offsetMax.y);
-		} else {
-			BarObject.offsetMin = new(BarObject.offsetMin.x, t1);
-			BarObject.offsetMax = new(BarObject.offsetMax.x, t2);
-		}
-	}
-
 	bool lastHovered;
 	bool lastPressed;
-	[HideInInspector] public bool dragging;
+	[HideInNormalInspector] public bool dragging;
 	
 	float dragStartBackT;
 	float dragStartPercent;
 
 	void Update() {
-		bool hovered = UIHovers.hovers.Contains(BarObject);
+		bool hovered;
+		if (OptionalOtherBar)
+			hovered = UIHovers.CheckFirstAllowing(BarObject, OptionalOtherBar);
+		else
+			hovered = UIHovers.CheckFirstAllowing(BarObject);
+
 		bool pressed = Conatrols.IM.Mouse.Left.IsPressed();
 
 		Color tint = new(0, 0, 0, 0);
@@ -102,6 +77,38 @@ public class ScrollBar : MonoBehaviour {
 
 		lastHovered = hovered;
 		lastPressed = pressed;
+	}
+
+	public void UpdateBar(float percent, float scale, bool invert) {
+		currentPercent = percent;
+		currentScale = scale;
+		currentInversion = invert;
+
+		bool tooBig = scale > 1;
+		Background.gameObject.SetActive(!tooBig);
+		BarObject.gameObject.SetActive(!tooBig);
+		if (tooBig) return;
+
+		totalLength =
+			Direction == Directions.Horizontal ?
+				thisRect.rect.width :
+				thisRect.rect.height;
+
+		if (invert) percent = 1 - percent;
+		float barLength = totalLength * scale;
+		float t = percent * (totalLength - barLength);
+
+		float t1 = totalLength - t - barLength;
+		float t2 = -t;
+
+		//yBarParent.sizeDelta = new(barSize, yBarParent.sizeDelta.y); // for script width control
+		if (Direction == Directions.Horizontal) {
+			BarObject.offsetMin = new(t1, BarObject.offsetMin.y);
+			BarObject.offsetMax = new(t2, BarObject.offsetMax.y);
+		} else {
+			BarObject.offsetMin = new(BarObject.offsetMin.x, t1);
+			BarObject.offsetMax = new(BarObject.offsetMax.x, t2);
+		}
 	}
 
 	float BarT() {
