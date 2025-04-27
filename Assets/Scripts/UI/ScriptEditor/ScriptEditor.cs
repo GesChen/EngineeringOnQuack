@@ -600,16 +600,15 @@ public class ScriptEditor : MonoBehaviour {
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
 		if (!mousePos.HasValue) return;
 
-		bool clickedThisFrame = Conatrols.IM.Mouse.Left.WasPressedThisFrame();
-		DetectExtraClicks(clickedThisFrame, mousePos.Value);
-		HandleDrag(clickedThisFrame, ClampPosition(mousePos.Value), mousePos.Value);
+		DetectExtraClicks(mousePos.Value);
+		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
 	}
 
 	float lastClickTime;
 	Vector2Int lastClickPos;
 	int clicksInARow = 0;
-	void DetectExtraClicks(bool clickedThisFrame, Vector2Int pos) {
-		if (clickedThisFrame) {
+	void DetectExtraClicks(Vector2Int pos) {
+		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
 			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000 &&
 			lastClickPos == pos) {
 				clicksInARow++;
@@ -675,8 +674,8 @@ public class ScriptEditor : MonoBehaviour {
 	Vector2Int dragStart;
 	Vector2Int dragStartUnclamped;
 	bool boxCleared = false;
-	void HandleDrag(bool clickedThisFrame, Vector2Int pos, Vector2Int posUnclamped) {
-		if (clickedThisFrame) { // down
+	void HandleDrag(Vector2Int pos, Vector2Int posUnclamped) {
+		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) { // down
 			dragging = true;
 
 			if (!Conatrols.Keyboard.Modifiers.Shift) {
@@ -700,7 +699,6 @@ public class ScriptEditor : MonoBehaviour {
 		if (Conatrols.IM.Mouse.Left.WasReleasedThisFrame()) {
 			dragging = false;
 		}
-
 		if (dragging) {
 			if (Conatrols.Keyboard.Modifiers.Ctrl &&
 				Conatrols.Keyboard.Modifiers.Shift &&
@@ -831,7 +829,8 @@ public class ScriptEditor : MonoBehaviour {
 
 		for (int i = 0; i < lines.Count; i++) {
 			RectTransform contents = lines[i].Components.LineContent;
-			if (UIHovers.CheckStrictlyFirst(contents)) 
+			//if (UIHovers.CheckFirstAllowing(contents, lineContentVerticalLayout.transform)) 
+			if (UIHovers.CheckIgnoreOrder(contents)) 
 				return i;
 		}
 		return -1;
@@ -841,7 +840,8 @@ public class ScriptEditor : MonoBehaviour {
 	int GetCharIndexAtWorldSpacePositionUnclamped(int line) {
 
 		// not sure why this happens but it just does idk
-		if (!UIHovers.CheckStrictlyFirst(lines[line].Components.LineContent))
+		//if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, lineContentVerticalLayout.transform))
+		if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
 			return -1;
 
 		RectTransform rt = lines[line].Components.LineContent;
@@ -849,7 +849,9 @@ public class ScriptEditor : MonoBehaviour {
 		Vector3[] corners = new Vector3[4];
 		rt.GetWorldCorners(corners);
 
-		RaycastResult result = UIHovers.results[0];
+		int contentsIndex = UIHovers.hovers.IndexOf(rt);
+
+		RaycastResult result = UIHovers.results[contentsIndex];
 
 		Vector2? uv = HF.UVOfHover(result);
 		if (!uv.HasValue) return -1;
@@ -905,7 +907,14 @@ public class ScriptEditor : MonoBehaviour {
 				Conatrols.Keyboard.Modifiers.Alt)
 				continue; // do nothing with all 3
 
-			c.MoveHead(movement);
+			// this logic is sooooo fucked
+
+			if (Conatrols.Keyboard.Modifiers.Alt && 
+				!Conatrols.Keyboard.Modifiers.Ctrl) {
+				AltMove(c, movement);
+			} else {
+				c.MoveHead(movement);
+			}
 
 			if (Conatrols.Keyboard.Modifiers.Ctrl) {
 				(int start, int end) = DoubleClickWordAt(new(
@@ -916,8 +925,24 @@ public class ScriptEditor : MonoBehaviour {
 					movement.x > 0 
 					? end 
 					: start, c.head.y));
-			} else // ctrl overrides alt 
-			if (Conatrols.Keyboard.Modifiers.Alt) {
+			}
+			
+
+			if (!Conatrols.Keyboard.Modifiers.Shift &&
+				!Conatrols.Keyboard.Modifiers.Alt) {
+				c.MatchTail();
+			}
+
+			c.Update();
+			c.ResetBlink();
+		}
+	}
+
+	void AltMove(Caret c, Vector2Int movement) {
+		if (movement.x != 0) {
+			if (c.HasSelection) {
+				HorizontalMoveSelection(c, movement);
+			} else {
 				int pos =
 					movement.x > 0
 					? lines[c.head.y].Content.Length // end if right
@@ -925,13 +950,86 @@ public class ScriptEditor : MonoBehaviour {
 
 				c.SetHead(new(pos, c.head.y));
 			}
+		}
 
-			if (!Conatrols.Keyboard.Modifiers.Shift) {
-				c.MatchTail();
+		if (movement.y != 0) {
+
+		}
+	}
+
+	void HorizontalMoveSelection(Caret c, Vector2Int movement) {
+
+
+		// move left and right
+		// make it go between lines if you really wanna deal with those bugs
+
+		// im doing this a dumb way, more bugs. but . idk im lazy
+
+		bool forward = movement.x > 0;
+		int shift = forward ? 1 : -1; // add ctrl and whatever other bullshit later
+
+		if (c.head.y == c.tail.y) {
+			Line thisLine = lines[c.head.y];
+
+			int minX = Mathf.Min(c.head.x, c.tail.x);
+			int maxX = Mathf.Max(c.head.x, c.tail.x);
+
+			// stop at ends 
+			if ((movement.x > 0 && c.head.y == lines.Count - 1 && maxX >= thisLine.Content.Length - 1) ||
+				(movement.x < 0 && c.head.y == 0 && minX <= 0))
+				return;
+
+			(string shiftedString, bool overflows, string overRegion) =
+				HF.ShiftRegion(thisLine.Content, minX, maxX - 1, shift);
+
+			thisLine.Content = shiftedString;
+			UpdateLine(c.head.y);
+
+			bool tailBehind = c.tail.x < c.head.x;
+
+			// yeah fuck never nesting we stacking nests to the ceiling rn
+			// honestly im too lazy to make the code look good rn
+			// sooo easily dryable tho
+			if (overflows) {
+				if (forward) {
+					Line nextLine = lines[c.head.y + 1];
+					nextLine.Content = nextLine.Content.Insert(0, overRegion);
+					UpdateLine(c.head.y + 1);
+
+					if (tailBehind) {
+						c.head.x = overRegion.Length;
+						c.head.y++;
+
+						c.tail.x += shift;
+					} else {
+						c.tail.x = 1;
+						c.tail.y++;
+
+						c.head.x += shift;
+					}
+				} else {
+					Line prevLine = lines[c.head.y - 1];
+					prevLine.Content += overRegion;
+					UpdateLine(c.head.y - 1);
+
+					if (tailBehind) {
+						c.tail.x = prevLine.Content.Length - overRegion.Length;
+						c.tail.y--;
+
+						c.head.x += shift;
+					} else {
+						c.head.x = prevLine.Content.Length - overRegion.Length;
+						c.head.y--;
+
+						c.tail.x += shift;
+					}
+				}
+			} else {
+				c.head.x += shift;
+				c.tail.x += shift;
 			}
+		} else {
 
-			c.Update();
-			c.ResetBlink();
 		}
 	}
 
@@ -1024,7 +1122,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	#endregion
 
-	#region Typing Input
+	#region Text Editing
 	// aw hell nah i really need to get this into a separate class :((((((((((
 	void HandleTyping() {
 		foreach (Caret c in carets) {
@@ -1382,7 +1480,6 @@ public class ScriptEditor : MonoBehaviour {
 		c.MatchTail();
 		c.Update();
 	}
-
 	#endregion
 
 	#region Position Utils

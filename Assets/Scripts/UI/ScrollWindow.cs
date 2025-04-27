@@ -53,7 +53,7 @@ public class ScrollWindow : MonoBehaviour {
 	}
 
 	bool CheckMouse() {
-		return UIHovers.CheckStrictlyFirst(transform);
+		return UIHovers.CheckFirstAllowing(transform, transform);
 	}
 
 	void HandleInput() {

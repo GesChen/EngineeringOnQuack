@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Microsoft.Win32;
 
 public static class HF {
 	#region Base Class Extensions
@@ -336,4 +337,110 @@ public static class HF {
 	public static float CrossProductSign(Vector3 p1, Vector3 p2, Vector3 p3) {
 		return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
 	}
+
+	public static (string moved, bool overflows, string ofString) ShiftRegion
+		(string orig, int startInc, int endInc, int shift) {
+
+		if (string.IsNullOrEmpty(orig)) return (orig, false, null);
+		if (shift == 0 || startInc < 0 || endInc >= orig.Length || startInc > endInc) return (orig, false, null);
+
+		string moveRegion = orig[startInc..(endInc + 1)];
+		int regionLen = moveRegion.Length;
+
+		int movedStart = startInc + shift;
+		int movedEnd = endInc + shift;
+
+		string origWithoutRegion = orig[..startInc] + orig[(endInc + 1)..];
+
+		string overRegion = null;
+		bool overflows = false;
+
+		if (movedStart < 0) {
+			if (movedEnd < 0)
+				return (origWithoutRegion, true, moveRegion);
+
+			overflows = true;
+
+			int overAmount = -movedStart;
+
+			overRegion = moveRegion[..overAmount];
+			moveRegion = moveRegion[overAmount..];
+
+			movedStart = 0;
+		} else
+		if (movedEnd >= orig.Length) {
+			if (movedStart >= orig.Length)
+				return (origWithoutRegion, true, moveRegion);
+
+			overflows = true;
+
+			int overAmount = movedEnd - (orig.Length - 1);
+
+			overRegion = moveRegion[(regionLen - overAmount)..];
+			moveRegion = moveRegion[..(regionLen - overAmount)];
+
+			movedEnd = orig.Length - 1;
+		}
+
+		string shiftedString;
+
+		if (shift > 0) {
+			string beforeMovedRegion = orig[..startInc];
+			string shiftedRegion = orig[(endInc + 1)..(movedEnd + 1)];
+			string afterMovedRegion = orig[(movedEnd + 1)..];
+
+			shiftedString = beforeMovedRegion + shiftedRegion + moveRegion + afterMovedRegion;
+		} else {
+			string beforeMovedRegion = orig[..movedStart];
+			string shiftedRegion = orig[movedStart..startInc];
+			string afterMovedRegion = orig[(endInc + 1)..];
+
+			shiftedString = beforeMovedRegion + moveRegion + shiftedRegion + afterMovedRegion;
+		}
+
+
+		return (shiftedString, overflows, overRegion);
+	}
+
+
+	// chatgpt cant code for shit
+	static (string moved, bool overflows, string ofString) BSShiftRegion(string orig, int startInc, int endInc, int shift) {
+		if (string.IsNullOrEmpty(orig)) return (orig, false, null);
+		if (startInc < 0 || endInc >= orig.Length || startInc > endInc) return (orig, false, null);
+
+		string region = orig.Substring(startInc, endInc - startInc + 1);
+		string before = orig[..startInc];
+		string after = orig[(endInc + 1)..];
+		string withoutRegion = before + after;
+
+		int insertAt = startInc + shift;
+
+		// Default: no characters fall off
+		string overflowRegion = null;
+		bool overflows = false;
+
+		// Determine which part of the region can actually fit
+		int newStart = insertAt;
+		int newEnd = insertAt + region.Length - 1;
+
+		int truncateLeft = Math.Max(0, -newStart);
+		int truncateRight = Math.Max(0, newEnd - withoutRegion.Length + 1);
+
+		if (truncateLeft > 0 || truncateRight > 0) {
+			overflows = true;
+			overflowRegion = region[..truncateLeft];
+
+			if (truncateRight > 0)
+				overflowRegion += region.Substring(region.Length - truncateRight, truncateRight);
+
+			// Truncate region accordingly
+			region = region.Substring(truncateLeft, region.Length - truncateLeft - truncateRight);
+			newStart = Math.Max(0, newStart);
+		}
+
+		// Insert the truncated region
+		string result = region.Length > 0 ? withoutRegion.Insert(newStart, region) : withoutRegion;
+		return (result, overflows, overflowRegion);
+	}
+
 }

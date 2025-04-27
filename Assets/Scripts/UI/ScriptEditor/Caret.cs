@@ -224,8 +224,10 @@ public class Caret {
 	void RenderCaret() {
 		(RectTransform RT, float t) = main.GetLocation(head);
 
-		if (!image.enabled) Debug.LogWarning("cursor image is disabled agian iditio");
-
+		if (!image.enabled) {
+			Debug.LogWarning("cursor image is disabled agian iditio");
+			image.enabled = true; // don't have any negative effects YET so we can risk this
+		}
 		rt.SetParent(RT);
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 
 
