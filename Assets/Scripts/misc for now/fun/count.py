@@ -9,7 +9,7 @@ def get_character_count(filename):
     print(f"Error: File not found - {filename}")
     return 0
 
-start = r'C:\CTools\Unity\PRP_HDRP\Assets\Scripts'
+start = r'C:\Users\gesch\Tools\Unity\EngineeringOnQuack\Assets\Scripts'
 
 counts = {}
 for root, _, files in os.walk(start):

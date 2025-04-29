@@ -17,6 +17,8 @@ public class ScrollWindow : MonoBehaviour {
 	protected float xScrollableDist;
 	protected float yScrollableDist;
 
+	public Vector2 CurrentScrollAmount => new(xScrollAmount, yScrollAmount);
+
 	void Start() {
 		xScrollAmount = 0;
 		yScrollAmount = 0;
@@ -72,5 +74,12 @@ public class ScrollWindow : MonoBehaviour {
 
 	public virtual void UpdateContentsPosition() {
 		contentsRect.localPosition = new(-xScrollAmount, yScrollAmount);
+	}
+
+	public void ManuallyScrollX(float px) {
+		xScrollAmount += px;
+	}
+	public void ManuallyScrollY(float px) {
+		yScrollAmount += px;
 	}
 }

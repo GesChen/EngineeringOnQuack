@@ -99,8 +99,8 @@ public class Tester : MonoBehaviour {
 			if (script != null) {
 				using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
 				{
-					//string json = ScriptSaveLoad.ConvertScriptToString(script);
-					string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
+					string json = ScriptSaveLoad.ConvertScriptToString(script);
+					//string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
 					sw.Write(json);
 
 					//string reconstructed = ScriptSaveLoad.ReconstructJson(json);

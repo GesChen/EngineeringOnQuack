@@ -24,6 +24,7 @@ public class Caret {
 
 	public bool HasSelection => head != tail;
 	public bool IsSingleWholeLine => boxes.Count == 1 && boxes[0].fullLine;
+	public float LocalX => rt.localPosition.x;
 
 	public Caret(ScriptEditor se, Vector2Int pos) {
 		main = se;
@@ -142,8 +143,22 @@ public class Caret {
 		tail = head;
 	}
 
+	public void WrapHead() {
+		if (head.x < 0 && head.y > 0) {
+			head.y--;
+			head.x = main.lines[head.y].Content.Length - 1;
+		}
+	}
+
+	public void WrapTail() {
+		if (tail.x < 0 && tail.y > 0) {
+			tail.y--;
+			tail.x = main.lines[tail.y].Content.Length - 1;
+		}
+	}
+
 	public void Update() {
-		RenderCaret();	
+		RenderCaret();
 		HandleSelections();
 	}
 

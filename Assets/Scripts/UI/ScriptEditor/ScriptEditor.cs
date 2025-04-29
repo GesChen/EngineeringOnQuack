@@ -20,7 +20,7 @@ public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
 	List<LineNumber> lineNumbers;
 
-	public ScrollWindow scroll;
+	public SEScrollWindow scroll;
 	public CustomVerticalLayout lineContentVerticalLayout;
 	public RectTransform lineContentContainer;
 	public CustomVerticalLayout lineNumbersVerticalLayout;
@@ -39,6 +39,7 @@ public class ScriptEditor : MonoBehaviour {
 	public float fontSize;
 	public Color selectionColor;
 	public Color test;
+	public float cursorScreenMargin;
 
 	#region Line Classes
 	public class Line {
@@ -110,6 +111,7 @@ public class ScriptEditor : MonoBehaviour {
 	void Update() {
 		HandleMouseNavigation();
 		HandleKeyboardNavgation();
+		KeepHeadCaretHeadOnScreen();
 		UpdateCarets();
 		HandleTyping();
 	}
@@ -119,6 +121,7 @@ public class ScriptEditor : MonoBehaviour {
 	int longestLine;
 	float charUVAmount;
 	float lineNumberWidth;
+	float charWidth;
 	[HideInNormalInspector] public float allLinesHeight;
 
 	public void Load(string[] strLines) {
@@ -208,6 +211,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	void RecalculateCharUVA() {
 		charUVAmount = 1f / lines[longestLine].ProcessedContent.Length;
+		charWidth = longestLineWidth / lines[longestLine].ProcessedContent.Length;
 	}
 
 	void ScaleAllContainersToMax() {
@@ -592,6 +596,52 @@ public class ScriptEditor : MonoBehaviour {
 		return false;
 	}
 
+	void KeepHeadCaretHeadOnScreen() {
+		Caret head = carets[headCaretI];
+		Vector2 pos = LocalPositionOfCaretHead(head);
+
+		int count = 0;
+		var offset = CheckCursorOffsets(pos);
+		while (offset != (0, 0)) {
+			if (offset.x > 0)		scroll.ManuallyScrollX(charWidth);
+			else if (offset.x < 0)	scroll.ManuallyScrollX(-charWidth);
+			if (offset.y > 0)		scroll.ManuallyScrollY(allLinesHeight);
+			else if (offset.y < 0)	scroll.ManuallyScrollY(-allLinesHeight);
+
+			offset = CheckCursorOffsets(pos);
+
+			if (++count > 10) break; // shouldn't be THIS off screen hopefully :(
+		}
+	}
+
+	public Vector2 LocalPositionOfCaretHead(Caret c) {
+		float x = c.LocalX;
+		float y = allLinesHeight * c.head.y;
+
+		return new(x, y);
+	}
+
+	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
+		pos -= scroll.CurrentScrollAmount;
+
+		// definition of insanity
+		return // seriously why are we using ternary here :(((((
+		(
+			pos.x < cursorScreenMargin
+			? -1
+			: (
+			pos.x > lineContentContainer.rect.width - cursorScreenMargin
+			? 1
+			: 0)
+		,
+			pos.y < cursorScreenMargin
+			? -1
+			: (
+			pos.y > lineContentContainer.rect.height - cursorScreenMargin
+			? 1
+			: 0)
+		);
+	}
 	#endregion
 
 	#region Mouse Input
@@ -840,8 +890,9 @@ public class ScriptEditor : MonoBehaviour {
 	int GetCharIndexAtWorldSpacePositionUnclamped(int line) {
 
 		// not sure why this happens but it just does idk
-		//if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, lineContentVerticalLayout.transform))
-		if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
+		// ok this was broken before idk its fixed now??
+		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, lineContentVerticalLayout.transform))
+		//if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
 			return -1;
 
 		RectTransform rt = lines[line].Components.LineContent;
@@ -928,8 +979,7 @@ public class ScriptEditor : MonoBehaviour {
 			}
 			
 
-			if (!Conatrols.Keyboard.Modifiers.Shift &&
-				!Conatrols.Keyboard.Modifiers.Alt) {
+			if (!Conatrols.Keyboard.Modifiers.Shift) {
 				c.MatchTail();
 			}
 
@@ -940,25 +990,48 @@ public class ScriptEditor : MonoBehaviour {
 
 	void AltMove(Caret c, Vector2Int movement) {
 		if (movement.x != 0) {
-			if (c.HasSelection) {
-				HorizontalMoveSelection(c, movement);
-			} else {
+			//if (c.HasSelection) {
+				//HorizontalMoveSelection(c, movement);
+			//} else {
 				int pos =
 					movement.x > 0
 					? lines[c.head.y].Content.Length // end if right
 					: 0; // start if left
 
 				c.SetHead(new(pos, c.head.y));
-			}
+			//}
 		}
 
-		if (movement.y != 0) {
+		if (movement.y < 0 && c.head.y > 0) {
 
+			// swap contents
+			(lines[c.head.y].Content, lines[c.head.y - 1].Content) =
+				(lines[c.head.y - 1].Content, lines[c.head.y].Content);
+
+			UpdateLine(c.head.y);
+			UpdateLine(c.head.y - 1);
+
+			// move with
+			c.head.y--;
+			c.MatchTail();
+		} else
+		if (movement.y > 0 && c.head.y < lines.Count - 1) {
+
+			// swap contents
+			(lines[c.head.y].Content, lines[c.head.y + 1].Content) =
+				(lines[c.head.y + 1].Content, lines[c.head.y].Content);
+
+			UpdateLine(c.head.y);
+			UpdateLine(c.head.y + 1);
+
+			// move with
+			c.head.y++;
+			c.MatchTail();
 		}
 	}
 
+	// if you like suffering, then make this work. 
 	void HorizontalMoveSelection(Caret c, Vector2Int movement) {
-
 
 		// move left and right
 		// make it go between lines if you really wanna deal with those bugs
@@ -1024,12 +1097,46 @@ public class ScriptEditor : MonoBehaviour {
 						c.tail.x += shift;
 					}
 				}
+
+				c.WrapHead();
+				c.WrapTail();
+
 			} else {
 				c.head.x += shift;
 				c.tail.x += shift;
 			}
 		} else {
+			string selectedFullLines = string.Join("", c.boxes.Select(b => lines[b.line].Content));
+			List<int> lineLengths = c.boxes.Select(b => lines[b.line].Content.Length).ToList();
 
+			int fullStartI = c.boxes[0].start;
+			int fullEndI = 
+				selectedFullLines.Length - 1 -
+				(lines[c.boxes[^1].line].Content.Length - c.boxes[^1].end);
+
+			string selection = selectedFullLines[fullStartI..(fullEndI + 1)];
+
+			(string shiftedString, bool overflows, string overRegion) =
+				HF.ShiftRegion(selectedFullLines, fullStartI, fullEndI, shift);
+			
+			if (!overflows) {
+				int index = 0;
+				for (int i = 0; i < c.boxes.Count; i++) {
+					SelectionBox box = c.boxes[i];
+					lines[box.line].Content = shiftedString[index..(index + lineLengths[i])];
+					index += lineLengths[i];
+				}
+
+				UpdateLine(c.boxes[0].line);
+
+				c.head.x += shift;
+				c.tail.x += shift;
+
+				c.WrapHead();
+				c.WrapTail();
+			} else {
+
+			}
 		}
 	}
 
@@ -1170,7 +1277,6 @@ public class ScriptEditor : MonoBehaviour {
 			return;
 		} else
 		if (c.head.y == c.tail.y) {
-
 
 			int start = Mathf.Min(c.head.x, c.tail.x);
 			int end = Mathf.Max(c.head.x, c.tail.x);
@@ -1601,6 +1707,7 @@ public class ScriptEditor : MonoBehaviour {
 		(int tabs, int spaces) = IndentToPosColumn(startCol, endCol, line);
 		return new string('\t', tabs) + new string(' ', spaces);
 	}
+
 	#endregion
 
 	void DebugLines() {
