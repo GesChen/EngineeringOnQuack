@@ -31,8 +31,6 @@ public class ScriptEditor : MonoBehaviour {
 	int headCaretI = 0;
 	int tailCaretI = 0;
 
-	public List<string> Clipboard = new();
-
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
 	public TMP_FontAsset font;
@@ -1734,13 +1732,61 @@ public class ScriptEditor : MonoBehaviour {
 
 	#region Clipboard
 
-	List<string> clipboard = new();
-	void Copy() {
-		print("copying");
+	struct ClipboardEntry {
+		public bool IsMultiline;
+		public bool IsWholeLine;
+		public List<string> Strings;
 	}
-	void Cut() {
 
+	List<ClipboardEntry> Clipboard = new();
+	void Copy() {
+		if (carets.Count > 1) {
+			CopyMultiCaret();
+			return;
+		}
+
+		Caret c = carets[0];
+		if (c.HasSelection) {
+			string content = c.GetSelectionString();
+
+			Clipboard.Add(new() {
+				IsMultiline = false,
+				IsWholeLine = false,
+				Strings = new() { content }
+			});
+		} else {
+			// copy entire line 
+			Clipboard.Add(new() {
+				IsMultiline = false,
+				IsWholeLine = true,
+				Strings = new() { lines[c.head.y].Content }
+			});
+		}
+
+		// possible edge cases
+		while (Clipboard.Count > Config.ScriptEditor.MaxClipboardSize) {
+			Clipboard.RemoveAt(0);
+		}
 	}
+
+	void CopyMultiCaret() {
+		List<string> contents = carets.Select(c => c.GetSelectionString()).ToList();
+
+		Clipboard.Add(new() {
+			IsMultiline = true,
+			IsWholeLine = false,
+			Strings = contents
+		});
+	}
+
+	void Cut() {
+		Copy();
+
+		foreach(Caret c in carets) {
+			DeleteSelection(c, lines[c.head.y]);
+		}
+	}
+
 	void Paste() {
 
 	}
@@ -1751,6 +1797,8 @@ public class ScriptEditor : MonoBehaviour {
 
 	void SubscribeToShortcuts() {
 		Shortcuts.Get("copy").Subscribe(Copy);
+		Shortcuts.Get("cut").Subscribe(Cut);
+		Shortcuts.Get("paste").Subscribe(Paste);
 	}
 
 	#endregion

@@ -277,4 +277,9 @@ public class Caret {
 			box.Destroy();
 		}
 	}
+
+	public string GetSelectionString() {
+		return string.Join('\n',
+			boxes.Select(b => main.lines[b.line].Content[b.start..b.end]));
+	}
 }
