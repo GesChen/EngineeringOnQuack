@@ -39,7 +39,8 @@ public class ScriptEditor : MonoBehaviour {
 	public float fontSize;
 	public Color selectionColor;
 	public Color test;
-	public float cursorScreenMargin;
+	public int xCursorScreenMarginChars;
+	public int yCursorScreenMarginLines;
 
 	#region Line Classes
 	public class Line {
@@ -106,12 +107,12 @@ public class ScriptEditor : MonoBehaviour {
 
 	void Start() {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
+		SubscribeToShortcuts();
 	}
 	
 	void Update() {
 		HandleMouseNavigation();
 		HandleKeyboardNavgation();
-		KeepHeadCaretHeadOnScreen();
 		UpdateCarets();
 		HandleTyping();
 	}
@@ -159,6 +160,8 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		RecalculateAll();
+
+		SetSingleCaret(new(0, 0), new(0, 0));
 	}
 
 	void RecalculateAll() {
@@ -627,18 +630,18 @@ public class ScriptEditor : MonoBehaviour {
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
 		(
-			pos.x < cursorScreenMargin
-			? -1
+			pos.x < xCursorScreenMarginChars * charWidth
+				? -1
 			: (
-			pos.x > lineContentContainer.rect.width - cursorScreenMargin
-			? 1
+			pos.x > lineContentContainer.rect.width - xCursorScreenMarginChars * charWidth
+				? 1
 			: 0)
 		,
-			pos.y < cursorScreenMargin
-			? -1
+			pos.y < yCursorScreenMarginLines * allLinesHeight
+				? -1
 			: (
-			pos.y > lineContentContainer.rect.height - cursorScreenMargin
-			? 1
+			pos.y > lineContentContainer.rect.height - yCursorScreenMarginLines * allLinesHeight
+				? 1
 			: 0)
 		);
 	}
@@ -948,6 +951,12 @@ public class ScriptEditor : MonoBehaviour {
 			Conatrols.Keyboard.Modifiers.Ctrl)
 			boxEditing = false;
 
+		if (Conatrols.Keyboard.Modifiers.Ctrl &&
+			movement.y != 0) {
+			scroll.ManuallyScrollY(Mathf.Sign(movement.y) * allLinesHeight);
+			return;
+		}
+
 		if (boxEditing) { 
 			HandleKeyboardBox(movement);
 			return;
@@ -986,6 +995,8 @@ public class ScriptEditor : MonoBehaviour {
 			c.Update();
 			c.ResetBlink();
 		}
+
+		KeepHeadCaretHeadOnScreen();
 	}
 
 	void AltMove(Caret c, Vector2Int movement) {
@@ -1244,6 +1255,8 @@ public class ScriptEditor : MonoBehaviour {
 		// has to be a text key pressed (incs backspace etc)
 		if (!Conatrols.Keyboard.Pressed.Any(k => Conatrols.Keyboard.All.TextKeys.Contains(k)))
 			return;
+
+		KeepHeadCaretHeadOnScreen();
 
 		// force stop dragging;
 		dragging = false;
@@ -1734,11 +1747,11 @@ public class ScriptEditor : MonoBehaviour {
 	
 	#endregion
 
-	#region Exposed
+	#region Shortcuts
 
-	public void C_Copy() { Copy(); }
-	public void C_Cut() { Cut(); }
-	public void C_Paste() { Paste(); }
+	void SubscribeToShortcuts() {
+		Shortcuts.Get("copy").Subscribe(Copy);
+	}
 
 	#endregion
 }

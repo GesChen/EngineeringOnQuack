@@ -68,6 +68,10 @@ public class ScrollWindow : MonoBehaviour {
 		else
 			yScrollAmount -= Conatrols.IM.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
 
+		Clamp();
+	}
+
+	void Clamp() {
 		xScrollAmount = Mathf.Clamp(xScrollAmount, 0, Mathf.Max(0, xScrollableDist));
 		yScrollAmount = Mathf.Clamp(yScrollAmount, 0, Mathf.Max(0, yScrollableDist));
 	}
@@ -78,8 +82,10 @@ public class ScrollWindow : MonoBehaviour {
 
 	public void ManuallyScrollX(float px) {
 		xScrollAmount += px;
+		Clamp();
 	}
 	public void ManuallyScrollY(float px) {
 		yScrollAmount += px;
+		Clamp();
 	}
 }
