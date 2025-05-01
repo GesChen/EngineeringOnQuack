@@ -445,6 +445,7 @@ GameObject:
   - component: {fileID: 746701338}
   - component: {fileID: 746701337}
   - component: {fileID: 746701339}
+  - component: {fileID: 746701340}
   m_Layer: 0
   m_Name: gm
   m_TagString: Untagged
@@ -492,6 +493,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentPlayMode: 0
+--- !u!114 &746701340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 746701336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ce596d1b7ae0c947939a4cd91eb7af9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &772403695
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,12 +748,13 @@ MonoBehaviour:
   lineNumbersVerticalLayout: {fileID: 1172439017}
   lineNumbersRect: {fileID: 0}
   syntaxHighlighter: {fileID: 1116476324}
-  Clipboard: []
   numberToContentSpace: 20
   font: {fileID: 11400000, guid: f9ae5c2f5f64fad439ba828fc50a5a5a, type: 2}
   fontSize: 20
   selectionColor: {r: 0.94716984, g: 0.2269633, b: 0.2269633, a: 0.15294118}
   test: {r: 0.638814, g: 0.638814, b: 0.638814, a: 1}
+  xCursorScreenMarginChars: 2
+  yCursorScreenMarginLines: 2
   allLinesHeight: 0
 --- !u!114 &1116476324
 MonoBehaviour:

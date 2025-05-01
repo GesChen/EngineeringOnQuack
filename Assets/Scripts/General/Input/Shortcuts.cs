@@ -5,14 +5,18 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Shortcuts : MonoBehaviour {
-	public static Shortcut[] AllShortcuts = {
-		new("copy",		false,	Key.LeftCtrl,	Key.C),
-		new("cut",		false,	Key.LeftCtrl,	Key.X),
-		new("paste",	false,	Key.LeftCtrl,	Key.V),
-		new("undo",		false,	Key.LeftCtrl,	Key.Z),
-		new("redo",		false,	Key.LeftCtrl,	Key.Y),
-		new("redo_shift",false,	Key.LeftCtrl,	Key.LeftShift,	Key.V),
-	};
+	public static Shortcut[] AllShortcuts;
+	
+	void Awake() {
+		AllShortcuts = new Shortcut[] {
+			new("copy",			false, Key.LeftCtrl, Key.C),
+			new("cut",			false, Key.LeftCtrl, Key.X),
+			new("paste",		false, Key.LeftCtrl, Key.V),
+			new("undo",			false, Key.LeftCtrl, Key.Z),
+			new("redo",			false, Key.LeftCtrl, Key.Y),
+			new("redo_shift",	false, Key.LeftCtrl, Key.LeftShift, Key.Z),
+		};
+	}
 
 	void Update() {
 		foreach (var shortcut in AllShortcuts) {
@@ -61,18 +65,19 @@ public class Shortcuts : MonoBehaviour {
 
 		public bool Test() {
 			bool modifiersMatch =
-				(Modifiers.Ctrl && Conatrols.Keyboard.Modifiers.Ctrl || !Modifiers.Ctrl) &&
-				(Modifiers.Shift && Conatrols.Keyboard.Modifiers.Shift || !Modifiers.Shift) &&
-				(Modifiers.Alt && Conatrols.Keyboard.Modifiers.Alt || !Modifiers.Alt);
+				(Modifiers.Ctrl		== Conatrols.Keyboard.Modifiers.Ctrl) &&
+				(Modifiers.Shift	== Conatrols.Keyboard.Modifiers.Shift) &&
+				(Modifiers.Alt		== Conatrols.Keyboard.Modifiers.Alt);
 			if (!modifiersMatch) return false;
 
 			bool allPressed = Keys.All(k => Conatrols.Keyboard.Presses.Contains(k));
 			if (!allPressed) return false;
 
-			int nonModifiersCount = Conatrols.Keyboard.Presses.Count(
-				k => !Conatrols.Keyboard.All.Modifiers.Contains(k));
-			bool anyOthersPressed = nonModifiersCount == Keys.Length;
-			if (!(anyOthersPressed || AllowOtherKeys)) return false;
+			bool anyOthersPressed = Conatrols.Keyboard.Presses.Any(
+				k => !Keys.Contains(k) && 
+				!Conatrols.Keyboard.All.Modifiers.Contains(k));
+			
+			if (anyOthersPressed && !AllowOtherKeys) return false;
 
 			OnShortcutTrigger?.Invoke();
 			return true;

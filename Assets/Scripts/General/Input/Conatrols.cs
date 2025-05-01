@@ -73,8 +73,10 @@ public class Conatrols : MonoBehaviour {
 		public void Update() {
 			UpdateKeyboard();
 			UpdateKeyHeldTimes();
-			UpdateModifiers();
+
 			Presses = GetRepeats().Union(PressedThisFrame).ToList();
+
+			Modifiers.Update();
 		}
 
 		public static List<Key> LastPressed = new();
@@ -138,17 +140,19 @@ public class Conatrols : MonoBehaviour {
 			return keys;
 		}
 	
-		void UpdateModifiers() {
-			// controls.keyboard.modifiers.alt is shorter still
-			Modifiers.Ctrl = Pressed.Contains(Key.LeftCtrl) || Pressed.Contains(Key.RightCtrl);
-			Modifiers.Shift = Pressed.Contains(Key.LeftShift) || Pressed.Contains(Key.RightShift);
-			Modifiers.Alt = Pressed.Contains(Key.LeftAlt) || Pressed.Contains(Key.RightAlt);
-		}
-
 		public static class Modifiers {
-			public static bool Ctrl { get; internal set; }
-			public static bool Shift { get; internal set; }
-			public static bool Alt { get; internal set; }
+			public static bool Ctrl { get; private set; }
+			public static bool Shift { get; private set; }
+			public static bool Alt { get; private set; }
+			public static bool Any { get; private set; }
+
+			public static void Update() {
+				// controls.keyboard.modifiers.alt is shorter still
+				Ctrl = Pressed.Contains(Key.LeftCtrl) || Pressed.Contains(Key.RightCtrl);
+				Shift = Pressed.Contains(Key.LeftShift) || Pressed.Contains(Key.RightShift);
+				Alt = Pressed.Contains(Key.LeftAlt) || Pressed.Contains(Key.RightAlt);
+				Any = Ctrl || Shift || Alt;
+			}
 		}
 
 		public static class All {

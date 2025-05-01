@@ -611,7 +611,7 @@ public class ScriptEditor : MonoBehaviour {
 
 			offset = CheckCursorOffsets(pos);
 
-			if (++count > 10) break; // shouldn't be THIS off screen hopefully :(
+			if (++count > Config.ScriptEditor.MaxCaretViewRecoverySteps) break; // shouldn't be THIS off screen hopefully :(
 		}
 	}
 
@@ -1241,20 +1241,34 @@ public class ScriptEditor : MonoBehaviour {
 	#region Text Editing
 	// aw hell nah i really need to get this into a separate class :((((((((((
 	void HandleTyping() {
+		bool anyGood = false;
 		foreach (Caret c in carets) {
-			HandleCaretTyping(c);
+			bool good = HandleCaretTyping(c);
+
+			if (good) {
+				anyGood = true;
+			}
+		}
+
+		if (anyGood) {
+			KeepHeadCaretHeadOnScreen();
 		}
 	}
 
-	void HandleCaretTyping(Caret c) {
-		if (Conatrols.Keyboard.Presses.Count == 0) return;
+	bool HandleCaretTyping(Caret c) {
+		if (Conatrols.Keyboard.Presses.Count == 0) return false;
 		Line line = lines[c.head.y];
 
-		// has to be a text key pressed (incs backspace etc)
-		if (!Conatrols.Keyboard.Pressed.Any(k => Conatrols.Keyboard.All.TextKeys.Contains(k)))
-			return;
+		bool shortcutPressed =
+			(Conatrols.Keyboard.Modifiers.Ctrl ||
+			Conatrols.Keyboard.Modifiers.Alt) &&
+			Conatrols.Keyboard.Pressed.All(
+				k => Conatrols.Keyboard.All.CharacterKeys.Contains(k) ||
+				Conatrols.Keyboard.All.Modifiers.Contains(k));
 
-		KeepHeadCaretHeadOnScreen();
+		if (!Conatrols.Keyboard.Pressed.Any(k => Conatrols.Keyboard.All.TextKeys.Contains(k)) ||
+			shortcutPressed)
+			return false;
 
 		// force stop dragging;
 		dragging = false;
@@ -1270,14 +1284,34 @@ public class ScriptEditor : MonoBehaviour {
 			Delete(c, line);
 
 		// adders
-		if (Conatrols.IsUsed(Key.Enter))
-			Enter(c, line);
+		if (Conatrols.IsUsed(Key.Enter)) {
+			bool splitText = true;
+			bool addDownwards = true;
 
-		else if (Conatrols.IsUsed(Key.Tab))
+			if (Conatrols.Keyboard.Modifiers.Ctrl &&
+			Conatrols.Keyboard.Modifiers.Shift) {
+				splitText = true;
+				addDownwards = false;
+			} else
+			if (Conatrols.Keyboard.Modifiers.Ctrl) {
+				splitText = false;
+				addDownwards = false;
+			} else
+			if (Conatrols.Keyboard.Modifiers.Shift) {
+				splitText = false;
+				addDownwards = true;
+			}
+
+			Enter(c, line, splitText, addDownwards);
+		} else 
+
+		if (Conatrols.IsUsed(Key.Tab))
 			Tab(c, line);
 
 		else
 			NormallyType(c, line);
+
+		return true;
 	}
 
 	void DeleteSelection(Caret c, Line line) {
@@ -1514,23 +1548,7 @@ public class ScriptEditor : MonoBehaviour {
 		c.ResetBlink();
 	}
 
-	void Enter(Caret c, Line line) {
-		bool splitText = true;
-		bool addDownwards = true;
-
-		if (Conatrols.Keyboard.Modifiers.Ctrl &&
-			Conatrols.Keyboard.Modifiers.Shift) {
-			splitText = true;
-			addDownwards = false;
-		} else
-		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			splitText = false;
-			addDownwards = false;
-		} else
-		if (Conatrols.Keyboard.Modifiers.Shift) {
-			splitText = false;
-			addDownwards = true;
-		}
+	void Enter(Caret c, Line line, bool splitText, bool addDownwards) {
 
 		// determine end contents and split
 		string endContents = "";
@@ -1725,20 +1743,37 @@ public class ScriptEditor : MonoBehaviour {
 		StringBuilder sb = new();
 		for (int i = 0; i < lines.Count; i++) {
 			Line line = lines[i];
-			sb.Append($"Line {i} real {line.Realised} __ {line.ProcessedContent}\n");
+			sb.Append($"Line {i} com {line.Components} real {line.Realised} __ {line.ProcessedContent}\n");
 		}
-		print(sb.ToString()); // In this economy??? 
 	}
 
 	#region Clipboard
 
-	struct ClipboardEntry {
-		public bool IsMultiline;
-		public bool IsWholeLine;
-		public List<string> Strings;
+	class Clipboard {
+		public struct Entry {
+			public bool IsMultiline;
+			public bool IsWholeLine;
+			public List<string> Strings;
+		}
+
+		// 0 is first and goes ascending the older it is
+		public List<Entry> Entries = new();
+
+		public void Add(Entry entry) {
+			Entries.Insert(0, entry);
+
+			if (Entries.Count > Config.ScriptEditor.MaxClipboardSize) {
+				Entries.RemoveAt(Entries.Count - 1);
+			}
+		}
+
+		public Entry Get(int index) => Entries[index];
+
+		public Entry NewestEntry => Entries[^1];
 	}
 
-	List<ClipboardEntry> Clipboard = new();
+	Clipboard clipboard = new();
+
 	void Copy() {
 		if (carets.Count > 1) {
 			CopyMultiCaret();
@@ -1749,14 +1784,14 @@ public class ScriptEditor : MonoBehaviour {
 		if (c.HasSelection) {
 			string content = c.GetSelectionString();
 
-			Clipboard.Add(new() {
+			clipboard.Add(new() {
 				IsMultiline = false,
 				IsWholeLine = false,
 				Strings = new() { content }
 			});
 		} else {
 			// copy entire line 
-			Clipboard.Add(new() {
+			clipboard.Add(new() {
 				IsMultiline = false,
 				IsWholeLine = true,
 				Strings = new() { lines[c.head.y].Content }
@@ -1764,15 +1799,12 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		// possible edge cases
-		while (Clipboard.Count > Config.ScriptEditor.MaxClipboardSize) {
-			Clipboard.RemoveAt(0);
-		}
 	}
 
 	void CopyMultiCaret() {
 		List<string> contents = carets.Select(c => c.GetSelectionString()).ToList();
 
-		Clipboard.Add(new() {
+		clipboard.Add(new() {
 			IsMultiline = true,
 			IsWholeLine = false,
 			Strings = contents
@@ -1780,6 +1812,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Cut() {
+		DebugLines();
 		Copy();
 
 		foreach(Caret c in carets) {
@@ -1788,7 +1821,60 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Paste() {
+		PasteIndex(0);
+	}
 
+	void PasteIndex(int i) {
+		var entry = clipboard.Get(i);
+
+		if (entry.IsWholeLine) {
+
+		}
+
+		if (entry.IsMultiline && carets.Count > 1) {
+
+		} else 
+		if (entry.IsMultiline) {
+
+		} else
+		if (carets.Count > 1) {
+
+		}
+
+		Caret c = carets[0];
+
+		if (c.HasSelection) {
+			DeleteSelection(c, lines[c.head.y]);
+		}
+
+		PasteSingleContents(c, entry.Strings[0]);
+	}
+
+	void PasteSingleContents(Caret c, string contents) {
+		bool singleLine = !contents.Contains('\n');
+
+		string[] multiLines = new string[0];
+		if (!singleLine) {
+			multiLines = contents.Split('\n');
+			contents = contents[..(multiLines[0].Length + 1)]; // truncate first line entry
+		}
+
+		TypeAt(c, lines[c.head.y], contents);
+		UpdateLine(c.head.y);
+
+		if (!singleLine) {
+			foreach(string line in multiLines[1..]) {
+				Enter(c, lines[c.head.y], false, true);
+
+				lines[c.head.y].Content = line;
+				UpdateLine(c.head.y);
+
+				c.head.x = line.Length;
+			}
+		}
+
+		c.MatchTail();
+		KeepHeadCaretHeadOnScreen();
 	}
 	
 	#endregion
