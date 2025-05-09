@@ -443,4 +443,34 @@ public static class HF {
 		return (result, overflows, overflowRegion);
 	}
 
+	// from geeksforgeeks look at it again if no understand lol i dont
+	public static long HashString(string s) {
+		int n = s.Length;
+
+		// prime, large prime
+		long p = 31, m = (long)1e9 + 7;
+
+		long hash = 0;
+
+		long pPow = 1;
+
+		for (int i = 0; i < n; ++i) {
+			hash = (hash + (s[i] - 'a' + 1) * pPow) % m;
+			pPow = (pPow * p) % m;
+		}
+
+		return hash;
+	}
+
+	public static ulong Fnv1aHash64(string input) {
+		const ulong fnvPrime = 1099511628211;
+		ulong hash = 14695981039346656037;
+
+		for (int i = 0; i < input.Length; i++) {
+			hash ^= input[i];
+			hash *= fnvPrime;
+		}
+
+		return hash;
+	}
 }

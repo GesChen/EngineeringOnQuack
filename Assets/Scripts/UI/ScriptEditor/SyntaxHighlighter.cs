@@ -35,14 +35,14 @@ public class SyntaxHighlighter : MonoBehaviour {
 	void Awake() {
 		TypeToHex = new() {
 			{ Types.unassigned , "#000" },
-			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Keyword)	},
-			{ Types.func		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Function)	},
-			{ Types.variable	, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Variable)	},
-			{ Types.unknown		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Unknown)	},
-			{ Types.symbol		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Symbol)	},
-			{ Types.literal		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Literal)	},
-			{ Types.type		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Type)		},
-			{ Types.comment		, ColorUtility.ToHtmlStringRGB(Config.Language.Colors.Comment)	}
+			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Keyword)	},
+			{ Types.func		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Function)	},
+			{ Types.variable	, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Variable)	},
+			{ Types.unknown		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Unknown)	},
+			{ Types.symbol		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Symbol)	},
+			{ Types.literal		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Literal)	},
+			{ Types.type		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Type)		},
+			{ Types.comment		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.Colors.Comment)	}
 		};
 	}
 

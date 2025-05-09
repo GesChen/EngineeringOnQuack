@@ -59,6 +59,17 @@ public class Tester : MonoBehaviour {
 			script = null;
 			print("script nulled");
 		}
+
+		if (Input.GetKeyDown("t")) {
+			string res = "";
+			void test() {
+				res = editor.LinesString;
+			}
+
+			HF.Test(test, 100);
+
+			print(res);
+		}
 	}
 	void Test() {
 		TestOnce();

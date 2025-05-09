@@ -474,6 +474,13 @@ public class ScriptEditor : MonoBehaviour {
 
 		return (newObj, newText, newRect);
 	}
+
+	public string LinesString =>
+		string.Join('\n', lines.Select(l => l.Content));
+
+	public string[] LinesStringArray =>
+		lines.Select(l => l.Content).ToArray();
+
 	#endregion
 
 	#region Caret Utilities
@@ -1772,7 +1779,7 @@ public class ScriptEditor : MonoBehaviour {
 		public Entry NewestEntry => Entries[^1];
 	}
 
-	Clipboard clipboard = new();
+	private readonly Clipboard clipboard = new();
 
 	void Copy() {
 		if (carets.Count > 1) {
@@ -1876,7 +1883,7 @@ public class ScriptEditor : MonoBehaviour {
 		c.MatchTail();
 		KeepHeadCaretHeadOnScreen();
 	}
-	
+
 	#endregion
 
 	#region Shortcuts
