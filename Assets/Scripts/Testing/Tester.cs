@@ -67,9 +67,6 @@ public class Tester : MonoBehaviour {
 
 			HF.Test(test, 1);
 		}
-		if (Input.GetKeyDown("z")) {
-			editor.history.Undo();
-		}
 	}
 		void Test() {
 		TestOnce();

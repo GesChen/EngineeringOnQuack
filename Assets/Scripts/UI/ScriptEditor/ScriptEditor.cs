@@ -48,7 +48,7 @@ public class ScriptEditor : MonoBehaviour {
 		public string ProcessedContent;
 		public List<float> IndexTs;
 		public (
-			RectTransform LineContent, 
+			RectTransform LineContent,
 			TextMeshProUGUI LineText) Components;
 		public bool Realised;
 		public SyntaxHighlighter.Types[] ColorsSpaces;
@@ -109,7 +109,15 @@ public class ScriptEditor : MonoBehaviour {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
 		SubscribeToShortcuts();
 	}
-	
+
+	void SubscribeToShortcuts() {
+		Shortcuts.SubscribeTo("copy", Copy);
+		Shortcuts.SubscribeTo("cut", Cut);
+		Shortcuts.SubscribeTo("paste", Paste);
+		Shortcuts.SubscribeTo("undo", history.Undo);
+		Shortcuts.SubscribeTo("redo", history.Redo);
+	}
+
 	void Update() {
 		HandleMouseNavigation();
 		HandleKeyboardNavgation();
@@ -369,7 +377,7 @@ public class ScriptEditor : MonoBehaviour {
 		if (width > longestLineWidth) { // update everything if this is new longset
 			longestLine = lineIndex;
 			longestLineWidth = width;
-		
+
 			RecalculateCharUVA();
 			ScaleAllContainersToMax();
 
@@ -429,12 +437,12 @@ public class ScriptEditor : MonoBehaviour {
 	string MakeWhiteSpaceVisible(string original) {
 
 		StringBuilder sb = new();
-		
+
 		for (int i = 0; i < original.Length; i++) {
 			char c = original[i];
 			if (c == ' ') {
 				sb.Append('•');
-			} else 
+			} else
 			if (c == '\t') {
 			} else {
 				sb.Append(c);
@@ -443,7 +451,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		return sb.ToString();
 	}
-	
+
 	SyntaxHighlighter.Types[] RevertSpacesToTabs(
 		SyntaxHighlighter.Types[] colors,
 		string convertedString,
@@ -593,7 +601,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	bool PosInCaretSelection(Vector2Int pos, Caret caret) {
 		if (!caret.HasSelection) return false;
-		
+
 		bool tailBehind = caret.tail.y < caret.head.y ||
 			(caret.tail.y == caret.head.y && caret.tail.x < caret.head.x);
 
@@ -628,10 +636,10 @@ public class ScriptEditor : MonoBehaviour {
 		int count = 0;
 		var offset = CheckCursorOffsets(pos);
 		while (offset != (0, 0)) {
-			if (offset.x > 0)		scroll.ManuallyScrollX(charWidth);
-			else if (offset.x < 0)	scroll.ManuallyScrollX(-charWidth);
-			if (offset.y > 0)		scroll.ManuallyScrollY(allLinesHeight);
-			else if (offset.y < 0)	scroll.ManuallyScrollY(-allLinesHeight);
+			if (offset.x > 0) scroll.ManuallyScrollX(charWidth);
+			else if (offset.x < 0) scroll.ManuallyScrollX(-charWidth);
+			if (offset.y > 0) scroll.ManuallyScrollY(allLinesHeight);
+			else if (offset.y < 0) scroll.ManuallyScrollY(-allLinesHeight);
 
 			offset = CheckCursorOffsets(pos);
 
@@ -780,11 +788,11 @@ public class ScriptEditor : MonoBehaviour {
 				Conatrols.Keyboard.Modifiers.Alt)
 				return; // do nothing with all 3 
 
-			bool doubleClickCondition = 
-				Conatrols.Keyboard.Modifiers.Ctrl && 
+			bool doubleClickCondition =
+				Conatrols.Keyboard.Modifiers.Ctrl &&
 				!Conatrols.Keyboard.Modifiers.Alt; // dont want during adding
 
-			bool boxCondition =	// otherwise overrides ctrl alt adding news, TODO fix this later idk
+			bool boxCondition = // otherwise overrides ctrl alt adding news, TODO fix this later idk
 				Conatrols.Keyboard.Modifiers.Alt && // alt dragging
 				!Conatrols.Keyboard.Modifiers.Ctrl;
 
@@ -834,13 +842,12 @@ public class ScriptEditor : MonoBehaviour {
 					(tailCaretI, headCaretI) = (headCaretI, tailCaretI);
 
 				boxEditing = true;
-			}
-			else if (clicksInARow == 1 && !doubleClickCondition) {
+			} else if (clicksInARow == 1 && !doubleClickCondition) {
 				// normal dragging
 				SetCurrentCaret(pos, dragStart);
 				carets[headCaretI].DesiredCol = ColumnOfPosition(pos);
 			} else
-			if (clicksInARow == 2 || doubleClickCondition) {
+			  if (clicksInARow == 2 || doubleClickCondition) {
 				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
 				(int deS, int deE) = DoubleClickWordAt(pos);
 
@@ -905,19 +912,19 @@ public class ScriptEditor : MonoBehaviour {
 		for (int i = 0; i < lines.Count; i++) {
 			RectTransform contents = lines[i].Components.LineContent;
 			//if (UIHovers.CheckFirstAllowing(contents, lineContentVerticalLayout.transform)) 
-			if (UIHovers.CheckIgnoreOrder(contents)) 
+			if (UIHovers.CheckIgnoreOrder(contents))
 				return i;
 		}
 		return -1;
 	}
-	
+
 	// long ass name
 	int GetCharIndexAtWorldSpacePositionUnclamped(int line) {
 
 		// not sure why this happens but it just does idk
 		// ok this was broken before idk its fixed now??
 		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, lineContentVerticalLayout.transform))
-		//if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
+			//if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
 			return -1;
 
 		RectTransform rt = lines[line].Components.LineContent;
@@ -979,19 +986,19 @@ public class ScriptEditor : MonoBehaviour {
 			return;
 		}
 
-		if (boxEditing) { 
+		if (boxEditing) {
 			HandleKeyboardBox(movement);
 			return;
 		}
 		foreach (Caret c in carets) {
-			if (Conatrols.Keyboard.Modifiers.Ctrl && 
+			if (Conatrols.Keyboard.Modifiers.Ctrl &&
 				Conatrols.Keyboard.Modifiers.Shift &&
 				Conatrols.Keyboard.Modifiers.Alt)
 				continue; // do nothing with all 3
 
 			// this logic is sooooo fucked
 
-			if (Conatrols.Keyboard.Modifiers.Alt && 
+			if (Conatrols.Keyboard.Modifiers.Alt &&
 				!Conatrols.Keyboard.Modifiers.Ctrl) {
 				AltMove(c, movement);
 			} else {
@@ -1000,15 +1007,15 @@ public class ScriptEditor : MonoBehaviour {
 
 			if (Conatrols.Keyboard.Modifiers.Ctrl) {
 				(int start, int end) = DoubleClickWordAt(new(
-					Mathf.Max(0, c.head.x - (movement.x > 0 ? 1 : 0)), 
+					Mathf.Max(0, c.head.x - (movement.x > 0 ? 1 : 0)),
 					c.head.y));
 
 				c.SetHead(new(
-					movement.x > 0 
-					? end 
+					movement.x > 0
+					? end
 					: start, c.head.y));
 			}
-			
+
 
 			if (!Conatrols.Keyboard.Modifiers.Shift) {
 				c.MatchTail();
@@ -1024,14 +1031,14 @@ public class ScriptEditor : MonoBehaviour {
 	void AltMove(Caret c, Vector2Int movement) {
 		if (movement.x != 0) {
 			//if (c.HasSelection) {
-				//HorizontalMoveSelection(c, movement);
+			//HorizontalMoveSelection(c, movement);
 			//} else {
-				int pos =
-					movement.x > 0
-					? lines[c.head.y].Content.Length // end if right
-					: 0; // start if left
+			int pos =
+				movement.x > 0
+				? lines[c.head.y].Content.Length // end if right
+				: 0; // start if left
 
-				c.SetHead(new(pos, c.head.y));
+			c.SetHead(new(pos, c.head.y));
 			//}
 		}
 
@@ -1143,7 +1150,7 @@ public class ScriptEditor : MonoBehaviour {
 			List<int> lineLengths = c.boxes.Select(b => lines[b.line].Content.Length).ToList();
 
 			int fullStartI = c.boxes[0].start;
-			int fullEndI = 
+			int fullEndI =
 				selectedFullLines.Length - 1 -
 				(lines[c.boxes[^1].line].Content.Length - c.boxes[^1].end);
 
@@ -1151,7 +1158,7 @@ public class ScriptEditor : MonoBehaviour {
 
 			(string shiftedString, bool overflows, string overRegion) =
 				HF.ShiftRegion(selectedFullLines, fullStartI, fullEndI, shift);
-			
+
 			if (!overflows) {
 				int index = 0;
 				for (int i = 0; i < c.boxes.Count; i++) {
@@ -1195,7 +1202,7 @@ public class ScriptEditor : MonoBehaviour {
 					PositionOfColumn(targetHeadCol, c.head.y),
 					c.head.y));
 		}
-		
+
 		if (movement.y != 0) {
 			if (headCaret.head.y == lines.Count - 1) return;
 
@@ -1296,7 +1303,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		// force stop dragging;
 		dragging = false;
-		
+
 		// deleters
 		if (c.HasSelection)
 			DeleteSelection(c, line);
@@ -1327,7 +1334,7 @@ public class ScriptEditor : MonoBehaviour {
 			}
 
 			Enter(c, line, splitText, addDownwards);
-		} else 
+		} else
 
 		if (Conatrols.IsUsed(Key.Tab))
 			Tab(c, line);
@@ -1490,9 +1497,9 @@ public class ScriptEditor : MonoBehaviour {
 
 	void Backspace(Caret c, Line line) {
 		if (c.head.x == 0) { // delete line
-			// might switch to a SMARTER SYSTEM if it is needed later
-			// maybe with actual newlines idk
-			
+							 // might switch to a SMARTER SYSTEM if it is needed later
+							 // maybe with actual newlines idk
+
 			int num = c.head.y;
 			if (num == 0) return;
 
@@ -1501,7 +1508,7 @@ public class ScriptEditor : MonoBehaviour {
 			c.head.x = lines[c.head.y].Content.Length;
 			c.MatchTail();
 			c.Update(); // force update before the line gets deleted
-			
+
 			// append whatevers on this line onto previous
 			lines[num - 1].Content += line.Content;
 
@@ -1596,7 +1603,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		if (addDownwards) c.head.y++;
 
-		Line newLine = InsertLine(endContents, c.head.y); 
+		Line newLine = InsertLine(endContents, c.head.y);
 
 		// place cursor
 		c.head.x = newLine.Content.Length - endContents.Length + startIndent.Length;
@@ -1651,9 +1658,9 @@ public class ScriptEditor : MonoBehaviour {
 
 	public int ColumnOfPosition(Vector2Int pos) {
 		string line = lines[pos.y].Content;
-		if (pos.x >= line.Length) 
+		if (pos.x >= line.Length)
 			return ColumnOfPositionOvershoot(pos);
-		
+
 		int col = 0;
 		for (int i = 0; i < pos.x; i++) {
 			if (line[i] == '\t') col += TabIndexToSpaceCount(col);
@@ -1667,7 +1674,7 @@ public class ScriptEditor : MonoBehaviour {
 		int col = 0;
 		foreach (char c in line) {
 			if (c == '\t') col += TabIndexToSpaceCount(col);
-			else col++; 
+			else col++;
 		}
 
 		col += pos.x - line.Length;
@@ -1836,7 +1843,7 @@ public class ScriptEditor : MonoBehaviour {
 		DebugLines();
 		Copy();
 
-		foreach(Caret c in carets) {
+		foreach (Caret c in carets) {
 			DeleteSelection(c, lines[c.head.y]);
 		}
 	}
@@ -1854,7 +1861,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		if (entry.IsMultiline && carets.Count > 1) {
 
-		} else 
+		} else
 		if (entry.IsMultiline) {
 
 		} else
@@ -1884,7 +1891,7 @@ public class ScriptEditor : MonoBehaviour {
 		UpdateLine(c.head.y);
 
 		if (!singleLine) {
-			foreach(string line in multiLines[1..]) {
+			foreach (string line in multiLines[1..]) {
 				Enter(c, lines[c.head.y], false, true);
 
 				lines[c.head.y].Content = line;
@@ -1896,16 +1903,6 @@ public class ScriptEditor : MonoBehaviour {
 
 		c.MatchTail();
 		KeepHeadCaretHeadOnScreen();
-	}
-
-	#endregion
-
-	#region Shortcuts
-
-	void SubscribeToShortcuts() {
-		Shortcuts.Get("copy").Subscribe(Copy);
-		Shortcuts.Get("cut").Subscribe(Cut);
-		Shortcuts.Get("paste").Subscribe(Paste);
 	}
 
 	#endregion

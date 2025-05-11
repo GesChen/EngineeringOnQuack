@@ -25,8 +25,12 @@ public class Shortcuts : MonoBehaviour {
 		}
 	}
 
-	public static Shortcut Get(string name)
+	static Shortcut Get(string name)
 		=> AllShortcuts.First(s => s.Name == name);
+
+	public static void SubscribeTo(string name, Shortcut.ShortcutTriggeredEvent action) {
+		Get(name).Subscribe(action);
+	}
 
 	public class Shortcut {
 		public string Name;

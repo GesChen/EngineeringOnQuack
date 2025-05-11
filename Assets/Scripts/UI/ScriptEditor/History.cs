@@ -185,9 +185,14 @@ public class History : MonoBehaviour {
 			public Vector2Int head;
 			public Vector2Int tail;
 		}
-		public Caret[] Carets;
-		public int HeadCaretI;
-		public int TailCaretI;
+		public struct CaretState {
+			public Caret[] Carets;
+			public int HeadCaretI;
+			public int TailCaretI;
+		}
+
+		public CaretState PrevCarets;
+		public CaretState CurCarets;
 	
 		public struct LineChange {
 			public int LineNum;
@@ -211,6 +216,8 @@ public class History : MonoBehaviour {
 	int undos;
 
 	Snapshot.Caret[] lastCarets;
+	int lastHCI;
+	int lastTCI;
 
 	string[] LinesBefore;
 	string[] CurrentLines;
@@ -284,14 +291,31 @@ public class History : MonoBehaviour {
 			}
 		}
 
-		Snapshot snap = new() {
+		if (merged.Count == 0) return;
+
+		var curCarets = SE.carets.Select(c => new Snapshot.Caret() { head = c.head, tail = c.tail }).ToArray();
+
+		Snapshot.CaretState prevState = new() {
 			Carets = lastCarets,
 			HeadCaretI = SE.headCaretI,
-			TailCaretI = SE.tailCaretI,
+			TailCaretI = SE.tailCaretI
+		};
+
+		Snapshot.CaretState curState = new() {
+			Carets = curCarets,
+			HeadCaretI = lastHCI,
+			TailCaretI = lastTCI
+		};
+
+		Snapshot snap = new() {
+			PrevCarets = prevState,
+			CurCarets = curState,
 			Changes = merged.ToArray()
 		};
 
-		lastCarets = SE.carets.Select(c => new Snapshot.Caret() { head = c.head, tail = c.tail }).ToArray();
+		lastCarets = curCarets;
+		lastHCI = SE.headCaretI;
+		lastTCI = SE.tailCaretI;
 
 		if (undos != 0)
 			Changes.RemoveRange(Changes.Count - undos, undos);
@@ -306,6 +330,16 @@ public class History : MonoBehaviour {
 		LinesBefore = CurrentLines;
 	}
 
+	void ResetCarets(Snapshot.CaretState caretState) {
+		if (caretState.Carets is null) return;
+
+		SE.ResetCarets();
+		SE.AddMultipleCarets(caretState.Carets.Select(c => (c.head, c.tail)).ToList());
+		SE.headCaretI = caretState.HeadCaretI;
+		SE.tailCaretI = caretState.TailCaretI;
+		SE.UpdateCarets();
+	}
+
 	public void Undo() {
 		if (undos == Changes.Count || Changes.Count == 0) return;
 
@@ -313,18 +347,10 @@ public class History : MonoBehaviour {
 		undos++;
 
 		UndoChanges(ssToUndo.Changes);
-		SetSnapshotCarets(ssToUndo);
-	}
+		ResetCarets(ssToUndo.PrevCarets);
 
-	void SetSnapshotCarets(Snapshot ss) {
-
-		if (ss.Carets is null) return;
-
-		SE.ResetCarets();
-		SE.AddMultipleCarets(ss.Carets.Select(c => (c.head, c.tail)).ToList());
-		SE.headCaretI = ss.HeadCaretI;
-		SE.tailCaretI = ss.TailCaretI;
-		SE.UpdateCarets();
+		LinesBefore = SE.LinesStringArray;
+		lastCarets = ssToUndo.PrevCarets.Carets;
 	}
 
 	void UndoChanges(Snapshot.LineChange[] changes) {
@@ -335,9 +361,9 @@ public class History : MonoBehaviour {
 		var modifys = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Modification).ToArray();
 
 		List<int> updatedIndexes = new();
-		UndoAdditions(additions, ref updatedIndexes);
-		UndoDeletions(deletions, ref updatedIndexes);
-		UndoModifications(modifys, ref updatedIndexes);
+		RevertAdditions(additions, ref updatedIndexes);
+		RevertDeletions(deletions, ref updatedIndexes);
+		UseModifications(modifys, ref updatedIndexes, true);
 
 		// update
 		List<int> gotUpdated = new();
@@ -349,7 +375,7 @@ public class History : MonoBehaviour {
 		}
 	}
 
-	void UndoAdditions(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
+	void RevertAdditions(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
 		foreach (var change in changes) {
 			SE.DeleteLine(change.LineNum);
 
@@ -362,7 +388,7 @@ public class History : MonoBehaviour {
 		}
 	}
 
-	void UndoDeletions(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
+	void RevertDeletions(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
 		foreach (var change in changes) {
 			SE.InsertLine(change.LineContents, change.LineNum);
 
@@ -375,12 +401,48 @@ public class History : MonoBehaviour {
 		}
 	}
 
-	void UndoModifications(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
+	void UseModifications(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes, 
+		bool usePrevious) {
 		foreach (var change in changes) {
-			SE.lines[change.LineNum].Content = change.PrevContents;
+			SE.lines[change.LineNum].Content = usePrevious ? change.PrevContents : change.LineContents;
 
 			if (!updatedIndexes.Contains(change.LineNum))
 				updatedIndexes.Add(change.LineNum);
+		}
+	}
+
+	public void Redo() {
+		if (undos == 0 || Changes.Count == 0) return;
+
+		undos--;
+		Snapshot ssToUndo = Changes[Changes.Count - 1 - undos];
+
+		RedoChanges(ssToUndo.Changes);
+		ResetCarets(ssToUndo.CurCarets);
+
+		LinesBefore = SE.LinesStringArray;
+		lastCarets = ssToUndo.CurCarets.Carets;
+	}
+
+	void RedoChanges(Snapshot.LineChange[] changes) {
+		var sorted = changes.OrderByDescending(c => c.LineNum);
+
+		var additions = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Addition).ToArray();
+		var deletions = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Deletion).ToArray();
+		var modifys = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Modification).ToArray();
+
+		List<int> updatedIndexes = new();
+		UseModifications(modifys, ref updatedIndexes, false);
+		RevertDeletions(additions, ref updatedIndexes);
+		RevertAdditions(deletions, ref updatedIndexes);
+
+		// update
+		List<int> gotUpdated = new();
+		foreach (int toUpdate in updatedIndexes) {
+			if (gotUpdated.Contains(toUpdate)) continue;
+
+			List<int> updated = SE.UpdateLine(toUpdate);
+			gotUpdated.AddRange(updated);
 		}
 	}
 }
