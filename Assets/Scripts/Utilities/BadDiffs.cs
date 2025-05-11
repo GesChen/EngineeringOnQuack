@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.IonicZip;
 using UnityEngine;
 
+// really bad custom diffs algo. will switch if it causes too much trouble
+// but it was a good coding exercise 
 public class BadDiffs : MonoBehaviour {
 
 	public enum State {
@@ -15,6 +18,7 @@ public class BadDiffs : MonoBehaviour {
 	public struct Item {
 		public ulong c;
 		public State state;
+		public int pos;
 	}
 
 	public class Diffs {
@@ -113,6 +117,9 @@ public class BadDiffs : MonoBehaviour {
 						//ok
 						A[i].state = State.Modified;
 						B[mi + Badds].state = State.Modified;
+
+						A[i].pos = mi + Badds;
+						B[mi + Badds].pos = i;
 					}
 				}
 			}

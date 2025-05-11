@@ -1,8 +1,5 @@
-# a = "EEDEEFJTT"
-# b = "JJJJJDFHTT"
-
-a = "QWOEQOIWUE"
-b = "QIOWUOIQWUE"
+a = "EEDEEFJTT"
+b = "JJJJJDFHT"
 
 # state -1 unset 0- normal 1- modified 2- addition 3- removal
 

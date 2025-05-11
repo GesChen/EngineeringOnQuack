@@ -55,23 +55,23 @@ public class Tester : MonoBehaviour {
 		if (Input.GetKey("q"))
 			Test();
 
-		if (Input.GetKeyDown("z")) {
+		if (Input.GetKeyDown("n")) {
 			script = null;
 			print("script nulled");
 		}
 
 		if (Input.GetKeyDown("t")) {
-			string res = "";
 			void test() {
-				res = editor.LinesString;
+				editor.history.RecordChange();
 			}
 
-			HF.Test(test, 100);
-
-			print(res);
+			HF.Test(test, 1);
+		}
+		if (Input.GetKeyDown("z")) {
+			editor.history.Undo();
 		}
 	}
-	void Test() {
+		void Test() {
 		TestOnce();
 
 		Stopwatch sw = new();

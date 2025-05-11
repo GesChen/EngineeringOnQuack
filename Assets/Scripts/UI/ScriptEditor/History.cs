@@ -181,46 +181,206 @@ public class History : MonoBehaviour {
 */
 
 	public class Snapshot {
-		public Vector2Int[] Carets;
+		public struct Caret {
+			public Vector2Int head;
+			public Vector2Int tail;
+		}
+		public Caret[] Carets;
 		public int HeadCaretI;
 		public int TailCaretI;
 	
 		public struct LineChange {
 			public int LineNum;
 			public string LineContents;
+			public string PrevContents;
 
 			public enum ChangeType {
+				Default,
 				Addition,
-				Change,
-				Removal
+				Modification,
+				Deletion
 			}
 
 			public ChangeType Type;
-
-			/* fuckass diff algo figure out at home with blender
-			 * ABCCDEF
-			 * ABGGJDFH
-			 */
 		}
 
 		public LineChange[] Changes;
 	}
 
-	public List<Snapshot> Changes;
+	List<Snapshot> Changes = new();
+	int undos;
 
-	public string[] LinesBefore;
-	public string[] CurrentLines;
+	Snapshot.Caret[] lastCarets;
+
+	string[] LinesBefore;
+	string[] CurrentLines;
+
+	public void Initialize() {
+		LinesBefore = SE.LinesStringArray;
+		lastCarets = SE.carets.Select(c => new Snapshot.Caret() { head = c.head, tail = c.tail }).ToArray();
+	}
 
 	public void RecordChange() {
+		CurrentLines = SE.LinesStringArray;
 
 		// find changed lines and store them in a snapshot of the past
 		// like github diff
 
+
+		var diffs = BadDiffs.CheckDiffs(LinesBefore, CurrentLines);
+
+		// this will be changed later
+
+		// merge modifies that point to each other
+		List<Snapshot.LineChange> merged = new();
+		for (int aI = 0; aI < diffs.AItems.Length; aI++) {
+			BadDiffs.Item aChange = diffs.AItems[aI];
+
+			if (aChange.state == BadDiffs.State.Modified) {
+
+				// look for the matching
+				int bI = diffs.BItems.ToList().FindIndex(c => 
+					c.state == BadDiffs.State.Modified && 
+					c.pos == aI);
+
+				// has to be found and match the other way around
+				if (bI == -1 || aChange.pos != bI)
+					throw new("matching modified not found, fix your code");
+
+				merged.Add(new() {
+					LineNum = aI,
+					LineContents = CurrentLines[bI],
+					PrevContents = LinesBefore[aI],
+					Type = Snapshot.LineChange.ChangeType.Modification
+				});
+			} else
+			if (aChange.state != BadDiffs.State.Normal) {
+
+				merged.Add(new() {
+					LineNum = aI,
+					LineContents = LinesBefore[aI],
+					Type =
+						aChange.state == BadDiffs.State.Addition
+						? Snapshot.LineChange.ChangeType.Addition
+						: Snapshot.LineChange.ChangeType.Deletion
+				});
+			}
+		}
+
+		for (int bI = 0; bI < diffs.BItems.Length; bI++) {
+			BadDiffs.Item bChange = diffs.BItems[bI];
+
+			if (bChange.state == BadDiffs.State.Addition ||
+				bChange.state == BadDiffs.State.Removal) {
+
+				merged.Add(new() {
+					LineNum = bI,
+					LineContents = CurrentLines[bI],
+					Type =
+						bChange.state == BadDiffs.State.Addition
+						? Snapshot.LineChange.ChangeType.Addition
+						: Snapshot.LineChange.ChangeType.Deletion
+				});
+			}
+		}
+
+		Snapshot snap = new() {
+			Carets = lastCarets,
+			HeadCaretI = SE.headCaretI,
+			TailCaretI = SE.tailCaretI,
+			Changes = merged.ToArray()
+		};
+
+		lastCarets = SE.carets.Select(c => new Snapshot.Caret() { head = c.head, tail = c.tail }).ToArray();
+
+		if (undos != 0)
+			Changes.RemoveRange(Changes.Count - undos, undos);
+		undos = 0;
+
+		Changes.Add(snap);
+
+		while (Changes.Count > Config.ScriptEditor.MaxHistoryLength) {
+			Changes.RemoveAt(0);
+		}
+
 		LinesBefore = CurrentLines;
 	}
 
-	
+	public void Undo() {
+		if (undos == Changes.Count || Changes.Count == 0) return;
 
-	long[] LinesToLongs(string[] lines)
-		=> lines.Select(l => HF.HashString(l)).ToArray();
+		Snapshot ssToUndo = Changes[Changes.Count - 1 - undos];
+		undos++;
+
+		UndoChanges(ssToUndo.Changes);
+		SetSnapshotCarets(ssToUndo);
+	}
+
+	void SetSnapshotCarets(Snapshot ss) {
+
+		if (ss.Carets is null) return;
+
+		SE.ResetCarets();
+		SE.AddMultipleCarets(ss.Carets.Select(c => (c.head, c.tail)).ToList());
+		SE.headCaretI = ss.HeadCaretI;
+		SE.tailCaretI = ss.TailCaretI;
+		SE.UpdateCarets();
+	}
+
+	void UndoChanges(Snapshot.LineChange[] changes) {
+		var sorted = changes.OrderByDescending(c => c.LineNum);
+
+		var additions = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Addition).ToArray();
+		var deletions = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Deletion).ToArray();
+		var modifys = sorted.Where(c => c.Type == Snapshot.LineChange.ChangeType.Modification).ToArray();
+
+		List<int> updatedIndexes = new();
+		UndoAdditions(additions, ref updatedIndexes);
+		UndoDeletions(deletions, ref updatedIndexes);
+		UndoModifications(modifys, ref updatedIndexes);
+
+		// update
+		List<int> gotUpdated = new();
+		foreach (int toUpdate in updatedIndexes) {
+			if (gotUpdated.Contains(toUpdate)) continue;
+
+			List<int> updated = SE.UpdateLine(toUpdate);
+			gotUpdated.AddRange(updated);
+		}
+	}
+
+	void UndoAdditions(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
+		foreach (var change in changes) {
+			SE.DeleteLine(change.LineNum);
+
+			for (int i = 0; i < updatedIndexes.Count; i++)
+				if (updatedIndexes[i] > change.LineNum)
+					updatedIndexes[i]--;
+
+			if (!updatedIndexes.Contains(change.LineNum))
+				updatedIndexes.Add(change.LineNum);
+		}
+	}
+
+	void UndoDeletions(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
+		foreach (var change in changes) {
+			SE.InsertLine(change.LineContents, change.LineNum);
+
+			for (int i = 0; i < updatedIndexes.Count; i++)
+				if (updatedIndexes[i] >= change.LineNum)
+					updatedIndexes[i]++;
+
+			if (!updatedIndexes.Contains(change.LineNum))
+				updatedIndexes.Add(change.LineNum);
+		}
+	}
+
+	void UndoModifications(IEnumerable<Snapshot.LineChange> changes, ref List<int> updatedIndexes) {
+		foreach (var change in changes) {
+			SE.lines[change.LineNum].Content = change.PrevContents;
+
+			if (!updatedIndexes.Contains(change.LineNum))
+				updatedIndexes.Add(change.LineNum);
+		}
+	}
 }

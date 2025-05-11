@@ -27,9 +27,11 @@ public class ScriptEditor : MonoBehaviour {
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
 
 	public SyntaxHighlighter syntaxHighlighter;
-	public List<Caret> carets = new();
-	int headCaretI = 0;
-	int tailCaretI = 0;
+	public History history;
+
+	internal List<Caret> carets = new();
+	internal int headCaretI = 0;
+	internal int tailCaretI = 0;
 
 	[Header("temporary local config options, should move to global config soon")]
 	public float numberToContentSpace;
@@ -160,6 +162,8 @@ public class ScriptEditor : MonoBehaviour {
 		RecalculateAll();
 
 		SetSingleCaret(new(0, 0), new(0, 0));
+
+		history.Initialize();
 	}
 
 	void RecalculateAll() {
@@ -323,7 +327,7 @@ public class ScriptEditor : MonoBehaviour {
 		};
 	}
 
-	void UpdateLine(int lineIndex, bool forceUpdateNextToo = true) {
+	internal List<int> UpdateLine(int lineIndex, bool forceUpdateNextToo = true) {
 		Line line = lines[lineIndex];
 
 		Context context =
@@ -342,13 +346,15 @@ public class ScriptEditor : MonoBehaviour {
 
 		// if the context has changed
 
+		List<int> updatedLines = new() { lineIndex };
+
 		if (!ContextToSignature(context).Equals(preRunSignature) ||
 			forceUpdateNextToo) {
 			line.ContextAfterLine = context;
 
 			// then propgoate updates down the lines
 			if (lineIndex != lines.Count - 1)
-				UpdateLine(lineIndex + 1, false);
+				updatedLines.AddRange(UpdateLine(lineIndex + 1, false));
 		}
 
 		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
@@ -377,9 +383,20 @@ public class ScriptEditor : MonoBehaviour {
 			// otherwise just do this ones ts
 			line.IndexTs = CalculateTs(lineIndex);
 		}
+
+		return updatedLines;
 	}
 
-	void DeleteLine(int index) {
+	internal Line InsertLine(string contents, int at) {
+		Line newLine = GenerateNewLine(contents);
+
+		lines.Insert(at, newLine);
+		newLine.Components.LineContent.transform.SetSiblingIndex(at);
+
+		return newLine;
+	}
+
+	internal void DeleteLine(int index) {
 		Line line = lines[index];
 
 		// destroy the line
@@ -484,7 +501,7 @@ public class ScriptEditor : MonoBehaviour {
 	#endregion
 
 	#region Caret Utilities
-	void ResetCarets() {
+	internal void ResetCarets() {
 		if (carets.Count == 0) return; // prolly doesnt help lmao
 
 		foreach (var caret in carets)
@@ -500,7 +517,7 @@ public class ScriptEditor : MonoBehaviour {
 		return newCaret;
 	}
 
-	List<Caret> AddMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
+	internal List<Caret> AddMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
 
 		List<Caret> newCarets = new();
 		for (int i = 0; i < positions.Count; i++) {
@@ -524,7 +541,7 @@ public class ScriptEditor : MonoBehaviour {
 		carets.RemoveAt(i);
 	}
 
-	void UpdateCarets() {
+	internal void UpdateCarets() {
 		CheckForOverlaps();
 		PushTails();
 
@@ -1577,15 +1594,12 @@ public class ScriptEditor : MonoBehaviour {
 		string startIndent = IndentToColumnString(0, indentSpaces, c.head.y + 1);
 		endContents = endContents.Insert(0, startIndent);
 
-		Line newLine = GenerateNewLine(endContents); 
+		if (addDownwards) c.head.y++;
+
+		Line newLine = InsertLine(endContents, c.head.y); 
 
 		// place cursor
-		if (addDownwards) c.head.y++;
 		c.head.x = newLine.Content.Length - endContents.Length + startIndent.Length;
-
-		// set the indexes
-		lines.Insert(c.head.y, newLine);
-		newLine.Components.LineContent.transform.SetSiblingIndex(c.head.y);
 
 		// add ln
 		LineNumber newLN = GenerateNewNumber(lines.Count);

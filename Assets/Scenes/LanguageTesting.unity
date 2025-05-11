@@ -702,6 +702,7 @@ GameObject:
   - component: {fileID: 1116476321}
   - component: {fileID: 1116476322}
   - component: {fileID: 1116476324}
+  - component: {fileID: 1116476325}
   m_Layer: 5
   m_Name: procedural SE test
   m_TagString: Untagged
@@ -748,6 +749,7 @@ MonoBehaviour:
   lineNumbersVerticalLayout: {fileID: 1172439017}
   lineNumbersRect: {fileID: 0}
   syntaxHighlighter: {fileID: 1116476324}
+  history: {fileID: 1116476325}
   numberToContentSpace: 20
   font: {fileID: 11400000, guid: f9ae5c2f5f64fad439ba828fc50a5a5a, type: 2}
   fontSize: 20
@@ -768,6 +770,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2bfe13c1748b634394e9adf54a22eb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1116476325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1116476320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba8d7d3a8a7009e4f9a5eedfc846054d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SE: {fileID: 1116476322}
+  LinesBefore: []
+  CurrentLines: []
 --- !u!1 &1172439013
 GameObject:
   m_ObjectHideFlags: 0
