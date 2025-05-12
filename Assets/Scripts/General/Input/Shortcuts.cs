@@ -14,7 +14,7 @@ public class Shortcuts : MonoBehaviour {
 			new("paste",		false, Key.LeftCtrl, Key.V),
 			new("undo",			false, Key.LeftCtrl, Key.Z),
 			new("redo",			false, Key.LeftCtrl, Key.Y),
-			new("redo_shift",	false, Key.LeftCtrl, Key.LeftShift, Key.Z),
+			new("redo",			false, Key.LeftCtrl, Key.LeftShift, Key.Z),
 		};
 	}
 
@@ -25,11 +25,14 @@ public class Shortcuts : MonoBehaviour {
 		}
 	}
 
-	static Shortcut Get(string name)
+	static Shortcut GetFirst(string name)
 		=> AllShortcuts.First(s => s.Name == name);
 
+	static List<Shortcut> GetAll(string name)
+		=> AllShortcuts.Where(s => s.Name == name).ToList();
+
 	public static void SubscribeTo(string name, Shortcut.ShortcutTriggeredEvent action) {
-		Get(name).Subscribe(action);
+		GetAll(name).ForEach(s => s.Subscribe(action));
 	}
 
 	public class Shortcut {

@@ -228,11 +228,12 @@ public class History : MonoBehaviour {
 	}
 
 	public void RecordChange() {
+		HF.LogColor("recording", MoreColors.PastelYellow);
+
 		CurrentLines = SE.LinesStringArray;
 
 		// find changed lines and store them in a snapshot of the past
 		// like github diff
-
 
 		var diffs = BadDiffs.CheckDiffs(LinesBefore, CurrentLines);
 
@@ -291,7 +292,11 @@ public class History : MonoBehaviour {
 			}
 		}
 
-		if (merged.Count == 0) return;
+		if (merged.Count == 0) {
+			//print("same");
+			SetLasts();
+			return;
+		}
 
 		var curCarets = SE.carets.Select(c => new Snapshot.Caret() { head = c.head, tail = c.tail }).ToArray();
 
@@ -313,21 +318,23 @@ public class History : MonoBehaviour {
 			Changes = merged.ToArray()
 		};
 
-		lastCarets = curCarets;
-		lastHCI = SE.headCaretI;
-		lastTCI = SE.tailCaretI;
-
 		if (undos != 0)
 			Changes.RemoveRange(Changes.Count - undos, undos);
 		undos = 0;
-
 		Changes.Add(snap);
 
 		while (Changes.Count > Config.ScriptEditor.MaxHistoryLength) {
 			Changes.RemoveAt(0);
 		}
 
+		SetLasts();
 		LinesBefore = CurrentLines;
+	}
+
+	void SetLasts() {
+		lastCarets = SE.carets.Select(c => new Snapshot.Caret() { head = c.head, tail = c.tail }).ToArray();
+		lastHCI = SE.headCaretI;
+		lastTCI = SE.tailCaretI;
 	}
 
 	void ResetCarets(Snapshot.CaretState caretState) {
@@ -341,6 +348,7 @@ public class History : MonoBehaviour {
 	}
 
 	public void Undo() {
+		RecordChange();
 		if (undos == Changes.Count || Changes.Count == 0) return;
 
 		Snapshot ssToUndo = Changes[Changes.Count - 1 - undos];
@@ -412,6 +420,8 @@ public class History : MonoBehaviour {
 	}
 
 	public void Redo() {
+		RecordChange();
+
 		if (undos == 0 || Changes.Count == 0) return;
 
 		undos--;

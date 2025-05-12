@@ -692,7 +692,7 @@ public class ScriptEditor : MonoBehaviour {
 	int clicksInARow = 0;
 	void DetectExtraClicks(Vector2Int pos) {
 		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
-			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000 &&
+			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000f &&
 			lastClickPos == pos) {
 				clicksInARow++;
 			} else {
@@ -759,6 +759,7 @@ public class ScriptEditor : MonoBehaviour {
 	bool boxCleared = false;
 	void HandleDrag(Vector2Int pos, Vector2Int posUnclamped) {
 		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) { // down
+
 			dragging = true;
 
 			if (!Conatrols.Keyboard.Modifiers.Shift) {
@@ -787,6 +788,8 @@ public class ScriptEditor : MonoBehaviour {
 				Conatrols.Keyboard.Modifiers.Shift &&
 				Conatrols.Keyboard.Modifiers.Alt)
 				return; // do nothing with all 3 
+
+			history.RecordChange(); // before cursor moves
 
 			bool doubleClickCondition =
 				Conatrols.Keyboard.Modifiers.Ctrl &&
@@ -847,7 +850,7 @@ public class ScriptEditor : MonoBehaviour {
 				SetCurrentCaret(pos, dragStart);
 				carets[headCaretI].DesiredCol = ColumnOfPosition(pos);
 			} else
-			  if (clicksInARow == 2 || doubleClickCondition) {
+			if (clicksInARow == 2 || doubleClickCondition) {
 				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
 				(int deS, int deE) = DoubleClickWordAt(pos);
 
@@ -1271,35 +1274,76 @@ public class ScriptEditor : MonoBehaviour {
 
 	#region Text Editing
 	// aw hell nah i really need to get this into a separate class :((((((((((
+	bool lastAnyMeetsCriteria = false;
+	float lastTypeTime = 0;
+	bool pauseRecorded = false;
 	void HandleTyping() {
-		bool anyGood = false;
-		foreach (Caret c in carets) {
-			bool good = HandleCaretTyping(c);
+		bool good = GoodToType();
 
-			if (good) {
-				anyGood = true;
+		if (good) {
+			//print($"good");
+			var presses = Conatrols.Keyboard.Presses;
+
+			static bool criteria(char c) => char.IsLetterOrDigit(c) || c == ' ';
+
+			// fuck performance im done with this code
+			bool anyCharKeysPressed = presses.Any(press =>
+				Conatrols.Keyboard.All.CharacterKeys.Contains(press));
+
+			bool anyMeetsCriteria =
+				presses.Any(press =>
+				Conatrols.Keyboard.All.CharacterKeys.Contains(press) && // early escape prevent keyerror
+				criteria(
+					Conatrols.Keyboard.Modifiers.Shift
+					? Conatrols.Keyboard.All.KeyShiftedMapping[press]
+					: Conatrols.Keyboard.All.KeyCharMapping[press]));
+
+			if (anyCharKeysPressed) {
+				if (anyMeetsCriteria != lastAnyMeetsCriteria)
+					history.RecordChange();
+
+				lastAnyMeetsCriteria = anyMeetsCriteria;
 			}
+
+			//print($"any {anyMeetsCriteria} lkas {lastAnyMeetsCriteria} anychar {anyCharKeysPressed}");
+
+			foreach (Caret c in carets) {
+				HandleCaretTyping(c);
+			}
+
+			KeepHeadCaretHeadOnScreen();
+			lastTypeTime = Time.time;
+			pauseRecorded = false;
 		}
 
-		if (anyGood) {
-			KeepHeadCaretHeadOnScreen();
+		if (Time.time - lastTypeTime > Config.ScriptEditor.NewHistoryPauseThresholdMs / 1000f &&
+			!pauseRecorded) {
+			history.RecordChange();
+			pauseRecorded = true;
 		}
 	}
 
-	bool HandleCaretTyping(Caret c) {
+	bool GoodToType() {
 		if (Conatrols.Keyboard.Presses.Count == 0) return false;
-		Line line = lines[c.head.y];
 
 		bool shortcutPressed =
 			(Conatrols.Keyboard.Modifiers.Ctrl ||
 			Conatrols.Keyboard.Modifiers.Alt) &&
-			Conatrols.Keyboard.Pressed.All(
+			Conatrols.Keyboard.Presses.All(
 				k => Conatrols.Keyboard.All.CharacterKeys.Contains(k) ||
 				Conatrols.Keyboard.All.Modifiers.Contains(k));
 
-		if (!Conatrols.Keyboard.Pressed.Any(k => Conatrols.Keyboard.All.TextKeys.Contains(k)) ||
-			shortcutPressed)
+		if (shortcutPressed)
 			return false;
+
+		return Conatrols.Keyboard.Presses.All(
+			k => 
+				Conatrols.Keyboard.All.TextKeys.Contains(k) || 
+				Conatrols.Keyboard.All.Modifiers.Contains(k));
+	}
+
+	void HandleCaretTyping(Caret c) {
+		Line line = lines[c.head.y];
 
 		// force stop dragging;
 		dragging = false;
@@ -1316,24 +1360,12 @@ public class ScriptEditor : MonoBehaviour {
 
 		// adders
 		if (Conatrols.IsUsed(Key.Enter)) {
-			bool splitText = true;
-			bool addDownwards = true;
-
-			if (Conatrols.Keyboard.Modifiers.Ctrl &&
-			Conatrols.Keyboard.Modifiers.Shift) {
-				splitText = true;
-				addDownwards = false;
-			} else
-			if (Conatrols.Keyboard.Modifiers.Ctrl) {
-				splitText = false;
-				addDownwards = false;
-			} else
-			if (Conatrols.Keyboard.Modifiers.Shift) {
-				splitText = false;
-				addDownwards = true;
-			}
+			bool splitText = !Conatrols.Keyboard.Modifiers.Shift;
+			bool addDownwards = !Conatrols.Keyboard.Modifiers.Ctrl;
 
 			Enter(c, line, splitText, addDownwards);
+
+			history.RecordChange(); // after adding
 		} else
 
 		if (Conatrols.IsUsed(Key.Tab))
@@ -1341,8 +1373,6 @@ public class ScriptEditor : MonoBehaviour {
 
 		else
 			NormallyType(c, line);
-
-		return true;
 	}
 
 	void DeleteSelection(Caret c, Line line) {
@@ -1530,6 +1560,8 @@ public class ScriptEditor : MonoBehaviour {
 			int length = end - start;
 			line.Content = line.Content.Remove(start, length);
 			c.head.x -= length;
+
+			history.RecordChange();
 		} else {
 			line.Content = line.Content.Remove(c.head.x - 1, 1);
 			c.head.x--;
@@ -1580,7 +1612,6 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Enter(Caret c, Line line, bool splitText, bool addDownwards) {
-
 		// determine end contents and split
 		string endContents = "";
 		if (splitText) {
@@ -1840,6 +1871,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void Cut() {
+		history.RecordChange();
+
 		DebugLines();
 		Copy();
 
@@ -1853,6 +1886,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void PasteIndex(int i) {
+		history.RecordChange();
+
 		var entry = clipboard.Get(i);
 
 		if (entry.IsWholeLine) {

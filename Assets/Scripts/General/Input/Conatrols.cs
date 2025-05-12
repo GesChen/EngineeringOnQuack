@@ -87,7 +87,7 @@ public class Conatrols : MonoBehaviour {
 		public static List<Key> PressedThisFrame;
 		public static List<Key> ReleasedThisFrame;
 		public void UpdateKeyboard() {
-			Pressed = GetAllPressedKeys();
+			Pressed = KeyboardFastPoll.GetAllPressedKeys();
 
 			// might be kinda slow but idk
 			PressedThisFrame = Pressed.Except(LastPressed).ToList();
@@ -102,17 +102,21 @@ public class Conatrols : MonoBehaviour {
 		}
 
 		// dw about speed, its doing like .05ms so 20k fps \_("/)_/
+		/*
 		List<Key> GetAllPressedKeys() {
 			List<Key> pressed = new();
 
 			var kb = UnityEngine.InputSystem.Keyboard.current;
 			foreach (KeyControl kc in kb.allKeys) {
 				if (kc.isPressed) pressed.Add(kc.keyCode);
+				if (kc.keyCode == Key.Enter) 
+					print($"chedck ent");
 			}
+			print(pressed.Count);
 
 			return pressed;
 		}
-
+*/
 		// these two can be optimized away into one timer sort of thing if you want
 		readonly Dictionary<Key, float> KeyHeldTimes = new();
 		readonly Dictionary<Key, float> KeyLastRepeatTime = new();
@@ -130,7 +134,7 @@ public class Conatrols : MonoBehaviour {
 		List<Key> GetRepeats() {
 			List<Key> keys = new();
 			foreach (KeyValuePair<Key, float> keytime in KeyHeldTimes) {
-				if (Time.time - keytime.Value > Config.ScriptEditor.RepeatDelayMs / 1000 && // long enough held
+				if (Time.time - keytime.Value > Config.ScriptEditor.RepeatDelayMs / 1000f && // long enough held
 					Time.time - KeyLastRepeatTime[keytime.Key] > 1f / Config.ScriptEditor.RepeatRateCPS) { // long enough since last repeat
 					keys.Add(keytime.Key);
 					KeyLastRepeatTime[keytime.Key] = Time.time;

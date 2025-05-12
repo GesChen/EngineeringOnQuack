@@ -247,7 +247,7 @@ public class Caret {
 		rt.localPosition = new(t * RT.rect.width, -RT.rect.height / 2); // center 
 
 		// blink
-		float rate = Config.ScriptEditor.CursorBlinkRateMs / 1000;
+		float rate = Config.ScriptEditor.CursorBlinkRateMs / 1000f;
 		rt.gameObject.SetActive(
 			(Time.time - blinkTimer) % (2 * rate) < rate);
 
