@@ -228,8 +228,6 @@ public class History : MonoBehaviour {
 	}
 
 	public void RecordChange() {
-		HF.LogColor("recording", MoreColors.PastelYellow);
-
 		CurrentLines = SE.LinesStringArray;
 
 		// find changed lines and store them in a snapshot of the past
