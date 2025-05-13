@@ -1,14 +1,26 @@
-test:
-    a = 0
-    print("innit")
+a = 100 
 
-    test(x):
-        a = x
-        print("constructed " + str(x))
+test: -- i need more comments
+	print("innit")
 
-    something(y):
-        print(a + y)
-        print("nuts")
+	property = "blah"
+
+	test(x):
+		this.a = x
+		print("constructed " + str(x))	
+
+	something(y):		
+		print("this is "+this.property)
+		print("found a to be " + str(this.a))
+		---print(this.a + y)
+		print("nuts")---
+
+		this.another(this.a, 2, y)
+		print("its something "+str(this.fab)+" with pro "+this.property)
+	
+	another(a,b,c):
+		this.fab = a + b + c
+		print(this.fab)
 
 breakpoint()
 thing = test(1)
@@ -17,3 +29,11 @@ thing.something(2)
 fed = "test"
 print(fed)
 print(fed.upper())
+
+upperized = fed.upper()
+lowered = upperized.lower()
+
+print("stuff "+lowered)
+
+if thing == 3:
+	-- this something

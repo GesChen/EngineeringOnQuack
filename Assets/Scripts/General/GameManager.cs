@@ -30,9 +30,13 @@ public class GameManager : MonoBehaviour
 
 	public PlayingMode currentPlayMode = PlayingMode.Building;
 
+	void Start() {
+		UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;
+	}
+
 	void Update()
 	{
-		Application.targetFrameRate = Config.FpsLimit;
+		Application.targetFrameRate = Config.FPS_LIMIT;
 	}
 
 	public void StartSimulating()

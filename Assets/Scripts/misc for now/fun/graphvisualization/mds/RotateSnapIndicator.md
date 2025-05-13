@@ -1,0 +1,6 @@
+[[RotateSnapIndicator]]
+[[Vector3]]
+[[float]]
+[[GameObject]]
+[[Renderer]]
+[[int]]

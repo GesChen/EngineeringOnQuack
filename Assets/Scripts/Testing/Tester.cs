@@ -4,51 +4,71 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using System.Diagnostics;
-using System;
-using System.Runtime.InteropServices;
 
 public class Tester : MonoBehaviour {
-	public bool boo;
 
-	public bool testFile;
 	public bool usefp1;
 	public string filepath1;
 	public string filepath2;
 	public string logpath1;
 	public string logpath2;
-	[TextArea]
-	public List<string> testCases = new();
-	public int useTestCase;
 	public List<Color> colors;
 
 	public int iters;
-	public MemoryPart memory;
+	public Memory memory;
 	public Interpreter interpreter;
 	public Evaluator evaluator;
 
-	public Cable IEcable;
-	public Cable IMcable;
+	public ScriptEditor editor;
 
 	Script script;
 	void Start() {
+		interpreter = new();
+		evaluator = new();
+		memory = new(interpreter, "main");
+
+		interpreter.Evaluator = evaluator;
+		interpreter.Memory = memory;
+		evaluator.Interpreter = interpreter;
+
 		BeforeTesting();
 		Updatetest();
 	}
 
 	private void Update() {
+		if (!(Input.GetKey(KeyCode.LeftControl) && Input.GetKey(KeyCode.LeftShift))) return;
+
 		if (Input.GetKeyDown("w"))
 			Updatetest();
 
 		if (Input.GetKeyDown("r"))
 			BeforeTesting();
 
-		if (Input.GetKeyDown("e"))
+		if (Input.GetKeyDown("e")) {
+			script = null;
+			BeforeTesting();
+			Updatetest();
+
 			Test();
+		}
 
 		if (Input.GetKey("q"))
 			Test();
+
+		if (Input.GetKeyDown("n")) {
+			script = null;
+			print("script nulled");
+		}
+
+		if (Input.GetKeyDown("t")) {
+			void test() {
+				editor.history.RecordChange();
+			}
+
+			HF.Test(test, 1);
+		}
 	}
-	void Test() {
+		void Test() {
 		TestOnce();
 
 		Stopwatch sw = new();
@@ -60,68 +80,64 @@ public class Tester : MonoBehaviour {
 		sw.Stop();
 
 		double ns = sw.ElapsedTicks * 100;
-		HF.LogColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
+		HF.WarnColor($"{ns} ns ({ns / 1e6} ms)", colors[0]);
 
 		if (iters > 1)
-			HF.LogColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
+			HF.WarnColor($"average {ns / iters} ns ({ns / 1e6 / iters} ms) each", colors[0]);
 	}
 
 	void BeforeTesting() {
-		(CableConnection onItoMCC, CableConnection onMtoICC) = IMcable.Connect(interpreter, memory);
-		interpreter.MemoryCC = onItoMCC;
-		memory.InterpreterCC = onMtoICC;
-		memory.Initialize(onMtoICC);
-		HF.LogColor($"memory initialized", colors[1]);
+		interpreter.Memory = memory;
+		memory.Interpreter = interpreter;
+		memory.Initialize();
+		HF.WarnColor($"memory initialized", colors[1]);
 	}
 	void Updatetest() {
 		Tokenizer tokenizer = new();
-		if (testFile) {
-			string path = usefp1 ? filepath1 : filepath2;
-			if (File.Exists(path)) {
-				string contents = File.ReadAllText(path);
+		string path = usefp1 ? filepath1 : filepath2;
+		if (File.Exists(path)) {
+			string contents = File.ReadAllText(path);
 
-				print($"tokenizing {contents}");
-				(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
-
-				if (output is Error) print(output);
-				script = scriptOut;
-
-				if (script != null) {
-					using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
-					{
-						string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
-						sw.Write(json);
-					}
-				}
-
-				HF.LogColor($"test updated to testcase file", colors[1]);
-				print($"updated script: \n{script}");
-			}
-		}
-		else {
-
-			(Script scriptOut, Data output) = tokenizer.Tokenize(testCases[useTestCase]);
+			HF.WarnColor($"tokenizing {contents}", colors[1]);
+			(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
 
 			if (output is Error) print(output);
 			script = scriptOut;
 
-			HF.LogColor($"test updated to {HF.Repr(testCases[useTestCase])}", colors[1]);
+			if (script != null) {
+				using StreamWriter sw = File.CreateText(usefp1 ? logpath1 : logpath2);
+				{
+					string json = ScriptSaveLoad.ConvertScriptToString(script);
+					//string json = ScriptSaveLoad.ConvertScriptToJson(script, true);
+					sw.Write(json);
+
+					//string reconstructed = ScriptSaveLoad.ReconstructJson(json);
+					//sw.Write(reconstructed);
+				}
+				
+				string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
+				print(lines.Length);
+				void load() => editor.Load(lines);
+				HF.Test(load, 1);
+			}
+
+			HF.WarnColor($"test updated to testcase file", colors[1]);
+			HF.WarnColor($"updated script: \n{script}", colors[1]);
 		}
 
 	}
 	void TestOnce() {
 		if (iters == 1) return;
 
-		Memory copy = memory.component.Copy();
+		Memory copy = memory.Copy();
 		Data run = interpreter.Run(copy, script);
 		print(run);
 	}
 	void ToTest() {
 
-		Data run = interpreter.Run(memory.component, script);
+		Data run = interpreter.Run(memory, script);
 		if (iters == 1)
-			print($"run out:" + run);
-
+			HF.WarnColor($"run out:" + run, colors[1]);
 	}
 
 	/*
