@@ -1,12 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public abstract partial class Primitive : Data {
+public abstract partial class Primitive : T_Data {
 	public partial class Function : Primitive {
 		public static Function Default = new();
 
 		// functions dont have methods or instance vars
-		public static Type InternalType = new("Function", new Dictionary<string, Data>());
+		public static Type InternalType = new("Function", new Dictionary<string, T_Data>());
 
 		public enum FunctionTypeEnum {
 			UserDefined,
@@ -50,7 +50,7 @@ public abstract partial class Primitive : Data {
 		#endregion
 
 		#region internal
-		public delegate Data InternalFunctionDelegate(Data thisReference, List<Data> args);
+		public delegate T_Data InternalFunctionDelegate(T_Data thisReference, List<T_Data> args);
 		public InternalFunctionDelegate InternalFunction;
 	
 		public Function(string name, InternalFunctionDelegate internalFunction) : base(InternalType) {
@@ -75,7 +75,7 @@ public abstract partial class Primitive : Data {
 			return $"Function object";
 		}
 
-		public override Data Copy() {
+		public override T_Data Copy() {
 			return new Function(this);
 		}
 	}

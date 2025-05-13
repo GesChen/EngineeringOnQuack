@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public abstract partial class Primitive : Data {
+public abstract partial class Primitive : T_Data {
 	protected Primitive(Type type) : base(type) { }
 	protected Primitive(Primitive original) : base(original) { }
 

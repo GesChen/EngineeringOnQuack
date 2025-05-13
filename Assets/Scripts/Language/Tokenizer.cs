@@ -66,7 +66,7 @@ public class Tokenizer {
 		'(', ')', '[', ']', '{', '}',			 // region
 		'.', ',', ':'							// special
 	};
-	public (List<Token>, Data) TokenizeLine(string line) {
+	public (List<Token>, T_Data) TokenizeLine(string line) {
 		// line has been stripped and preprocessed already
 
 		var chartypes = new {
@@ -92,13 +92,13 @@ public class Tokenizer {
 		int lastType = -1;
 		int i = 0;
 
-		Data maketoken() {
+		T_Data maketoken() {
 			// make new token out of past built sb
 			string tokenString = sb.ToString();
 			sb.Clear();
 
 			if (tokenString == "")
-				return Data.Success; // can be caused by string's custom processing code
+				return T_Data.Success; // can be caused by string's custom processing code
 
 			if (tokenString.All(c => char.IsDigit(c))) { // number 
 				if (int.TryParse(tokenString, out int number))
@@ -111,21 +111,21 @@ public class Tokenizer {
 					return Errors.VarNameCannotStartWithNum();
 
 				// keyword check
-				if (Token.Keyword.KeywordsHashSet.Contains(tokenString))
-					tokens.Add(new Token.Keyword(tokenString));
+				if (Token.T_Keyword.KeywordsHashSet.Contains(tokenString))
+					tokens.Add(new Token.T_Keyword(tokenString));
 				else
-					tokens.Add(new Token.Name(tokenString)); // otherwise add normally as name
+					tokens.Add(new Token.T_Name(tokenString)); // otherwise add normally as name
 			}
 			else if (tokenString.All(c => opchars.Contains(c))) { // all operator symbols
-				if (Operator.AllOperatorStringsHashSet.Contains(tokenString))
-					tokens.Add(new Operator(tokenString));
+				if (T_Operator.AllOperatorStringsHashSet.Contains(tokenString))
+					tokens.Add(new T_Operator(tokenString));
 				else
 					return Errors.UnknownOperator(tokenString);
 			}
 			else
 				return Errors.CouldntParse(line);
 
-			return Data.Success;
+			return T_Data.Success;
 		}
 
 		while (i < line.Length) {
@@ -134,7 +134,7 @@ public class Tokenizer {
 			if (type == chartypes.unknown) return (null, Errors.InvalidCharacter(c));
 
 			bool lastOpThisNotFull = lastType == chartypes.op && // (sb (last op?) + this) is not valid op
-				!Token.Operator.AllOperatorStrings.Contains(sb.ToString() + c); // put before the lasttype change to type
+				!Token.T_Operator.AllOperatorStrings.Contains(sb.ToString() + c); // put before the lasttype change to type
 
 			if (i == 0 || 
 				lastType == chartypes.space || 
@@ -149,7 +149,7 @@ public class Tokenizer {
 
 			
 			if ((typechanged && !numtonameVV) || lastOpThisNotFull) {
-				Data output = maketoken();
+				T_Data output = maketoken();
 				if (output is Error) return (null, output);
 			}
 			if (c != ' ') sb.Append(c); // add char to sb after and if its not space
@@ -197,11 +197,11 @@ public class Tokenizer {
 			if (i == line.Length) { // at end do one manual token generation 
 				// defo better way to do this but im too lazy rn
 				
-				Data output = maketoken();
+				T_Data output = maketoken();
 				if (output is Error) return (null, output);
 			}
 		}
-		return (tokens, Data.Success);
+		return (tokens, T_Data.Success);
 	}
 
 	public string PreProcessLine(string line) {
@@ -238,7 +238,7 @@ public class Tokenizer {
 		return sb.ToString();
 	}
 
-	public (Section, Data) SplitSection(iLine[] lines) {
+	public (Section, T_Data) SplitSection(iLine[] lines) {
 		List<Line> sectionLines = new();
 
 		int indentation(int linenum) {
@@ -271,13 +271,13 @@ public class Tokenizer {
 				i--; // dont go into the next token
 
 				// recurse deeper sections, give starting index
-				(Section subsection, Data output) = SplitSection(subSecStrings.ToArray());
+				(Section subsection, T_Data output) = SplitSection(subSecStrings.ToArray());
 				if (output is Error) return (null, output);
 
 				sectionLines.Add(new(iLine.lineNum , line, subsection)); // add a subsection
 			}
 			else { // tokenize line
-				(List<Token> tokens, Data output) = TokenizeLine(line);
+				(List<Token> tokens, T_Data output) = TokenizeLine(line);
 				if (output is Error) return (null, output);
 
 				sectionLines.Add(new(iLine.lineNum, line, tokens));
@@ -285,10 +285,10 @@ public class Tokenizer {
 
 			i++;
 		}
-		return (new(sectionLines.ToArray()), Data.Success);
+		return (new(sectionLines.ToArray()), T_Data.Success);
 	}
 
-	public (Script, Data) Tokenize(string text) {
+	public (Script, T_Data) Tokenize(string text) {
 		string preprocessed = RemoveComments(text);
 
 		string[] lineStrings = preprocessed.Split('\n');
@@ -300,11 +300,11 @@ public class Tokenizer {
 			});
 		}
 
-		(Section split, Data result) = SplitSection(iLines.ToArray());
+		(Section split, T_Data result) = SplitSection(iLines.ToArray());
 		if (result is Error) return (null, result);
 
 		Script newScript = new(split, text);
 
-		return (newScript, Data.Success);
+		return (newScript, T_Data.Success);
 	}
 }

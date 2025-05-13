@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public abstract partial class Primitive : Data {
+public abstract partial class Primitive : T_Data {
 	public partial class Number : Primitive {
 		public static Number Default = new();
 		
 		// defines internal type with name and memory
-		public static Type InternalType = new("Number", new Dictionary<string, Data>() {
+		public static Type InternalType = new("Number", new Dictionary<string, T_Data>() {
 			{ "eq",			new Function("eq", eq)		},
 			{ "lt",			new Function("lt", lt)		},
 			{ "ad",			new Function("ad", ad)		},
@@ -34,42 +34,42 @@ public abstract partial class Primitive : Data {
 			return (tostring(this, new()) as String).Value;
 		}
 
-		public override Data Copy() {
+		public override T_Data Copy() {
 			return new Number(this);
 		}
 
 		#region methods
-		public static Data eq(Data thisRef, List<Data> args) {
+		public static T_Data eq(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("eq", 1, args.Count);
 			if (args[0] is not Number) return new Bool(false);
 			return new Bool((thisRef as Number).Value == (args[0] as Number).Value);
 		}
-		public static Data lt(Data thisRef, List<Data> args) {
+		public static T_Data lt(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("lt", 1, args.Count);
 			if (args[0] is not Number)
 				return Errors.CannotCompare("Number", args[0].Type.Name);
 			return new Bool((thisRef as Number).Value < (args[0] as Number).Value);
 		}
-		public static Data ad(Data thisRef, List<Data> args) {
+		public static T_Data ad(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("ad", 1, args.Count);
 			if (args[0] is not Number othernum) return Errors.UnsupportedOperation("+", "Number", args[0].Type.Name);
 
 			return new Number((thisRef as Number).Value + othernum.Value);
 		}
-		public static Data su(Data thisRef, List<Data> args) {
+		public static T_Data su(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("su", 1, args.Count);
 			if (args[0] is not Number othernum) return Errors.UnsupportedOperation("-", "Number", args[0].Type.Name);
 
 			return new Number((thisRef as Number).Value - othernum.Value);
 		}
-		public static Data mu(Data thisRef, List<Data> args) {
+		public static T_Data mu(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("mu", 1, args.Count);
 			if (args[0] is not Number othernum) return Errors.UnsupportedOperation("*", "Number", args[0].Type.Name);
 
 
 			return new Number((thisRef as Number).Value * othernum.Value);
 		}
-		public static Data di(Data thisRef, List<Data> args) {
+		public static T_Data di(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("di", 1, args.Count);
 			if (args[0] is not Number othernum) return Errors.UnsupportedOperation("/", "Number", args[0].Type.Name);
 
@@ -78,7 +78,7 @@ public abstract partial class Primitive : Data {
 
 			return new Number((thisRef as Number).Value / othernum.Value);
 		}
-		public static Data mo(Data thisRef, List<Data> args) {
+		public static T_Data mo(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("mo", 1, args.Count);
 			if (args[0] is not Number othernum) return Errors.UnsupportedOperation("%", "Number", args[0].Type.Name);
 
@@ -94,13 +94,13 @@ public abstract partial class Primitive : Data {
 
 			return new Number(remainder);
 		}
-		public static Data po(Data thisRef, List<Data> args) {
+		public static T_Data po(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("po", 1, args.Count);
 			if (args[0] is not Number othernum) return Errors.UnsupportedOperation("^", "Number", args[0].Type.Name);
 
 			return new Number(Math.Pow((thisRef as Number).Value, othernum.Value));
 		}
-		public static Data tostring(Data thisRef, List<Data> args) {
+		public static T_Data tostring(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
 			return new String((thisRef as Number).Value.ToString());
 		}

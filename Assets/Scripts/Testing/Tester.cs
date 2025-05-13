@@ -99,7 +99,7 @@ public class Tester : MonoBehaviour {
 			string contents = File.ReadAllText(path);
 
 			HF.WarnColor($"tokenizing {contents}", colors[1]);
-			(Script scriptOut, Data output) = tokenizer.Tokenize(contents);
+			(Script scriptOut, T_Data output) = tokenizer.Tokenize(contents);
 
 			if (output is Error) print(output);
 			script = scriptOut;
@@ -130,12 +130,12 @@ public class Tester : MonoBehaviour {
 		if (iters == 1) return;
 
 		Memory copy = memory.Copy();
-		Data run = interpreter.Run(copy, script);
+		T_Data run = interpreter.Run(copy, script);
 		print(run);
 	}
 	void ToTest() {
 
-		Data run = interpreter.Run(memory, script);
+		T_Data run = interpreter.Run(memory, script);
 		if (iters == 1)
 			HF.WarnColor($"run out:" + run, colors[1]);
 	}

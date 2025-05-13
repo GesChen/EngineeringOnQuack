@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.XR;
 
 public partial class Token {
-	public partial class Operator : Token {
+	public partial class T_Operator : Token {
 		public static readonly List<string> UnaryOperatorStrings			= new()
 		{
 			"+",
@@ -281,7 +281,7 @@ public partial class Token {
 		public OperatorType Type;
 		public bool IsUnary;
 
-		public Operator(string op) {
+		public T_Operator(string op) {
 			SetStringValue(op);
 		}
 

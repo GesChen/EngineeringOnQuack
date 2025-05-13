@@ -9,11 +9,11 @@ public class Interpreter {
 
 
 	// need memory so run call can have a copy of it
-	public Data RunFunction(
+	public T_Data RunFunction(
 		Memory memory,
 		Primitive.Function function,
-		Data thisReference,
-		List<Data> args,
+		T_Data thisReference,
+		List<T_Data> args,
 		int depth = 0) {
 
 		if (Config.Language.DEBUG) HF.WarnColor($"Running function {function.Name}", Color.yellow);
@@ -26,23 +26,23 @@ public class Interpreter {
 			case Primitive.Function.FunctionTypeEnum.Constructor:
 				if (Config.Language.DEBUG) HF.WarnColor($"Constructing {function.TypeFor.Name}", Color.yellow);
 
-				Data newObject = new(function.TypeFor) {
+				T_Data newObject = new(function.TypeFor) {
 					Memory = new(memory.Interpreter, "object memory")
 				};
-				Memory originalUse = Data.currentUseMemory;
-				Data.currentUseMemory = newObject.Memory;
+				Memory originalUse = T_Data.currentUseMemory;
+				T_Data.currentUseMemory = newObject.Memory;
 
 				// DONT INFINITE RECURSE!!!
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.UserDefined;
 
-				Data runConstructor = RunFunction(
+				T_Data runConstructor = RunFunction(
 					newObject.Memory,
 					function,
 					newObject,
 					args,
 					depth + 1);
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.Constructor;
-				Data.currentUseMemory = originalUse;
+				T_Data.currentUseMemory = originalUse;
 
 				if (runConstructor is Error)
 					return runConstructor;
@@ -58,7 +58,7 @@ public class Interpreter {
 		// set args in a copy of memory
 		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
 
-		Data trySet;
+		T_Data trySet;
 		Memory memoryCopy = memory.Copy();
 
 		for (int a = 0; a < args.Count; a++) {
@@ -71,12 +71,12 @@ public class Interpreter {
 		if (trySet is Error) return trySet;
 
 		// run the script with the memory copy
-		Data output = RunSection(memoryCopy, function.Script, depth + 1); // increase depth on function call
+		T_Data output = RunSection(memoryCopy, function.Script, depth + 1); // increase depth on function call
 
 		return output;
 	}
 
-	public Data Run(Memory memory, Script script, int depth = 0) {
+	public T_Data Run(Memory memory, Script script, int depth = 0) {
 		if (script == null)
 			return Errors.NoScriptLoaded();
 
@@ -90,7 +90,7 @@ public class Interpreter {
 		public bool IfSuccceded; // if succeeded
 
 		public bool ForLoopNext;
-		public Token.Reference LoopOver;
+		public Token.T_Reference LoopOver;
 
 		public bool ReturnToWhileStatement;
 		public int WhileLoops;
@@ -109,7 +109,7 @@ public class Interpreter {
 	bool CheckFlag(Flags flags, Flags check)
 		=> (flags & check) != 0;
 
-	private Data RunSection(Memory memory, Section section, int depth) {
+	private T_Data RunSection(Memory memory, Section section, int depth) {
 		if (depth > Config.Language.RecursionDepthLimit) // check recursion depth
 			return Errors.RecursionLimitReached();
 
@@ -143,7 +143,7 @@ public class Interpreter {
 			if (line.LineType == Line.LineTypeEnum.Line) {
 
 				Line lineCopy = line.DeepCopy();
-				Data output = Evaluator.Evaluate(lineCopy, memory, false, depth);
+				T_Data output = Evaluator.Evaluate(lineCopy, memory, false, depth);
 				if (output is Error) return output;
 				Flags nFlags = output.Flags;
 
@@ -198,7 +198,7 @@ public class Interpreter {
 				else if (CheckFlag(nFlags, Flags.For)) {
 					state.ForLoopNext = true;
 					state.ExpectingSection = true;
-					state.LoopOver = lineCopy.Tokens[1] as Token.Reference;
+					state.LoopOver = lineCopy.Tokens[1] as Token.T_Reference;
 				}
 				else if (CheckFlag(nFlags, Flags.While)) {
 					if (state.WhileLoops > Config.Language.MaxWhileLoopIters)
@@ -206,7 +206,7 @@ public class Interpreter {
 
 					state.ExpectingSection = true;
 
-					if (!(lineCopy.Tokens[1] is Token.Reference condition &&
+					if (!(lineCopy.Tokens[1] is Token.T_Reference condition &&
 						condition.ThisReference is Primitive.Bool b))
 						return Errors.BadSyntaxFor("while loop");
 
@@ -246,7 +246,7 @@ public class Interpreter {
 				}
 
 				else if (CheckFlag(nFlags, Flags.MakeFunction)) {
-					List<Data> formattedOutput = (output as Primitive.List).Value;
+					List<T_Data> formattedOutput = (output as Primitive.List).Value;
 
 					string name = (formattedOutput[0] as Primitive.String).Value;
 
@@ -261,7 +261,7 @@ public class Interpreter {
 					state.NewFuncParams = newparams;
 				}
 				else if (CheckFlag(nFlags, Flags.MakeInline)) {
-					List<Data> formattedOutput = (output as Primitive.List).Value;
+					List<T_Data> formattedOutput = (output as Primitive.List).Value;
 					
 					string name = (formattedOutput[0] as Primitive.String).Value;
 
@@ -287,17 +287,17 @@ public class Interpreter {
 				state.ExpectingSection = false;
 
 				if (state.ForLoopNext) {// run as for loop
-					List<Data> values = (state.LoopOver.ThisReference as Primitive.List).Value;
-					Token.Reference iterator = state.LoopOver.Copy(); // keep original ref to iterator
+					List<T_Data> values = (state.LoopOver.ThisReference as Primitive.List).Value;
+					Token.T_Reference iterator = state.LoopOver.Copy(); // keep original ref to iterator
 
 					// iterate over loopover
-					foreach (Data item in values) {
+					foreach (T_Data item in values) {
 						// set the iterator
-						Data trySet = memory.Set(iterator, item);
+						T_Data trySet = memory.Set(iterator, item);
 						if (trySet is Error) return trySet;
 
 						// run this section
-						Data trySection = RunSection(memory, line.Section, depth);
+						T_Data trySection = RunSection(memory, line.Section, depth);
 						if (trySection is Error) return trySection;
 						Flags sFlags = trySection.Flags;
 
@@ -313,7 +313,7 @@ public class Interpreter {
 				}
 				else if (state.MakeFunction) {
 					Primitive.Function newFunction = new(state.NewName, state.NewFuncParams, line.Section);
-					Data trySet = memory.Set(state.NewName, newFunction);
+					T_Data trySet = memory.Set(state.NewName, newFunction);
 					if (trySet is Error) return trySet;
 
 					state.MakeFunction = false;
@@ -321,11 +321,11 @@ public class Interpreter {
 				else if (state.MakeClass) {
 					if (Config.Language.DEBUG) HF.WarnColor($"Constructing class {state.NewName}", Color.yellow);
 
-					Memory originallyUsing = Data.currentUseMemory;
+					Memory originallyUsing = T_Data.currentUseMemory;
 					Memory classMemory = new (memory.Interpreter, "class init memory");
-					Data.currentUseMemory = classMemory;
+					T_Data.currentUseMemory = classMemory;
 
-					Data trySection = RunSection(classMemory, line.Section, depth);
+					T_Data trySection = RunSection(classMemory, line.Section, depth);
 
 					Type newType = new(state.NewName, classMemory);
 					
@@ -339,15 +339,15 @@ public class Interpreter {
 						memory.Set(state.NewName, constructor); // save it 
 					}
 
-					Data makeNewType = memory.NewType(newType);
+					T_Data makeNewType = memory.NewType(newType);
 					if (Config.Language.DEBUG) HF.WarnColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);
 
-					Data.currentUseMemory = originallyUsing;
+					T_Data.currentUseMemory = originallyUsing;
 
 					state.MakeClass = false;
 				}
 				else { // run once
-					Data trySection = RunSection(memory, line.Section, depth);
+					T_Data trySection = RunSection(memory, line.Section, depth);
 					if (trySection is Error) return trySection;
 
 					if (CheckFlag(trySection.Flags, Flags.Break)) {
@@ -371,6 +371,6 @@ public class Interpreter {
 			i++;
 		}
 
-		return Data.Success;
+		return T_Data.Success;
 	}
 }

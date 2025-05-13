@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 
-public abstract partial class Primitive : Data {
+public abstract partial class Primitive : T_Data {
 	public partial class Dict : Primitive {
 		public static Dict Default = new();
 
 		// defines internal type with name and memory
-		public static Type InternalType = new("Dict", new Dictionary<string, Data>() {
+		public static Type InternalType = new("Dict", new Dictionary<string, T_Data>() {
 			{ "eq"			, new Function("eq"			, eq)			},
 			{ "lt"			, new Function("lt"			, lt)			},
 			{ "ad"			, new Function("ad"			, ad)			},
@@ -21,9 +21,9 @@ public abstract partial class Primitive : Data {
 			{ "tolist"		, new Function("tolist"		, tolist)		}
 		});
 
-		public Dictionary<Data, Data> Value; // internal value
+		public Dictionary<T_Data, T_Data> Value; // internal value
 
-		public Dict(Dictionary<Data, Data> value) : base(InternalType) { // default constructor
+		public Dict(Dictionary<T_Data, T_Data> value) : base(InternalType) { // default constructor
 			Value = value;
 		}
 		public Dict(Dict original) : base(original) {
@@ -37,7 +37,7 @@ public abstract partial class Primitive : Data {
 			return (tostring(this, new()) as String).Value;
 		}
 
-		public override Data Copy() {
+		public override T_Data Copy() {
 			return new Dict(this);
 		}
 
@@ -46,12 +46,12 @@ public abstract partial class Primitive : Data {
 		#endregion
 
 		#region methods
-		public static Data eq(Data thisRef, List<Data> args) {
+		public static T_Data eq(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("eq", 1, args.Count);
 			if (args[0] is not Dict) return new Bool(false);
 
-			Dictionary<Data, Data> dict1 = (thisRef as Dict).Value;
-			Dictionary<Data, Data> dict2 = (args[0] as Dict).Value;
+			Dictionary<T_Data, T_Data> dict1 = (thisRef as Dict).Value;
+			Dictionary<T_Data, T_Data> dict2 = (args[0] as Dict).Value;
 
 			// magic linq bs
 			bool areEqual = dict1.Count == dict2.Count &&
@@ -59,38 +59,38 @@ public abstract partial class Primitive : Data {
 
 			return new Bool(areEqual);
 		}
-		public static Data lt(Data thisRef, List<Data> args) {
+		public static T_Data lt(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("lt", 1, args.Count);
 			if (args[0] is not Dict)
 				return Errors.CannotCompare("Dict", args[0].Type.Name);
 			return new Bool((thisRef as Dict).Value.Count < (args[0] as Dict).Value.Count);
 		}
-		public static Data ad(Data thisRef, List<Data> args) {
+		public static T_Data ad(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("ad", 1, args.Count);
 			if (args[0] is not Dict otherDict)
 				return Errors.UnsupportedOperation("+", "Dict", args[0].Type.Name);
 
-			Dictionary<Data, Data> newDict = new();
-			foreach (KeyValuePair<Data, Data> kvp in (thisRef as Dict).Value)
+			Dictionary<T_Data, T_Data> newDict = new();
+			foreach (KeyValuePair<T_Data, T_Data> kvp in (thisRef as Dict).Value)
 				newDict[kvp.Key] = kvp.Value;
 
-			foreach (KeyValuePair<Data, Data> kvp in otherDict.Value)
+			foreach (KeyValuePair<T_Data, T_Data> kvp in otherDict.Value)
 				newDict[kvp.Key] = kvp.Value;
 
 			return new Dict(newDict);
 		}
-		public static Data tostring(Data thisRef, List<Data> args) {
+		public static T_Data tostring(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
 
 			// init
-			Dictionary<Data, Data> v = (thisRef as Dict).Value;
+			Dictionary<T_Data, T_Data> v = (thisRef as Dict).Value;
 			StringBuilder sb = new();
 			sb.Append("{ ");
 
 			int i = 0;
-			foreach (KeyValuePair<Data, Data> kv in v) {
+			foreach (KeyValuePair<T_Data, T_Data> kv in v) {
 				// cast key to string
-				Data tryCast = kv.Key.Cast(String.InternalType);
+				T_Data tryCast = kv.Key.Cast(String.InternalType);
 				if (tryCast is Error) return tryCast;
 				string keyString = (tryCast as String).Value;
 
@@ -111,49 +111,49 @@ public abstract partial class Primitive : Data {
 		}
 
 
-		public static Data get(Data thisRef, List<Data> args) {
+		public static T_Data get(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("getkey", 1, args.Count);
 
-			Data key = args[0];
-			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
+			T_Data key = args[0];
+			T_Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
-			Operator equals = new("==");
+			T_Operator equals = new("==");
 
-			foreach (KeyValuePair<Data, Data> kvp in (thisRef as Dict).Value) {
-				Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
+			foreach (KeyValuePair<T_Data, T_Data> kvp in (thisRef as Dict).Value) {
+				T_Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
 				if (compare is Error) return compare;
 
 				if ((compare as Bool).Value) return kvp.Value;
 			}
 
 			// no value found
-			Data keyAsString = key.Cast(String.InternalType);
+			T_Data keyAsString = key.Cast(String.InternalType);
 			if (keyAsString is Error) return Errors.UnknownKey();
 			return Errors.UnknownKey((keyAsString as String).Value);
 		}
-		public static Data clear(Data thisRef, List<Data> args) {
+		public static T_Data clear(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("clear", 0, args.Count);
 			(thisRef as Dict).Value.Clear();
 			return thisRef;
 		}
-		public static Data values(Data thisRef, List<Data> args) {
+		public static T_Data values(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("values", 0, args.Count);
 			return new List((thisRef as Dict).Value.Values.ToList());
 		}
-		public static Data keys(Data thisRef, List<Data> args) {
+		public static T_Data keys(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("keys", 0, args.Count);
 			return new List((thisRef as Dict).Value.Keys.ToList());
 		}
-		public static Data removekey(Data thisRef, List<Data> args) {
+		public static T_Data removekey(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("removekey", 1, args.Count);
 
-			Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
+			T_Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
 			if (get is Error) return get;
-			Operator equals = new("==");
+			T_Operator equals = new("==");
 
-			Dictionary<Data, Data> copy = new();
-			foreach (KeyValuePair<Data, Data> kvp in (thisRef as Dict).Value) {
-				Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
+			Dictionary<T_Data, T_Data> copy = new();
+			foreach (KeyValuePair<T_Data, T_Data> kvp in (thisRef as Dict).Value) {
+				T_Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
 				if (compare is Error) return compare;
 
 				if (!(compare as Bool).Value)
@@ -163,14 +163,14 @@ public abstract partial class Primitive : Data {
 			(thisRef as Dict).Value = copy;
 			return thisRef;
 		}
-		public static Data tolist(Data thisRef, List<Data> args) {
+		public static T_Data tolist(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("tolist", 0, args.Count);
 
-			List<Data> newList = new();
+			List<T_Data> newList = new();
 
-			Dictionary<Data, Data> v = (thisRef as Dict).Value;
-			foreach (KeyValuePair<Data, Data> kv in v) {
-				List pair = new(new List<Data>() { kv.Key, kv.Value });
+			Dictionary<T_Data, T_Data> v = (thisRef as Dict).Value;
+			foreach (KeyValuePair<T_Data, T_Data> kv in v) {
+				List pair = new(new List<T_Data>() { kv.Key, kv.Value });
 				newList.Add(pair);
 			}
 

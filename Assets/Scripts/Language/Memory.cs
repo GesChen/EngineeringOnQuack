@@ -9,10 +9,10 @@ public class Memory {
 
 	public Interpreter Interpreter;
 
-	public Dictionary<string, Data> Data;
+	public Dictionary<string, T_Data> Data;
 	public Dictionary<string, Type> Types;
 
-	public static Dictionary<string, Data> StaticData = new() {
+	public static Dictionary<string, T_Data> StaticData = new() {
 		// normal functions
 		{ "breakpoint",	new Primitive.Function("breakpoint",InternalFunctions.breakpoint)},
 		{ "print",		new Primitive.Function("print",		InternalFunctions.print)	},
@@ -47,10 +47,10 @@ public class Memory {
 	};
 
 	public void Initialize() {
-		foreach (Data d in Data.Values) d.Memory = this;
+		foreach (T_Data d in Data.Values) d.Memory = this;
 	}
 
-	public Memory(Dictionary<string, Data> data, Dictionary<string, Type> types, string nick) {
+	public Memory(Dictionary<string, T_Data> data, Dictionary<string, Type> types, string nick) {
 		Data = data;
 		Types = types;
 		Nick = nick;
@@ -62,7 +62,7 @@ public class Memory {
 		Nick = nick;
 	}
 	public Memory(Memory original) {
-		Data = new Dictionary<string, Data>(original.Data);
+		Data = new Dictionary<string, T_Data>(original.Data);
 		Types = new Dictionary<string, Type>(original.Types);
 		Interpreter = original.Interpreter;
 		Nick = $"Copy of {original.Nick}";
@@ -83,11 +83,11 @@ public class Memory {
 	/// <summary>
 	/// Returns data value if found, otherwise error
 	/// </summary>
-	public Data Get(string name) {
+	public T_Data Get(string name) {
 		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: getting {name}\n{MemoryDump()}", Color.yellow);
 
 		if (StaticData.ContainsKey(name)) {
-			Data staticCopy = StaticData[name].Copy();
+			T_Data staticCopy = StaticData[name].Copy();
 			staticCopy.Memory = this;
 			return staticCopy;
 		}
@@ -98,7 +98,7 @@ public class Memory {
 		return Errors.UnknownName(name);
 	}
 
-	public Data Set(string name, Data data) {
+	public T_Data Set(string name, T_Data data) {
 		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: name setting {name} {data}\n{MemoryDump()}", Color.yellow);
 
 		if (StaticData.ContainsKey(name))
@@ -110,10 +110,10 @@ public class Memory {
 
 		Data[name] = data;
 
-		return global::Data.Success;
+		return global::T_Data.Success;
 	}
 
-	public Data Set(Reference reference, Data data) {
+	public T_Data Set(T_Reference reference, T_Data data) {
 		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: ref setting {reference.Name} {data}\n{MemoryDump()}", Color.yellow);
 
 		if (reference.Name == "")
@@ -125,24 +125,24 @@ public class Memory {
 		return reference.SetData(this, data);
 	}
 
-	public Data NewType(Type type) {
+	public T_Data NewType(Type type) {
 		string name = type.Name;
 		if (StaticTypes.ContainsKey(name))
 			return Errors.CannotOverwriteBuiltin(name);
 		Types[name] = type;
-		return global::Data.Success;
+		return global::T_Data.Success;
 	}
 
 	public override string ToString() {
 		return $"Memory object";
 	}
 
-	public static Data GetEvaluator(Data thisRef, out Evaluator evaluator) {
+	public static T_Data GetEvaluator(T_Data thisRef, out Evaluator evaluator) {
 		evaluator = null;
 		Memory memory = thisRef.Memory;
 		Interpreter interpreter = memory.Interpreter;
 		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
 		evaluator = interpreter.Evaluator;
-		return global::Data.Success;
+		return global::T_Data.Success;
 	}
 }
