@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
+using TMPro;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using Microsoft.Win32;
 
 public static class HF {
 	#region Base Class Extensions
-	public static Color MultiplyColorByVector(Vector3 vector, Color color)
-	{
+	public static Color MultiplyColorByVector(Vector3 vector, Color color) {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 
@@ -18,8 +21,7 @@ public static class HF {
 	public static Vector3 Vector3Round(Vector3 v)
 		=> new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 
-	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t)
-	{
+	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t) {
 		return new Vector3(
 			Mathf.Lerp(a.x, b.x, t.x),
 			Mathf.Lerp(a.y, b.y, t.y),
@@ -30,36 +32,44 @@ public static class HF {
 		=> new(Mathf.Round(v.x), Mathf.Round(v.y));
 
 	public static Vector2 Vector2Abs(Vector2 v)
-		=> new (Mathf.Abs(v.x), Mathf.Abs(v.y));
+		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 	#endregion
 
-	public static void LogColor(string str, Color color)
-	{
+	private static void OldLogColor(string str, Color color) {
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
 	}
 
-	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices)
-	{
+	public static void LogColor(string str, Color color) {
+		string colorTag = string.Format("<color=#{0:X2}{1:X2}{2:X2}>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f));
+		string[] lines = str.Split('\n');
+		string coloredText = string.Join("\n", lines.Select(line => colorTag + line + "</color>"));
+		Debug.Log(coloredText);
+	}
+	public static void WarnColor(string str, Color color) {
+		string colorTag = string.Format("<color=#{0:X2}{1:X2}{2:X2}>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f));
+		string[] lines = str.Split('\n');
+		string coloredText = string.Join("\n", lines.Select(line => colorTag + line + "</color>"));
+		Debug.LogWarning(coloredText);
+	}
+
+	public static float PointToPolygonEdgeDistance(Vector2 point, Vector2[] polygonVertices) {
 		float minDistance = float.MaxValue;
 
-		for (int i = 0; i < polygonVertices.Length; i++)
-		{
+		for (int i = 0; i < polygonVertices.Length; i++) {
 			Vector2 p1 = polygonVertices[i];
 			Vector2 p2 = polygonVertices[(i + 1) % polygonVertices.Length];
 
 			float distance = PointToLineSegmentDistance(point, p1, p2);
 
-			if (distance < minDistance)
-			{
+			if (distance < minDistance) {
 				minDistance = distance;
 			}
 		}
 
 		return minDistance;
 	}
-	
-	public static float PointToLineSegmentDistance(Vector2 point, Vector2 p1, Vector2 p2)
-	{
+
+	public static float PointToLineSegmentDistance(Vector2 point, Vector2 p1, Vector2 p2) {
 		Vector2 v = p2 - p1;
 		Vector2 w = point - p1;
 
@@ -76,9 +86,8 @@ public static class HF {
 
 		return Vector2.Distance(point, pb);
 	}
-	
-	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2)
-	{
+
+	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2) {
 		Vector3 deltaP = linePoint2 - linePoint1;
 		float a = Vector3.Dot(lineVec1, lineVec1);
 		float b = Vector3.Dot(lineVec1, lineVec2);
@@ -88,8 +97,7 @@ public static class HF {
 
 		float denom = a * c - b * b;
 
-		if (denom == 0)
-		{
+		if (denom == 0) {
 			// Lines are parallel
 			return Vector3.zero;
 		}
@@ -99,9 +107,8 @@ public static class HF {
 		return linePoint1 + t1 * -lineVec1;
 		//closestPoint2 = p2 + t2 * v2;
 	}
-	
-	public static Vector3 RayPlaneIntersect(Vector3 planePoint, Vector3 planeNormal, Vector3 rayOrigin, Vector3 rayDirection)
-	{
+
+	public static Vector3 RayPlaneIntersect(Vector3 planePoint, Vector3 planeNormal, Vector3 rayOrigin, Vector3 rayDirection) {
 		float t = Vector3.Dot(planeNormal, planePoint - rayOrigin) / Vector3.Dot(planeNormal, rayDirection);
 		Vector3 intersectionPoint = rayOrigin + t * rayDirection;
 
@@ -112,13 +119,11 @@ public static class HF {
 		return intersectionPoint;
 	}
 
-	public static bool Vector2InAABB(Vector2 point, Vector2 min, Vector2 max)
-	{
+	public static bool Vector2InAABB(Vector2 point, Vector2 min, Vector2 max) {
 		return point.x < max.x && point.y < max.y && point.x > min.x && point.y > min.y;
 	}
 
-	public static bool Vector2InRectTransform(Vector2 point, RectTransform rect)
-	{
+	public static bool Vector2InRectTransform(Vector2 point, RectTransform rect) {
 		Vector3[] corners = new Vector3[4];
 		rect.GetWorldCorners(corners);
 		Vector2 min = corners[0];
@@ -126,186 +131,45 @@ public static class HF {
 		return Vector2InAABB(point, min, max);
 	}
 
-
 	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
 		=> Vector3.Dot(point - reference, direction);
-	
+
 	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir)
-		=> new (Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
-	
-	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal)
-	{
+		=> new(Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
+
+	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal) {
 		float dist = Vector3.Dot(point - planeOrig, planeNormal);
 		return point - dist * planeNormal;
 	}
 
+	/// <summary>
+	/// Replaces section of string with another, chars at start and end index are both replaced too
+	/// </summary>
 	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
 		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static string ConvertToString(dynamic value, bool stringQuotes = true, bool listBrackets = true)
-	{
-		Type t = value.GetType();
-		if (value is null) return "";
-		else if (value is string s) return stringQuotes ? $"\"{s}\"" : s;
-		else if (value is double d) return d.ToString("0." + new string('#', 339)); // d.ToString("G10");
-		else if (value is bool b) return b ? "true" : "false";
-		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
-		{
-			string builtString = "";
-			if (listBrackets) builtString = "[";
-			for (int i = 0; i < value.Count; i++)
-			{
-				builtString += ConvertToString(value[i], stringQuotes);
-				if (i < value.Count - 1) builtString += ", ";
-			}
-			if (listBrackets) builtString += "]";
-			return builtString;
-		}
-		else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-		{
-			List<string> keys = new(value.Keys);
-			string builtString = "{";
-			for (int i = 0; i < keys.Count; i++)
-			{
-				dynamic key = keys[i];
-				builtString += ConvertToString(key, stringQuotes);
-				builtString += " : ";
-				builtString += ConvertToString(value[key], stringQuotes);
-				if (i != keys.Count - 1) builtString += ", ";
-			}
-			builtString += "}";
-			return builtString;
-		}
-		else if (t.Name == "ScriptLine") return value.Line;
-		return value.ToString();
+	public static string RemoveSection(string original, int start, int end)
+		=> original.Remove(start, end - start);
+
+	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
+		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);
+		originalList.InsertRange(startIndexInc, replacementList);
 	}
 
-	public static string RemoveNonStringSpace(string expr)
-	{
-		StringBuilder tempString = new();
-		bool inString = false;
+	/*public static List<T> FasterReplaceRange<T>(List<T> values, int startIndexInc, int endIndexInc, T[] replacement) {
+		if (endIndexInc < startIndexInc) throw new("End index cannot be before start");
+		int count = endIndexInc - startIndexInc + 1;
 
-		foreach (char c in expr)
-		{
-			if (c == '"')
-				inString = !inString;
+		T[] original = values.ToArray();
+		T[] replaced = new T[values.Count - count + replacement.Length];
+		Array.Copy(original, replaced, startIndexInc - 1);
+		Array.Copy(replacement, 0, replaced, startIndexInc, replacement.Length);
+		Array.Copy(original, endIndexInc + 1, replaced, startIndexInc + replacement.Length, original.Length - endIndexInc);
 
-			if (c != ' ' || inString) // Add character if it's not a space or if it's inside quotes
-				tempString.Append(c);
-		}
+		return replaced.ToList();
+	}*/
 
-		return tempString.ToString();
-	}
-
-	public static bool ContainsSubstringOutsideQuotes(string text, string substring)
-	{
-		if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(substring))
-		{
-			return false;
-		}
-
-		bool inQuotes = false;
-		int prevCharIndex = -1;
-
-		for (int i = 0; i < text.Length; i++)
-		{
-			char currentChar = text[i];
-
-			// Handle escaped quotes within quotes
-			if (currentChar == '"' && prevCharIndex >= 0 && text[prevCharIndex] == '\\')
-			{
-				prevCharIndex = -1;
-				continue;
-			}
-
-			// Toggle quote state
-			if (currentChar == '"')
-			{
-				inQuotes = !inQuotes;
-			}
-
-			// Check substring if not within quotes
-			else if (!inQuotes)
-			{
-				if (text[i..].StartsWith(substring))
-				{
-					return true;
-				}
-			}
-
-			prevCharIndex = i;
-		}
-
-		return false;
-	}
-
-	public static bool ExpressionContainsSurfaceLevel(char symbol, string expr)
-	{
-		bool inString = false;
-		int depth = 0;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (!inString && (c == '(' || c == '[')) depth++;
-			if (!inString && (c == ')' || c == ']')) depth--;
-
-			if (c == symbol && !inString && depth == 0) return true;
-		}
-		return false;
-	}
-
-	public static string DetermineTypeFromString(string s)
-	{
-		s = s.TrimStart('(').TrimEnd(')'); // remove parentheses
-
-		if (s.Length == 0) return null;
-
-		if (s[0] == '"' && s[^1] == '"') return "string";
-		else if (s[0] == '"' && s[^1] != '"' || s[0] != '"' && s[^1] == '"') return "malformed string"; // start is " but not end, or end is " but not start
-
-		if ((s[0] == '[' && s[^1] == ']') || ExpressionContainsSurfaceLevel(',', s)) return "list";
-		else if (s[0] == '[' && s[^1] != ']' || s[0] != '[' && s[^1] == ']') return "malformed list"; // start is " but not end, or end is " but not start
-
-		bool isnumber = true;
-		foreach (char c in s) if (!(char.IsDigit(c) || c == '.' || c == '-')) isnumber = false;
-		if (isnumber) return "number";
-
-		if (s == "true" || s == "false") return "bool";
-		return "variable"; //TODO!!!!!!!!!!
-	}
-
-	public static string DetermineTypeFromVariable(dynamic v)
-	{
-		if (v is null || (v is string && v == "")) return "null";
-		else if (v is string) return "string";
-		else if (v is double) return "number";
-		else if (v is bool) return "bool";
-		else if (v is List<dynamic>) return "list";
-		
-		Type t = v.GetType();
-		if (t.Name == "ClassInstance") return "Class Instance";
-		else if (t.Name == "ClassDefinition") return "Class Definition";
-		return t.Name.ToLower(); // function and script type are handled by this last return
-	}
-
-	public static bool VariableNameIsValid(string name)
-	{
-		/* naming convention:
-		 - starts either with letter or _
-		 - following characters can be letter, number or _
-		 - variable names are case sensitive
-		*/
-		if (string.IsNullOrWhiteSpace(name)) return false;
-		if (!(char.IsLetter(name[0]) || name[0] == '_')) return false;
-
-		foreach (char c in name)
-			if (!(char.IsLetter(c) || char.IsDigit(c) || c == '_')) return false;
-
-		return true;
-	}
-
-	public static bool FasterStartsWith(string target, string prefix)
-	{
+	public static bool FasterStartsWith(string target, string prefix) {
 		if (target == null || prefix == null) return false;
 		if (prefix.Length > target.Length) return false;
 
@@ -313,5 +177,300 @@ public static class HF {
 			if (target[i] != prefix[i])
 				return false;
 		return true;
+	}
+
+	public static string Repr(string input) {
+		return input
+			.Replace(' ', '_')
+			.Replace("\t", @"\t")
+			.Replace("\n", @"\n")
+			.Replace("\r", @"\r")
+			.Replace("\v", @"\v")
+			.Replace("\f", @"\f")
+			.Replace("\0", @"\0");
+	}
+
+	// inheritly a very slow op, prepare for >.1 ms times
+	public static Vector2 TextWidthExact(string text, TextMeshProUGUI source) {
+		string originalText = source.text; // copy
+
+		source.text = text; // set new
+
+		source.ForceMeshUpdate(); // probably faster calculation instead of whole canvas update
+								  //Canvas.ForceUpdateCanvases(); // update
+
+		// get size
+		float preferredWidth = LayoutUtility.GetPreferredWidth(source.rectTransform);
+		float preferredHeight = LayoutUtility.GetPreferredHeight(source.rectTransform);
+		Vector2 preferredSize = new(preferredWidth, preferredHeight);
+
+		source.text = originalText; // reset
+
+		return preferredSize;
+	}
+
+	public static float TextWidthApproximation(string text, TMP_FontAsset fontAsset, int fontSize) {
+		// Compute scale of the target point size relative to the sampling point size of the font asset.
+		float pointSizeScale = fontSize / (fontAsset.faceInfo.pointSize * fontAsset.faceInfo.scale);
+		float emScale = fontSize * 0.01f;
+
+		float styleSpacingAdjustment = 0; // (style & FontStyles.Bold) == FontStyles.Bold ? fontAsset.boldSpacing : 0;
+		float normalSpacingAdjustment = fontAsset.normalSpacingOffset;
+
+		float width = 0;
+
+		for (int i = 0; i < text.Length; i++) {
+			char unicode = text[i];
+			// Make sure the given unicode exists in the font asset.
+			if (fontAsset.characterLookupTable.TryGetValue(unicode, out TMP_Character character))
+				width += character.glyph.metrics.horizontalAdvance * pointSizeScale + (styleSpacingAdjustment + normalSpacingAdjustment) * emScale;
+		}
+
+		return width;
+	}
+
+	public static float Mod(float a, float b) => (Mathf.Abs(a * b) + a) % b;
+	public static int Mod(int a, int b) => (Mathf.Abs(a * b) + a) % b;
+
+	public static void Test(Action toTest, int iters) {
+		System.Diagnostics.Stopwatch sw = new();
+		sw.Start();
+
+		for (int i = 0; i < iters; i++) {
+			toTest();
+		}
+		sw.Stop();
+
+		double ms = sw.Elapsed.TotalMilliseconds;
+		double ns = ms * 1e6;
+		long fps = (long)(1e9 / ns);
+
+		WarnColor($"{toTest.Method.Name}: {ns} ns ({ms:F10} ms) ({fps} fps)", MoreColors.Crimson);
+
+		if (iters > 1)
+			WarnColor($"average {ns / iters} ns ({(ms / iters):F10} ms) ({(long)(1e9 / (ns / iters))}) each", MoreColors.Crimson);
+	}
+
+	public static Vector2? UVOfHover(RaycastResult result) {
+		RectTransform rt = result.gameObject.GetComponent<RectTransform>();
+
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		Vector3? worldspaceHit = 
+			RayPlanarQuadIntersect(result.screenPosition, Vector3.forward, corners);
+
+		if (!worldspaceHit.HasValue)
+			return null; // ray didn't actually hit
+
+		return UVOf3DPointOnQuad(corners[0], corners[3], corners[1], worldspaceHit.Value);
+	}
+
+	public static Vector2? RectScreenSpaceMouseUV(RectTransform rt) {
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		Vector2 screenSpaceMousePos = Mouse.current.position.value;
+
+		Vector3? planeIntersect = RayPlaneOfQuadIntersect(screenSpaceMousePos, Vector3.forward, corners);
+		if (!planeIntersect.HasValue) return null;
+
+		return UVOf3DPointOnQuad(corners[0], corners[3], corners[1], planeIntersect.Value);
+	}
+
+	// point must be on the plane of the quad
+	public static Vector2 UVOf3DPointOnQuad(Vector3 bottomLeft, Vector3 bottomRight, Vector3 topLeft, Vector3 point) {
+		return new(
+			UVAxis(bottomLeft, bottomRight, point),
+			UVAxis(bottomLeft, topLeft, point));
+	}
+
+	public static float UVAxis(Vector3 origin, Vector3 directionVector, Vector3 point) {
+		return Vector3.Dot(point - origin, (directionVector - origin).normalized) / Vector3.Distance(origin, directionVector);
+	}
+
+	// just intersects with the plane, doesnt necessarily have to be in the quad
+	public static Vector3? RayPlaneOfQuadIntersect(Vector3 rayOrigin, Vector3 rayDir, Vector3[] points) {
+		// using unity's rect corners function ordering of points
+
+		// Step 1: Calculate the normal of the plane
+		Vector3 v1 = points[1] - points[0];
+		Vector3 v2 = points[3] - points[0];
+		Vector3 normal = Vector3.Cross(v1, v2);
+
+		// Step 2: Find intersection with the plane
+		float denom = Vector3.Dot(normal, rayDir);
+		if (Mathf.Abs(denom) < Mathf.Epsilon) // Line is parallel to the plane
+			return null;
+
+		float t = Vector3.Dot(normal, points[0] - rayOrigin) / denom;
+
+		// Step 3: Find the point of intersection on the line
+		Vector3 intersectionPoint = rayOrigin + t * rayDir;
+
+		return intersectionPoint;
+	}
+
+	// intersect the quad, return false if no intersect with the quad
+	public static Vector3? RayPlanarQuadIntersect(Vector3 rayOrigin, Vector3 rayDir, Vector3[] points) {
+		Vector3? intersectionPoint = RayPlaneOfQuadIntersect(rayOrigin, rayDir, points);
+
+		if (!intersectionPoint.HasValue)
+			return null;
+
+		// Step 4: Check if the intersection point is inside the quad
+		if (IsPointInQuad(intersectionPoint.Value, points[0], points[1], points[2], points[3]))
+			return intersectionPoint;
+		
+		return null;
+	}
+
+	public static bool IsPointInQuad(Vector3 point, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3) {
+		bool b0 = CrossProductSign(point, p0, p1) < 0.0f;
+		bool b1 = CrossProductSign(point, p1, p2) < 0.0f;
+		bool b2 = CrossProductSign(point, p2, p3) < 0.0f;
+		bool b3 = CrossProductSign(point, p3, p0) < 0.0f;
+
+		return (b0 == b1) && (b1 == b2) && (b2 == b3);
+	}
+
+	public static float CrossProductSign(Vector3 p1, Vector3 p2, Vector3 p3) {
+		return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+	}
+
+	public static (string moved, bool overflows, string ofString) ShiftRegion
+		(string orig, int startInc, int endInc, int shift) {
+
+		if (string.IsNullOrEmpty(orig)) return (orig, false, null);
+		if (shift == 0 || startInc < 0 || endInc >= orig.Length || startInc > endInc) return (orig, false, null);
+
+		string moveRegion = orig[startInc..(endInc + 1)];
+		int regionLen = moveRegion.Length;
+
+		int movedStart = startInc + shift;
+		int movedEnd = endInc + shift;
+
+		string origWithoutRegion = orig[..startInc] + orig[(endInc + 1)..];
+
+		string overRegion = null;
+		bool overflows = false;
+
+		if (movedStart < 0) {
+			if (movedEnd < 0)
+				return (origWithoutRegion, true, moveRegion);
+
+			overflows = true;
+
+			int overAmount = -movedStart;
+
+			overRegion = moveRegion[..overAmount];
+			moveRegion = moveRegion[overAmount..];
+
+			movedStart = 0;
+		} else
+		if (movedEnd >= orig.Length) {
+			if (movedStart >= orig.Length)
+				return (origWithoutRegion, true, moveRegion);
+
+			overflows = true;
+
+			int overAmount = movedEnd - (orig.Length - 1);
+
+			overRegion = moveRegion[(regionLen - overAmount)..];
+			moveRegion = moveRegion[..(regionLen - overAmount)];
+
+			movedEnd = orig.Length - 1;
+		}
+
+		string shiftedString;
+
+		if (shift > 0) {
+			string beforeMovedRegion = orig[..startInc];
+			string shiftedRegion = orig[(endInc + 1)..(movedEnd + 1)];
+			string afterMovedRegion = orig[(movedEnd + 1)..];
+
+			shiftedString = beforeMovedRegion + shiftedRegion + moveRegion + afterMovedRegion;
+		} else {
+			string beforeMovedRegion = orig[..movedStart];
+			string shiftedRegion = orig[movedStart..startInc];
+			string afterMovedRegion = orig[(endInc + 1)..];
+
+			shiftedString = beforeMovedRegion + moveRegion + shiftedRegion + afterMovedRegion;
+		}
+
+
+		return (shiftedString, overflows, overRegion);
+	}
+
+
+	// chatgpt cant code for shit
+	static (string moved, bool overflows, string ofString) BSShiftRegion(string orig, int startInc, int endInc, int shift) {
+		if (string.IsNullOrEmpty(orig)) return (orig, false, null);
+		if (startInc < 0 || endInc >= orig.Length || startInc > endInc) return (orig, false, null);
+
+		string region = orig.Substring(startInc, endInc - startInc + 1);
+		string before = orig[..startInc];
+		string after = orig[(endInc + 1)..];
+		string withoutRegion = before + after;
+
+		int insertAt = startInc + shift;
+
+		// Default: no characters fall off
+		string overflowRegion = null;
+		bool overflows = false;
+
+		// Determine which part of the region can actually fit
+		int newStart = insertAt;
+		int newEnd = insertAt + region.Length - 1;
+
+		int truncateLeft = Math.Max(0, -newStart);
+		int truncateRight = Math.Max(0, newEnd - withoutRegion.Length + 1);
+
+		if (truncateLeft > 0 || truncateRight > 0) {
+			overflows = true;
+			overflowRegion = region[..truncateLeft];
+
+			if (truncateRight > 0)
+				overflowRegion += region.Substring(region.Length - truncateRight, truncateRight);
+
+			// Truncate region accordingly
+			region = region.Substring(truncateLeft, region.Length - truncateLeft - truncateRight);
+			newStart = Math.Max(0, newStart);
+		}
+
+		// Insert the truncated region
+		string result = region.Length > 0 ? withoutRegion.Insert(newStart, region) : withoutRegion;
+		return (result, overflows, overflowRegion);
+	}
+
+	// from geeksforgeeks look at it again if no understand lol i dont
+	public static long HashString(string s) {
+		int n = s.Length;
+
+		// prime, large prime
+		long p = 31, m = (long)1e9 + 7;
+
+		long hash = 0;
+
+		long pPow = 1;
+
+		for (int i = 0; i < n; ++i) {
+			hash = (hash + (s[i] - 'a' + 1) * pPow) % m;
+			pPow = (pPow * p) % m;
+		}
+
+		return hash;
+	}
+
+	public static ulong Fnv1aHash64(string input) {
+		const ulong fnvPrime = 1099511628211;
+		ulong hash = 14695981039346656037;
+
+		for (int i = 0; i < input.Length; i++) {
+			hash ^= input[i];
+			hash *= fnvPrime;
+		}
+
+		return hash;
 	}
 }

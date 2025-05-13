@@ -1,0 +1,9 @@
+test
+string arg1
+tst erropr 
+
+InvaidArgumentCount
+string funcName, int expected, int got
+Function \"{funcName}\" expects {expected} args, got {got}
+
+end

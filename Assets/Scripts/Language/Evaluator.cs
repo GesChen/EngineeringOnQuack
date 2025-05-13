@@ -1,1538 +1,1486 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
+using System.Text;
 using UnityEngine;
+using static Token;
 
-public class Evaluator : MonoBehaviour
-{
-	public bool DEBUGMODE = false;
+public class Evaluator {
+	public Interpreter Interpreter;
 
-	readonly Dictionary<string, int> operatorRanks = new()
-	{
-		{ "+" , 1 },
-		{ "-" , 1 },
-		{ "*" , 2 },
-		{ "/" , 2 },
-		{ "^" , 3 },
-		{ "%" , 3 },
-		{ "==", 0 },
-		{ "!=", 0 },
-		{ "<" , 0 },
-		{ ">" , 0 },
-		{ "<=", 0 },
-		{ ">=", 0 },
-		{ "&&", 4 },
-		{ "||", 4 },
-		{ "!&", 4 },
-		{ "&!", 4 },
-		{ "!|", 4 },
-		{ "|!", 4 },
-		{ "!!", 4 },
-		{ "!" , 5 },
-		{ "." , 6 }
-	};
+	public Data Compare(Data a, Data b, Operator op, Memory memory) {
+		// not gona add comparison operator check bc whatever's calling this should already have done it
 
-	readonly string[] operators =
-	{
-		"+",
-		"-",
-		"*",
-		"/",
-		"^",
-		"%",
-		"==",
-		"!=",
-		"<",
-		">",
-		"<=",
-		">=",
-		"&&",
-		"||",
-		"!",
-		"!&",
-		//"&!",
-		"!|",
-		//"|!",
-		"!!",
-		"."
-	};
-	readonly char[] operatorFirstChars =
-	{
-		'+',
-		'-',
-		'*',
-		'/',
-		'^',
-		'%',
-		'=',
-		'!',
-		'<',
-		'>',
-		'&',
-		'|',
-		'.'
-	};
-	readonly string[] booleanOperators =
-	{
-		"==",
-		"!=",
-		"&&", //and
-		"||", //or
-		"!", //not
-		"!&", //nand
-		//"&!",
-		"!|", //nor
-		//"|!", //
-		"!!"  //xor
-	};
-
-	public enum TokenType
-	{
-		val, // value
-		op // operator, keyword is not allowed
-		   //arg // arguments to a function (not sure if this will work)
-	}
-	public class Token
-	{
-		public string Text;
-		public dynamic RealValue;
-		public TokenType Type;
-		public Token(string text, TokenType type, dynamic realValue = null)
-		{
-			Text = text;
-			RealValue = realValue;
-			Type = type;
+		Data lt = null;
+		bool lessthan = false;
+		if (!(op.Value == Operator.Ops.Equality || 
+			op.Value == Operator.Ops.NotEquals)) {
+			lt = LessThan(a, b, memory, Interpreter); // is bool checks done in the methods already
+			if (lt is Error) return lt;
+		
+			lessthan = (lt as Primitive.Bool).Value;
 		}
 
-		public void Set(dynamic realValue, TokenType type, bool updateText = false)
-		{
-			RealValue = realValue;
-			if (updateText) Text = HF.ConvertToString(realValue);
-			Type = type;
+		Data eq = null;
+		bool equals = false;
+		if (!(op.Value == Operator.Ops.LessThan ||
+			op.Value == Operator.Ops.GreaterThanOrEqualTo)) {
+			eq = Equals(a, b, memory, Interpreter);
+			if (eq is Error) return eq;
+		
+			equals = (eq as Primitive.Bool).Value;
 		}
 
-		public override string ToString()
-		{
-			return $"Token [{Text}] of type {Type}";
-		}
-	}
-
-	public class Member
-	{
-		public delegate dynamic AttributeFunctionType(dynamic value); // assuming everything is done right, there should be no type issues
-		public string For { get; private set; } // might not be used, just metadata
-		public string Name { get; private set; }
-		public bool IsFunction { get; private set; }
-		public AttributeFunctionType AttributeFunction { get; private set; }
-		public Function Function { get; private set; }
-
-		public Member(string @for, string name, Function function = null, AttributeFunctionType attributeFunction = null)
-		{
-			For = @for;
-			Name = name;
-			if (attributeFunction == null) 
-			{
-				IsFunction = true;
-				Function = function;
-			}
-			else
-			{
-				IsFunction = false;
-				AttributeFunction = attributeFunction;
-			}
-		}
-	}
-
-	#region builtin type classes
-
-	public class Number
-	{
-		public static Output GetMember(double value, string membername, Interpreter interpreter)
-		{
-			if (!Members.ContainsKey(membername))
-				return Errors.TypeHasNoAttribute(membername, "number", interpreter);
-
-			Member member = Members[membername];
-			if (member.IsFunction)
-			{
-				Function function = member.Function;
-				function.UsingInterpreter = interpreter;
-				function.SetSelf(value);
-				return new(function);
-			}
-			else // attribute
-			{ // you have to actually run the attribute function on the value to get the attribute result
-				dynamic output = member.AttributeFunction.Invoke(value);
-				return new(output);
-			}
-		}
-
-		static readonly Dictionary<string, Member> Members = new()
-		{
-			{"pow", new("number", "pow", new("pow", Pow, null), null) },
-			{"toString", new("number", "toString", null, StringFunction)}
-		};
-
-		static Output Pow(List<dynamic> args, Interpreter interpreter)
-		{
-			// argument checks
-			if (args.Count != 2) return Errors.TypeHasNoMethod("pow", "number", args.Count - 1, interpreter);
-			string arg0type = HF.DetermineTypeFromVariable(args[0]); if (arg0type != "number") return Errors.MethodExpectedType("Pow", "number", arg0type, interpreter);
-			string arg1type = HF.DetermineTypeFromVariable(args[1]); if (arg1type != "number") return Errors.MethodExpectedType("Pow", "number", arg1type, interpreter);
-
-			double a = args[0];
-			double b = args[1];
-			return new(Math.Pow(a, b));
-		}
-		static dynamic StringFunction(dynamic value) 
-		{
-			double doublevalue = (double)value;
-			return doublevalue.ToString();
-		}
-	}
-
-	#endregion
-
-	int ExpressionCountSymbol(char symbol, string expr)
-	{
-		int count = 0;
-		bool inString = false;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (c == symbol && !inString) count++;
-		}
-		return count;
-	}
-	bool CheckListForm(string s) // returns if a list is properly formed, expects single lists, not chained or expressions
-	{
-		string nospaces = s.Replace(" ", "");
-		if (nospaces[0] != '[' || nospaces[^1] != ']') return false;
-
-		int depth = 0;
-		bool instring = false;
-		foreach (char c in s)
-		{
-			if (c == '"') instring = !instring;
-			if (c == '[' && !instring) depth++;
-			else if (c == ']' && !instring) depth--;
-		}
-		bool paritycheck = depth == 0; // well formed lists should have equal [ and ], therefore closed
-		if (!paritycheck) return false;
-
-		// commas should always have something between them
-		nospaces = nospaces[1..^1]; // made sure started and ended with [], now remove them
-		instring = false;
-		bool inlist = false;
-		for (int i = 0; i < nospaces.Length; i++)
-		{
-			char c = nospaces[i];
-			if (c == '"') instring = !instring;
-			if ((c == '[' || c == ']') && !instring) inlist = !inlist;
-			if (nospaces[i] == ',' && !(instring || inlist)) // dont process commas inside of nested list or string
-			{
-				if (i == 0 || i == nospaces.Length - 1)// shouldnt be at start or end
-					return false;
-				
-				if (nospaces[i + 1] == ',' || nospaces[i - 1] == ',') // shouldnt be next to each other
-					return false;
-			}
-		}
-		return true; // if paritycheck was false, would have already returned 
-	}
-
-	Output ParseNumberPart(string s, Interpreter interpreter)
-	{
-		double value = 0;
-		try
-		{
-			value = double.Parse(s);
-		}
-		catch
-		{ // could be a variable
-			bool negative = s[0] == '-';
-			if (negative) s = s[1..];
-
-			Output result = interpreter.memory.Fetch(s, interpreter);
-			string type = HF.DetermineTypeFromString(s);
-			if (!result.Success)
-			{
-				if (type != "number")
-					return result;
-				else
-					return Errors.UnableToParseStrAsNum(s, interpreter);
-			}
-			else
-			{
-				dynamic variable = result.Value;
-				if (variable is double v)
-				{
-					value = v;
-				}
-				else if (variable is string)
-				{
-					try
-					{
-						double.TryParse(variable, out value); // extremely slow fsr, especially when called 1000 times, might use a custom class
-					}
-					catch
-					{ // not a parseable double string, or a variable
-						return Errors.UnableToParseStrAsNum(value.ToString(), interpreter);
-					}
-				}
-				if (negative)
-				{
-					value *= -1;
-				}
-			}
-		}
-		return new Output(value);
-	}
-
-	Output DynamicStringParse(string s, Interpreter interpreter)
-	{
-		if (s == "") return new(s);
-
-		string type = HF.DetermineTypeFromString(s);
-
-		if (type == "malformed string") return Errors.MalformedString(s, interpreter);
-		else if (type == "malformed list") return Errors.MalformedList(s, interpreter);
-
-		dynamic value = null;
-
-		if (type == "number")
-		{
-			Output result = ParseNumberPart(s, interpreter);
-			if (!result.Success) return result;
-			value = result.Value;
-		}
-		else if (type == "string") value = s.Trim('"');
-		else if (type == "bool")
-		{
-			if (s == "true") value = true;
-			else if (s == "false") value = false;
-			else return Errors.UnableToParseAsBool(s, interpreter);
-		}
-		else if (type == "list")
-		{
-			Output attemptR = EvaluateList(s, interpreter);
-			if (!attemptR.Success) return attemptR;
-
-			value = attemptR.Value;
-		}
-		else if (type == "variable")
-		{
-			Output result = interpreter.memory.Fetch(s, interpreter);
-			if (!result.Success) return result;
-			value = result.Value;
-		}
-
-		return new Output(value);
-	}
-	
-	Output ParityChecks(string expr, Interpreter interpreter)
-	{
-		bool inString = false;
-		int parenthesesDepth = 0;
-		int bracketDepth = 0;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (!inString)
-			{
-				if (c == '(') parenthesesDepth++;
-				else if (c == ')') parenthesesDepth--;
-				else if (c == '[') bracketDepth++;
-				else if (c == ']') bracketDepth--;
-
-				if (parenthesesDepth <= -1) return Errors.MismatchedParentheses(interpreter);
-				else if (bracketDepth <= -1) return Errors.MismatchedBrackets(interpreter);
-			}
-		}
-		if (inString) return Errors.MismatchedQuotes(interpreter);
-		return new(true);
-	}
-	
-	public static Output DynamicCast(string typeFrom, string typeTo, dynamic value, Interpreter interpreter)
-	{
-		return $"{typeFrom}-{typeTo}" switch
-		{
-			"string-string" => new(value),
-			"string-number" => new(0f),
-			"string-bool" => new(false),
-			"string-list" => new(new List<dynamic> { value }),
-			"number-string" => new(HF.ConvertToString(value)),
-			"number-number" => new(value),
-			"number-bool" => new(false),
-			"number-list" => new(new List<dynamic> { value }),
-			"bool-string" => new(HF.ConvertToString(value)),
-			"bool-number" => new((bool)value ? 1f : 0f),
-			"bool-bool" => new(value),
-			"bool-list" => new(new List<dynamic> { value }),
-			"list-string" => new(HF.ConvertToString(value)),
-			"list-number" => new(0f),
-			"list-bool" => new(false),
-			"list-list" => new(value),
-			_ => Errors.UnknownType(interpreter),
+		return op.Value switch {
+			Operator.Ops.Equality				=> eq,
+			Operator.Ops.NotEquals				=> new Primitive.Bool(!equals), // (!=) = (! ==)
+			Operator.Ops.LessThan				=> lt,
+			Operator.Ops.GreaterThan			=> new Primitive.Bool(!(lessthan || equals)), // (>) = (!<=) 
+			Operator.Ops.LessThanOrEqualTo		=> new Primitive.Bool(lessthan || equals), // (<=) = (< || ==)
+			Operator.Ops.GreaterThanOrEqualTo	=> new Primitive.Bool(!lessthan), // (>=) = (! <)
+			_ => Errors.CannotCompare(a.Type.Name, b.Type.Name),
 		};
 	}
-	
-	public static Output SoftCast(string typeA, ref dynamic A, string typeB, ref dynamic B, Interpreter interpreter)
-	{
-		switch (new string(typeA[0], typeB[0]))
-		{
-			case "nn":	return new(true);														// number - number
-			case "ns":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// number - string
-			case "nb":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// number - bool
-			case "nl":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// number - list
-			case "sn":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// string - number
-			case "ss":	return new(true);														// string - string
-			case "sb":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// string - bool
-			case "sl":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// string - list
-			case "bn":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// bool - number
-			case "bs":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// bool - string
-			case "bb":	return new(true);														// bool - bool
-			case "bl":	A = DynamicCast(typeA, typeB, A, interpreter).Value; return new(true);	// bool - list
-			case "ln":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// list - number
-			case "ls":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// list - string
-			case "lb":	B = DynamicCast(typeB, typeA, B, interpreter).Value; return new(true);	// list - bool
-			case "ll":	return new(true);														// list - list
-			default: return Errors.UnknownType(interpreter);
+	private Data Equals(Data a, Data b, Memory memory, Interpreter interpreter) { // op should either be == or !=
+																				  // try to get the eq operator from either a or b, if neither has one then return false
+		Data f = a.GetMember("eq");
+		bool functionIsA = true;
+		if (f is not Primitive.Function) {
+			f = b.GetMember("eq");
+			functionIsA = false;
+
+			if (f is not Primitive.Function)
+				//return Errors.CannotCompare(a.Type.Name, b.Type.Name);
+				return new Primitive.Bool(false); // say false for now, cuz its just equals so if neither side has equals operator then neither is equal
+		}
+
+		Primitive.Function function = f as Primitive.Function;
+		if (!functionIsA) // swap if we use b's function
+			(a, b) = (b, a);
+
+		Data run = interpreter.RunFunction(memory, function, a, new() { b });
+		if (run is Error) return run;
+		if (run is not Primitive.Bool)
+			return Errors.ImproperImplementation($"the eq operator", "Should return a bool");
+
+		return run; // more handling to be done by specifics
+	}
+	private Data LessThan(Data a, Data b, Memory memory, Interpreter interpreter) {
+		// try to get the eq operator from the data
+		Data f = a.GetMember("lt");
+		if (f is Error) return f;
+		if (f is not Primitive.Function)
+			return Errors.CannotCompare(a.Type.Name, b.Type.Name);
+
+		Primitive.Function function = f as Primitive.Function;
+
+		Data run = interpreter.RunFunction(memory, function, a, new() { b });
+		if (run is Error) return run;
+		if (run is not Primitive.Bool)
+			return Errors.ImproperImplementation($"the lt operator", "Should return a bool");
+
+		return run; // more handling to be done by specifics
+	}
+
+	enum Actions {
+		None,
+		FString,
+		Data,
+		Name,
+		DotOperator,
+		Region,
+		Unary,
+		Arithmetic,
+		Comparison,
+		Logical,
+		Assignment
+	}
+
+	class ActionContext {
+		public Line				line;
+		public Memory			memory;
+		public int				curRecursionDepth;
+		public List<Token>		remaining;
+		public Token			highestToken;
+		public int				highestIndex;
+		public Token			left;
+		public Token			right;
+		public Reference		leftRef;
+		public bool				leftIsRefAndExists;
+		public Reference		rightRef;
+		public bool				rightIsRefAndExists;
+
+		public ActionContext(
+			Line line, 
+			Memory memory, 
+			int curRecursionDepth, 
+			List<Token> remaining, 
+			Token highestToken, 
+			int highestIndex, 
+			Token left, 
+			Token right, 
+			Reference leftRef, 
+			bool leftIsRefAndExists, 
+			Reference rightRef, 
+			bool rightIsRefAndExists) {
+
+			this.line = line;
+			this.memory = memory;
+			this.curRecursionDepth = curRecursionDepth;
+			this.remaining = remaining;
+			this.highestToken = highestToken;
+			this.highestIndex = highestIndex;
+			this.left = left;
+			this.right = right;
+			this.leftRef = leftRef;
+			this.leftIsRefAndExists = leftIsRefAndExists;
+			this.rightRef = rightRef;
+			this.rightIsRefAndExists = rightIsRefAndExists;
 		}
 	}
-	Output EvaluateRangeList(string expr, bool isAlone, int baseListLength, Interpreter interpreter) // isalone determines behavior of range from positive to negative
-	{ // expects well formed list (not checking again)
-		string[] parts = expr.Split("..."); // there should only be one ... therefore two sides
-		if (parts.Length > 2) return Errors.MalformedList(expr, interpreter);
 
-		expr = expr[1..^1];
-		parts = expr.Split("...");
+	public Data Evaluate(Line line, Memory memory, bool makeCopy = true, int depth = 0) {
 
-		string startString = parts[0];
-		string endString = parts[1];
-		string intervalString = "1"; // default interval is 1
-		int commaCount = ExpressionCountSymbol(',', startString);
-		if (commaCount > 1)
-			return Errors.MalformedList(expr, interpreter);
-		else if (commaCount == 1)
-		{
-			intervalString = startString.Split(',')[1];
-			startString = startString.Split(',')[0];
-		}
+		if (makeCopy)
+			line = line.DeepCopy();
 
-		Output tryEval;
-		double start;
-		if (!string.IsNullOrEmpty(startString))
-		{
-			tryEval = Evaluate(startString, interpreter);
-			if (!tryEval.Success) return tryEval;
-			if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(startString, interpreter);
-			start = tryEval.Value;
-		}
-		else
-			start = 0;
+		Data.currentUseMemory = memory;
+		UpdateAllLineDataWithMemory(ref line, memory);
+		Data tryEvaluate = EvaluateInternal(line, memory, depth);
+		Data.currentUseMemory = null;
 
-		double end;
-		if (!string.IsNullOrEmpty(endString))
-		{
-			tryEval = Evaluate(endString, interpreter);
-			if (!tryEval.Success) return tryEval;
-			if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(endString, interpreter);
-			end = tryEval.Value;
-		}
-		else if (!isAlone)
-			end = baseListLength - 1;
-		else
-			return Errors.TestError(interpreter);
-
-		tryEval = Evaluate(intervalString, interpreter);
-		if (!tryEval.Success) return tryEval;
-		if (tryEval.Value is not double) return Errors.UnableToParseStrAsNum(intervalString, interpreter);
-		double interval = tryEval.Value;
-
-		List<dynamic> values = new();
-		if (isAlone)
-		{
-			if (start < 0) start = baseListLength + start;
-			if (end < 0) end = baseListLength + end;
-		}
-
-		if (start < end)
-			for (double v = start; v < end; v += interval)
-				values.Add(v);
-		else
-			for (double v = start; v > end; v -= interval)
-				values.Add(v);
-
-		return new Output(values);
+		return tryEvaluate;
 	}
-	public Output EvaluateSingularList(string expr, Interpreter interpreter)
-	{
-		return EvaluateSingularList(expr, true, 0, interpreter);
-	}
-	public Output EvaluateSingularList(string expr, bool isAlone, int baseListLength, Interpreter interpreter)
-	{
-		// check for well formed list
-		if (!CheckListForm(expr)) return Errors.MalformedList(expr, interpreter);
 
-		// check if this is a range list [x,y...z] [x...y]
-		if (expr.Contains("...")) return EvaluateRangeList(expr, isAlone, baseListLength, interpreter);
-
-		expr = expr[1..^1]; // trim first and last [ ] 
-
-		List<dynamic> items = new();
-
-		int depth = 0;
-		string accum = "";
-		bool inString = false;
-		Output evaluate;
-		for (int i = 0; i < expr.Length; i++)
-		{
-			char c = expr[i];
-
-			if (c == '[') depth++;
-			else if (c == ']') depth--;
-
-			if (c == '"') inString = !inString;
-			if (c != ',' || inString || depth != 0) // commas are allowed in strings 
-			{
-				accum += c;
-			}
-			else
-			{ // , and not in string
-				evaluate = Evaluate(accum.Trim(), interpreter);
-				if (!evaluate.Success) return evaluate;
-
-				items.Add(evaluate.Value);
-				accum = "";
-			}
-		}
-		evaluate = Evaluate(accum.Trim(), interpreter);
-		if (!evaluate.Success) return evaluate;
-
-		items.Add(evaluate.Value);
-
-		return new Output(items);
-	}
-	public Output EvaluateList(string expr, Interpreter interpreter)
-	{
-		#region empty list check
-		if (expr.Replace(" ", "") == "[]") return new(new List<dynamic>());
-		#endregion
-
-		#region extract the parts from the expression
-		List<string> parts = new();
-		bool inString = false;
-		int depth = 0;
-		string accum = "";
-		for (int i = 0; i < expr.Length; i++)
-		{
-			char c = expr[i];
-
-			if (c == ' ' && !inString) continue; // ignore spaces
-
-			accum += c;
-
-			if (c == '"') inString = !inString;
-			else if (c == '[' && !inString) depth++;
-			else if (c == ']' && !inString) depth--;
-
-			// list ending or end of expresion, not in nested list or string
-			if ((c == ']' || i == expr.Length - 1) && depth == 0 && !inString)
-			{
-				parts.Add(accum);
-				accum = "";
-			}
-		}
-		if (depth != 0) return Errors.MalformedList(expr, interpreter);
-		//parts.Reverse();
-		#endregion
-
-		if (parts.Count > 1)
-		{ // some kind of indexing is going on
-		  // eval first part first
-
-			Output tryEval = EvaluateSingularList(parts[0], interpreter);
-			if (!tryEval.Success) return tryEval;
-			List<dynamic> baseList = tryEval.Value;
-
-			parts.RemoveAt(0);
-
-			// iteratively evaluate the next lists, using their returned items as indexes
-			foreach (string part in parts)
-			{
-				tryEval = EvaluateSingularList(part, false, baseList.Count, interpreter);
-				if (!tryEval.Success) return tryEval;
-				List<dynamic> dynamicIndexes = tryEval.Value;
-
-				// only whole numbers allowed in the indexes
-				foreach (dynamic index in dynamicIndexes)
-				{
-					if (index is not double)
-						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
-					if (Math.Round(index) != index)
-						return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
-				}
-				List<int> indexes = new();
-				foreach (dynamic index in dynamicIndexes) indexes.Add((int)index);
-
-				// indexes have to be in range
-				foreach (int index in indexes)
-					if (index < -baseList.Count || index >= baseList.Count) // negatives can get up to amount, cant go over length - 1
-						return Errors.IndexOutOfRange(index, interpreter);
-
-				// index the list
-				List<dynamic> temp = new();
-				foreach (int index in indexes)
-					temp.Add(baseList[index < 0 ? ^Math.Abs(index) : index]); // handle - indexes
-				baseList = temp;
-			}
-
-			return new Output(baseList);
-		}
-		else
-		{ // no indexing, normal list
-		  // return the one part 
-			return EvaluateSingularList(expr, interpreter);
+	private void UpdateAllLineDataWithMemory(ref Line line, Memory memory) {
+		foreach (Token token in line.Tokens) {
+			if (token is Data d)
+				d.Memory = memory;
 		}
 	}
-	public Output Tokenize(string expr, Interpreter interpreter)
-	{
-		List<Token> tokens = new();
-		string accum = "";
-		int i = 0;
-		while (i < expr.Length) 
-		{ 
-			char c = expr[i];
-			// some - are negative signs ugh just stole the old code jk now its acting up and im gonna fix it in the evaluator
-			/*			bool minusIsNegative = false;
-			if (c == '-') // handle - sign, annoying af
-			{
-				minusIsNegative = i == 0; // is first char
-				if (!minusIsNegative)
-					minusIsNegative = // case where previous operator 
-						!(char.IsDigit(expr[i - 1]) ||	// previous char is not a digit (operator)
-						char.IsLetter(expr[i - 1]) ||
-						expr[i - 1] == '_' ||
-						expr[i - 1] == '.');			// and previous char is not .
-			}*/
 
+	private Data EvaluateInternal(Line line, Memory memory, int depth = 0) {
+		if (line.Tokens.Count == 0) return Errors.CannotEvaluateEmpty();
+		if (Config.Language.DEBUG) HF.WarnColor($"Evaluating {line.TokenList()}", Color.green);
 
-			if (char.IsLetterOrDigit(c) || c == '_')// || minusIsNegative)
-				//|| (c == '.' && ((i > 0 && char.IsDigit(expr[i-1])) || (i < expr.Length - 2 && char.IsDigit(expr[i-1]))))) // there has to be a better way than this
-			{
-				accum += c;
+		Data declChecks = DeclarationChecks(line.Tokens);
+		if (declChecks is Error ||
+			declChecks.Flags != Flags.None) // check passed
+			return declChecks;
+
+		List<Token> remaining = line.Tokens;
+		List<Token> last = new();
+		bool atLast = false;
+		while (!atLast || remaining.Count > 1) { // main loop
+			if (remaining.Count <= 1) atLast = true; // ensures last single token can be operated on if needed
+
+			GetHighestPrecedenceAction(
+				remaining,
+				out Actions highestAction,
+				out float highestPrecedence,
+				out int highestIndex
+			);
+			if (highestPrecedence == -1)
+				break; // done with iterating
+
+			Token highestToken = remaining[highestIndex];
+			Token left					= remaining.ElementAtOrDefault(highestIndex - 1);
+			Reference leftRef			= left as Reference;
+			bool leftIsRefAndExists		= leftRef != null && leftRef.Exists;
+
+			Token right					= remaining.ElementAtOrDefault(highestIndex + 1);
+			Reference rightRef			= right as Reference;
+			bool rightIsRefAndExists	= rightRef != null && rightRef.Exists;
+
+			ActionContext localActionContext = new(
+				line,
+				memory,
+				depth,
+				remaining,
+				highestToken,
+				highestIndex,
+				left,
+				right,
+				leftRef,
+				leftIsRefAndExists,
+				rightRef,
+				rightIsRefAndExists
+			);
+
+			switch (highestAction) {
+				// handle f strings
+				case Actions.FString:
+					Data parseFString = ParseFString((remaining[highestIndex + 1] as Primitive.String).Value, localActionContext);
+					HF.ReplaceRange(remaining, highestIndex, highestIndex + 1, 
+						new() { Reference.ExistingGlobalReference(
+							parseFString
+					) });
+					break;
+
+				// D -> R
+				case Actions.Data:
+					Data data = highestToken as Data;
+					remaining[highestIndex] = Reference.ExistingGlobalReference("", data);
+					break;
+
+				// N -> R 
+				case Actions.Name:
+					// check memory for name 
+					string name = (highestToken as Name).Value;
+					Data get = memory.Get(name);
+					// dont return error again LMAO
+
+					// replace name token with reference token
+					remaining[highestIndex] = (get is not Error) ?
+						Reference.ExistingGlobalReference(name, get) :   // make existing if data exists
+						Reference.NewGlobalReference(name);             // or make new
+					break;
+
+				// decimal / member handling
+				case Actions.DotOperator:
+					Data tryHandleDotOperator = HandleDotOperator(localActionContext);
+					if (tryHandleDotOperator is Error) return tryHandleDotOperator;
+					break;
+
+				// region operators
+				case Actions.Region:
+					Data tryHandleRegion = HandleRegion(localActionContext);
+					if (tryHandleRegion is Error) return tryHandleRegion;
+					break;
+
+				// unary operators
+				case Actions.Unary:
+					Data tryHandleUnary = HandleUnary(localActionContext);
+					if (tryHandleUnary is Error) return tryHandleUnary;
+					break;
+
+				// normal operators
+				case Actions.Arithmetic:
+					Data tryHandleArithmetic = HandleArithmetic(localActionContext);
+					if (tryHandleArithmetic is Error) return tryHandleArithmetic;
+					break;
+
+				case Actions.Comparison:
+					Data tryHandleComparison = HandleComparison(localActionContext);
+					if (tryHandleComparison is Error) return tryHandleComparison;
+					break;
+
+				case Actions.Logical:
+					Data tryHandleLogical = HandleLogical(localActionContext);
+					if (tryHandleLogical is Error) return tryHandleLogical;
+					break;
+
+				// assignment
+				case Actions.Assignment:
+					Data tryHandleAssignment = HandleAssignment(localActionContext);
+					if (tryHandleAssignment is Error) return tryHandleAssignment;
+					break;
 			}
-			else if (c == '(' || c == '[') // parentheses and brackets are just their own entire token
-			{ // entire thing is a token 
-				char incChar = c;
-				char decChar = c == '(' ? ')' : ']';
 
-				if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
-				accum = "";
-				int depth = 0;
-				bool deeperInString = false;
-				while (i < expr.Length)
-				{
-					c = expr[i];
-					if (c == '"') deeperInString = !deeperInString;
-					if (!deeperInString)
-					{
-						if (c == incChar) depth++;
-						else if (c == decChar) depth--;
-					}
-					accum += c;
-					if (depth == 0) break;
-					i++;
-				}
+			if (last.SequenceEqual(remaining)) break; // duplicate between iters = break
+			last = new(remaining);
+		}
 
-				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
-				{
-					if (incChar == '(') return Errors.MismatchedParentheses(interpreter);
-					else return Errors.MismatchedBrackets(interpreter);
-				}
+		if (remaining[0] is Keyword kw) {
+			Data handleKeywords = HandleKeywords(ref remaining, kw);
+			if (handleKeywords is Error) return handleKeywords;
 
-				tokens.Add(new(accum, TokenType.val));
-				accum = "";
-			}
-			else if (c == '"') // string special eval lest bullshit
-			{
-				if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
-				int startI = i;
-				accum = "";
-				while (i < expr.Length)
-				{
-					c = expr[i];
-					accum += c;
-					if (c == '"' && i != startI) break;
-					i++;
-				}
+			return handleKeywords;
+		}
 
-				if (i >= expr.Length) // should not have broken by i being too high, at some point should have broken early
-					return Errors.MismatchedQuotes(interpreter);
+		// return data if thats what it collapses to
+		if (remaining.Count == 1 && remaining[0] is Reference r) {
+			if (!r.Exists)
+				return Errors.UnknownName(r);
 
-				tokens.Add(new(accum, TokenType.val));
-				accum = "";
-			}
-			else if (operatorFirstChars.Contains(c))
-			{
-				if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
-				accum = "";
+			return r.ThisReference;
+		}
 
-				string operation = c.ToString();
+		return Data.Success;
+	}
 
-				if (i != expr.Length - 1)
-				{
-					char next = expr[i + 1];
-					foreach (string op in operators)
-					{
-						if (new string(c, next) == op)
-						{
-							operation = op;
-							break;
+	private Data DeclarationChecks(List<Token> tokens) {
+		// check for function, inline function, or class
+
+		(int colonIndex, _) = FindAndCountOperator(tokens, Operator.Ops.Colon);
+		if (tokens[0] is Name N && colonIndex != -1) { // some kind of declaration
+
+			// determine if this is some kind of function
+			(int oPIndex, int oPCount) = FindAndCountOperator(tokens, Operator.Ops.OpenParentheses);
+			(int cPIndex, int cPCount) = FindAndCountOperator(tokens, Operator.Ops.CloseParentheses);
+
+			bool maybeFunction = (oPIndex != -1) || (cPIndex != -1);
+
+			if (maybeFunction) {
+				if (oPIndex == -1 || cPIndex == -1 ||
+					oPCount > 1 || cPCount > 1)
+					return Errors.BadSyntaxFor("function declaration", "mismatched parentheses");
+
+				// find all param names and store as string list
+				List<string> paramNames = new();
+				for (int i = oPIndex + 1; i < cPIndex; i++) {
+					Token thisToken = tokens[i];
+
+					if (thisToken is Operator thisOp) {
+						if (thisOp.Value == Operator.Ops.Comma) {
+							if (i > oPIndex + 1 && tokens[i - 1] is Operator) // 2 ops in a row
+								return Errors.BadSyntaxFor("function declaration", "bad parameter list syntax");
+							
+							continue; // delimeter, ignore it
 						}
+						else // any op other than , 
+							return Errors.BadSyntaxFor("function declaration", $"invalid operator {thisOp.StringValue} in parameters");
 					}
+					
+					if (thisToken is Keyword)
+						return Errors.BadSyntaxFor("function declaration", "cannot use keywords as parameters");
+
+					if (thisToken is not Name thisName) // for good measure
+						return Errors.BadSyntaxFor("function declaration");
+
+					paramNames.Add(thisName.Value);
 				}
 
-				if (!operators.Contains(operation))
-					return Errors.OperatorDoesntExist(operation, interpreter);
+				(int eqIndex, int eqCount) = FindAndCountOperator(tokens, Operator.Ops.Equals);
+				
+				if (eqIndex != -1) { // inline function 
+					return new Primitive.List(new List<Data>() {	   // return list with function info
+						new Primitive.String(N.Value),				  // name
+						new Primitive.Number(cPIndex)				 // c paren index (rest is definition)
+					}).SetFlags(Flags.MakeInline);					// tell interpreter to make inline func
+				}
 
-				tokens.Add(new(operation, TokenType.op));
+				// normal function
+				return new Primitive.List(new List<Data>() {		  // return list with function info
+					new Primitive.String(N.Value),					 // name
+					new Primitive.List(paramNames					// turn arg names into list of strings
+						.Select(n => new Primitive.String(n) as Data)
+						.ToList())								  //
+				}).SetFlags(Flags.MakeFunction);				 // tell interpreter to make function
+
+			}
+			else { // must be class
+
+				// class syntax: <name> <:>
+				if (tokens.Count != 2 ||
+					colonIndex != 1)
+					return Errors.BadSyntaxFor("class declaration");
+
+				return new Primitive.String(N.Value) // return new class name
+					.SetFlags(Flags.MakeClass);		// tell interpreter to make class
+			}
+		}
+		return Data.Fail;
+	}
+
+	private void GetHighestPrecedenceAction(
+		in  List<Token> remaining,
+		out Actions highestAction,
+		out float highestPrecedence,
+		out int highestIndex) {
+
+		highestAction = Actions.None;
+		highestPrecedence = -1;
+		highestIndex = -1;
+
+		for (int i = 0; i < remaining.Count; i++) {
+			Token token = remaining[i];
+			Actions action = Actions.None;
+			float precedence = -1;
+
+			bool isOp = token is Operator;
+			Operator op = isOp ? token as Operator : null;
+
+			// f-strings
+			if (token is Name N &&
+				N.Value == "f" &&
+				i != remaining.Count - 1 &&
+				remaining[i + 1] is Data) {
+				precedence = 25;
+				action = Actions.FString;
+			}
+
+			// D -> R
+			else if (token is Data) {
+				precedence = 20;
+				action = Actions.Data;
+			}
+
+			// N -> R
+			else if (token is Name) {
+				precedence = 15;
+				action = Actions.Name;
+			}
+
+			// handle .
+			else if (isOp && op.Value == Operator.Ops.Dot) {
+				precedence = 15;
+				action = Actions.DotOperator;
+			}
+
+			// region operator
+			else if (isOp &&
+				(op.Value	== Operator.Ops.OpenParentheses ||
+				op.Value	== Operator.Ops.OpenBracket ||
+				op.Value	== Operator.Ops.OpenBrace)) {
+				precedence = 15;
+				action = Actions.Region;
+			}
+
+			// unary operator
+			else if (isOp && Operator.UnaryOperatorsHashSet.Contains(op.Value) &&
+				(i == 0 || remaining[i - 1] is Operator or Keyword)) {
+				precedence = 14; // slightly less than others
+				action = Actions.Unary;
+			}
+
+			// normal operators
+			else if (isOp && Operator.ArithmeticOperatorsHashSet.Contains(op.Value)) {
+				precedence = Operator.NormalOperatorsPrecedence[op.Value];
+				action = Actions.Arithmetic;
+			}
+			else if (isOp && Operator.ComparisonOperatorsHashSet.Contains(op.Value)) {
+				precedence = Operator.NormalOperatorsPrecedence[op.Value];
+				action = Actions.Comparison;
+			}
+			else if (isOp && Operator.LogicalOperatorsHashSet.Contains(op.Value)) {
+				precedence = Operator.NormalOperatorsPrecedence[op.Value];
+				action = Actions.Logical;
+			}
+
+			// assignment
+			else if (isOp && Operator.AssignmentOperatorsHashSet.Contains(op.Value)) {
+				// 4 (1 below highest of normal) + inverse 0-1 of position in the thing
+				precedence = 4 + Mathf.InverseLerp(0, remaining.Count + 1, i);
+				action = Actions.Assignment;
+			}
+
+			if (precedence > highestPrecedence) { // > not >= for leftmost
+				highestPrecedence = precedence;
+				highestIndex = i;
+				highestAction = action;
+			}
+		}
+	}
+
+	private Data ParseFString(string s, ActionContext AC) {
+		#region unpack AC
+		Line line = AC.line;
+		Memory memory = AC.memory;
+		#endregion
+
+		if (Config.Language.DEBUG) HF.LogColor($"Parsing f string {s}", Color.yellow);
+
+		StringBuilder sb = new();
+
+		int depth = 0;
+		for (int i = 0; i < s.Length; i++) {
+			char c = s[i];
+
+			if (c == '}') depth--;
+
+			else if (c == '{') {
+				if (depth == 0) {
+					int startIndex = i;
+
+					while (i < s.Length) { // get braces chunk
+						c = s[i];
+						if (c == '{') depth++;
+						else if (c == '}') depth--;
+						if (depth == 0) break;
+						i++;
+					}
+
+					string expression = s[(startIndex + 1)..i];
+					Tokenizer tokenizer = new();
+					(List<Token> tokens, Data tryTokenize) = tokenizer.TokenizeLine(expression);
+					if (tryTokenize is Error) return tryTokenize;
+
+					Data tryEval = EvaluateInternal(line.CopyWithNewTokens(tokens), memory);
+					if (tryEval is Error) return tryEval;
+
+					Data tryCast = tryEval.Cast(Primitive.String.InternalType);
+					if (tryCast is Error) return tryCast;
+					if (tryCast is not Primitive.String S) return Errors.BadCode();
+
+					sb.Append(S.Value);
+				}
+
+				depth++;
 			}
 			else
-			{
-				return Errors.UnknownSymbol(c, interpreter);
+				sb.Append(c);
+		}
+
+		return new Primitive.String(sb.ToString());
+	}
+
+	private Data HandleDotOperator(in ActionContext AC) {
+		#region unpack AC
+		List<Token> remaining		= AC.remaining;
+		int highestIndex			= AC.highestIndex;
+		Token right					= AC.right;
+		Reference leftRef			= AC.leftRef;
+		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
+		Reference rightRef			= AC.rightRef;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
+		#endregion
+
+		void handleAsNumber() {
+			Primitive.Number leftAsNumber = leftIsRefAndExists ?
+				leftRef.ThisReference as Primitive.Number : null;
+			Primitive.Number rightAsNumber = rightIsRefAndExists ?
+				rightRef.ThisReference as Primitive.Number : null;
+
+			int leftNum = leftAsNumber != null ? (int)leftAsNumber.Value : 0;
+			int rightNum = rightAsNumber != null ? (int)rightAsNumber.Value : 0;
+
+			int replaceStart = highestIndex - (leftAsNumber != null ? 1 : 0);
+			int replaceEnd = highestIndex + (rightAsNumber != null ? 1 : 0);
+
+			double fractionalPart = rightNum * Math.Pow(10, Math.Floor(Math.Log10(rightNum)) - 1);
+			double realValue = leftNum + fractionalPart;
+
+			HF.ReplaceRange(remaining, replaceStart, replaceEnd,					  // replace those tokens with the value
+				new() { Reference.ExistingGlobalReference(new Primitive.Number(		 // turn value into ref
+					realValue														// actual value
+			))});
+		}
+
+		// normal member syntax, expect existing reference on left
+		if (leftRef != null) {// left is ref
+			if (!leftIsRefAndExists) // leftref doesnt exist
+				return Errors.UnknownName(leftRef);
+				
+			if (right is Name rightname) {
+				Data tryget = leftRef.GetData();
+				if (tryget is Error) return tryget;
+
+				tryget = tryget.GetMember(rightname.Value);
+
+				Reference dataRef;
+				if (tryget is Error)
+					dataRef = Reference.NewMemberReference(leftRef, rightname.Value);
+				else
+					dataRef = Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
+
+				HF.ReplaceRange( // replace l . r with R
+					remaining,
+					highestIndex - 1,
+					highestIndex + 1,
+					new() { dataRef });
+			}
+			else if (leftRef.ThisReference is Primitive.Number)
+				handleAsNumber();
+			else
+				return Errors.InvalidUseOfOperator(".");
+		}
+		else { // left is null or anything else
+			if (right is Primitive.Number) // handle as number if right is number
+				handleAsNumber();
+			else
+				return Errors.InvalidUseOfOperator(".");
+		}
+
+		return Data.Success;
+	}
+
+	private Data HandleRegion(in ActionContext AC) {
+		#region unpack AC
+		Line line					= AC.line					;
+		Memory memory				= AC.memory					;
+		List<Token> remaining		= AC.remaining				;
+		Token highestToken			= AC.highestToken			;
+		int highestIndex			= AC.highestIndex			;
+		Token left					= AC.left					;
+		Token right					= AC.right					;
+		Reference leftRef			= AC.leftRef				;
+		bool leftIsRefAndExists		= AC.leftIsRefAndExists		;
+		Reference rightRef			= AC.rightRef				;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists	;
+		#endregion
+
+		Operator highestTokenAsOp = highestToken as Operator; // it should be operator plz....
+
+		Operator.Ops pairing = highestTokenAsOp.Value switch {
+			Operator.Ops.OpenParentheses	=> Operator.Ops.CloseParentheses,
+			Operator.Ops.OpenBracket		=> Operator.Ops.CloseBracket,
+			Operator.Ops.OpenBrace			=> Operator.Ops.CloseBrace,
+			_ => Operator.Ops.None
+		};
+		if (pairing == Operator.Ops.None) return Errors.CouldntParse(line.OriginalString);
+		
+		int i = highestIndex;
+		int depth = 0;
+		while (i < remaining.Count) { // find index of matching
+			if (remaining[i] is Operator op) {
+				if (op.Value == pairing) {
+					depth--;
+					if (depth == 0) break;
+				}
+				else if (op.Value == highestTokenAsOp.Value)
+					depth++;
 			}
 			i++;
 		}
-		if (accum != "") tokens.Add(new(accum, TokenType.val)); // not sure what was before this, but add it to not lose it
+		int pairIndex = i;
 
-		return new(tokens);
-	}
+		if (pairIndex == remaining.Count) return Errors.MismatchedSomething(
+			highestTokenAsOp.Value switch {
+				Operator.Ops.OpenParentheses => "parentheses",
+				Operator.Ops.OpenBracket => "brackets",
+				Operator.Ops.OpenBrace => "braces",
+				_ => "unknown"
+			});
 
-	public Output HandleMembers(string type, dynamic left, string memberName, Interpreter interpreter)
-	{
-		if (type == "Class Instance")
-		{
-			ClassInstance classInstance = (ClassInstance)left;
+		List<Token> regionTokens = remaining.GetRange(highestIndex + 1, pairIndex - highestIndex - 1);
 
-			return classInstance.OwnInterpreter.memory.Fetch(memberName, interpreter);
+		switch (highestTokenAsOp.Value) {
+			case Operator.Ops.OpenParentheses:
+				bool isArguments = leftRef != null; // doesnt matter if it doesnt exist, will be errored
+				if (isArguments) { // run function
+					Data run = RunFunction(AC, regionTokens);
+					if (run is Error) return run;
+
+					HF.ReplaceRange(remaining, highestIndex - 1, pairIndex, 
+						new() { Reference.ExistingGlobalReference(
+							run
+					) });
+				}
+				else {
+					Data evalSubexp = Evaluate(line.CopyWithNewTokens(regionTokens), memory);
+					if (evalSubexp is Error) return evalSubexp;
+
+					HF.ReplaceRange(remaining, highestIndex, pairIndex, 
+						new() { Reference.ExistingGlobalReference(
+							evalSubexp
+					) });
+				}
+				break;
+
+			case Operator.Ops.OpenBracket:
+				bool indexing = leftIsRefAndExists;
+				if (indexing) {
+					Primitive.List leftAsList		= leftRef.ThisReference as Primitive.List;
+					Primitive.String leftAsString	= leftRef.ThisReference as Primitive.String;
+					Primitive.Dict leftAsDict		= leftRef.ThisReference as Primitive.Dict;
+
+					if (leftAsList == null && leftAsString == null && leftAsDict == null)
+						return Errors.CannotIndex(leftRef.ThisReference.Type.Name);
+
+					List<Data> baseList = leftAsList?.Value;
+					if (leftAsString != null)
+						baseList = Enumerable.Repeat<Data>(null, leftAsString.Value.Length).ToList(); // turn string into representative list
+
+					Data evalList = EvaluateList(
+						line.CopyWithNewTokens(regionTokens),
+						memory,
+						baseList
+						);
+					if (evalList is Error) return evalList;
+
+					if (leftAsList != null || leftAsString != null) { // indexing
+																	  // check indices
+						List<int> indices = new();
+						foreach (Data d in (evalList as Primitive.List).Value) {
+							if (d is not Primitive.Number num)
+								return Errors.CannotIndexWithType(d.Type.Name);
+
+							int val = (int)num.Value;
+
+							if (num.Value != val)
+								return Errors.CannotIndexWithType("non whole number");
+
+							if (val >= baseList.Count ||
+								val < -baseList.Count)
+								return Errors.IndexOutOfRange(val);
+
+							indices.Add((int)num.Value);
+						}
+
+						if (leftAsList != null) { // left is list
+							List<Data> indexed = new();
+							foreach (int val in indices)
+								indexed.Add(leftAsList.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
+
+							HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
+								new() { Reference.ExistingGlobalReference(new Primitive.List(
+									indexed
+							)) });
+						}
+						else { // left is string
+							StringBuilder sb = new();
+							foreach (int val in indices)
+								sb.Append(leftAsString.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
+
+							HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
+								new() { Reference.ExistingGlobalReference(new Primitive.String(
+									sb.ToString()
+							)) });
+						}
+					}
+					else { // dict key get
+						List<Data> values = new();
+						foreach (Data key in (evalList as Primitive.List).Value) {
+							Data trygetvalue = Interpreter.RunFunction(
+								memory,
+								new Primitive.Function("get", Primitive.Dict.get),
+								leftAsDict,
+								new() { key });
+							if (trygetvalue is Error) return trygetvalue;
+
+							values.Add(trygetvalue);
+						}
+
+						Data res =
+							values.Count > 1 ? new Primitive.List(values) :
+							values[0];
+
+						HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
+							new() { Reference.ExistingGlobalReference(
+								res
+						) });
+					}
+				}
+				else { // normal list
+					Data evalList = EvaluateList(line.CopyWithNewTokens(regionTokens), memory);
+					if (evalList is Error) return evalList;
+
+					HF.ReplaceRange(remaining, highestIndex, pairIndex, 
+						new() { Reference.ExistingGlobalReference(
+							evalList
+					) });
+				}
+				break;
+
+			case Operator.Ops.OpenBrace:
+				Data evalDict = EvaluateDict(line.CopyWithNewTokens(regionTokens), memory);
+				if (evalDict is Error) return evalDict;
+
+				HF.ReplaceRange(remaining, highestIndex, pairIndex, 
+					new() { Reference.ExistingGlobalReference(
+						evalDict
+				) });
+				break;
 		}
 
-		switch (type)
-		{
-			case "number": return Number.GetMember(left, memberName, interpreter);
-			case "string":
-			case "boolean":
-			case "list":
-			default:
-				return Errors.TypeHasNoAttribute(memberName, type, interpreter);
-		}
+		return Data.Success;
 	}
 
-	public Output Evaluate(string expr, Interpreter interpreter)
-	{
-		if (DEBUGMODE) HF.LogColor($"Evaluating {expr}", Color.blue);
-
-		// can't evaluate nothing
-		if (string.IsNullOrWhiteSpace(expr)) return new(""); // return Errors.EvaluatedNothing(interpreter);
-
-		expr = HF.RemoveNonStringSpace(expr); // get rid of whitespace
-
-		Output parityCheck = ParityChecks(expr, interpreter); // pre check(s)
-		if (!parityCheck.Success) return parityCheck;
+	private Data RunFunction(in ActionContext AC, List<Token> regionTokens) {
+		#region unpack AC
+		Line line = AC.line;
+		Memory memory = AC.memory;
+		Reference leftRef = AC.leftRef;
+		#endregion
 		
-		if (HF.ExpressionContainsSurfaceLevel(',', expr)) // evaluate straight lists
-			return EvaluateList('[' + expr + ']', interpreter);
+		// make sure left is a callable type
+		if (!leftRef.Exists)
+			return Errors.UnknownName(leftRef);
 
-		Output tokenize = Tokenize(expr, interpreter); // tokenize the expression
-		if (!tokenize.Success) return tokenize;
-		List<Token> tokens = tokenize.Value;
+		if (leftRef.ThisReference is not Primitive.Function func)
+			return Errors.MemberIsNotMethod(leftRef.Name, leftRef.ThisReference.Type.Name);
 
-		if (tokens.Count == 1)
-		{
-			if (expr.StartsWith('(') && expr.EndsWith(')'))
-				return Evaluate(expr[1..^1], interpreter); // single values in parentheses get evaled
+		Data evalArgs = EvaluateList(
+			line.CopyWithNewTokens(regionTokens),
+			memory);
+		if (evalArgs is Error) return evalArgs;
 
-			return DynamicStringParse(expr, interpreter);
-		}
+		List<Data> args = (evalArgs as Primitive.List).Value;
 
-		// get the actual value of each value token (not operation, they don't need to be evaluated)
-		foreach (Token token in tokens) if (token.Type == TokenType.val)
-			{
-				if (token.Text.StartsWith('(')) token.Text = token.Text[1..];
-				if (token.Text.EndsWith(')')) token.Text = token.Text[..^1];
+		//Memory context = leftRef.IsInstanceVariable ? leftRef.ParentReference.Memory : memory;
+		Memory context = memory;
 
-				// variables are treated differently
-				if (HF.DetermineTypeFromString(token.Text) == "variable")
-				{
-					Variable variable = new(token.Text, null); // bad idea
-					token.Set(variable, TokenType.val, false);
-				}
-				else
-				{
-					Output tryEval = Evaluate(token.Text, interpreter); // TODO: this is not gonna end well
-					if (!tryEval.Success) return tryEval;
-					token.Set(tryEval.Value, TokenType.val, false);
-				}
-			}
-
-		return EvaluateTokens(tokens, interpreter);
+		Data run = Interpreter.RunFunction(context, func, leftRef.ParentReference, args); // might change this retian later 
+		run.ClearFlags();
+		return run;
 	}
 
-	public Output EvaluateTokens(List<Token> tokens, Interpreter interpreter)
-	{
-		// evaluate with pemdas
-		while (tokens.Count > 1)
-		{
-			// evaluate all functions and list indexing before everything else 
-			bool doublesExist = true; // side by side values
-			while (doublesExist)
-			{
-				// find doubles location
-				int doubleStartIndex = -1;
-				doublesExist = false;
-				for (int i = 0; i < tokens.Count; i++)
-				{
-					if ( // condition for function or list indexing (not method)
-						i < tokens.Count - 1 &&
-						tokens[i].Type == TokenType.val && tokens[i + 1].Type == TokenType.val && // value followed by argument?
-						(i == 0 || tokens[i - 1].Text != ".") // prev token isn't . ?  
-						)
-					{
-						doublesExist = true;
-						doubleStartIndex = i;
-						break;
-					}
-				}
+	private Data HandleUnary(in ActionContext AC) {
+		#region unpack AC
+		List<Token> remaining		= AC.remaining;
+		Token highestToken			= AC.highestToken;
+		int highestIndex			= AC.highestIndex;
+		Reference rightRef			= AC.rightRef;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
+		#endregion
 
-				if (doublesExist)
-				{
-					int nextIndex = doubleStartIndex + 1;
-					// differentiate between list indexing and arguments
-					if (tokens[nextIndex].Text.StartsWith('[') && tokens[nextIndex].Text.EndsWith(']')) // indexing
-					{
-						// chained indexing should hopefully be handled implicitly as the first instance is always processed first
-						// only need to handle two together
+		Operator thisOp = (highestToken as Operator);
 
-						if (tokens[nextIndex].RealValue is not List<dynamic>) // how would this happen?
-							return Errors.UnknownError(interpreter);
+		if (!rightIsRefAndExists)
+			return Errors.InvalidUseOfOperator(thisOp.StringValue);
 
-						List<dynamic> listToIndex = tokens[doubleStartIndex].RealValue is List<dynamic> ?
-							tokens[doubleStartIndex].RealValue :
-							new List<dynamic>() { tokens[doubleStartIndex].RealValue };
-						List<dynamic> indexList = tokens[nextIndex].RealValue;
+		if (thisOp.Value == Operator.Ops.Plus ||
+			thisOp.Value == Operator.Ops.Minus) { // + or -
 
-						List<dynamic> newList = new();
-						foreach (dynamic index in indexList)
-						{
-							if (index is not double || Math.Round(index) != index)
-								return Errors.IndexListWithType(HF.DetermineTypeFromVariable(index), interpreter);
+			Data castToNumber = rightRef.ThisReference.Cast(Primitive.Number.InternalType);
+			if (castToNumber is Error) return castToNumber;
 
-							int intIndex = (int)index;
-							if (intIndex >= listToIndex.Count)
-								return Errors.IndexOutOfRange(intIndex, interpreter);
+			double value = (castToNumber as Primitive.Number).Value;
+			// use a copy of the number i guess
+			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
+				new() { Reference.ExistingGlobalReference(new Primitive.Number(
+					value * (thisOp.Value == Operator.Ops.Minus ? -1 : 1
+				))) });
+		}
+		else { // !
+			Data castToBool = rightRef.ThisReference.Cast(Primitive.Bool.InternalType);
+			if (castToBool is Error) return castToBool;
 
-							newList.Add(listToIndex[intIndex]);
-						}
+			bool value = (castToBool as Primitive.Bool).Value;
 
-						tokens.RemoveAt(nextIndex); // remove index list
-						tokens[doubleStartIndex].Set(newList, TokenType.val); // update list
-					}
-					else
-					{
-						Token functionToken = tokens[doubleStartIndex];
-						Token argumentToken = tokens[nextIndex];
-
-						string functionName = functionToken.Text;
-
-						List<dynamic> args = argumentToken.RealValue is List<dynamic> ? argumentToken.RealValue :
-							(argumentToken.RealValue == "" ? new List<dynamic>() : new List<dynamic>() { argumentToken.RealValue }); // null check
-						int numargs = args.Count;
-
-						if (numargs > 0 && args[0] is string && args[0] == "")
-							numargs = 0;
-
-						if (functionToken.RealValue is Variable v)
-						{
-							Output fetch = interpreter.memory.Fetch(v.Name, interpreter);
-							if (!fetch.Success) return fetch;
-
-							functionToken.Set(fetch.Value, TokenType.val);
-						}
-
-						string functionTokenType = HF.DetermineTypeFromVariable(functionToken.RealValue);
-						if (functionTokenType == "function")
-						{
-							Function function = functionToken.RealValue;
-							if (function != null && function.Type != Function.FunctionType.internalFunc) // internal functions already exist statically
-							{
-								Dictionary<string, Function> functions = interpreter.memory.GetFunctions();
-								if (!functions.ContainsKey(functionName))
-									return Errors.NoFunctionExists(name, numargs, interpreter);
-								function = functions[functionName];
-							}
-
-							Output output = function.Run(args, interpreter);
-							if (!output.Success) return output;
-
-							tokens.RemoveAt(nextIndex); // remove arg token
-							tokens[doubleStartIndex].Set(output.Value, TokenType.val); // set the function vallue accordingly
-						}
-						else
-						{
-							return Errors.NoFunctionExists(functionToken.Text, numargs, interpreter);
-						}
-					}
-				}
-			}
-
-			if (tokens.Count == 1) break;
-
-			#region find leftmost highest ranking operator
-			int opIndex = -1;
-			int highestRank = int.MinValue;
-			for (int i = 0; i < tokens.Count; i++)
-			{
-				Token token = tokens[i];
-				if (token.Type == TokenType.op)
-				{
-					int rank = operatorRanks[token.Text];
-					if (rank > highestRank)
-					{
-						opIndex = i;
-						highestRank = rank;
-					}
-				}
-			}
-			#endregion
-
-			if (opIndex == -1) return Errors.NoOperator(interpreter);
-
-			string[] specialOperators = new string[2] { "!", "." };
-			string operation = tokens[opIndex].Text;
-			if ((opIndex == 0 || opIndex == tokens.Count - 1 || // not outside range
-				tokens[opIndex - 1].Type == TokenType.op || tokens[opIndex + 1].Type == TokenType.op) && // left or right aren't operators
-				!specialOperators.Contains(operation)) // special operators get exception
-				return Errors.OperatorInInvalidPosition(operation, interpreter);
-
-			Token leftToken = opIndex > 0d ? tokens[opIndex - 1] : new Token(null, 0d);
-			Token rightToken = opIndex < (tokens.Count - 1) ? tokens[opIndex + 1] : new Token(null, 0d);
-
-			#region special checks
-			bool leftWasntValid = false; // for future reference for . to know how to handle left and right side
-			bool rightWasntValid = false;
-			if (opIndex == 0 || tokens[opIndex - 1].Type == TokenType.op)
-			{ // special case for ., would have been caught normally
-				leftToken = new Token(null, 0d);
-				leftWasntValid = true;
-			}
-			if (opIndex == tokens.Count - 1 || tokens[opIndex + 1].Type == TokenType.op)
-			{
-				rightToken = new Token(null, 0d);
-				rightWasntValid = true;
-			}
-			#endregion
-
-			dynamic left = leftToken.RealValue;
-			dynamic right = rightToken.RealValue;
-
-			#region handle variables
-			if (left is Variable lv)
-			{
-				Output fetch = interpreter.memory.Fetch(lv.Name, interpreter);
-				if (!fetch.Success) return fetch;
-
-				left = fetch.Value;
-			}
-			if (operation != ".") // there may be members which the main interpreter does not know
-			{
-				if (right is Variable rv)
-				{
-					Output fetch = interpreter.memory.Fetch(rv.Name, interpreter);
-					if (!fetch.Success) return fetch;
-
-					right = fetch.Value;
-				}
-
-				if (!(left is double || left is string || left is bool || left is List<dynamic>))
-				{
-					left = left.ToString();
-				}
-				if (!(right is double || right is string || right is bool || right is List<dynamic>))
-				{
-					right = right.ToString();
-				}
-			}
-			#endregion
-
-			string leftType = HF.DetermineTypeFromVariable(left);
-			string rightType = HF.DetermineTypeFromVariable(right);
-			dynamic result = 0;
-
-			bool normaloperation = true;
-
-			if (operation == "!")
-			{
-				if (rightToken == null) return Errors.OperatorInInvalidPosition("!", interpreter);
-
-				bool boolvalue = false;
-				if (rightType == "string") boolvalue = right == "true";
-				else if (rightType == "number") boolvalue = right > 0;
-				else if (rightType == "boolean") boolvalue = right;
-				else if (rightType == "list") boolvalue = false;
-
-				tokens.RemoveAt(opIndex);
-				tokens[opIndex].Set(!boolvalue, TokenType.val);
-
-				normaloperation = false;
-			}
-			else if (operation == ".")
-			{
-				if (leftType == "number" && rightType == "number") // decimal (will have unintended consequences)
-				{
-					double rightDigits = right != 0 ? Math.Floor(Math.Log10(right) + 1) : 1;
-					result = left + right / Math.Pow(10d, rightDigits);
-
-					if (leftWasntValid)
-					{
-						tokens[opIndex + 1].Set(result, TokenType.val); // replace original value with result
-						tokens.RemoveAt(opIndex); // remove .
-					}
-					else if (rightWasntValid)
-					{
-						tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
-						tokens.RemoveAt(opIndex); // remove .
-					}
-					else
-					{
-						tokens.RemoveAt(opIndex + 1); // remove right side
-						tokens.RemoveAt(opIndex); // remove .
-						tokens[opIndex - 1].Set(result, TokenType.val); // replace original value with result
-					}
-				}
-				else if (rightType == "variable") // optimally want to be able to just check for method/variable
-				{
-					if (leftWasntValid)
-						return Errors.ExpectedExpression(interpreter);
-
-					Variable rightVar = (Variable)right;
-					Output attemptHandleMember = HandleMembers(leftType, left, rightVar.Name, interpreter);
-					if (!attemptHandleMember.Success) return attemptHandleMember;
-
-					tokens.RemoveAt(opIndex + 1); // remove right side
-					tokens.RemoveAt(opIndex); // remove .
-					tokens[opIndex - 1].Set(attemptHandleMember.Value, TokenType.val); // replace original value with result
-				}
-				else
-				{
-					return Errors.InvalidUseOfPeriod(interpreter);
-				}
-
-				normaloperation = false;
-			}
-
-			if (normaloperation)
-			{
-				SoftCast(leftType, ref left, rightType, ref right, interpreter);
-
-				string opType = HF.DetermineTypeFromVariable(left);
-
-				try
-				{
-					switch (opType)
-					{
-						case "number":
-							switch (operation)
-							{
-								case "+": result = left + right; break;
-								case "-": result = left - right; break;
-								case "*": result = left * right; break;
-								case "/":  // check for division by zero
-									if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
-									else result = left / right; break;
-								case "^": result = Math.Pow(left, right); break;
-								case "%": result = left % right; break; //
-								case "==": result = left == right; break;
-								case "!=": result = left != right; break;
-								case "<": result = left < right; break;
-								case ">": result = left > right; break;
-								case "<=": result = left <= right; break;
-								case ">=": result = left >= right; break;
-								default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
-							}
-							break;
-						case "string":
-							if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
-
-							result = left + right;
-							break;
-						case "list":
-							if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
-							left.AddRange(right);
-							result = left;
-							break;
-						case "bool":
-							if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
-
-							switch (operation)
-							{
-								case "==": result = left == right; break;
-								case "!=": result = left != right; break;
-								case "&&": result = left && right; break;
-								case "||": result = left || right; break;
-								case "!&": result = !(left && right); break;
-								case "!|": result = !(left || right); break;
-								case "!!": result = left ^ right; break;
-							}
-							break;
-						default:
-							return Errors.UnsupportedOperation(operation, leftType, rightType, interpreter);
-					}
-				}
-				catch
-				{
-					return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
-				}
-				tokens.RemoveAt(opIndex + 1); // remove right side
-				tokens[opIndex].Set(result, TokenType.val); // replace operator with result
-				tokens.RemoveAt(opIndex - 1); // remove left
-			}
-
+			// use a copy of the bool
+			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
+				new() { Reference.ExistingGlobalReference(new Primitive.Bool(
+					!value
+				)) });
 		}
 
-		return new(tokens[0].RealValue);
-
+		return Data.Success;
 	}
 
-	/*public Output _Evaluate(string expr, Interpreter interpreter)
-	{
-		if (DEBUGMODE) interpreter.LogColor($"Evaluating {expr}", Color.blue);
+	private Data OperatorCheck(
+		in ActionContext AC,
+		in Operator op,
+		out Data leftData, out Data rightData) {
+		#region unpack AC
+		Reference leftRef = AC.leftRef;
+		bool leftIsRefAndExists = AC.leftIsRefAndExists;
+		Reference rightRef = AC.rightRef;
+		bool rightIsRefAndExists = AC.rightIsRefAndExists;
+		#endregion
+		
+		leftData = null;
+		rightData = null;
 
-		#region blankcheck
-		if (string.IsNullOrWhiteSpace(expr))
-			return Errors.EvaluatedNothing(interpreter);
+		// check left and right
+		if (leftRef == null)
+			return Errors.Expected("expression", "left of " + op.StringValue);
+		if (rightRef == null)
+			return Errors.Expected("expression", "right of " + op.StringValue);
+
+		if (!leftIsRefAndExists)
+			return Errors.UnknownName(leftRef);
+		if (!rightIsRefAndExists)
+			return Errors.UnknownName(rightRef);
+
+		leftData = leftRef.ThisReference;
+		rightData = rightRef.ThisReference;
+		return Data.Success;
+	}
+
+	private Data HandleArithmetic(in ActionContext AC) {
+		#region unpack AC
+		Memory memory = AC.memory;
+		List<Token> remaining = AC.remaining;
+		Token highestToken = AC.highestToken;
+		int highestIndex = AC.highestIndex;
+		Reference leftRef = AC.leftRef;
+		Reference rightRef = AC.rightRef;
 		#endregion
 
-		#region remove all spaces except inside ""
-		string tempstring = "";
-		bool inString = false;
-		foreach (char c in expr)
-		{
-			if (c == '"') inString = !inString;
-			if (c != ' ' || inString) // anything but space unless in quotes
-				tempstring += c;
+		// assume precedence is sorted out already
+
+		Operator op = highestToken as Operator;
+
+		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
+		if (check is Error) return check;
+
+		Data perform = PerformOperation(op, leftData, rightData, leftRef, rightRef, memory);
+		if (perform is Error) return perform;
+
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
+			new() { Reference.ExistingGlobalReference(
+				perform
+		) });
+
+		return Data.Success;
+	}
+
+	private Data PerformOperation(
+		in Operator op,
+		in Data leftData, in Data rightData,
+		in Reference leftRef, in Reference rightRef,
+		in Memory memory) {
+		
+		// cast left to right
+		Data left = leftData.Cast(rightRef.ThisReference.Type);
+		if (left is Error) return left;
+		Data right = rightData;
+
+		Dictionary<Operator.Ops, string> opNames = new() {
+			{ Operator.Ops.Plus,		"ad" },
+			{ Operator.Ops.Minus,		"su" },
+			{ Operator.Ops.Multiply,	"mu" },
+			{ Operator.Ops.Divide,		"di" },
+			{ Operator.Ops.Mod,			"mo" },
+			{ Operator.Ops.Power,		"po" } 
+		};
+
+		string operationName = opNames[op.Value];
+		Data tryGetLeftMember = leftData.GetMember(operationName);
+		if (tryGetLeftMember is Error)
+			return Errors.UnsupportedOperation(
+				op.StringValue, 
+				leftRef.ThisReference.Type.Name, 
+				rightRef.ThisReference.Type.Name);
+		if (tryGetLeftMember is not Primitive.Function F)
+			return Errors.MemberIsNotMethod(operationName, leftData.Type.Name);
+
+		Data runFunction = Interpreter.RunFunction(
+			memory, 
+			F, 
+			left, 
+			new() { right }
+		);
+		return runFunction;
+	}
+	
+	private Data HandleComparison(in ActionContext AC) {
+		#region unpack AC
+		Memory memory = AC.memory;
+		List<Token> remaining = AC.remaining;
+		Token highestToken = AC.highestToken;
+		int highestIndex = AC.highestIndex;
+		#endregion
+
+		// assume precedence is sorted out already
+
+		Operator op = highestToken as Operator;
+
+		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
+		if (check is Error) return check;
+
+		Data compare = Compare(leftData, rightData, op, memory);
+		if (compare is Error) return compare;
+
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
+			new() { Reference.ExistingGlobalReference(
+				compare
+		) });
+
+		return Data.Success;
+	}
+
+	private Data HandleLogical(in ActionContext AC) {
+		#region unpack AC
+		List<Token> remaining = AC.remaining;
+		Token highestToken = AC.highestToken;
+		int highestIndex = AC.highestIndex;
+		#endregion
+
+		// assume precedence is sorted out already
+
+		Operator op = highestToken as Operator;
+
+		Data check = OperatorCheck(AC, op, out Data leftData, out Data rightData);
+		if (check is Error) return check;
+
+		// try cast both to bool
+		Data trycastLeft = leftData.Cast(Primitive.Bool.InternalType);
+		Data trycastRight = rightData.Cast(Primitive.Bool.InternalType);
+		if (trycastLeft is Error) return trycastLeft;
+		if (trycastRight is Error) return trycastRight;
+
+		bool a = (trycastLeft as Primitive.Bool).Value;
+		bool b = (trycastRight as Primitive.Bool).Value;
+
+		bool result = op.Value switch {
+			Operator.Ops.And	=> a && b,
+			Operator.Ops.Or		=> a || b,
+			Operator.Ops.Nand	=> !(a && b),
+			Operator.Ops.Nor	=> !(a || b),
+			Operator.Ops.Xor	=> a != b,
+			_ => false // vs wouldnt stop screaming at me to add default case
+		};
+
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
+			new() { Reference.ExistingGlobalReference(new Primitive.Bool(
+				result
+		)) });
+
+		return Data.Success;
+	}
+	
+	private Data HandleAssignment(in ActionContext AC) {
+		#region unpack AC
+		Memory memory				= AC.memory;
+		List<Token> remaining		= AC.remaining;
+		Token highestToken			= AC.highestToken;
+		int highestIndex			= AC.highestIndex;
+		Reference leftRef			= AC.leftRef;
+		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
+		Reference rightRef			= AC.rightRef;
+		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
+		#endregion
+
+		// assume precedence is sorted out already
+
+		Operator op = highestToken as Operator;
+
+		// check right for ref to existing data
+		if (rightRef == null)
+			return Errors.Expected("expression", "right of " + op.StringValue);
+		if (!rightIsRefAndExists)
+			return Errors.UnknownName(rightRef);
+		Data rightData = rightRef.ThisReference;
+
+		// check left for ref (doesnt have to exist)
+		if (leftRef == null)
+			return Errors.Expected("expression", "left of " + op.StringValue);
+
+		Data newValue;
+
+		if (op.Value == Operator.Ops.Equals)
+			newValue = rightData;
+		else {
+			if (!leftIsRefAndExists) // += and others have to have existing left type
+				return Errors.UnknownName(leftRef);
+
+			string opToPerform = op.Value switch {
+				Operator.Ops.PlusEquals			=> "+",
+				Operator.Ops.MinusEquals		=> "-",
+				Operator.Ops.MultiplyEquals		=> "*",
+				Operator.Ops.DivideEquals		=> "/",
+				Operator.Ops.PowerEquals		=> "^",
+				Operator.Ops.ModEquals			=> "%",
+				_ => ""
+			};
+			Operator inlineOp = new(opToPerform); // sets it up so i dont have to
+
+			Data performOp = PerformOperation(
+				inlineOp, leftRef.ThisReference, rightData, leftRef, rightRef, memory);
+			if (performOp is Error) return performOp;
+
+			newValue = performOp;
 		}
-		expr = tempstring;
-		#endregion
 
-		#region function check 
-		// look for all functions, replace with evaluated output, or error if fail
-		bool foundFunction = expr.IndexOf('(') != -1; // kinda jank? idk
-		string functionName;
-		int depth;
-		while (foundFunction)
-		{
-			// find the first valid set of parentheses
-			inString = false;
-			depth = 0;
-			foundFunction = false;
-			int startIndex = -1;
-			int endIndex = -1;
-			for (int i = 0; i < expr.Length; i++)
-			{
-				char c = expr[i];
-				if (c == '"') inString = !inString;
-				else if (!inString && c == '(')
-				{
-					if (depth == 0) startIndex = i;
-					depth++;
-				}
-				else if (!inString && c == ')')
-				{
-					depth--;
-					if (depth == 0) { endIndex = i; break; }
-				}
+		Data trySet = memory.Set(leftRef, newValue);
+		if (trySet is Error) return trySet;
+
+		// replace with left bc its the actual new reference that got assigned
+		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, new() { leftRef });
+		return Data.Success;
+	}
+
+	private Data HandleKeywords		(ref List<Token> tokens, Keyword kw) {
+		return kw.Value switch {
+			Keyword.Kws.If			=> HandleIf			(ref tokens),
+			Keyword.Kws.Else		=> HandleElse		(ref tokens),
+			Keyword.Kws.For			=> HandleFor		(ref tokens),
+			Keyword.Kws.While		=> HandleWhile		(ref tokens),
+			Keyword.Kws.Break		=> HandleBreak		(ref tokens),
+			Keyword.Kws.Continue	=> HandleContinue	(ref tokens),
+			Keyword.Kws.Pass		=> HandlePass		(ref tokens),
+			Keyword.Kws.Return		=> HandleReturn		(ref tokens),
+			Keyword.Kws.Try			=> HandleTry		(ref tokens),
+			Keyword.Kws.Except		=> HandleExcept		(ref tokens),
+			Keyword.Kws.Finally		=> HandleFinally	(ref tokens),
+			Keyword.Kws.Raise		=> HandleRaise		(ref tokens),
+			_ => Data.Success
+		};
+	}
+	private Data HandleIf			(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 3 ||
+			!(tokens[1] is Reference R && // check for R : 
+			tokens[2] is Operator o && o.Value == Operator.Ops.Colon))
+			return Errors.BadSyntaxFor("if statement");
+
+		if (!R.Exists)
+			return Errors.UnknownName(R);
+
+		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
+		if (dataAsBool is Error) return dataAsBool;
+
+		if ((dataAsBool as Primitive.Bool).Value)
+			return Data.Success.CopyWithFlags(
+									Flags.If |
+									Flags.Success
+									);
+		else
+			return Data.Fail.CopyWithFlags(
+								Flags.If |
+								Flags.Fail
+								);
+	}
+	private Data HandleElse			(ref List<Token> tokens) {
+		// check if this is else if
+		if (tokens.Count > 1 &&
+			tokens[1] is Keyword kw && kw.Value == Keyword.Kws.If)
+			return HandleElseIf(ref tokens);
+
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return Errors.BadSyntaxFor("else statement");
+
+		return Data.Success.CopyWithFlags(Flags.Else);
+	}
+	private Data HandleElseIf		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 4 ||
+			!(tokens[2] is Reference R && // check for R :
+			tokens[3] is Operator o && o.Value == Operator.Ops.Colon))
+			return Errors.BadSyntaxFor("else if statement");
+
+		if (!R.Exists)
+			return Errors.UnknownName(R);
+
+		Data dataAsBool = (tokens[2] as Reference).ThisReference.Cast(Primitive.Bool.InternalType);
+		if (dataAsBool is Error) return dataAsBool;
+
+		if ((dataAsBool as Primitive.Bool).Value)
+			return Data.Success.CopyWithFlags(
+									Flags.Else |
+									Flags.If |
+									Flags.Success
+									);
+		else
+			return Data.Fail.CopyWithFlags(
+								Flags.Else |
+								Flags.If |
+								Flags.Fail
+								);
+	}
+	private Data HandleFor			(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 3 ||
+			!(tokens[1] is Reference R &&
+			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
+			return Errors.BadSyntaxFor("for loop");
+
+		if (!R.Exists)
+			return Errors.UnknownName(R);
+
+		Data dataAsList = R.ThisReference.Cast(Primitive.List.InternalType);
+		if (dataAsList is Error) return dataAsList;
+
+		return dataAsList.CopyWithFlags(Flags.For);
+	}
+	private Data HandleWhile		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 3 ||
+			!(tokens[1] is Reference R &&
+			(tokens[2] is Operator o && o.Value == Operator.Ops.Colon)))
+			return Errors.BadSyntaxFor("while loop");
+		
+		if (!R.Exists)
+			return Errors.UnknownName(R);
+
+		Data dataAsBool = R.ThisReference.Cast(Primitive.Bool.InternalType);
+		if (dataAsBool is Error) return dataAsBool;
+
+		return dataAsBool.CopyWithFlags(Flags.While);
+	}
+	private Data HandleBreak		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 1)
+			return Errors.BadSyntaxFor("break statement");
+
+		return Data.Fail.CopyWithFlags(Flags.Break);
+	}
+	private Data HandleContinue		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 1)
+			return Errors.BadSyntaxFor("continue statement");
+
+		return Data.Success.CopyWithFlags(Flags.Continue);
+	}
+	private Data HandlePass			(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 1)
+			return Errors.BadSyntaxFor("pass statement");
+
+		return Data.Success;
+	}
+	private Data HandleReturn		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			tokens[1] is not Reference R)
+			return Errors.BadSyntaxFor("return statement");
+
+		if (!R.Exists)
+			return Errors.UnknownName(R);
+
+		return R.ThisReference.CopyWithFlags(Flags.Return);
+	}
+	private Data HandleTry			(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return Errors.BadSyntaxFor("try statement");
+
+		return Data.Success.CopyWithFlags(Flags.Try);
+	}
+	private Data HandleExcept		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return Errors.BadSyntaxFor("except statement");
+
+		return Data.Success.CopyWithFlags(Flags.Except);
+	}
+	private Data HandleFinally		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			!(tokens[1] is Operator o && o.Value == Operator.Ops.Colon))
+			return Errors.BadSyntaxFor("finally statement");
+
+		return Data.Success.CopyWithFlags(Flags.Finally);
+	}
+	private Data HandleRaise		(ref List<Token> tokens) {
+		// syntax check
+		if (tokens.Count != 2 ||
+			tokens[1] is not Reference R)
+			return Errors.BadSyntaxFor("finally statement");
+
+		if (!R.Exists)
+			return Errors.UnknownName(R);
+
+		Data castToString = R.ThisReference.Cast(Primitive.String.InternalType);
+		if (castToString is Error) return castToString;
+
+		return castToString.CopyWithFlags(Flags.Finally);
+	}
+
+	private Data EvaluateList(Line line, Memory memory, List<Data> baseList = null) {
+		// expects unsurrounded list, just tokens and commas
+		List<Token> tokens = line.Tokens;
+		if (tokens.Count == 0) return new Primitive.List();
+
+		// identify list type
+		bool rangeList = false;
+
+		// find and count ellipses
+		(int ellipsisIndex, int eCount) = FindAndCountOperator(line.Tokens, Operator.Ops.Ellipsis);
+		
+		if (eCount > 1) // either 0 or 1 ..s
+			return Errors.InvalidUseOfOperator("..");
+		else if (eCount > 0) // this is range
+			rangeList = true;
+
+
+		if (rangeList) {
+			Token[] leftOfEllipsis = tokens.ToArray()[..ellipsisIndex]; // exclusive
+			Token[] rightOfEllipsis = tokens.ToArray()[(ellipsisIndex + 1)..]; // inclusive 
+
+			double start = 0;
+			bool stepDefined = false;
+			double step = 0;
+			bool endDefined = false;
+			double end = 0;
+
+			if (baseList != null) { // ternaries hard to understand so using if instead
+				endDefined = true;
+				end = baseList.Count;
 			}
 
-			// find closest index of operator
-			int checkingIndex = startIndex - 1;
-			bool curIndexIsNotPartOfName = false; // if char at this index or this and char before is an operator
-			while (checkingIndex >= 0)
-			{
-				if (startIndex != -1 && endIndex != -1)
-				{
-					if ((checkingIndex >= 1 && operators.Contains(expr[checkingIndex].ToString()))
-						|| (checkingIndex >= 2 && operators.Contains(expr.Substring(checkingIndex - 1, 2)))
-						|| !(char.IsLetterOrDigit(expr[checkingIndex]) || expr[checkingIndex] == '_'))
-						curIndexIsNotPartOfName = true;
-				}
+			if (leftOfEllipsis.Length != 0) {
+				Data leftOfEllipsisEval = EvaluateList(
+					line.CopyWithNewTokens(leftOfEllipsis.ToList()), 
+					memory);
+				if (leftOfEllipsisEval is Error) return leftOfEllipsisEval;
+				
+				Primitive.List leftList = leftOfEllipsisEval as Primitive.List;
+				
+				if (leftList.Value[0] is not Primitive.Number leftNum)
+					return Errors.CannotUseTypeWithFeature(leftList.Value[0].Type.Name, "range lists");
 
-				if (curIndexIsNotPartOfName)
-				{
-					if (checkingIndex == startIndex - 1) // operator immediately before, this is not a function
-						foundFunction = false;
-					else
-						foundFunction = true;
+				start = leftNum.Value;
 
-					checkingIndex++;
-					break;
-				}
-				else if (checkingIndex == 0) // if it breaks because hit 0 then include 0
-				{
-					if (checkingIndex == startIndex) foundFunction = false;
-					else foundFunction = true;
-					break;
-				}
+				if (leftList.Value.Count > 1) {
+					if (leftList.Value[1] is not Primitive.Number stepNum)
+						return Errors.CannotUseTypeWithFeature(leftList.Value[1].Type.Name, "range lists");
 
-				checkingIndex--;
+					stepDefined = true;
+					step = stepNum.Value;
+				}
+				else if (leftList.Value.Count > 2)
+					return Errors.BadSyntaxFor("range lists", "too many start parameters");
 			}
-			if (foundFunction)
-			{
-				functionName = expr[checkingIndex..startIndex];
 
-				Dictionary<string, Function> functions = interpreter.GetFunctions();
+			if (rightOfEllipsis.Length != 0) {
+				Data rightOfEllipsisEval = Evaluate(
+					line.CopyWithNewTokens(rightOfEllipsis.ToList()),
+					memory);
 
-				if (!functions.ContainsKey(functionName))
-					return Errors.UnknownFunction(functionName, interpreter);
+				if (rightOfEllipsisEval is Error) return rightOfEllipsisEval;
 
-				Output tryEval = interpreter.ExtractArgs(expr[checkingIndex..(endIndex+1)], functionName, functions[functionName].ArgumentNames.Count);
-				if (!tryEval.Success) return tryEval;
-				List<dynamic> args = tryEval.Value;
+				if (rightOfEllipsisEval is not Primitive.Number rightNum)
+					return Errors.CannotUseTypeWithFeature(rightOfEllipsisEval.Type.Name, "range lists");
 
-				tryEval = interpreter.RunFunction(functions[functionName], args);
-				if (!tryEval.Success) return tryEval;
-				if (tryEval.Value is ClassInstance) return new(tryEval.Value); // classes are immediately returned
-
-				expr = HF.ReplaceSection(expr, checkingIndex, endIndex, HF.ConvertToString(tryEval.Value));
-
+				endDefined = true;
+				end = rightNum.Value;
 			}
+
+			if (!stepDefined)
+				step = 1;
+
+			step = (start < end ? 1 : -1) * Math.Abs(step); // force step to work
+
+			if (!endDefined)
+				return Errors.BadSyntaxFor("range lists", "missing end parameter");
+
+			List<Data> list = new();
+
+			for (double i = start; start < end ? (i < end) : (i > end); i += step) {
+				list.Add(new Primitive.Number(i));
+			}
+
+			return new Primitive.List(list);
 		}
-		#endregion
+		else { // normal list
+			// split into chunks by comma
+			List<Token> curChunk = new();
+			List<List<Token>> tokenChunks = new();
+			int i = 0;
+			int depth = 0; // have to account for nested lists
+			while (i < tokens.Count) {
+				Token rt = tokens[i];
+				bool added = false;
+				if (rt is Operator op){
+					switch (op.Value) {
+						case Operator.Ops.Comma: // normal comma breakage into new chunk
+							if (depth == 0) {
+								added = true;
+								tokenChunks.Add(curChunk);
+								curChunk = new(); // instead of clearing so the reference isnt shared
+							}
+							break;
 
-		#region handle parentheses
-		while (ExpressionContainsParentheses(expr))
-		{
-			// find the first instance of ( not inside of string
-			int parenthesesStartIndex = 0;
-			inString = false;
-			for (int i = 0; i < expr.Length; i++)
-			{
-				if (expr[i] == '"') inString = !inString;
-				if (expr[i] == '(' && !inString)
-				{
-					parenthesesStartIndex = i;
-					break;
+						case Operator.Ops.OpenParentheses:
+						case Operator.Ops.OpenBracket:
+						case Operator.Ops.OpenBrace:
+							depth++;
+							break;
+
+						case Operator.Ops.CloseParentheses:
+						case Operator.Ops.CloseBracket:
+						case Operator.Ops.CloseBrace:
+							depth--;
+							break;
+
+					}
+				}
+
+				if (!added)
+					curChunk.Add(rt);
+				i++;
+			}
+			if (curChunk.Count > 0) 
+				tokenChunks.Add(curChunk);
+
+			// eval arg token chunks into data
+			List<Data> items = new(); // can be optimized into array if desperate
+			foreach (List<Token> chunk in tokenChunks) {
+				Data tryEval = Evaluate(line.CopyWithNewTokens(chunk), memory);
+				if (tryEval is Error) return tryEval;
+
+				items.Add(tryEval);
+			}
+
+			return new Primitive.List(items);
+		}
+	}
+
+	private Data EvaluateDict(Line line, Memory memory) {
+		List<Token> tokens = line.Tokens;
+
+		// stole from evallist lol
+
+		// split into chunks by comma
+		List<Token> curChunk = new();
+		List<List<Token>> tokenChunks = new();
+		int i = 0;
+		while (i < tokens.Count) {
+			Token rt = tokens[i];
+			if (rt is Operator op && op.Value == Operator.Ops.Comma) {
+				tokenChunks.Add(curChunk);
+				curChunk = new(); // instead of clearing so the reference isnt shared
+			}
+			else
+				curChunk.Add(rt);
+			i++;
+		}
+		if (curChunk.Count > 0)
+			tokenChunks.Add(curChunk);
+
+		/* structure: 
+		 * outermost list - all kvp groups
+		 * 2nd layer key value pair (groups) (only 2 in this layer)
+		 * groups of tokens making up key and value
+		 */
+
+		List<Token[][]> kvpGroups = new();
+		foreach (List<Token> group in tokenChunks) {
+			// split by the : operator
+			int colonCount = 0;
+			int colonIndex = -1;
+			for (int ci = 0; ci < group.Count; ci++) {
+				if (group[ci] is Operator co && co.Value == Operator.Ops.Colon) {
+					colonCount++;
+					colonIndex = ci;
 				}
 			}
-			int parenthesesEndIndex = -1;
+			if (colonCount == 0) return Errors.BadSyntaxFor("dictionary", "missing colon");
+			if (colonCount > 1)  return Errors.BadSyntaxFor("dictionary", "too many colons");
 
-			// search for matching parentheses
-			depth = 0;
-			inString = false;
-			for (int i = parenthesesStartIndex; i < expr.Length; i++)
-			{
-				char c = expr[i];
-				if (c == '"') inString = !inString;
-				if (c == '(' && !inString) depth++;
-				if (c == ')' && !inString)
-				{
-					depth--;
-					if (depth == 0)
-					{
-						parenthesesEndIndex = i;
+			Token[] key = group.ToArray()[..colonIndex];
+			Token[] value = group.ToArray()[(colonIndex + 1)..];
+
+			if (key.Length == 0)   return Errors.BadSyntaxFor("dictionary", "missing key");
+			if (value.Length == 0) return Errors.BadSyntaxFor("dictionary", "missing value");
+
+			kvpGroups.Add(new[] { key, value });
+		}
+
+		Dictionary<Data, Data> newDict = new();
+		foreach (Token[][] kvpTokenGroup in kvpGroups) {
+			Data evalKey = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[0].ToList()), memory);
+			if (evalKey is Error) return evalKey;
+
+			Data evalValue = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[1].ToList()), memory);
+			if (evalValue is Error) return evalValue;
+
+			newDict[evalKey] = evalValue;
+		}
+
+		return new Primitive.Dict(newDict);
+	}
+
+	private (int, int) FindAndCountOperator(List<Token> tokens, Operator.Ops lookFor) {
+		int count = 0;
+		int index = -1;
+
+		int depth = 0;
+		for (int i = 0; i < tokens.Count; i++) {
+			if (tokens[i] is Operator op) {
+				switch (op.Value) {
+					case Operator.Ops.CloseParentheses:
+					case Operator.Ops.CloseBracket:
+					case Operator.Ops.CloseBrace:
+						depth--;
 						break;
-					}
-				}
-			}
-
-			// either missing ( or ) isnt closed properly
-			if (parenthesesStartIndex == -1 || parenthesesEndIndex == -1)
-				return Errors.MismatchedParentheses(interpreter);
-
-			string newexpr = expr.Substring(parenthesesStartIndex + 1, parenthesesEndIndex - parenthesesStartIndex - 1);
-
-			Output tryEval = Evaluate(newexpr, interpreter);
-			if (!tryEval.Success) return tryEval;
-			string evaledvalue = HF.ConvertToString(tryEval.Value);
-
-			// replace the chunk of parentheses with the evalled value 
-			expr = HF.ReplaceSection(expr, parenthesesStartIndex, parenthesesEndIndex, evaledvalue);
-		}
-		#endregion
-
-		#region tokenize the expression
-		List<string> tokenStrings = new();
-		string accum = "";
-		inString = false;
-		bool exitGrace = false; // this is because when you exit string or list, it wants to interpret final char as operator
-		int listDepth = 0;
-		for (int i = 0; i < expr.Length; i++)
-		{
-			char c = expr[i];
-
-			if (c == '"') { inString = !inString; exitGrace = true; }
-			else if (c == '[' && !inString) listDepth++;
-			else if (c == ']' && !inString) { listDepth--; exitGrace = true; }
-
-			if (char.IsDigit(c) || c == '.' || char.IsLetter(c) // digits, . and letters are never operators
-				|| inString || exitGrace // also ignore anything when in a string
-				|| listDepth != 0) // or if in a list
-			{
-				accum += c;
-				exitGrace = false;
-			}
-			else
-			{
-				bool minusIsNegative = false;
-				if (c == '-') // handle - sign, annoying af
-				{
-					minusIsNegative = i == 0; // is first char
-					if (!minusIsNegative)
-						minusIsNegative = // case where previous operator 
-							!(char.IsDigit(expr[i - 1]) ||   // previous char is not a digit (operator)
-							char.IsLetter(expr[i - 1]) ||
-							expr[i - 1] == '_' ||
-							expr[i - 1] == '.');             // and previous char is not .
 				}
 
-				if (minusIsNegative)
-				{
-					accum += c;
+				if (op.Value == lookFor) {
+					if (depth == 0) {
+						index = i;
+						count++;
+					}
 				}
-				else
-				{
-					if (accum.Length > 0)
-						tokenStrings.Add(accum);
-					accum = "";
-
-					string op = c.ToString();
-					// handle 2 len operators
-					if (i != expr.Length - 1)
-					{
-						char next = expr[i + 1];
-						if (operators.Contains(c.ToString() + next.ToString())) // would adding the next char still make it an operator
-						{
-							i++; // already checked to see if last, shouldnt break hopefully
-							op += expr[i]; // add next char to the operator
-						}
-					}
-					else // additional check can be added, operators shouldnt be at end
-						return Errors.OperatorInInvalidPosition(op, interpreter);
-
-					if (operators.Contains(op))
-					{ // valid operator
-						tokenStrings.Add(op);
-					}
-					else
-						return Errors.OperatorDoesntExist(op, interpreter);
+				
+				switch (op.Value) {
+					case Operator.Ops.OpenParentheses:
+					case Operator.Ops.OpenBracket:
+					case Operator.Ops.OpenBrace:
+						depth++;
+						break;
 				}
 			}
 		}
-		tokenStrings.Add(accum);
-		#endregion
 
-		#region handle ! modifier
-		List<string> temp = new();
-		for (int i = 0; i < tokenStrings.Count; i++)
-		{
-			if (tokenStrings[i] == "!")
-			{
-				if (i != tokenStrings.Count - 1)
-				{
-					Output evaluateboolean = Evaluate(tokenStrings[i + 1], interpreter);
-					if (!evaluateboolean.Success) return evaluateboolean;
-
-					string newToken;
-					if (evaluateboolean.Value is string) newToken = !evaluateboolean.Value;
-					else newToken = evaluateboolean.Value ? "false" : "true";
-					temp.Add(newToken);
-					i++;
-				}
-				else // shouldnt be at end
-					return Errors.OperatorInInvalidPosition("!", interpreter);
-			}
-			else
-			{
-				temp.Add(tokenStrings[i]);
-			}
-		}
-		tokenStrings = temp;
-		#endregion
-
-		#region check if operators are in correct positions (odd indices), not in front
-		for (int t = 0; t < tokenStrings.Count; t++)
-		{
-			if (t % 2 == 0)
-			{
-				if (operators.Contains(tokenStrings[t])) return Errors.OperatorInInvalidPosition(tokenStrings[t], interpreter);
-			}
-			else
-			{
-				if (!operators.Contains(tokenStrings[t])) return Errors.OperatorInInvalidPosition(interpreter);
-			}
-		}
-		#endregion
-
-		#region parse non operation parts
-		List<dynamic> tokens = new();
-		foreach (string tokenString in tokenStrings)
-		{
-			if (!operators.Contains(tokenString))
-			{
-				Output parsed = DynamicStringParse(tokenString, interpreter);
-				if (!parsed.Success) return parsed;
-
-				tokens.Add(parsed.Value);
-			}
-			else
-				tokens.Add(tokenString);
-		}
-		#endregion
-
-		#region convert special types to string
-		List<dynamic> converted = new();
-		foreach (dynamic token in tokens)
-		{
-			if (token is ClassInstance || token is ClassDefinition) converted.Add(token.ToString());
-			else converted.Add(token);
-		}
-		tokens = converted;
-		#endregion
-
-		#region iteratively evaluate with pemdas
-		while (tokens.Count > 1)
-		{
-			#region find the index of left most and highest ranking operator
-			int lmhrIndex = -1;
-			int lmhrRank = -1;
-			for (int t = 1; t < tokens.Count; t += 2)
-			{ // premature check already confirmed all odd indices are ops
-				int rank = operatorRanks[tokens[t]];
-				if (rank > lmhrRank)
-				{
-					lmhrRank = rank;
-					lmhrIndex = t;
-				}
-			}
-
-			if (lmhrIndex == -1) return Errors.Error("how.", interpreter); // code should have found at least one op
-			if (lmhrIndex == tokens.Count - 1 || lmhrIndex == 0) return Errors.OperatorInInvalidPosition(tokens[^1], interpreter); // operators shouldnt be at end
-			#endregion
-
-			// operator definitely has items on both sides
-			// left and right types
-			dynamic left = tokens[lmhrIndex - 1];
-			string leftType = HF.DetermineTypeFromVariable(left);
-
-			dynamic right = tokens[lmhrIndex + 1];
-			string rightType = HF.DetermineTypeFromVariable(right);
-
-			string operation = tokens[lmhrIndex];
-			dynamic result = 0;
-
-			try
-			{
-				if (leftType == "number")
-				{
-					if (rightType != "number")
-					{ // attempt to convert to number
-						if (rightType == "string")
-						{
-							try
-							{
-								right = float.Parse(right.Trim('"'));
-							}
-							catch
-							{
-								return Errors.UnableToParseStrAsNum(right, interpreter);
-							}
-						}
-						else if (rightType == "bool")
-						{
-							right = right ? 1 : 0;
-						}
-						else if (rightType == "list") return Errors.UnsupportedOperation(operation, "number", "list", interpreter);
-					}
-
-					switch (operation)
-					{
-						case "+": result = left + right; break;
-						case "-": result = left - right; break;
-						case "*": result = left * right; break;
-						case "/":  // check for division by zero
-							if (left == 0 || right == 0) return Errors.DivisionByZero(interpreter);
-							else result = left / right; break;
-						case "^": result = Mathf.Pow(left, right); break;
-						case "%": result = left % right; break; //
-						case "==": result = left == right; break;
-						case "!=": result = left != right; break;
-						case "<": result = left < right; break;
-						case ">": result = left > right; break;
-						case "<=": result = left <= right; break;
-						case ">=": result = left >= right; break;
-						default: return Errors.UnsupportedOperation(operation, "number", rightType, interpreter);
-					}
-				}
-				else if (leftType == "string")
-				{
-					if (operation != "+") return Errors.UnsupportedOperation(operation, "string", rightType, interpreter);
-					if (rightType != "string") right = HF.ConvertToString(right);
-
-					result = left + right;
-				}
-				else if (leftType == "list")
-				{
-					if (operation != "+") return Errors.UnsupportedOperation(operation, "list", rightType, interpreter);
-					if (rightType == "list")
-						left.AddRange(right);
-					else
-						left.Add(right);
-					result = left;
-				}
-				else if (leftType == "bool")
-				{
-					if (!booleanOperators.Contains(operation)) return Errors.UnsupportedOperation(operation, "bool", rightType, interpreter);
-					if (rightType != "bool")
-					{
-						if (rightType == "string")
-						{
-							if (right == "true") right = true;
-							else if (right == "false") right = false;
-							else return Errors.UnsupportedOperation(operation, "bool", "string", interpreter);
-						}
-						else if (rightType == "number")
-						{
-							if (right == 1) right = true;
-							else if (right == 0) right = false;
-							else return Errors.UnsupportedOperation(operation, "bool", "number", interpreter);
-						}
-						else if (rightType == "list") return Errors.UnsupportedOperation(operation, "bool", "list", interpreter);
-					}
-					switch (operation)
-					{
-						case "==": result = left == right; break;
-						case "!=": result = left != right; break;
-						case "&&": result = left && right; break;
-						case "||": result = left || right; break;
-						case "!&": result = !(left && right); break;
-						case "!|": result = !(left || right); break;
-						case "!!": result = left ^ right; break;
-					}
-				}
-			}
-			catch
-			{
-				return Errors.OperationFailed($"{left}{operation}{right}", interpreter);
-			}
-
-			tokens.RemoveAt(lmhrIndex + 1); // remove right side
-			tokens[lmhrIndex] = result; // replace operator with result
-			tokens.RemoveAt(lmhrIndex - 1); // remove left
-		}
-		#endregion
-
-		return new Output(tokens[0]);
-	}*/
+		return (index, count);
+	}
 }

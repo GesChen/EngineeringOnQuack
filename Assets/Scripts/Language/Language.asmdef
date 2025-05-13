@@ -2,8 +2,9 @@
     "name": "Language",
     "rootNamespace": "",
     "references": [
+        "GUID:59682221470403d43bb2c1120cdbc4b3",
         "GUID:1b37b5d0dc8a2c147bc43b3e56ad8620",
-        "GUID:59682221470403d43bb2c1120cdbc4b3"
+        "GUID:027d3b0e8981b95499cbdd69e1c9b2d6"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
