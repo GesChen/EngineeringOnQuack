@@ -5153,11 +5153,7 @@ MonoBehaviour:
   logpath2: 
   colors: []
   iters: 0
-  memory: {fileID: 0}
-  interpreter: {fileID: 0}
-  evaluator: {fileID: 0}
-  IEcable: {fileID: 0}
-  IMcable: {fileID: 0}
+  editor: {fileID: 0}
 --- !u!4 &1437857903
 Transform:
   m_ObjectHideFlags: 0
@@ -5574,7 +5570,7 @@ GameObject:
   - component: {fileID: 1569215800}
   - component: {fileID: 1569215801}
   - component: {fileID: 1569215803}
-  - component: {fileID: 1569215802}
+  - component: {fileID: 1569215804}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -5622,63 +5618,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd02b984e6e914049a455a13fc0ba9aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1569215802
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1569215798}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de14a18b6c1bb45458be86fb4a2b6d63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  UIConfig:
-    _mouseValidityMargin: 50
-    _maxRightClickTime: 0.1
-    _maxMovementAfterClick: 30
-    _maxMouseMovementToCount: 10
-    _hoverTimeUntilDescription: 0.5
-    _backgroundColor: {r: 0.21, g: 0.21, b: 0.21, a: 1}
-    _descriptionBackgroundColor: {r: 0.1, g: 0.1, b: 0.1, a: 1}
-    _buttonHoverColor: {r: 0.39, g: 0.39, b: 0.39, a: 1}
-    _buttonPressedColor: {r: 0.25, g: 0.25, b: 0.25, a: 1}
-    _textColor: {r: 1, g: 1, b: 1, a: 1}
-    _outlineThickness: 2
-    _outlineColor: {r: 0.433, g: 0.433, b: 0.433, a: 1}
-    _itemHeight: 30
-    _verticalSpacing: 2
-    _sidePadding: 2
-    _insidePadding: 3
-    _iconSize: 30
-    _dropDownArrowSize: 20
-    _fontSize: 22
-    _fontAsset: {fileID: 11400000, guid: b22d18c777f70164b9b7143c786ed6bb, type: 2}
-    _displayTopLeftCornerOffset: {x: 10, y: 10}
-    _minDistFromSides: 5
-    _dropDownDisplayOffset: 6
-    _descriptionFontSize: 20
-    _descriptionHeight: 25
-    _panelPrefab: {fileID: 1744749159770508969, guid: bbeb75242fae3c74998e12d991a066ee,
-      type: 3}
-    _componentPrefab: {fileID: 7765576991818599867, guid: c5c5db9c86ff8a146b3bdd3a32940f77,
-      type: 3}
-    _textPrefab: {fileID: 5316341834032407993, guid: 0407851de4ad5c94c9382b179a4d8519,
-      type: 3}
-    _descriptionObject: {fileID: 1533624389}
-    _dividerPrefab: {fileID: 0}
-    _dropDownArrow: {fileID: 5288230183721291851, guid: e8a7ff04c26cda94ab93fc650eb5da0a,
-      type: 3}
-    _iconPrefab: {fileID: 5288230183721291851, guid: 23697e87cf514cf4e828355579399b7a,
-      type: 3}
-    _dropDownClosedSprite: {fileID: 21300000, guid: bbe0b3a6451b8f345b3b2958d4a10d33,
-      type: 3}
-    _dropDownOpenedSprite: {fileID: 21300000, guid: 01f5e93e988879e4fb5b03062c4f6f02,
-      type: 3}
-  _fpsLimit: 120
-  _maxRecursionDepth: 128
-  _fileSaveLocation: D:\Projects\engineeringonquack\EngineeringOnQuack\Assets\TestSaveLoc
 --- !u!114 &1569215803
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5694,6 +5633,19 @@ MonoBehaviour:
   contextPreview: 0
   mouseOverWindow: 0
   selectionStatus: 0
+--- !u!114 &1569215804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569215798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4b081e896463e644afa67a56436be13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  samplingRate: 500
 --- !u!4 &1577646648 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5028631425214081430, guid: 7f302dbe3f22d224eb4b483b4aee3301,

@@ -18,9 +18,18 @@ public class UIHovers : MonoBehaviour {
 			_instance = this;
 		}
 	}
+	
+	static void PerformCheck() {
+		if (_instance == null) {
+			throw new("UIHovers singleton missing!");
+		}
+		if (_instance.canvases.Count == 0)
+			Debug.LogWarning("UIHovers canvases list is empty");
+	}
 	#endregion
 
-	[HideInNormalInspector] public Canvas detectionCanvas;
+	public List<Canvas> canvases; // Assign in Inspector or pass programmatically
+	private List<GraphicRaycaster> graphicRaycasters = new();
 
 	public static List<Transform> hovers = new();
 	public static List<RaycastResult> results = new();
@@ -30,10 +39,12 @@ public class UIHovers : MonoBehaviour {
 	private EventSystem eventSystem;
 
 	public static bool CheckIgnoreOrder(Transform t) {
+		PerformCheck();
 		return hovers.Contains(t);
 	}
 
 	public static bool CheckStrictlyFirst(Transform t) {
+		PerformCheck();
 		if (hovers.Count == 0) return false;
 
 		return hovers[0] == t;
@@ -41,6 +52,7 @@ public class UIHovers : MonoBehaviour {
 
 	// thx chatgpt i was too lazy to do this myself
 	public static bool CheckFirstAllowing(Transform t, params Transform[] allowedInFront) {
+		PerformCheck();
 		if (hovers.Count == 0) return false;
 
 		foreach (var hover in hovers) {
@@ -54,24 +66,34 @@ public class UIHovers : MonoBehaviour {
 		return false; // t wasn't found at all
 	}
 
+	// this kinda tedious work small change is a good use of ai
 	void Start() {
-		detectionCanvas = GetComponent<Canvas>();
-		graphicRaycaster = GetComponent<GraphicRaycaster>();
-		eventSystem = FindObjectOfType<EventSystem>();
+		// Cache all raycasters
+		graphicRaycasters = canvases
+			.Select(c => c.GetComponent<GraphicRaycaster>())
+			.Where(gr => gr != null)
+			.ToList();
+
+		eventSystem = EventSystem.current;
 	}
 
 	void Update() {
 		CheckUIRaycast();
-
-		hoversDebug = hovers;
+		hoversDebug = new List<Transform>(hovers);
 	}
+
 	void CheckUIRaycast() {
-		pointerEventData = new(eventSystem) {
+		pointerEventData = new PointerEventData(eventSystem) {
 			position = Input.mousePosition
 		};
 
 		results.Clear();
-		graphicRaycaster.Raycast(pointerEventData, results);
+
+		foreach (var raycaster in graphicRaycasters) {
+			List<RaycastResult> tempResults = new();
+			raycaster.Raycast(pointerEventData, tempResults);
+			results.AddRange(tempResults);
+		}
 
 		if (results.Count > 0) {
 			hovers = results.Select(r => r.gameObject.transform).ToList();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TransformControls : MonoBehaviour
+public class TransformControlsTemporary : MonoBehaviour
 {
 	public TransformTools Tools;
 	public Button translate;
@@ -12,10 +12,10 @@ public class TransformControls : MonoBehaviour
 
 	void Start()
 	{
-		GetComponent<Image>().color = Config.UI.BackgroundColor;
+		GetComponent<Image>().color = Config.UI.Visual.BackgroundColor;
 		Outline outline = gameObject.AddComponent<Outline>();
-		outline.effectColor = Config.UI.OutlineColor;
-		outline.effectDistance = Config.UI.OutlineThickness * Vector2.one;
+		outline.effectColor = Config.UI.Visual.OutlineColor;
+		outline.effectDistance = Config.UI.Visual.OutlineThickness * Vector2.one;
 
 		UpdateColors();
 	}
@@ -25,16 +25,16 @@ public class TransformControls : MonoBehaviour
 		ColorBlock normalColors = new()
 		{
 			colorMultiplier = 1f,
-			normalColor = Config.UI.BackgroundColor,
-			highlightedColor = Config.UI.ButtonHoverColor,
-			pressedColor = Config.UI.ButtonPressedColor
+			normalColor = Config.UI.Visual.BackgroundColor,
+			highlightedColor = Config.UI.Visual.ButtonHoverColor,
+			pressedColor = Config.UI.Visual.ButtonPressedColor
 		};
 		ColorBlock enabledColors = new()
 		{
 			colorMultiplier = 1f,
-			normalColor = Config.UI.ButtonPressedColor,
-			highlightedColor = Config.UI.ButtonHoverColor,
-			pressedColor = Config.UI.ButtonPressedColor
+			normalColor = Config.UI.Visual.ButtonPressedColor,
+			highlightedColor = Config.UI.Visual.ButtonHoverColor,
+			pressedColor = Config.UI.Visual.ButtonPressedColor
 		};
 
 		translate.colors = Tools.translating ? enabledColors : normalColors;
