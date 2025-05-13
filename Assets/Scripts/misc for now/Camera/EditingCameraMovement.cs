@@ -36,46 +36,39 @@ public class EditingCameraMovement : MonoBehaviour
 	private Vector2 vel;
 	Vector2 lastvel;
 
-	InputMaster controls;
-
 	// Start is called before the first frame update
 	void Awake()
 	{
 		//Cursor.lockState = CursorLockMode.Locked;
 		//Cursor.visible = false;
-		controls = new InputMaster();
 		dist = initDist;
 		targetDist = initDist;
-		controls.Camera.Focus.performed += Focus;
 		moveSmoothness = moveDrift;
 	}
 	void OnEnable()
 	{
-		controls ??= new InputMaster();
-		controls.Enable();
 	}
 	void OnDisable()
 	{
-		controls.Disable(); 
 	}
 
 	// Update is called once per frame
 	float globalSensitivity = 1.0f;
 	void Update()
 	{
-		globalSensitivity = controls.Camera.Precision.IsPressed() ? precisionCoef : 1;
+		globalSensitivity = Conatrols.IM.Camera.Precision.IsPressed() ? precisionCoef : 1;
 		
 		// orbit
 		vel *= orbitDrift;
-		if (controls.Camera.PerfOrbit.IsPressed())
+		if (Conatrols.IM.Camera.PerfOrbit.IsPressed())
 		{
 			Orbit();
 			Movement();
 		}
 
 		// move todo: sensitivity changes with screen resolution. no good fix. bad fix for now. please fix future me. sorry.
-		else if (controls.Camera.Move.IsPressed())
-			target += transform.rotation * -controls.Camera.Mouse.ReadValue<Vector2>() * moveSensitivity * Mathf.Abs(dist) * globalSensitivity; // / Screen.width * 1920;
+		else if (Conatrols.IM.Camera.Move.IsPressed())
+			target += transform.rotation * -Conatrols.Mouse.Delta * moveSensitivity * Mathf.Abs(dist) * globalSensitivity; // / Screen.width * 1920;
 
 		pitch = (pitch - vel.y) % 360;
 		yaw = (yaw + vel.x) % 360;
@@ -96,25 +89,25 @@ public class EditingCameraMovement : MonoBehaviour
 	void Orbit()
 	{
 		if (sumAxes(v2Abs(lastvel) - v2Abs(vel)) > 0)
-			vel = Vector2.Lerp(vel, globalSensitivity * orbitSensitivity * controls.Camera.Mouse.ReadValue<Vector2>(), 1 - orbitDrift);
+			vel = Vector2.Lerp(vel, globalSensitivity * orbitSensitivity * Conatrols.Mouse.Delta, 1 - orbitDrift);
 		else
-			vel = globalSensitivity * orbitSensitivity * controls.Camera.Mouse.ReadValue<Vector2>();
+			vel = globalSensitivity * orbitSensitivity * Conatrols.Mouse.Delta;
 		lastvel = vel;
 	}
 	void Movement()
 	{
-		Vector3 movement = controls.Camera.KeyboardMovement.ReadValue<Vector3>();
+		Vector3 movement = Conatrols.IM.Camera.KeyboardMovement.ReadValue<Vector3>();
 		Vector3 globalMove = transform.rotation * movement;
 		target += globalMove * keyboardmoveSpeed;
 	}
 	void Zoom()
 	{
-		targetDist += controls.Camera.Zoom.ReadValue<float>() * zoomSensitivity * globalSensitivity;
+		targetDist += Conatrols.IM.Camera.Zoom.ReadValue<float>() * zoomSensitivity * globalSensitivity;
 		dist = Mathf.Lerp(dist, targetDist, zoomDrift);
 	}
 	void Focus(InputAction.CallbackContext context)
 	{
-		if (Physics.Raycast(Camera.main.ScreenPointToRay(controls.Camera.MousePos.ReadValue<Vector2>()), out RaycastHit hit)) { 
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(Conatrols.Mouse.Position), out RaycastHit hit)) { 
 			if (hit.transform.GetComponent<Part>())
 			{
 				targetTransform = hit.transform;

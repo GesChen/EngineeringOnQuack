@@ -55,7 +55,7 @@ public class SelectionManager : MonoBehaviour
 	void HandleInput()
 	{
 		bool mouseDown = Conatrols.IM.Selection.Drag.IsPressed();
-		mousePos = Conatrols.IM.Selection.MousePos.ReadValue<Vector2>();
+		mousePos = Conatrols.Mouse.Position;
 
 		// detect mouse down
 		if (mouseDown && mouseDown != lastMouseDown)

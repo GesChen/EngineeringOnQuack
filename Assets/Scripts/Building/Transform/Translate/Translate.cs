@@ -128,7 +128,7 @@ public class Translate : MonoBehaviour
 			maxScreen = Vector2.Max(maxScreen, corner);
 		}
 
-		Vector2 mousePos = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Conatrols.Mouse.Position;
 		bool inBounds;
 
 		// dynamic bounds offset
@@ -195,7 +195,7 @@ public class Translate : MonoBehaviour
 			if (numaxes < 3) axisIndicator = main.axisIndicatorManager.NewIndicator(); // full doesn't need
 			if (numaxes == 2) otherAxisIndicator = main.axisIndicatorManager.NewIndicator(); // two axes needs another
 
-			mouseOffset = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
+			mouseOffset = Conatrols.Mouse.Position - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			distance = Vector3.Distance(transform.position, Camera.main.transform.position);
 			dragStartPos = main.transform.position;
 		}
@@ -250,7 +250,7 @@ public class Translate : MonoBehaviour
 
 		Camera mainCamera = Camera.main;
 
-		Vector3 mouseScreenSpace = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
+		Vector3 mouseScreenSpace = Conatrols.Mouse.Position - mouseOffset;
 		mouseScreenSpace.z = mainCamera.nearClipPlane;
 
 		Vector3 cameraPos = mainCamera.transform.position;

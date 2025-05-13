@@ -28,19 +28,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""242ca290-21f9-4781-8792-e7fdc4ef943c"",
             ""actions"": [
                 {
-                    ""name"": ""Mouse"",
-                    ""type"": ""Value"",
-                    ""id"": ""3598dc3d-4099-49f0-a865-c27aaa69a24b"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""PerfOrbit"",
                     ""type"": ""Button"",
                     ""id"": ""b686a359-b3b3-4316-9df6-ac7632c4dc22"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -76,19 +67,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""Focus"",
                     ""type"": ""Button"",
                     ""id"": ""781b16df-b033-4077-94c2-99b98f6636a9"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": ""MultiTap(tapDelay=0.2)"",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""MousePos"",
-                    ""type"": ""Value"",
-                    ""id"": ""d0dc1153-1b31-4421-a26b-62ae4135f726"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""KeyboardMovement"",
@@ -109,17 +91,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""PerfOrbit"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""058fe2b0-3daf-45b0-a04e-210f9e88b1a6"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Mouse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -164,17 +135,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Focus"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""92bc5792-09fb-419e-bfd1-a1052a9360ea"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MousePos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -271,19 +231,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Look"",
-                    ""type"": ""Value"",
-                    ""id"": ""5f73bf31-f5fd-4122-a041-904d492c4343"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""Fire"",
                     ""type"": ""Button"",
                     ""id"": ""f4e8e56a-43a9-43f3-af22-5d9ea5b8d50c"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -419,39 +370,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Joystick"",
                     ""action"": ""Move"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c1f7a91b-d0fd-4a62-997e-7fb9b69bf235"",
-                    ""path"": ""<Gamepad>/rightStick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Gamepad"",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8c8e490b-c610-4785-884f-f04217b23ca4"",
-                    ""path"": ""<Pointer>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse;Touch"",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""3e5f5442-8668-4b27-a940-df99bad7e831"",
-                    ""path"": ""<Joystick>/{Hatswitch}"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Joystick"",
-                    ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -1033,19 +951,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""cac43080-c997-4558-825f-b6c7d559e3a2"",
             ""actions"": [
                 {
-                    ""name"": ""MousePos"",
-                    ""type"": ""Value"",
-                    ""id"": ""17fb18cd-05d1-4693-9e93-5479aba3c24f"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""Drag"",
                     ""type"": ""Button"",
                     ""id"": ""1c6241ac-eff0-4881-8a12-d6c70a3f8b24"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1060,36 +969,16 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""MouseDelta"",
-                    ""type"": ""Value"",
-                    ""id"": ""0c161e5b-ff1a-41cd-979c-9f0f565fbb79"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""Snap"",
                     ""type"": ""Button"",
                     ""id"": ""3c4386f9-ae95-45b8-ab0c-a726291548a7"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""c2e78431-8889-4a08-a9eb-14760fa6738e"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MousePos"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
                 {
                     ""name"": """",
                     ""id"": ""5ac106d3-89fd-44d3-9b28-14a4dfe94a7e"",
@@ -1114,17 +1003,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""a20bf459-dda9-41b0-bc2e-e88adc69eab6"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MouseDelta"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""c2650720-7b32-403d-87f5-9b8c85b14762"",
                     ""path"": ""<Keyboard>/ctrl"",
                     ""interactions"": """",
@@ -1141,19 +1019,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""8df1483b-7e67-47ac-8ca6-5fecb0753c88"",
             ""actions"": [
                 {
-                    ""name"": ""MousePos"",
-                    ""type"": ""Value"",
-                    ""id"": ""363cb0c3-edc4-46a4-9388-9d83823f925f"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""Drag"",
                     ""type"": ""Button"",
                     ""id"": ""685e1efa-3e3c-44ab-9f7e-f225571ef079"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1169,17 +1038,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 }
             ],
             ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""a98cad9a-512d-4f88-aed0-19305e0b3f97"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MousePos"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
                 {
                     ""name"": """",
                     ""id"": ""cb01d1a6-fa72-404d-a2f8-9586cbee2ac1"",
@@ -1449,15 +1307,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Scroll"",
-                    ""type"": ""Value"",
-                    ""id"": ""69af3937-ac69-4d33-aa8d-83bdde7cf980"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -1524,17 +1373,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Alt"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""11832599-a7f6-453a-9754-9c57b0f3dc77"",
-                    ""path"": ""<Mouse>/scroll"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Scroll"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1606,18 +1444,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 }");
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
-        m_Camera_Mouse = m_Camera.FindAction("Mouse", throwIfNotFound: true);
         m_Camera_PerfOrbit = m_Camera.FindAction("PerfOrbit", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_Move = m_Camera.FindAction("Move", throwIfNotFound: true);
         m_Camera_Precision = m_Camera.FindAction("Precision", throwIfNotFound: true);
         m_Camera_Focus = m_Camera.FindAction("Focus", throwIfNotFound: true);
-        m_Camera_MousePos = m_Camera.FindAction("MousePos", throwIfNotFound: true);
         m_Camera_KeyboardMovement = m_Camera.FindAction("KeyboardMovement", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-        m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
         m_Player_Fire = m_Player.FindAction("Fire", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
@@ -1633,14 +1468,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
         // Transform
         m_Transform = asset.FindActionMap("Transform", throwIfNotFound: true);
-        m_Transform_MousePos = m_Transform.FindAction("MousePos", throwIfNotFound: true);
         m_Transform_Drag = m_Transform.FindAction("Drag", throwIfNotFound: true);
         m_Transform_Distance = m_Transform.FindAction("Distance", throwIfNotFound: true);
-        m_Transform_MouseDelta = m_Transform.FindAction("MouseDelta", throwIfNotFound: true);
         m_Transform_Snap = m_Transform.FindAction("Snap", throwIfNotFound: true);
         // Selection
         m_Selection = asset.FindActionMap("Selection", throwIfNotFound: true);
-        m_Selection_MousePos = m_Selection.FindAction("MousePos", throwIfNotFound: true);
         m_Selection_Drag = m_Selection.FindAction("Drag", throwIfNotFound: true);
         m_Selection_Multiselect = m_Selection.FindAction("Multiselect", throwIfNotFound: true);
         // Mouse
@@ -1662,7 +1494,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_TextEditor_Ctrl = m_TextEditor.FindAction("Ctrl", throwIfNotFound: true);
         m_TextEditor_Shift = m_TextEditor.FindAction("Shift", throwIfNotFound: true);
         m_TextEditor_Alt = m_TextEditor.FindAction("Alt", throwIfNotFound: true);
-        m_TextEditor_Scroll = m_TextEditor.FindAction("Scroll", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -1735,25 +1566,21 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Camera
     private readonly InputActionMap m_Camera;
     private List<ICameraActions> m_CameraActionsCallbackInterfaces = new List<ICameraActions>();
-    private readonly InputAction m_Camera_Mouse;
     private readonly InputAction m_Camera_PerfOrbit;
     private readonly InputAction m_Camera_Zoom;
     private readonly InputAction m_Camera_Move;
     private readonly InputAction m_Camera_Precision;
     private readonly InputAction m_Camera_Focus;
-    private readonly InputAction m_Camera_MousePos;
     private readonly InputAction m_Camera_KeyboardMovement;
     public struct CameraActions
     {
         private @InputMaster m_Wrapper;
         public CameraActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Mouse => m_Wrapper.m_Camera_Mouse;
         public InputAction @PerfOrbit => m_Wrapper.m_Camera_PerfOrbit;
         public InputAction @Zoom => m_Wrapper.m_Camera_Zoom;
         public InputAction @Move => m_Wrapper.m_Camera_Move;
         public InputAction @Precision => m_Wrapper.m_Camera_Precision;
         public InputAction @Focus => m_Wrapper.m_Camera_Focus;
-        public InputAction @MousePos => m_Wrapper.m_Camera_MousePos;
         public InputAction @KeyboardMovement => m_Wrapper.m_Camera_KeyboardMovement;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
@@ -1764,9 +1591,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_CameraActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_CameraActionsCallbackInterfaces.Add(instance);
-            @Mouse.started += instance.OnMouse;
-            @Mouse.performed += instance.OnMouse;
-            @Mouse.canceled += instance.OnMouse;
             @PerfOrbit.started += instance.OnPerfOrbit;
             @PerfOrbit.performed += instance.OnPerfOrbit;
             @PerfOrbit.canceled += instance.OnPerfOrbit;
@@ -1782,9 +1606,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Focus.started += instance.OnFocus;
             @Focus.performed += instance.OnFocus;
             @Focus.canceled += instance.OnFocus;
-            @MousePos.started += instance.OnMousePos;
-            @MousePos.performed += instance.OnMousePos;
-            @MousePos.canceled += instance.OnMousePos;
             @KeyboardMovement.started += instance.OnKeyboardMovement;
             @KeyboardMovement.performed += instance.OnKeyboardMovement;
             @KeyboardMovement.canceled += instance.OnKeyboardMovement;
@@ -1792,9 +1613,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 
         private void UnregisterCallbacks(ICameraActions instance)
         {
-            @Mouse.started -= instance.OnMouse;
-            @Mouse.performed -= instance.OnMouse;
-            @Mouse.canceled -= instance.OnMouse;
             @PerfOrbit.started -= instance.OnPerfOrbit;
             @PerfOrbit.performed -= instance.OnPerfOrbit;
             @PerfOrbit.canceled -= instance.OnPerfOrbit;
@@ -1810,9 +1628,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Focus.started -= instance.OnFocus;
             @Focus.performed -= instance.OnFocus;
             @Focus.canceled -= instance.OnFocus;
-            @MousePos.started -= instance.OnMousePos;
-            @MousePos.performed -= instance.OnMousePos;
-            @MousePos.canceled -= instance.OnMousePos;
             @KeyboardMovement.started -= instance.OnKeyboardMovement;
             @KeyboardMovement.performed -= instance.OnKeyboardMovement;
             @KeyboardMovement.canceled -= instance.OnKeyboardMovement;
@@ -1838,14 +1653,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
-    private readonly InputAction m_Player_Look;
     private readonly InputAction m_Player_Fire;
     public struct PlayerActions
     {
         private @InputMaster m_Wrapper;
         public PlayerActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
         public InputAction @Move => m_Wrapper.m_Player_Move;
-        public InputAction @Look => m_Wrapper.m_Player_Look;
         public InputAction @Fire => m_Wrapper.m_Player_Fire;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
@@ -1859,9 +1672,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
-            @Look.started += instance.OnLook;
-            @Look.performed += instance.OnLook;
-            @Look.canceled += instance.OnLook;
             @Fire.started += instance.OnFire;
             @Fire.performed += instance.OnFire;
             @Fire.canceled += instance.OnFire;
@@ -1872,9 +1682,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
-            @Look.started -= instance.OnLook;
-            @Look.performed -= instance.OnLook;
-            @Look.canceled -= instance.OnLook;
             @Fire.started -= instance.OnFire;
             @Fire.performed -= instance.OnFire;
             @Fire.canceled -= instance.OnFire;
@@ -2017,19 +1824,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Transform
     private readonly InputActionMap m_Transform;
     private List<ITransformActions> m_TransformActionsCallbackInterfaces = new List<ITransformActions>();
-    private readonly InputAction m_Transform_MousePos;
     private readonly InputAction m_Transform_Drag;
     private readonly InputAction m_Transform_Distance;
-    private readonly InputAction m_Transform_MouseDelta;
     private readonly InputAction m_Transform_Snap;
     public struct TransformActions
     {
         private @InputMaster m_Wrapper;
         public TransformActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @MousePos => m_Wrapper.m_Transform_MousePos;
         public InputAction @Drag => m_Wrapper.m_Transform_Drag;
         public InputAction @Distance => m_Wrapper.m_Transform_Distance;
-        public InputAction @MouseDelta => m_Wrapper.m_Transform_MouseDelta;
         public InputAction @Snap => m_Wrapper.m_Transform_Snap;
         public InputActionMap Get() { return m_Wrapper.m_Transform; }
         public void Enable() { Get().Enable(); }
@@ -2040,18 +1843,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_TransformActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_TransformActionsCallbackInterfaces.Add(instance);
-            @MousePos.started += instance.OnMousePos;
-            @MousePos.performed += instance.OnMousePos;
-            @MousePos.canceled += instance.OnMousePos;
             @Drag.started += instance.OnDrag;
             @Drag.performed += instance.OnDrag;
             @Drag.canceled += instance.OnDrag;
             @Distance.started += instance.OnDistance;
             @Distance.performed += instance.OnDistance;
             @Distance.canceled += instance.OnDistance;
-            @MouseDelta.started += instance.OnMouseDelta;
-            @MouseDelta.performed += instance.OnMouseDelta;
-            @MouseDelta.canceled += instance.OnMouseDelta;
             @Snap.started += instance.OnSnap;
             @Snap.performed += instance.OnSnap;
             @Snap.canceled += instance.OnSnap;
@@ -2059,18 +1856,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 
         private void UnregisterCallbacks(ITransformActions instance)
         {
-            @MousePos.started -= instance.OnMousePos;
-            @MousePos.performed -= instance.OnMousePos;
-            @MousePos.canceled -= instance.OnMousePos;
             @Drag.started -= instance.OnDrag;
             @Drag.performed -= instance.OnDrag;
             @Drag.canceled -= instance.OnDrag;
             @Distance.started -= instance.OnDistance;
             @Distance.performed -= instance.OnDistance;
             @Distance.canceled -= instance.OnDistance;
-            @MouseDelta.started -= instance.OnMouseDelta;
-            @MouseDelta.performed -= instance.OnMouseDelta;
-            @MouseDelta.canceled -= instance.OnMouseDelta;
             @Snap.started -= instance.OnSnap;
             @Snap.performed -= instance.OnSnap;
             @Snap.canceled -= instance.OnSnap;
@@ -2095,14 +1886,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Selection
     private readonly InputActionMap m_Selection;
     private List<ISelectionActions> m_SelectionActionsCallbackInterfaces = new List<ISelectionActions>();
-    private readonly InputAction m_Selection_MousePos;
     private readonly InputAction m_Selection_Drag;
     private readonly InputAction m_Selection_Multiselect;
     public struct SelectionActions
     {
         private @InputMaster m_Wrapper;
         public SelectionActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @MousePos => m_Wrapper.m_Selection_MousePos;
         public InputAction @Drag => m_Wrapper.m_Selection_Drag;
         public InputAction @Multiselect => m_Wrapper.m_Selection_Multiselect;
         public InputActionMap Get() { return m_Wrapper.m_Selection; }
@@ -2114,9 +1903,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_SelectionActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_SelectionActionsCallbackInterfaces.Add(instance);
-            @MousePos.started += instance.OnMousePos;
-            @MousePos.performed += instance.OnMousePos;
-            @MousePos.canceled += instance.OnMousePos;
             @Drag.started += instance.OnDrag;
             @Drag.performed += instance.OnDrag;
             @Drag.canceled += instance.OnDrag;
@@ -2127,9 +1913,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 
         private void UnregisterCallbacks(ISelectionActions instance)
         {
-            @MousePos.started -= instance.OnMousePos;
-            @MousePos.performed -= instance.OnMousePos;
-            @MousePos.canceled -= instance.OnMousePos;
             @Drag.started -= instance.OnDrag;
             @Drag.performed -= instance.OnDrag;
             @Drag.canceled -= instance.OnDrag;
@@ -2273,7 +2056,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_TextEditor_Ctrl;
     private readonly InputAction m_TextEditor_Shift;
     private readonly InputAction m_TextEditor_Alt;
-    private readonly InputAction m_TextEditor_Scroll;
     public struct TextEditorActions
     {
         private @InputMaster m_Wrapper;
@@ -2284,7 +2066,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         public InputAction @Ctrl => m_Wrapper.m_TextEditor_Ctrl;
         public InputAction @Shift => m_Wrapper.m_TextEditor_Shift;
         public InputAction @Alt => m_Wrapper.m_TextEditor_Alt;
-        public InputAction @Scroll => m_Wrapper.m_TextEditor_Scroll;
         public InputActionMap Get() { return m_Wrapper.m_TextEditor; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2312,9 +2093,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Alt.started += instance.OnAlt;
             @Alt.performed += instance.OnAlt;
             @Alt.canceled += instance.OnAlt;
-            @Scroll.started += instance.OnScroll;
-            @Scroll.performed += instance.OnScroll;
-            @Scroll.canceled += instance.OnScroll;
         }
 
         private void UnregisterCallbacks(ITextEditorActions instance)
@@ -2337,9 +2115,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Alt.started -= instance.OnAlt;
             @Alt.performed -= instance.OnAlt;
             @Alt.canceled -= instance.OnAlt;
-            @Scroll.started -= instance.OnScroll;
-            @Scroll.performed -= instance.OnScroll;
-            @Scroll.canceled -= instance.OnScroll;
         }
 
         public void RemoveCallbacks(ITextEditorActions instance)
@@ -2404,19 +2179,16 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public interface ICameraActions
     {
-        void OnMouse(InputAction.CallbackContext context);
         void OnPerfOrbit(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMove(InputAction.CallbackContext context);
         void OnPrecision(InputAction.CallbackContext context);
         void OnFocus(InputAction.CallbackContext context);
-        void OnMousePos(InputAction.CallbackContext context);
         void OnKeyboardMovement(InputAction.CallbackContext context);
     }
     public interface IPlayerActions
     {
         void OnMove(InputAction.CallbackContext context);
-        void OnLook(InputAction.CallbackContext context);
         void OnFire(InputAction.CallbackContext context);
     }
     public interface IUIActions
@@ -2434,15 +2206,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public interface ITransformActions
     {
-        void OnMousePos(InputAction.CallbackContext context);
         void OnDrag(InputAction.CallbackContext context);
         void OnDistance(InputAction.CallbackContext context);
-        void OnMouseDelta(InputAction.CallbackContext context);
         void OnSnap(InputAction.CallbackContext context);
     }
     public interface ISelectionActions
     {
-        void OnMousePos(InputAction.CallbackContext context);
         void OnDrag(InputAction.CallbackContext context);
         void OnMultiselect(InputAction.CallbackContext context);
     }
@@ -2466,6 +2235,5 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnCtrl(InputAction.CallbackContext context);
         void OnShift(InputAction.CallbackContext context);
         void OnAlt(InputAction.CallbackContext context);
-        void OnScroll(InputAction.CallbackContext context);
     }
 }

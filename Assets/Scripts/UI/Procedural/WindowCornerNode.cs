@@ -6,8 +6,12 @@ using cfg = Config.UI.Window.CornerNode;
 public class WindowCornerNode : MonoBehaviour {
 	public enum Corner {
 		TopLeft,
+		TopRight,
+		BottomLeft,
+		BottomRight
+	};
+	public Corner Position;
 
-	}
 	bool hovered = false;
 	bool dragging = false;
 	float curSize;
@@ -28,7 +32,7 @@ public class WindowCornerNode : MonoBehaviour {
 	}
 
 	void UpdateSize() {
-		float mouseDist = Vector2.Distance(transform.position, Conatrols.mousePos);
+		float mouseDist = Vector2.Distance(transform.position, Conatrols.Mouse.Position);
 		float t = Mathf.InverseLerp(cfg.ExpansionStartDist, cfg.ExpansionEndDist, mouseDist);
 
 		float size = cfg.EasingFunction(t) * cfg.NormalSize;
@@ -41,7 +45,6 @@ public class WindowCornerNode : MonoBehaviour {
 
 	void HandleMouse() {
 		if (!hovered) return;
-
 
 	}
 }

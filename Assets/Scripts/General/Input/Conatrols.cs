@@ -17,11 +17,13 @@ public class Conatrols : MonoBehaviour {
 
 	public static InputMaster IM;
 	Keyboard CurrentKeyboard;
+	Mouse CurrentMouse;
 
 	void Awake() {
 		IM = new();
 
 		CurrentKeyboard = new();
+		CurrentMouse = new();
 	}
 	void OnEnable() {
 		IM ??= new InputMaster();
@@ -31,27 +33,11 @@ public class Conatrols : MonoBehaviour {
 		IM.Disable();
 	}
 
-	public delegate void MouseMove(Vector2 position);
-	public static event MouseMove OnMouseMove;
-
-	public static Vector2 mousePos;
-	public static Vector2 lastMousePos;
 	void Update() {
-		UpdateMouse();
-
+		CurrentMouse.Update();
 		CurrentKeyboard.Update();
 	}
-	private void LateUpdate() {
-		lastMousePos = mousePos;
-	}
 
-	void UpdateMouse() {
-		mousePos = Mouse.current.position.value;
-		if (lastMousePos != mousePos) {
-			//Debug.Log($"moved to {mousePos}");
-			OnMouseMove?.Invoke(mousePos);
-		}
-	}
 
 	#region Shortcut Methods
 	/// <summary>
@@ -63,6 +49,45 @@ public class Conatrols : MonoBehaviour {
 	/// </summary>
 	public static bool IsPressed(Key key) => Keyboard.Pressed.Contains(key);
 	#endregion
+
+	public class Mouse {
+		public static Vector2 Position;
+		public static Vector2 LastPos;
+		public static Vector2 Delta;
+		public static Vector2 Scroll;
+
+		public static MouseButton Left = new(IM.Mouse.Left);
+		public static MouseButton Middle = new(IM.Mouse.Middle);
+		public static MouseButton Right = new(IM.Mouse.Right);
+
+		// add more when needed like the side ones
+
+		public void Update() {
+			LastPos = Position;
+			Position = IM.Mouse.Position.ReadValue<Vector2>();
+			Delta = IM.Mouse.Delta.ReadValue<Vector2>();
+			Scroll = IM.Mouse.Scroll.ReadValue<Vector2>();
+
+			Left.Update();
+			Middle.Update();
+			Right.Update();
+		}
+
+		public class MouseButton {
+			public InputAction Binding;
+			public bool Pressed;
+			public bool PressedThisFrame;
+			public bool ReleasedThisFrame;
+
+			public MouseButton(InputAction binding) { Binding = binding; }
+
+			public void Update() {
+				Pressed = Binding.IsPressed();
+				PressedThisFrame = Binding.WasPressedThisFrame();
+				ReleasedThisFrame = Binding.WasReleasedThisFrame();
+			}
+		}
+	}
 
 	public class Keyboard {
 

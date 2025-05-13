@@ -97,7 +97,7 @@ public class RotateAxis : MonoBehaviour
 		for (int i = 0; i < 36; i++)
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
-		Vector2 mousePos = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Conatrols.Mouse.Position;
 		float mouseToCircleDistance = HF.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
@@ -200,7 +200,7 @@ public class RotateAxis : MonoBehaviour
 		Vector3 planePos = transform.position;
 		Vector3 planeNormal = (main.transform.rotation * axis).normalized;
 
-		Vector3 mouseScreenSpace = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>();
+		Vector3 mouseScreenSpace = Conatrols.Mouse.Position;
 		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
 		Vector3 cameraPos = Camera.main.transform.position;

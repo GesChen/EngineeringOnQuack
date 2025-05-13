@@ -61,12 +61,12 @@ public class ScrollWindow : MonoBehaviour {
 	void HandleInput() {
 		if (!CheckMouse()) return;
 
-		xScrollAmount += Conatrols.IM.TextEditor.Scroll.ReadValue<Vector2>().x * sensitivity * Time.deltaTime;
+		xScrollAmount += Conatrols.Mouse.Scroll.x * sensitivity * Time.deltaTime;
 
 		if (Conatrols.IM.TextEditor.Shift.IsPressed())
-			xScrollAmount -= Conatrols.IM.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
+			xScrollAmount -= Conatrols.Mouse.Scroll.y * sensitivity * Time.deltaTime;
 		else
-			yScrollAmount -= Conatrols.IM.TextEditor.Scroll.ReadValue<Vector2>().y * sensitivity * Time.deltaTime;
+			yScrollAmount -= Conatrols.Mouse.Scroll.y * sensitivity * Time.deltaTime;
 
 		Clamp();
 	}
