@@ -24,6 +24,7 @@ public class Conatrols : MonoBehaviour {
 
 		CurrentKeyboard = new();
 		CurrentMouse = new();
+		CurrentMouse.Initialize();
 	}
 	void OnEnable() {
 		IM ??= new InputMaster();
@@ -56,11 +57,17 @@ public class Conatrols : MonoBehaviour {
 		public static Vector2 Delta;
 		public static Vector2 Scroll;
 
-		public static MouseButton Left = new(IM.Mouse.Left);
-		public static MouseButton Middle = new(IM.Mouse.Middle);
-		public static MouseButton Right = new(IM.Mouse.Right);
+		public static MouseButton Left;
+		public static MouseButton Middle;
+		public static MouseButton Right;
 
 		// add more when needed like the side ones
+
+		public void Initialize() {
+			Left = new(IM.Mouse.Left);
+			Middle = new(IM.Mouse.Middle);
+			Right = new(IM.Mouse.Right);
+		}
 
 		public void Update() {
 			LastPos = Position;

@@ -45,12 +45,6 @@ public class EditingCameraMovement : MonoBehaviour
 		targetDist = initDist;
 		moveSmoothness = moveDrift;
 	}
-	void OnEnable()
-	{
-	}
-	void OnDisable()
-	{
-	}
 
 	// Update is called once per frame
 	float globalSensitivity = 1.0f;
@@ -83,8 +77,7 @@ public class EditingCameraMovement : MonoBehaviour
 
 		focus = Vector3.Lerp(focus, target, moveSmoothness);// Vector3.SmoothDamp(focus, target, ref smoothTargetVel, focusTime);
 		Quaternion r = Quaternion.Euler(pitch, yaw, 0);
-		transform.position = r * Vector3.forward * dist + focus;
-		transform.rotation = r;
+		transform.SetPositionAndRotation(r * Vector3.forward * dist + focus, r);
 	}
 	void Orbit()
 	{
@@ -105,7 +98,7 @@ public class EditingCameraMovement : MonoBehaviour
 		targetDist += Conatrols.IM.Camera.Zoom.ReadValue<float>() * zoomSensitivity * globalSensitivity;
 		dist = Mathf.Lerp(dist, targetDist, zoomDrift);
 	}
-	void Focus(InputAction.CallbackContext context)
+	void Focus()
 	{
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(Conatrols.Mouse.Position), out RaycastHit hit)) { 
 			if (hit.transform.GetComponent<Part>())
