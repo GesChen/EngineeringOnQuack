@@ -33,6 +33,12 @@ public static class HF {
 
 	public static Vector2 Vector2Abs(Vector2 v)
 		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
+
+	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
+		=> new(
+			Mathf.Clamp(v.x, min.x, max.x),
+			Mathf.Clamp(v.y, min.y, max.y));
+
 	#endregion
 
 	private static void OldLogColor(string str, Color color) {

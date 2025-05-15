@@ -31,10 +31,12 @@ public class UIHovers : MonoBehaviour {
 	public List<Canvas> canvases; // Assign in Inspector or pass programmatically
 	private List<GraphicRaycaster> graphicRaycasters = new();
 
+	/// <summary>
+	/// 0 is highest, descending order
+	/// </summary>
 	public static List<Transform> hovers = new();
 	public static List<RaycastResult> results = new();
 	public List<Transform> hoversDebug;
-	private GraphicRaycaster graphicRaycaster;
 	private PointerEventData pointerEventData;
 	private EventSystem eventSystem;
 

@@ -11,18 +11,18 @@ public class WindowCornerNode : MonoBehaviour {
 		BottomRight
 	};
 	public Corner position;
-	public Window main;
+	private Window main;
 
 	bool hovered = false;
-	bool dragging = false;
+	[HideInInspector] public bool dragging = false;
 	float curSize;
 	Vector2 dragStartCenter;
-	Corner dragStartPos;
 	bool oppositeVert;
 	bool oppositeHori;
 
 	[HideInInspector] public RectTransform rt;
 	void Start() {
+		main = GetComponentInParent<Window>();
 		rt = GetComponent<RectTransform>();
 	}
 
@@ -42,14 +42,16 @@ public class WindowCornerNode : MonoBehaviour {
 
 		float size = cfg.EasingFunction(t) * cfg.NormalSize;
 
-		size += hovered ? cfg.HoverAddedSize : 0;
+		if (hovered) size = cfg.HoverSize;
+		if (dragging) size = cfg.DragSize;
+		if (main.manager.anyDragging && !dragging) size = 0;
 
 		curSize = Mathf.Lerp(curSize, size, Config.UI.Visual.Smoothness * Time.deltaTime);
 		rt.sizeDelta = curSize * Vector2.one;
 	}
 
 	void HandleMouse() {
-		if (!hovered && !dragging) return;
+		if (!(hovered || dragging || main.manager.anyDragging)) return;
 
 		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame) {
 			dragging = true;
@@ -90,6 +92,7 @@ public class WindowCornerNode : MonoBehaviour {
 			Corner.TopLeft => Corner.BottomRight,
 			Corner.TopRight => Corner.BottomLeft,
 			Corner.BottomRight => Corner.TopLeft,
+			_ => Corner.TopRight
 		};
 
 		otherCornerPos = main.cornerNodes.Find(n => n.position == opposing).transform.position;
