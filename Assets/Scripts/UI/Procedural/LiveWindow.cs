@@ -3,17 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Window : MonoBehaviour {
-	public List<WindowCornerNode> cornerNodes;
+public class LiveWindow : MonoBehaviour {
+	public List<WindowSizeNode> cornerNodes;
 	public Transform backgroundImage;
 	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
-	[HideInInspector] public bool dragging = false;
-	[HideInInspector] public bool anyNodesDragging = false;
-	WindowCornerNode TL;
-	WindowCornerNode TR;
-	WindowCornerNode BL;
-	WindowCornerNode BR;
+	[HideInNormalInspector] public bool dragging = false;
+	[HideInNormalInspector] public bool anyNodesDragging = false;
+	public ClassWindow.Config Config;
+	WindowSizeNode TL;
+	WindowSizeNode TR;
+	WindowSizeNode BL;
+	WindowSizeNode BR;
 
 	void Start() {
 		manager = GetComponentInParent<WindowManager>();
@@ -21,31 +22,41 @@ public class Window : MonoBehaviour {
 	}
 
 	public void FlipNodesVertically() {
-		TL.position = WindowCornerNode.Corner.BottomLeft;
-		TR.position = WindowCornerNode.Corner.BottomRight;
-		BL.position = WindowCornerNode.Corner.TopLeft;
-		BR.position = WindowCornerNode.Corner.TopRight;
+		TL.position = WindowSizeNode.Positions.BottomLeft;
+		TR.position = WindowSizeNode.Positions.BottomRight;
+		BL.position = WindowSizeNode.Positions.TopLeft;
+		BR.position = WindowSizeNode.Positions.TopRight;
 	}
 
 	public void FlipNodesHorizontally() {
-		TL.position = WindowCornerNode.Corner.TopRight;
-		TR.position = WindowCornerNode.Corner.TopLeft;
-		BL.position = WindowCornerNode.Corner.BottomRight;
-		BR.position = WindowCornerNode.Corner.BottomLeft;
+		TL.position = WindowSizeNode.Positions.TopRight;
+		TR.position = WindowSizeNode.Positions.TopLeft;
+		BL.position = WindowSizeNode.Positions.BottomRight;
+		BR.position = WindowSizeNode.Positions.BottomLeft;
 	}
 
 	void Update() {
-		Find();
-		SetAnchors();
-		HandleDrag();
-		CheckNodes();
+		SetNodesActive(Config.Resizable);
+
+		if (Config.Resizable) {
+			Find();
+			SetAnchors();
+			CheckNodes();
+		}
+		if (Config.Movable) {
+			HandleDrag();
+		}
+	}
+
+	void SetNodesActive(bool state) {
+		cornerNodes.ForEach(n => n.gameObject.SetActive(state));
 	}
 
 	void Find() {
-		TL = cornerNodes.Find(n => n.position == WindowCornerNode.Corner.TopLeft);
-		TR = cornerNodes.Find(n => n.position == WindowCornerNode.Corner.TopRight);
-		BL = cornerNodes.Find(n => n.position == WindowCornerNode.Corner.BottomLeft);
-		BR = cornerNodes.Find(n => n.position == WindowCornerNode.Corner.BottomRight);
+		TL = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.TopLeft);
+		TR = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.TopRight);
+		BL = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.BottomLeft);
+		BR = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.BottomRight);
 	}
 
 	void SetAnchors() {

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public static partial class Config {
 	public static class UI {
@@ -34,7 +36,9 @@ public static partial class Config {
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
 			public static readonly Color ButtonHoverColor		= new(.39f, .39f, .39f);
 			public static readonly Color ButtonPressedColor		= new(.25f, .25f, .25f);
+			public static readonly Color ButtonDisabledColor	= new(.16f, .16f, .16f);
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
+			public static readonly int FontSize = 22;
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
 			public static readonly int OutlineThickness = 2;
 		}

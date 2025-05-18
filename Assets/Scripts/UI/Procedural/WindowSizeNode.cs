@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using cfg = Config.UI.Window.CornerNode;
 
-public class WindowCornerNode : MonoBehaviour {
-	public enum Corner {
+public class WindowSizeNode : MonoBehaviour {
+	public enum Positions {
 		BottomLeft,
 		TopLeft,
 		TopRight,
 		BottomRight
 	};
-	public Corner position;
-	private Window main;
+	public Positions position;
+	private LiveWindow main;
 
 	bool hovered = false;
 	[HideInInspector] public bool dragging = false;
@@ -22,14 +22,16 @@ public class WindowCornerNode : MonoBehaviour {
 
 	[HideInInspector] public RectTransform rt;
 	void Start() {
-		main = GetComponentInParent<Window>();
+		main = GetComponentInParent<LiveWindow>();
 		rt = GetComponent<RectTransform>();
 	}
 
 	void Update() {
-		CheckHover();
-		UpdateSize();
-		HandleMouse();
+		if (main.Config.Resizable) {
+			CheckHover();
+			UpdateSize();
+			HandleMouse();
+		}
 	}
 
 	void CheckHover() {
@@ -51,7 +53,10 @@ public class WindowCornerNode : MonoBehaviour {
 	}
 
 	void HandleMouse() {
-		if (!(hovered || dragging || main.manager.anyDragging)) return;
+		bool notHoverOrDrag = !(hovered || dragging);
+		bool anyDraggingNotThis = main.manager.anyDragging && !dragging;
+
+		if (notHoverOrDrag || anyDraggingNotThis) return;
 
 		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame) {
 			dragging = true;
@@ -68,12 +73,12 @@ public class WindowCornerNode : MonoBehaviour {
 			SetCornerPosition(Conatrols.Mouse.Position);
 
 			oppositeVert =
-				(position == Corner.TopLeft || position == Corner.TopRight)
+				(position == Positions.TopLeft || position == Positions.TopRight)
 				? Conatrols.Mouse.Position.y < dragStartCenter.y
 				: Conatrols.Mouse.Position.y > dragStartCenter.y;
 
 			oppositeHori =
-				(position == Corner.TopRight || position == Corner.BottomRight)
+				(position == Positions.TopRight || position == Positions.BottomRight)
 				? Conatrols.Mouse.Position.x < dragStartCenter.x
 				: Conatrols.Mouse.Position.x > dragStartCenter.x;
 
@@ -87,12 +92,12 @@ public class WindowCornerNode : MonoBehaviour {
 
 	Vector2 otherCornerPos;
 	void GetOtherCorner() {
-		Corner opposing = position switch {
-			Corner.BottomLeft => Corner.TopRight,
-			Corner.TopLeft => Corner.BottomRight,
-			Corner.TopRight => Corner.BottomLeft,
-			Corner.BottomRight => Corner.TopLeft,
-			_ => Corner.TopRight
+		Positions opposing = position switch {
+			Positions.BottomLeft => Positions.TopRight,
+			Positions.TopLeft => Positions.BottomRight,
+			Positions.TopRight => Positions.BottomLeft,
+			Positions.BottomRight => Positions.TopLeft,
+			_ => Positions.TopRight
 		};
 
 		otherCornerPos = main.cornerNodes.Find(n => n.position == opposing).transform.position;

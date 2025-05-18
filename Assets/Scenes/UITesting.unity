@@ -172,7 +172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.46343386, g: 0.48013157, b: 0.509434, a: 1}
+  m_Color: {r: 0.3732645, g: 0.38091844, b: 0.3962264, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1559,6 +1559,8 @@ MonoBehaviour:
   windows:
   - {fileID: 1047622354}
   - {fileID: 1574368132}
+  canvas: {fileID: 0}
+  canvasRect: {fileID: 0}
   anyDragging: 0
 --- !u!1 &1900670114
 GameObject:

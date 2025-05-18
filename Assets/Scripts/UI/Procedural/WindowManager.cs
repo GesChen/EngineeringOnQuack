@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 // this file will probably not be used in final but here for temporary 
 public class WindowManager : MonoBehaviour {
-	public List<Window> windows;
+	public List<LiveWindow> windows;
 	[HideInInspector] public Canvas canvas;
 	[HideInInspector] public RectTransform canvasRect;
 
@@ -35,17 +35,29 @@ public class WindowManager : MonoBehaviour {
 	void Update() {
 		anyDragging = windows.Any(w => w.dragging || w.anyNodesDragging);
 
-		previewVisible = HandleWindowToWindowSnapping();
+		if (Conatrols.IM.UI.WindowSnap.IsPressed()) {
+			if (Conatrols.Mouse.Left.ReleasedThisFrame && beingDragged != null && lowestWindow != null) {
+				PerformSnap(beingDragged, lowestWindow, quadrant, center);
+			}
 
-		UpdatePreview();
+			previewVisible = HandleWindowToWindowSnapping();
+		} else {
+			previewVisible = false;
+		}
+
+			UpdatePreview();
 	}
 
+	LiveWindow lowestWindow;
+	LiveWindow beingDragged;
+	int quadrant;
+	bool center;
 	bool HandleWindowToWindowSnapping() {
 		if (!anyDragging) return false;
 
-		Window lowestWindow = null;
+		lowestWindow = null;
 		int lowestHoverIndex = int.MaxValue;
-		Window beingDragged = null;
+		beingDragged = null;
 		foreach (var window in windows) {
 			if (!window.dragging) {
 				int index = UIHovers.hovers.IndexOf(window.backgroundImage.transform);
@@ -68,7 +80,7 @@ public class WindowManager : MonoBehaviour {
 		// diagonal quadrants
 		bool dUL = UV.x < UV.y;
 		bool dUR = -UV.x < UV.y;
-		int quadrant = (dUL, dUR) switch {
+		quadrant = (dUL, dUR) switch {
 			(true, true) => 0, // up
 			(false, true) => 1, // right
 			(false, false) => 2, // down
@@ -76,29 +88,24 @@ public class WindowManager : MonoBehaviour {
 		};
 
 		float centerMargin = .5f *Config.UI.Window.CenterSnapRange;
-		bool center = Mathf.Abs(UV.x) < centerMargin && Mathf.Abs(UV.y) < centerMargin;
+		center = Mathf.Abs(UV.x) < centerMargin && Mathf.Abs(UV.y) < centerMargin;
 
 		DisplayPreview(beingDragged, lowestWindow, quadrant, center);
-
-		if (Conatrols.Mouse.Left.ReleasedThisFrame) {
-			PerformSnap(beingDragged, lowestWindow, quadrant, center);
-		}
 
 		return true;
 	}
 
-	void DisplayPreview(Window target, Window snapTo, int quadrant, bool center) {
+	void DisplayPreview(LiveWindow target, LiveWindow snapTo, int quadrant, bool center) {
 		var loc =
 			center
 			? SnapInside(snapTo, quadrant)
 			: SnapOutside(target, snapTo, quadrant);
 
-
 		pvPos = loc.pos;
 		pvSize = loc.size;
 	}
 
-	(Vector2 pos, Vector2 size) SnapInside(Window snapTo, int quadrant) {
+	(Vector2 pos, Vector2 size) SnapInside(LiveWindow snapTo, int quadrant) {
 		bool matchHeight = quadrant == 1 || quadrant == 3;
 
 		float oX = snapTo.rt.sizeDelta.x;
@@ -122,7 +129,7 @@ public class WindowManager : MonoBehaviour {
 		return (newPos, newSize);
 	}
 
-	(Vector2 pos, Vector2 size) SnapOutside(Window target, Window snapTo, int quadrant) {
+	(Vector2 pos, Vector2 size) SnapOutside(LiveWindow target, LiveWindow snapTo, int quadrant) {
 		bool matchHeight = quadrant == 1 || quadrant == 3;
 
 		float oX = snapTo.rt.sizeDelta.x;
@@ -148,7 +155,7 @@ public class WindowManager : MonoBehaviour {
 		return (newPos, newSize);
 	}
 
-	void PerformSnap(Window target, Window snapTo, int quadrant, bool center) {
+	void PerformSnap(LiveWindow target, LiveWindow snapTo, int quadrant, bool center) {
 		if (center) {
 			int opposideQuad = quadrant switch {
 				0 => 2,
