@@ -25,6 +25,8 @@ public class WindowItem {
 
 	public Component[] Construction;
 
+	public WindowItem[] SubItems;
+
 	public class Component {
 
 	}
@@ -33,6 +35,14 @@ public class WindowItem {
 		public class Image : Component {
 			public Color Color;
 			public Sprite Sprite;
+
+			public Image(Color color, Sprite sprite) {
+				Color = color;
+				Sprite = sprite;
+			}
+			public Image(Color color) : this(
+				color,
+				null) { }
 		}
 
 		public class Button : Component {
@@ -79,15 +89,15 @@ public class WindowItem {
 			public string Content;
 			public TMP_FontAsset Font;
 			public FontStyles Style;
-			public int FontSize;
+			public float FontSize;
 			public Color Color;
 			public TextAlignmentOptions Alignment;
 
 			public Text(
 					string content, 
 					TMP_FontAsset font, 
-					FontStyles style, 
-					int fontSize, 
+					FontStyles style,
+					float fontSize, 
 					Color color, 
 					TextAlignmentOptions alignment) {
 				Content = content;
@@ -113,26 +123,31 @@ public class WindowItem {
 		}
 	}
 
-	private WindowItem(LayoutConfig layout, Component[] components) {
+
+	private WindowItem(LayoutConfig layout, Component[] components, WindowItem[] items) {
 		Layout = layout;
 		Construction = components;
+		SubItems = items;
 	}
 
 	public static WindowItem Image(Components.Image image, LayoutConfig layout) =>
 		new(
 			layout,
-			new[] { image }
+			new[] { image },
+			null
 		);
 
 	public static WindowItem Text(Components.Text text, LayoutConfig layout) =>
 		new(
 			layout,
-			new[] { text }
+			new[] { text },
+			null
 		);
 
 	public static WindowItem Button(Components.Image image, Components.Button button, LayoutConfig layout) =>
 		new(
 			layout,
-			new Component[] { image, button }
+			new Component[] { image, button },
+			null
 		);
 }

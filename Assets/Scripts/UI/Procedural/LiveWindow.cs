@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class LiveWindow : MonoBehaviour {
-	public List<WindowSizeNode> cornerNodes;
+	public List<WindowSizeNode> cornerNodes = new();
 	public Transform backgroundImage;
 	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
 	[HideInNormalInspector] public bool dragging = false;
 	[HideInNormalInspector] public bool anyNodesDragging = false;
-	public ClassWindow.Config Config;
+	public ClassWindow.Config Config = new() { Movable = true, Resizable = true };
 	WindowSizeNode TL;
 	WindowSizeNode TR;
 	WindowSizeNode BL;

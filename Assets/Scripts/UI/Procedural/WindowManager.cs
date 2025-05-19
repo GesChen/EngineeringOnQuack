@@ -7,6 +7,7 @@ using UnityEngine.UI;
 // this file will probably not be used in final but here for temporary 
 public class WindowManager : MonoBehaviour {
 	public List<LiveWindow> windows;
+	public WindowRealiser realiser;
 	[HideInInspector] public Canvas canvas;
 	[HideInInspector] public RectTransform canvasRect;
 
@@ -18,9 +19,20 @@ public class WindowManager : MonoBehaviour {
 	public bool anyDragging = false;
 
 	void Start() {
+		StartWindows();
+
 		canvas = GetComponent<Canvas>();
 		canvasRect = canvas.GetComponent<RectTransform>();
 		CreatePreviewWindow();
+	}
+
+	void StartWindows() {
+		ClassWindow[] torealise = TestWindows.Windows;
+
+		foreach(var window in torealise) {
+			var realised = realiser.Realise(window);
+			windows.Add(realised);
+		}
 	}
 
 	void CreatePreviewWindow() {
@@ -45,7 +57,7 @@ public class WindowManager : MonoBehaviour {
 			previewVisible = false;
 		}
 
-			UpdatePreview();
+		UpdatePreview();
 	}
 
 	LiveWindow lowestWindow;
@@ -170,6 +182,7 @@ public class WindowManager : MonoBehaviour {
 			snapTo.rt.sizeDelta = snapOther.size;
 		}
 
+		print($"qhat");
 		target.rt.position = preview.position;
 		target.rt.sizeDelta = preview.sizeDelta;
 	}

@@ -8,6 +8,7 @@ public static partial class Config {
 			public static readonly float CenterSnapRange = .65f; // 0-1: 0=no center 1=full center
 
 			public static class CornerNode {
+				public static readonly Color Color = new(1, 1, 1);
 				public static readonly float NormalSize = 15;
 				public static readonly float HoverSize = 20;
 				public static readonly float DragSize = 10;
@@ -38,7 +39,7 @@ public static partial class Config {
 			public static readonly Color ButtonPressedColor		= new(.25f, .25f, .25f);
 			public static readonly Color ButtonDisabledColor	= new(.16f, .16f, .16f);
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
-			public static readonly int FontSize = 22;
+			public static readonly float FontSize = 22;
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
 			public static readonly int OutlineThickness = 2;
 		}

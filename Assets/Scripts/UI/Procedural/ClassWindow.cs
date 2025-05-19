@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ClassWindow {
+	public string Name;
 	public WindowItem[] Items;
 
-	public struct Config {
-		public bool Resizable;
-		public bool Movable;
+	public class Config {
+		public bool Resizable = true;
+		public bool Movable = true;
+		public Color Color = global::Config.UI.Visual.BackgroundColor;
 	}
 
-	public Config Configuration;
+	public Config Configuration = new();
 }
