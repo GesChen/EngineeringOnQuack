@@ -27,6 +27,7 @@ public class WindowSizeNode : MonoBehaviour {
 	}
 
 	void Update() {
+		rt.anchoredPosition = Vector2.zero;
 		if (main.Config.Resizable) {
 			CheckHover();
 			UpdateSize();
@@ -82,8 +83,6 @@ public class WindowSizeNode : MonoBehaviour {
 				? Conatrols.Mouse.Position.x < dragStartCenter.x
 				: Conatrols.Mouse.Position.x > dragStartCenter.x;
 
-			DebugExtra.DrawPoint(dragStartCenter);
-
 			if (oppositeVert)
 				main.FlipNodesVertically();
 
@@ -110,7 +109,6 @@ public class WindowSizeNode : MonoBehaviour {
 		Vector2 newCenter = (otherCornerPos + pos) / 2;
 		Vector2 newSize = HF.Vector2Abs(otherCornerPos - pos);
 
-		print($"setting");
 		main.rt.position = newCenter;
 		main.rt.sizeDelta = newSize;
 	}

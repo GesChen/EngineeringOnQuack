@@ -15,6 +15,7 @@ public class WindowItem {
 			Down = down;
 			Left = left;
 		}
+		public FourSides(float x) : this(x, x, x, x) { }
 	}
 	public struct LayoutConfig {
 		public FourSides Margins;
@@ -27,6 +28,11 @@ public class WindowItem {
 
 	public WindowItem[] SubItems;
 
+	public WindowItem WithSubItems(params WindowItem[] sub) {
+		SubItems = sub;
+		return this;
+	}
+
 	public class Component {
 
 	}
@@ -34,11 +40,11 @@ public class WindowItem {
 	public class Components {
 		public class Image : Component {
 			public Color Color;
-			public Sprite Sprite;
+			public string SpriteResource;
 
-			public Image(Color color, Sprite sprite) {
+			public Image(Color color, string spriteResourcePath) {
 				Color = color;
-				Sprite = sprite;
+				SpriteResource = spriteResourcePath;
 			}
 			public Image(Color color) : this(
 				color,
@@ -114,6 +120,15 @@ public class WindowItem {
 				FontStyles.Normal,
 				Config.UI.Visual.FontSize,
 				Config.UI.Visual.TextColor,
+				TextAlignmentOptions.TopLeft
+				) { }
+
+			public Text(string content, Color color) : this(
+				content,
+				Config.Fonts.Roboto,
+				FontStyles.Normal,
+				Config.UI.Visual.FontSize,
+				color,
 				TextAlignmentOptions.TopLeft
 				) { }
 		}

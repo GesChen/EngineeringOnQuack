@@ -182,7 +182,6 @@ public class WindowManager : MonoBehaviour {
 			snapTo.rt.sizeDelta = snapOther.size;
 		}
 
-		print($"qhat");
 		target.rt.position = preview.position;
 		target.rt.sizeDelta = preview.sizeDelta;
 	}

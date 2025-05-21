@@ -12,9 +12,13 @@ public class WindowRealiser : MonoBehaviour {
 		// make new live window
 		var (newWindow, windowRT) = 
 			MakeNewRT(window.Name, canvas.transform);
+		windowRT.anchorMin = window.Config.DefaultPosition.AnchorMin;
+		windowRT.anchorMax = window.Config.DefaultPosition.AnchorMax;
+		windowRT.anchoredPosition = window.Config.DefaultPosition.Position;
+		windowRT.sizeDelta = window.Config.Size.Default;
 
 		// make background obj
-		var (bgRT, _) = MakeNewImageObj("Background", windowRT, window.Configuration.Color);
+		var (bgRT, _) = MakeNewImageObj("Background", windowRT, window.Config.Color);
 		SetFull(bgRT);
 
 		// 4 corner nodes
@@ -50,7 +54,7 @@ public class WindowRealiser : MonoBehaviour {
 		}
 
 		LiveWindow component = newWindow.AddComponent<LiveWindow>();
-		component.Config = window.Configuration;
+		component.Config = window.Config;
 		component.backgroundImage = bgRT;
 		component.cornerNodes = nodes;
 
@@ -111,7 +115,11 @@ public class WindowRealiser : MonoBehaviour {
 			case WindowItem.Components.Image im:
 				Image image = newObj.AddComponent<Image>();
 				image.color = im.Color;
-				image.sprite = im.Sprite;
+				if (im.SpriteResource != null && im.SpriteResource != "") {
+					// let it throw its own exception 
+					Sprite sprite = Resources.Load(im.SpriteResource) as Sprite;
+					image.sprite = sprite;
+				}
 				break;
 
 			case WindowItem.Components.Button bt:

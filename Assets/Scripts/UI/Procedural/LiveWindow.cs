@@ -10,7 +10,7 @@ public class LiveWindow : MonoBehaviour {
 	[HideInInspector] public RectTransform rt;
 	[HideInNormalInspector] public bool dragging = false;
 	[HideInNormalInspector] public bool anyNodesDragging = false;
-	public ClassWindow.Config Config = new() { Movable = true, Resizable = true };
+	public ClassWindow.Configuration Config = new() { Movable = true, Resizable = true };
 	WindowSizeNode TL;
 	WindowSizeNode TR;
 	WindowSizeNode BL;
@@ -43,6 +43,7 @@ public class LiveWindow : MonoBehaviour {
 			SetAnchors();
 			CheckNodes();
 		}
+		CheckSize();
 		if (Config.Movable) {
 			HandleDrag();
 		}
@@ -68,6 +69,10 @@ public class LiveWindow : MonoBehaviour {
 		BL.rt.anchorMax = new(0, 0);
 		BR.rt.anchorMin = new(1, 0);
 		BR.rt.anchorMax = new(1, 0);
+	}
+
+	void CheckSize() {
+		rt.sizeDelta = Vector2.Min(Vector2.Max(rt.sizeDelta, Config.Size.Minimum), Config.Size.Maximum);
 	}
 
 	Vector2 dragOffset;
