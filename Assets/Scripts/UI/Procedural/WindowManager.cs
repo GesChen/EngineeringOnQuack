@@ -27,7 +27,7 @@ public class WindowManager : MonoBehaviour {
 	}
 
 	void StartWindows() {
-		ClassWindow[] torealise = TestWindows.Windows;
+		CWindow[] torealise = TestWindows.Windows;
 
 		foreach(var window in torealise) {
 			var realised = realiser.Realise(window);

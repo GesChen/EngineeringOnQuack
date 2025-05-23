@@ -10,7 +10,7 @@ public class LiveWindow : MonoBehaviour {
 	[HideInInspector] public RectTransform rt;
 	[HideInNormalInspector] public bool dragging = false;
 	[HideInNormalInspector] public bool anyNodesDragging = false;
-	public ClassWindow.Configuration Config = new() { Movable = true, Resizable = true };
+	public CWindow.Configuration Config = new() { Movable = true, Resizable = true };
 	WindowSizeNode TL;
 	WindowSizeNode TR;
 	WindowSizeNode BL;

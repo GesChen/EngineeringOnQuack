@@ -32,16 +32,21 @@ public static partial class Config {
 
 		public static class Visual {
 			public static readonly float Smoothness = 20;
-
 			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
-			public static readonly Color ButtonHoverColor		= new(.39f, .39f, .39f);
-			public static readonly Color ButtonPressedColor		= new(.25f, .25f, .25f);
-			public static readonly Color ButtonDisabledColor	= new(.16f, .16f, .16f);
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
-			public static readonly float FontSize = 22;
+			public static readonly float FontSize				= 22;
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
-			public static readonly int OutlineThickness = 2;
+			public static readonly int OutlineThickness			= 2;
+		}
+
+		public static class Button {
+			public static readonly Color DefaultColor	= new(.27f, .27f, .27f);
+			public static readonly Color HoverColor		= new(.39f, .39f, .39f);
+			public static readonly Color PressedColor	= new(.45f, .45f, .45f);
+			public static readonly Color DisabledColor	= new(.16f, .16f, .16f);
+			public static readonly Color ToggledColor	= new(.33f, .33f, .33f);
+			public static readonly float FadeDuration = .05f;
 		}
 	}
 	/*
