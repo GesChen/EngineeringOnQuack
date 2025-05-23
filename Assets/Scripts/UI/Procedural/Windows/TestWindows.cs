@@ -15,16 +15,12 @@ public static class TestWindows {
 			Items = new WindowItem[] {
 				WindowItem.NewLayout(
 					"Transform controls",
-					WindowItem.Components.Layout.HorizontalFixed(
-						5f,
-						TextAnchor.UpperLeft,
-						true,
-						true
-					),
+					WindowItem.Components.Layout.Dynamic(5f),
 					WindowItem.LayoutConfig.DynamicLayout(
 						FourSides.Zero,
 						FourSides.Even(5),
-						FourSides.Zero),
+						FourSides.Zero
+					),
 					new() {
 						WindowItem.NewButton(
 							"Translate",

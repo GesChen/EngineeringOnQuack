@@ -180,13 +180,20 @@ public class WindowRealiser : MonoBehaviour {
 				break;
 
 			case WindowItem.Components.Layout lt:
-				HorizontalOrVerticalLayoutGroup layout;
+				HorizontalOrVerticalLayoutGroup layout = null;
 
-				bool horizontal = lt.LayoutType == WindowItem.Components.Layout.Type.Horizontal;
-				if (horizontal)
-					layout = newObj.AddComponent<HorizontalLayoutGroup>();
-				else
-					layout = newObj.AddComponent<VerticalLayoutGroup>();
+				int type = lt.LayoutType switch {
+					WindowItem.Components.Layout.Type.Horizontal => 0,
+					WindowItem.Components.Layout.Type.Vertical => 1,
+					WindowItem.Components.Layout.Type.Dynamic => 2,
+					_ => 0
+				};
+
+				switch (type) {
+					case 0: layout = newObj.AddComponent<HorizontalLayoutGroup>(); break;
+					case 1: layout = newObj.AddComponent<VerticalLayoutGroup>(); break;
+					case 2: layout = newObj.AddComponent<DynamicLayoutGroup>(); break;
+				}
 
 				// basic settings
 				layout.spacing = lt.Spacing;
@@ -206,20 +213,22 @@ public class WindowRealiser : MonoBehaviour {
 					
 					// match dimension
 					if (lt.MatchOtherDimension) {
-						if (horizontal) {
+						if (type == 0 || type == 2) {
 							layout.childControlHeight = true;
 							layout.childForceExpandHeight = true;
-						} else {
+						} else
+						if (type == 1) {
 							layout.childControlWidth = true;
 							layout.childForceExpandWidth = true;
 						}
 					}
 
 					if (lt.FillDimension) {
-						if (horizontal) {
+						if (type == 0 || type == 2) {
 							layout.childControlWidth = true;
 							layout.childForceExpandWidth = true;
-						} else {
+						} else
+						if (type == 1) {
 							layout.childControlHeight = true;
 							layout.childForceExpandHeight = true;
 						}

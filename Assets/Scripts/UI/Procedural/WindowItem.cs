@@ -177,7 +177,8 @@ public class WindowItem {
 		public class Layout : Component {
 			public enum Type {
 				Vertical,
-				Horizontal // might add grid if possible?
+				Horizontal,
+				Dynamic // might add grid if possible?
 			}
 			public Type LayoutType;
 
@@ -290,6 +291,15 @@ public class WindowItem {
 					false,
 					false);
 
+			public static Layout Dynamic(
+				float spacing)
+				=> new(
+					Type.Dynamic,
+					spacing,
+					TextAnchor.MiddleCenter, // this makes no sense either, no differences
+					true, // always fill all dimensions, this is really not compatible with dynamic
+					true,
+					true);
 		}
 
 		public class LayoutElement : Component {
