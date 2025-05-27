@@ -97,8 +97,8 @@ public class WindowRealiser : MonoBehaviour {
 			MakeNewRT(item.Name, container);
 
 		// some comps need to be made before others
-		PutTypeFirst<WindowItem.Components.HoverTarget>(ref item.Construction);
-		PutTypeFirst<WindowItem.Components.Image>(ref item.Construction);
+		PutTypeFirst<PComponents.HoverTarget>(ref item.Construction);
+		PutTypeFirst<PComponents.Image>(ref item.Construction);
 
 		RectTransform contentsRT = rt;
 		if (item.SubItems != null && item.SubItems.Count > 0) {
@@ -106,7 +106,7 @@ public class WindowRealiser : MonoBehaviour {
 
 			// layouts have their own padding
 			// and items have to be directly inside so no padding object
-			bool isLayout = item.Construction.Any(c => c is WindowItem.Components.Layout);
+			bool isLayout = item.Construction.Any(c => c is PComponents.Layout);
 			if (item.Layout.Padding != null && !isLayout) {
 				var (_, padRT) =
 					MakeNewRT("Contents", rt);
@@ -131,11 +131,11 @@ public class WindowRealiser : MonoBehaviour {
 		// position properly
 		if (item.Layout.IsFixed) {
 			// fixed positioning
-			rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
-			rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
-			rt.pivot = item.Layout.FixedPosition.Pivot;
-			rt.anchoredPosition = item.Layout.FixedPosition.Position;
-			rt.sizeDelta = item.Layout.SizeDelta;
+			rt.anchorMin			= item.Layout.FixedPosition.AnchorMin;
+			rt.anchorMax			= item.Layout.FixedPosition.AnchorMax;
+			rt.pivot				= item.Layout.FixedPosition.Pivot;
+			rt.anchoredPosition		= item.Layout.FixedPosition.Position;
+			rt.sizeDelta			= item.Layout.SizeDelta;
 
 		} else {
 			// dynamic positioning
@@ -154,7 +154,7 @@ public class WindowRealiser : MonoBehaviour {
 		return rt;
 	}
 
-	void PutTypeFirst<T>(ref List<WindowItem.Component> components) where T : WindowItem.Component {
+	void PutTypeFirst<T>(ref List<PComponents.Component> components) where T : PComponents.Component {
 		for (int i = 0; i < components.Count; i++) {
 			if (components[i] is T ht) {
 				// hopefully this shit code works 
@@ -164,9 +164,13 @@ public class WindowRealiser : MonoBehaviour {
 		}
 	}
 
-	void AddComponent(WindowItem.Component comp, GameObject newObj, WindowItem originalItem, RectTransform contentsRT) {
+	void AddComponent(
+		PComponents.Component comp, 
+		GameObject newObj, 
+		WindowItem originalItem, 
+		RectTransform contentsRT) {
 		switch (comp) {
-			case WindowItem.Components.Image im:
+			case PComponents.Image im:
 				Image image = newObj.AddComponent<Image>();
 				image.color = im.Color;
 				image.preserveAspect = im.PreserveAspect;
@@ -177,7 +181,7 @@ public class WindowRealiser : MonoBehaviour {
 				}
 				break;
 
-			case WindowItem.Components.Button bt:
+			case PComponents.Button bt:
 				Button button = newObj.AddComponent<Button>();
 
 				button.interactable = bt.Enabled;
@@ -203,27 +207,28 @@ public class WindowRealiser : MonoBehaviour {
 
 				break;
 
-			case WindowItem.Components.Text tx:
+			case PComponents.Text tx:
 				var text = newObj.AddComponent<TextMeshProUGUI>();
-				text.text = tx.Content;
-				text.font = tx.Font;
-				text.fontStyle = tx.Style;
-				text.fontSize = tx.FontSize;
-				text.color = tx.Color;
-				text.alignment = tx.Alignment;
+				text.text		= tx.Content;
+				text.font		= tx.Font;
+				text.fontStyle	= tx.Style;
+				text.fontWeight	= tx.Weight;
+				text.fontSize	= tx.FontSize;
+				text.color		= tx.Color;
+				text.alignment	= tx.Alignment;
 
 				if (!originalItem.Layout.IsFixed)
 					text.margin = originalItem.Layout.Padding.ToTMProType();
 
 				break;
 
-			case WindowItem.Components.Layout lt:
+			case PComponents.Layout lt:
 				HorizontalOrVerticalLayoutGroup layout = null;
 
 				int type = lt.LayoutType switch {
-					WindowItem.Components.Layout.Type.Horizontal => 0,
-					WindowItem.Components.Layout.Type.Vertical => 1,
-					WindowItem.Components.Layout.Type.Dynamic => 2,
+					PComponents.Layout.Type.Horizontal => 0,
+					PComponents.Layout.Type.Vertical => 1,
+					PComponents.Layout.Type.Dynamic => 2,
 					_ => 0
 				};
 
@@ -280,13 +285,13 @@ public class WindowRealiser : MonoBehaviour {
 				}
 				break;
 
-			case WindowItem.Components.LayoutElement le:
+			case PComponents.LayoutElement le:
 				var element = newObj.AddComponent<LayoutElement>();
 				element.flexibleWidth = le.SizeMultiplier;
 				element.flexibleHeight = le.SizeMultiplier;
 				break;
 
-			case WindowItem.Components.HoverTarget ht:
+			case PComponents.HoverTarget ht:
 				var htComp = newObj.AddComponent<HoverTarget>();
 
 				htComp.NormalColor = ht.NormalColor;
@@ -295,7 +300,7 @@ public class WindowRealiser : MonoBehaviour {
 
 				break;
 
-			case WindowItem.Components.FlyoutTrigger ft:
+			case PComponents.FlyoutTrigger ft:
 				var ftComp = newObj.AddComponent<FlyoutTrigger>();
 
 				// find hovertarget component
@@ -309,7 +314,7 @@ public class WindowRealiser : MonoBehaviour {
 				ftComp.targetCWindow = ft.TargetFlyout;
 
 				// check for image component
-				if (!ft.IndicatorImage.Construction.Any(c=>c is WindowItem.Components.Image)) {
+				if (!ft.IndicatorImage.Construction.Any(c=>c is PComponents.Image)) {
 					Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
 					break;
 				}
@@ -329,6 +334,11 @@ public class WindowRealiser : MonoBehaviour {
 				else
 					Debug.LogError("Flyout trigger missing closed sprite location");
 
+				break;
+
+			case PComponents.Description ds:
+				var dsComp = newObj.AddComponent<Description>();
+				dsComp.Text = ds.Text;
 				break;
 		}
 	}

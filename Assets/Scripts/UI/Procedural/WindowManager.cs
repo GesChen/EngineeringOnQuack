@@ -28,10 +28,9 @@ public class WindowManager : MonoBehaviour {
 	}
 
 	void StartWindows() {
-		RealiseWindows(TestWindows.Windows);
-
-		CWindow rct = MenuUtil.ConvertWindow(RightClickMenus.testWindow);
-		RealiseWindows(new[] { rct });
+		//RealiseWindows(TestWindows.Windows);
+		RealiseWindows(RightClickTest.Windows);
+		RealiseWindows(RightClickMenus.GetWindows());
 	}
 
 	void RealiseWindows(CWindow[] torealise) {
@@ -114,10 +113,13 @@ public class WindowManager : MonoBehaviour {
 	}
 
 	void DisplayPreview(LiveWindow target, LiveWindow snapTo, int quadrant, bool center) {
-		var loc =
-			center
-			? SnapInside(snapTo, quadrant)
-			: SnapOutside(target, snapTo, quadrant);
+		(Vector2 pos, Vector2 size) loc;
+		if (snapTo.Config.ContentDynamic)
+			loc = SnapOutside(target, snapTo, quadrant);
+		else
+			loc = center 
+				? SnapInside(snapTo, quadrant)
+				: SnapOutside(target, snapTo, quadrant);
 
 		pvPos = loc.pos;
 		pvSize = loc.size;

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -20,9 +21,11 @@ public class MenuUtil : MonoBehaviour {
 		public float Width;
 		public List<Item> Items;
 
-		public Window(string title, float width, List<Item> items) {
+		public CWindow CWindow;
+
+		public Window(string title, float width, List<Item> items, bool showTitle = true) {
 			Title = title;
-			ShowTitle = true;
+			ShowTitle = showTitle;
 			Width = width;
 			Items = items;
 		}
@@ -33,19 +36,20 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		public class Item {
+			public string Label;
 			public string IconName;
 			public bool HasIcon = false;
-			public string Label;
+			public string Description;
+			public bool HasDescription = false;
 
-			public Item(string iconName, string label) {
+			public Item(string label, string description = null, string iconName = null) {
+				Label = label;
+
 				IconName = iconName;
-				HasIcon = true;
-				Label = label;
-			}
+				HasIcon = iconName != null;
 
-			public Item(string label) {
-				HasIcon = false;
-				Label = label;
+				Description = description;
+				HasDescription = description != null;
 			}
 		}
 
@@ -53,13 +57,8 @@ public class MenuUtil : MonoBehaviour {
 			public delegate void ButtonClickEvent();
 			public ButtonClickEvent OnButtonClick;
 
-			public Button(string iconName, string label, ButtonClickEvent onButtonClick)
-				: base(iconName, label) {
-				OnButtonClick = onButtonClick;
-			}
-
-			public Button(string label, ButtonClickEvent onButtonClick)
-				: base(label) {
+			public Button(ButtonClickEvent onButtonClick, string label, string description = null, string iconName = null)
+				: base(label, description, iconName) {
 				OnButtonClick = onButtonClick;
 			}
 		}
@@ -67,19 +66,27 @@ public class MenuUtil : MonoBehaviour {
 		public class Flyout : Item {
 			public Window SubWindow;
 
-			public Flyout(string iconName, string label, Window subWindow)
-				: base(iconName, label) {
-				SubWindow = subWindow;
-			}
-
-			public Flyout(string label, Window subWindow)
-				: base(label) {
+			public Flyout(Window subWindow, string label, string description = null, string iconName = null)
+				: base(label, description, iconName) {
 				SubWindow = subWindow;
 			}
 		}
 	}
 
+	public static CWindow[] ConvertWindows(params Window[] rcws) {
+		CWindow[] converted = new CWindow[rcws.Length];
+		for (int i = 0; i < rcws.Length; i++)
+			converted[i] = ConvertWindow(rcws[i]);
+
+		return converted;
+	}
+
 	public static CWindow ConvertWindow(Window rcw) {
+		if (rcw == null) {
+			Debug.LogError("Window is null!");
+			return null;
+		}
+
 		CWindow cw = new() {
 			Name = rcw.ShowTitle ? rcw.Title : "Right Click Window",
 			Config = new() {
@@ -114,7 +121,7 @@ public class MenuUtil : MonoBehaviour {
 
 		var finalLayoutItem =
 			WindowItem.NewLayout(
-				WindowItem.Components.Layout.VerticalDynamic(
+				PComponents.Layout.VerticalDynamic(
 					ItemSpacing,
 					TextAnchor.UpperLeft
 				),
@@ -123,6 +130,7 @@ public class MenuUtil : MonoBehaviour {
 			);
 
 		cw.Items = new[] { finalLayoutItem };
+		rcw.CWindow = cw;
 
 		return cw;
 	}
@@ -173,13 +181,13 @@ public class MenuUtil : MonoBehaviour {
 					)
 				);
 
-				CWindow subWindow = ConvertWindow(flyout.SubWindow);
+				CWindow subWindow = flyout.SubWindow.CWindow ?? ConvertWindow(flyout.SubWindow);
 
 				newItem = WindowItem.NewFlyoutTrigger(
-					item.Label,
-					new(subWindow, indicator),
-					layout
-				).WithSubItems(subs);
+						item.Label,
+						new(subWindow, indicator),
+						layout
+					).WithSubItems(subs);
 				break;
 
 			case Window.Button button:
@@ -196,6 +204,8 @@ public class MenuUtil : MonoBehaviour {
 				).WithSubItems(subs);
 				break;
 		}
+		if (item.HasDescription)
+			newItem.AddDescription(item.Description);
 
 		return newItem;
 	}

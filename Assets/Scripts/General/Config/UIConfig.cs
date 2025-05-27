@@ -8,6 +8,8 @@ public static partial class Config {
 			public static readonly float Smoothness = 20;
 			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
+			public static TMP_FontAsset DefaultFont { get { return Fonts.Roboto; } }
+			public static readonly FontWeight DefaultWeight		= FontWeight.Light;
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
 			public static readonly float FontSize				= 22;
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
@@ -17,8 +19,9 @@ public static partial class Config {
 		public static class Behaviour {
 			public static readonly int MaxFramesForRealization	= 5;
 			public static readonly float WindowMinDragDist		= 10;
-			public static readonly float FlyoutDistance			= 10;
+			public static readonly float FlyoutDistance			= 5;
 			public static readonly float FlyoutHoverMargin		= 50;
+			public static readonly int DescriptionHoverMs		= 500;
 		}
 
 		public static class Button {
@@ -32,6 +35,14 @@ public static partial class Config {
 
 		public static class RightClick {
 			public static readonly int WindowPadding	= 2;
+		}
+
+		public static class Description {
+			public static readonly Color Color				= new(.16f, .16f, .16f);
+			public static readonly int Padding				= 5;
+			public static readonly float FontSize			= 18;
+			public static readonly FontWeight FontWeight	= FontWeight.Light;
+			public static readonly Vector2 CursorOffset		= new(0, -30);
 		}
 
 		public static class Locations {

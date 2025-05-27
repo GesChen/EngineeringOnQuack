@@ -47,6 +47,7 @@ public class ScaleToContents : MonoBehaviour {
 		}
 	}
 
+	// doesnt work or something idk
 	void FastScale() {
 		Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(transform);
 		Vector2 size = bounds.size + new Vector3(padding.Left + padding.Right, padding.Up + padding.Down);

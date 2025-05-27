@@ -15,7 +15,7 @@ public static class TestWindows {
 			Items = new WindowItem[] {
 				WindowItem.NewLayout(
 					"Transform controls",
-					WindowItem.Components.Layout.Dynamic(5f),
+					PComponents.Layout.Dynamic(5f),
 					WindowItem.LayoutConfig.DynamicLayout(
 						FourSides.Zero,
 						FourSides.Even(5),
@@ -29,7 +29,7 @@ public static class TestWindows {
 								Position = new(0, 2/3f, 0, 0),
 								Margins = new(5)
 							},
-							new WindowItem.Components.Image("Icons/move")
+							new PComponents.Image("Icons/move")
 						),
 						WindowItem.NewButton(
 							"Rotate",
@@ -38,7 +38,7 @@ public static class TestWindows {
 								Position = new(0, 1/3f, 0, 1/3f),
 								Margins = new(5)
 							},
-							new WindowItem.Components.Image("Icons/rotate")
+							new PComponents.Image("Icons/rotate")
 						),
 						WindowItem.NewButton(
 							"Scale",
@@ -47,7 +47,7 @@ public static class TestWindows {
 								Position = new(0, 0, 0, 2/3f),
 								Margins = new(5)
 							},
-							new WindowItem.Components.Image("Icons/scale")
+							new PComponents.Image("Icons/scale")
 						)
 					})
 			}
