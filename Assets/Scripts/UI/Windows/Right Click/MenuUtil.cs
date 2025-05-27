@@ -49,7 +49,7 @@ public class MenuUtil : MonoBehaviour {
 				HasIcon = iconName != null;
 
 				Description = description;
-				HasDescription = description != null;
+				HasDescription = description != null && description != "";
 			}
 		}
 
@@ -88,7 +88,7 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		CWindow cw = new() {
-			Name = rcw.ShowTitle ? rcw.Title : "Right Click Window",
+			Name = rcw.ShowTitle ? rcw.Title : "Menu",
 			Config = new() {
 				Resizable = false,
 				Movable = false,
@@ -181,7 +181,9 @@ public class MenuUtil : MonoBehaviour {
 					)
 				);
 
-				CWindow subWindow = flyout.SubWindow.CWindow ?? ConvertWindow(flyout.SubWindow);
+				CWindow subWindow = flyout.SubWindow.CWindow;
+				if (subWindow == null) 
+					Debug.LogError($"Forgot to generate the subwindow of flyout {flyout.Label}");
 
 				newItem = WindowItem.NewFlyoutTrigger(
 						item.Label,
@@ -191,10 +193,15 @@ public class MenuUtil : MonoBehaviour {
 				break;
 
 			case Window.Button button:
+				List<UnityEngine.Events.UnityAction> action;
+				if (button.OnButtonClick != null)
+					action = new() { new(button.OnButtonClick) };
+				else action = new() { };
+				
 				newItem = WindowItem.NewButton(
-					new(new() { new(button.OnButtonClick) }),
-					layout
-				).WithSubItems(subs);
+						new(action),
+						layout
+					).WithSubItems(subs);
 				break;
 
 			case Window.Item:

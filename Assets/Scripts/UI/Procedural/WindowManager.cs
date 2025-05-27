@@ -29,7 +29,7 @@ public class WindowManager : MonoBehaviour {
 
 	void StartWindows() {
 		//RealiseWindows(TestWindows.Windows);
-		RealiseWindows(RightClickTest.Windows);
+		//RealiseWindows(RightClickTest.Windows);
 		RealiseWindows(RightClickMenus.GetWindows());
 	}
 

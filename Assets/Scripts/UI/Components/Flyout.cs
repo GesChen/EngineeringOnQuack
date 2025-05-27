@@ -16,14 +16,26 @@ public class Flyout : MonoBehaviour {
 
 	void Start() {
 		rt = GetComponent<RectTransform>();
-		LayoutRebuilder.ForceRebuildLayoutImmediate(rt); // hides instantly so must recalculate
+		// this thing doesnt work for shit for some reason
+		//LayoutRebuilder.ForceRebuildLayoutImmediate(rt); // hides instantly so must recalculate
+		//if (TryGetComponent(out ScaleToContents scale))
+			//scale.
 		canvas = GetComponentInParent<Canvas>();
+		//gameObject.SetActive(false);
 
-		gameObject.SetActive(false);
 	}
 
 	// only updates when visible (active)
 	void Update() {
+
+		// hacky workaround to give the ui elements time to load as active objects
+		// cuz forcerebuildlayoutimmediate doesnt wanna work for shit for some reason
+		// sorry future me
+		if (Time.frameCount == Config.UI.Behaviour.MaxFramesForRealization)
+			gameObject.SetActive(false);
+		if (Time.frameCount <= Config.UI.Behaviour.MaxFramesForRealization)
+			return;
+
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
 
 		if (!mouseInRange && !childOpen && !thisTrigger.selfHoverTarget.Hovering) {

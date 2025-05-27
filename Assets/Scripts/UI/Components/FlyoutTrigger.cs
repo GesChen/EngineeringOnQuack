@@ -23,15 +23,17 @@ public class FlyoutTrigger : MonoBehaviour {
 	void Start() {
 		rt = GetComponent<RectTransform>();
 
-		parentFlyout = GetComponentInParent<Flyout>();
-		parentIsFlyout = parentFlyout != null;
-
 		selfHoverTarget.OnHoverStateChange += HoverStateChange;
 
 		openIndicator.sprite = closedSprite;
 	}
 
 	void Update() {
+		if (parentFlyout == null && Time.frameCount < Config.UI.Behaviour.MaxFramesForRealization) {
+			parentFlyout = GetComponentInParent<Flyout>();
+			parentIsFlyout = parentFlyout != null;
+		}
+
 		CheckRealization();
 
 		open = targetFlyout.gameObject.activeSelf;

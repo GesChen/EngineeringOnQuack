@@ -19,8 +19,9 @@ public class Description : MonoBehaviour {
 	void Update() {
 		bool over = false;
 		if (descriptionInstance.rt != null)
-			over = UIHovers.CheckFirstAllowing(transform, descriptionInstance.rt);
-		else over = UIHovers.CheckStrictlyFirst(transform);
+			over = UIHovers.CheckFirstAllowing(transform, descriptionInstance.rt) || 
+				UIHovers.CheckFirstIgnoringChildren(transform);
+		else over = UIHovers.CheckFirstIgnoringChildren(transform);
 
 		if (over != lastMouseOver && over) {
 			mouseOverTime = Time.time;

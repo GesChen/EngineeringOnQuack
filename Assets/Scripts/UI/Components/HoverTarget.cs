@@ -21,6 +21,10 @@ public class HoverTarget : MonoBehaviour {
 		OnHoverStateChange = null; // reset, may get glitchy
 	}
 
+	void OnDisable() {
+		im.color = NormalColor;
+	}
+
 	void Start() {
 		im = GetComponent<Image>();
 		im.color = NormalColor;
