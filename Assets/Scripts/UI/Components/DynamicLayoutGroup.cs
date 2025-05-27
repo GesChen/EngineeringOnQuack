@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Combination of both Horizontal and Vertical layout groups.
+/// Which one used is based on the size of the element
+/// </summary>
 public class DynamicLayoutGroup : HorizontalOrVerticalLayoutGroup {
 	public bool IsVertical = true;
 

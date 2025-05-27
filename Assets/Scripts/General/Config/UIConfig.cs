@@ -4,6 +4,37 @@ using TMPro;
 
 public static partial class Config {
 	public static class UI {
+		public static class Visual {
+			public static readonly float Smoothness = 20;
+			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
+			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
+			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
+			public static readonly float FontSize				= 22;
+			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
+			public static readonly int OutlineThickness			= 2;
+		}
+
+		public static class Behaviour {
+			public static readonly int MaxFramesForRealization	= 5;
+			public static readonly float WindowMinDragDist		= 10;
+			public static readonly float FlyoutDistance			= 10;
+			public static readonly float FlyoutHoverMargin		= 50;
+		}
+
+		public static class Button {
+			public static readonly Color DefaultColor	= new(.27f, .27f, .27f);
+			public static readonly Color HoverColor		= new(.39f, .39f, .39f);
+			public static readonly Color PressedColor	= new(.45f, .45f, .45f);
+			public static readonly Color DisabledColor	= new(.16f, .16f, .16f);
+			public static readonly Color ToggledColor	= new(.33f, .33f, .33f);
+			public static readonly float FadeDuration = .05f;
+		}
+
+		public static class Locations {
+			public static readonly string FlyoutTriggerOpenSprite	= "Icons/dropdown open";
+			public static readonly string FlyoutTriggerClosedSprite	= "Icons/dropdown closed";
+		}
+
 		public static class Window {
 			public static readonly float CenterSnapRange = .65f; // 0-1: 0=no center 1=full center
 
@@ -28,25 +59,6 @@ public static partial class Config {
 					return powStart / (powStart + Mathf.Pow(1 - x, b));
 				}
 			}
-		}
-
-		public static class Visual {
-			public static readonly float Smoothness = 20;
-			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
-			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
-			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
-			public static readonly float FontSize				= 22;
-			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
-			public static readonly int OutlineThickness			= 2;
-		}
-
-		public static class Button {
-			public static readonly Color DefaultColor	= new(.27f, .27f, .27f);
-			public static readonly Color HoverColor		= new(.39f, .39f, .39f);
-			public static readonly Color PressedColor	= new(.45f, .45f, .45f);
-			public static readonly Color DisabledColor	= new(.16f, .16f, .16f);
-			public static readonly Color ToggledColor	= new(.33f, .33f, .33f);
-			public static readonly float FadeDuration = .05f;
 		}
 	}
 	/*

@@ -68,6 +68,38 @@ public class UIHovers : MonoBehaviour {
 		return false; // t wasn't found at all
 	}
 
+	public static bool CheckFirstIgnoringChildren(Transform t) {
+		PerformCheck();
+		if (hovers.Count == 0) return false;
+
+		foreach (var hover in hovers) {
+			if (hover == t)
+				return true;
+
+			// If hover is not a child of t, then t is not the first relevant
+			if (!hover.IsChildOf(t))
+				return false;
+		}
+
+		return false; // t wasn't found at all
+	}
+
+	public static bool CheckFirstIgnoringChildrenOfOther(Transform t, Transform other) {
+		PerformCheck();
+		if (hovers.Count == 0) return false;
+
+		foreach (var hover in hovers) {
+			if (hover == t)
+				return true;
+
+			// If hover is not a child of t, then t is not the first relevant
+			if (!hover.IsChildOf(other))
+				return false;
+		}
+
+		return false; // t wasn't found at all
+	}
+
 	// this kinda tedious work small change is a good use of ai
 	void Start() {
 		// Cache all raycasters

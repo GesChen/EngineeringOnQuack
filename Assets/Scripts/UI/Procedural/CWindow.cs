@@ -35,9 +35,12 @@ public class CWindow {
 
 		// scales with the content, overrides resizing
 		public bool ContentDynamic			= false;
+		public FourSides DynamicPadding		= FourSides.Zero;
 	}
 
 	public Configuration Config = new();
+
+	public LiveWindow RealisedWindow;
 }
 
 public class UIPosition {

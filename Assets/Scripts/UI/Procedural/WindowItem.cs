@@ -9,10 +9,10 @@ public class WindowItem {
 
 	public struct LayoutConfig {
 		public bool IsFixed;
+		public FourSides Padding;
 
 		// dynamic values
 		public FourSides Margins;
-		public FourSides Padding;
 		public FourSides Position; // anchor min max, side offset 
 
 		// fixed values
@@ -21,22 +21,30 @@ public class WindowItem {
 
 		public static LayoutConfig FillLayout => new() {
 			IsFixed = false,
+			Padding = new(0),
 
 			Margins = new(0),
-			Padding = new(0),
 			Position = new(0)
 		};
 
 		public static LayoutConfig DynamicLayout(FourSides margin, FourSides padding, FourSides position) => new() {
 			IsFixed = false,
+			Padding = padding,
 
 			Margins = margin,
-			Padding = padding,
 			Position = position
 		};
 
+		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size, FourSides padding) => new() {
+			IsFixed = true,
+			Padding = padding,
+
+			SizeDelta = size,
+			FixedPosition = position
+		};
 		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size) => new() {
 			IsFixed = true,
+			Padding = FourSides.Zero,
 
 			SizeDelta = size,
 			FixedPosition = position
@@ -69,13 +77,13 @@ public class WindowItem {
 	public class Components {
 		public class Image : Component {
 			public Color Color;
-			public string TextureResource;
+			public string SpriteResource;
 			public bool PreserveAspect; // explicity set to false only in special cases needed
 			// otherwise it makes sense to have it always true
 
 			public Image(Color color, string spriteResourcePath, bool preserveAspect) {
 				Color = color;
-				TextureResource = spriteResourcePath;
+				SpriteResource = spriteResourcePath;
 				PreserveAspect = preserveAspect;
 			}
 			public Image(Color color) : this(
@@ -93,12 +101,12 @@ public class WindowItem {
 		}
 
 		public class Button : Component {
-			public bool Enabled;
-			public Color NormalColor;
-			public Color HighlightedColor;
-			public Color PressedColor;
-			public Color DisabledColor;
-			public List<UnityEngine.Events.UnityAction> OnClick;
+			public bool Enabled				= true;
+			public Color NormalColor		= Config.UI.Button.DefaultColor;
+			public Color HighlightedColor	= Config.UI.Button.HoverColor;
+			public Color PressedColor		= Config.UI.Button.PressedColor;
+			public Color DisabledColor		= Config.UI.Button.DisabledColor;
+			public List<UnityEngine.Events.UnityAction> OnClick = new();
 
 			public Button(
 					bool enabled, 
@@ -115,13 +123,9 @@ public class WindowItem {
 				OnClick = onClick;
 			}
 
-			public Button(List<UnityEngine.Events.UnityAction> onClick) : this(
-				true,
-				Config.UI.Button.DefaultColor,
-				Config.UI.Button.HoverColor,
-				Config.UI.Button.PressedColor,
-				Config.UI.Button.DisabledColor,
-				onClick) { }
+			public Button(List<UnityEngine.Events.UnityAction> onClick) {
+				OnClick = onClick;
+			}
 
 			public Button() : this(
 				true,
@@ -134,11 +138,11 @@ public class WindowItem {
 
 		public class Text : Component {
 			public string Content;
-			public TMP_FontAsset Font;
-			public FontStyles Style;
-			public float FontSize;
-			public Color Color;
-			public TextAlignmentOptions Alignment;
+			public TMP_FontAsset Font =					Config.Fonts.Roboto;
+			public FontStyles Style =					FontStyles.Normal;
+			public float FontSize =						Config.UI.Visual.FontSize;
+			public Color Color =						Config.UI.Visual.TextColor;
+			public TextAlignmentOptions Alignment =		TextAlignmentOptions.TopLeft;
 
 			public Text(
 					string content, 
@@ -155,23 +159,21 @@ public class WindowItem {
 				Alignment = alignment;
 			}
 
-			public Text(string content) : this(
-				content,
-				Config.Fonts.Roboto,
-				FontStyles.Normal,
-				Config.UI.Visual.FontSize,
-				Config.UI.Visual.TextColor,
-				TextAlignmentOptions.TopLeft
-				) { }
+			public Text(string content) {
+				Content = content;
+			}
 
-			public Text(string content, Color color) : this(
-				content,
-				Config.Fonts.Roboto,
-				FontStyles.Normal,
-				Config.UI.Visual.FontSize,
-				color,
-				TextAlignmentOptions.TopLeft
-				) { }
+			public Text(string content, Color color) {
+				Content = content;
+				Color = color;
+			}
+
+			public Text(
+					string content,
+					TextAlignmentOptions alignment) {
+				Content = content;
+				Alignment = alignment;
+			}
 		}
 
 		public class Layout : Component {
@@ -306,8 +308,41 @@ public class WindowItem {
 			public float SizeMultiplier;
 		}
 
-		public class Dropdown : Component {
-			
+		public class HoverTarget : Component {
+			public Color NormalColor	= Config.UI.Button.DefaultColor;
+			public Color HoverColor		= Config.UI.Button.HoverColor;
+			public float FadeDuration	= Config.UI.Button.FadeDuration;
+
+			public HoverTarget(Color normalColor, Color hoverColor, float fadeDuration) {
+				NormalColor = normalColor;
+				HoverColor = hoverColor;
+				FadeDuration = fadeDuration;
+			}
+
+			public HoverTarget() { }
+		}
+
+		public class FlyoutTrigger : Component {
+			public CWindow TargetFlyout;
+			public WindowItem IndicatorImage;
+			public string openSpriteLocation	= Config.UI.Locations.FlyoutTriggerOpenSprite;
+			public string closedSpriteLocation	= Config.UI.Locations.FlyoutTriggerClosedSprite;
+
+			public FlyoutTrigger(CWindow targetFlyout, WindowItem indicatorImage, string openSpriteLocation, string closedSpriteLocation) {
+				TargetFlyout = targetFlyout;
+				IndicatorImage = indicatorImage;
+				this.openSpriteLocation = openSpriteLocation;
+				this.closedSpriteLocation = closedSpriteLocation;
+			}
+
+			public FlyoutTrigger(CWindow targetFlyout) {
+				TargetFlyout = targetFlyout;
+			}
+
+			public FlyoutTrigger(CWindow targetFlyout, WindowItem indicatorImage) {
+				TargetFlyout = targetFlyout;
+				IndicatorImage = indicatorImage;
+			}
 		}
 	}
 
@@ -381,5 +416,18 @@ public class WindowItem {
 			);
 	public static WindowItem NewLayout(Components.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items)
 		=> NewLayout("Layout", layoutComponent, layout, items);
+
+	public static WindowItem NewFlyoutTrigger(string name, Components.FlyoutTrigger trigger, LayoutConfig layout)
+		=> new(
+			name,
+			layout,
+			new() {
+				new Components.Image(),
+				new Components.HoverTarget(),
+				trigger },
+			null
+			);
+	public static WindowItem NewFlyoutTrigger(Components.FlyoutTrigger trigger, LayoutConfig layout)
+		=> NewFlyoutTrigger("Flyout Trigger", trigger, layout);
 	#endregion
 }

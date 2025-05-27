@@ -40,6 +40,21 @@ public class WindowRealiser : MonoBehaviour {
 		component.Config = window.Config;
 		component.backgroundImage = bgRT;
 		component.cornerNodes = nodes;
+		component.contentsContainer = contentParent;
+
+		// set up dynamic window
+		if (window.Config.ContentDynamic) {
+			var scaler = contentParent.gameObject.AddComponent<ScaleToContents>();
+			scaler.padding = window.Config.DynamicPadding;
+
+			var mainScale = newWindow.AddComponent<ScaleToTarget>();
+			mainScale.target = contentParent;
+
+			contentParent.anchorMin = new(.5f, .5f);
+			contentParent.anchorMax = new(.5f, .5f);
+		}
+
+		window.RealisedWindow = component;
 
 		return component;
 	}
@@ -81,26 +96,13 @@ public class WindowRealiser : MonoBehaviour {
 		var (newObj, rt) =
 			MakeNewRT(item.Name, container);
 
-		// add components
-		if (item.Construction != null)
-			foreach (var comp in item.Construction)
-				AddComponent(comp, newObj, item);
+		// some comps need to be made before others
+		PutTypeFirst<WindowItem.Components.HoverTarget>(ref item.Construction);
+		PutTypeFirst<WindowItem.Components.Image>(ref item.Construction);
 
-		// position properly
-		rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
-		rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
-
-		if (item.Layout.Margins != null) {
-			rt.offsetMin = new(item.Layout.Margins.Left, item.Layout.Margins.Down);
-			rt.offsetMax = new(-item.Layout.Margins.Right, -item.Layout.Margins.Up);
-		} else {
-			rt.offsetMin = Vector2.zero;
-			rt.offsetMax = Vector2.zero;
-		}
-
+		RectTransform contentsRT = rt;
 		if (item.SubItems != null && item.SubItems.Count > 0) {
 			// padding
-			RectTransform contentsRT = rt;
 
 			// layouts have their own padding
 			// and items have to be directly inside so no padding object
@@ -109,6 +111,8 @@ public class WindowRealiser : MonoBehaviour {
 				var (_, padRT) =
 					MakeNewRT("Contents", rt);
 
+				padRT.anchorMin = Vector2.zero;
+				padRT.anchorMax = Vector2.one;
 				padRT.offsetMin = new(item.Layout.Padding.Left, item.Layout.Padding.Down);
 				padRT.offsetMax = new(-item.Layout.Padding.Right, -item.Layout.Padding.Up);
 
@@ -119,26 +123,56 @@ public class WindowRealiser : MonoBehaviour {
 			}
 		}
 
+		// add components
+		if (item.Construction != null)
+			foreach (var comp in item.Construction)
+				AddComponent(comp, newObj, item, contentsRT);
+
+		// position properly
+		if (item.Layout.IsFixed) {
+			// fixed positioning
+			rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
+			rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
+			rt.pivot = item.Layout.FixedPosition.Pivot;
+			rt.anchoredPosition = item.Layout.FixedPosition.Position;
+			rt.sizeDelta = item.Layout.SizeDelta;
+
+		} else {
+			// dynamic positioning
+			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
+			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
+
+			if (item.Layout.Margins != null) {
+				rt.offsetMin = new(item.Layout.Margins.Left, item.Layout.Margins.Down);
+				rt.offsetMax = new(-item.Layout.Margins.Right, -item.Layout.Margins.Up);
+			} else {
+				rt.offsetMin = Vector2.zero;
+				rt.offsetMax = Vector2.zero;
+			}
+		}
+
 		return rt;
 	}
 
-	void AddComponent(WindowItem.Component comp, GameObject newObj, WindowItem originalItem) {
+	void PutTypeFirst<T>(ref List<WindowItem.Component> components) where T : WindowItem.Component {
+		for (int i = 0; i < components.Count; i++) {
+			if (components[i] is T ht) {
+				// hopefully this shit code works 
+				components.RemoveAt(i);
+				components.Insert(0, ht);
+			}
+		}
+	}
+
+	void AddComponent(WindowItem.Component comp, GameObject newObj, WindowItem originalItem, RectTransform contentsRT) {
 		switch (comp) {
 			case WindowItem.Components.Image im:
 				Image image = newObj.AddComponent<Image>();
 				image.color = im.Color;
 				image.preserveAspect = im.PreserveAspect;
 
-				if (im.TextureResource != null && im.TextureResource != "") {
-					Object load = Resources.Load(im.TextureResource);
-					Texture2D tex = load as Texture2D;
-					if (load == null)
-						Debug.LogError($"Item at {im.TextureResource} doesn't exist");
-					if (tex == null)
-						Debug.LogError($"Item at {im.TextureResource} is not a Texture2D, is {load.GetType()}");
-
-					Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-					sprite.name = tex.name;
+				if (im.SpriteResource != null && im.SpriteResource != "") {
+					Sprite sprite = Resources.Load<Sprite>(im.SpriteResource);
 					image.sprite = sprite;
 				}
 				break;
@@ -177,6 +211,10 @@ public class WindowRealiser : MonoBehaviour {
 				text.fontSize = tx.FontSize;
 				text.color = tx.Color;
 				text.alignment = tx.Alignment;
+
+				if (!originalItem.Layout.IsFixed)
+					text.margin = originalItem.Layout.Padding.ToTMProType();
+
 				break;
 
 			case WindowItem.Components.Layout lt:
@@ -246,6 +284,51 @@ public class WindowRealiser : MonoBehaviour {
 				var element = newObj.AddComponent<LayoutElement>();
 				element.flexibleWidth = le.SizeMultiplier;
 				element.flexibleHeight = le.SizeMultiplier;
+				break;
+
+			case WindowItem.Components.HoverTarget ht:
+				var htComp = newObj.AddComponent<HoverTarget>();
+
+				htComp.NormalColor = ht.NormalColor;
+				htComp.HoverColor = ht.HoverColor;
+				htComp.FadeDuration = ht.FadeDuration;
+
+				break;
+
+			case WindowItem.Components.FlyoutTrigger ft:
+				var ftComp = newObj.AddComponent<FlyoutTrigger>();
+
+				// find hovertarget component
+				var htInstance = newObj.GetComponent<HoverTarget>();
+				if (htInstance == null) {
+					Debug.LogError("Missing HoverTarget Component on FlyoutTrigger");
+					return;
+				}
+
+				ftComp.selfHoverTarget = htInstance;
+				ftComp.targetCWindow = ft.TargetFlyout;
+
+				// check for image component
+				if (!ft.IndicatorImage.Construction.Any(c=>c is WindowItem.Components.Image)) {
+					Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
+					break;
+				}
+
+				// make and set indicator image
+				var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
+				ftComp.openIndicator = indicatorImage.GetComponent<Image>();
+
+				// get the open and closed sprites
+				if (ft.openSpriteLocation != null && ft.openSpriteLocation != "") 
+					ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
+				else 
+					Debug.LogError("Flyout trigger missing open sprite location");
+				
+				if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "") 
+					ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
+				else
+					Debug.LogError("Flyout trigger missing closed sprite location");
+
 				break;
 		}
 	}

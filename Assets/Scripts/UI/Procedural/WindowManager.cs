@@ -27,13 +27,17 @@ public class WindowManager : MonoBehaviour {
 	}
 
 	void StartWindows() {
-		CWindow[] torealise = TestWindows.Windows;
+		RealiseWindows(TestWindows.Windows);
+		RealiseWindows(RightClickTest.Windows);
+	}
 
-		foreach(var window in torealise) {
+	void RealiseWindows(CWindow[] torealise) {
+		foreach (var window in torealise) {
 			var realised = realiser.Realise(window);
 			windows.Add(realised);
 		}
 	}
+
 
 	void CreatePreviewWindow() {
 		GameObject newObj = new("Window Preview");

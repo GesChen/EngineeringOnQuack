@@ -6,6 +6,7 @@ using UnityEngine;
 public class LiveWindow : MonoBehaviour {
 	public List<WindowSizeNode> cornerNodes = new();
 	public Transform backgroundImage;
+	public Transform contentsContainer;
 	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
 	[HideInNormalInspector] public bool dragging = false;
@@ -76,19 +77,31 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	Vector2 dragOffset;
+	Vector2 dragStartPos;
+	bool goodToStartDragging = false;
 	void HandleDrag() {
-		bool hovered = UIHovers.CheckStrictlyFirst(backgroundImage);
+		bool hovered = UIHovers.CheckFirstIgnoringChildrenOfOther(backgroundImage, contentsContainer);
 		if (!hovered && !dragging) return;
 
 		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame) {
 			dragging = true;
 			dragOffset = (Vector2)rt.position - Conatrols.Mouse.Position;
+			dragStartPos = Conatrols.Mouse.Position;
+			transform.SetAsLastSibling();
+
+			goodToStartDragging = false;
 		}
 		if (Conatrols.Mouse.Left.ReleasedThisFrame) {
 			dragging = false;
 		}
 
 		if (dragging) {
+			if (Vector2.Distance(dragStartPos, Conatrols.Mouse.Position) >
+				global::Config.UI.Behaviour.WindowMinDragDist)
+				goodToStartDragging = true;
+
+			if (!goodToStartDragging) return;
+
 			transform.position = Conatrols.Mouse.Position + dragOffset;
 
 			// prevent going off the sides

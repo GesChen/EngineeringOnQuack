@@ -20,6 +20,9 @@ public class FourSides {
 	public RectOffset ToUnityType() // for padding and large number typed. 
 		=> new((int)Left, (int)Right, (int)Up, (int)Down);
 
+	public Vector4 ToTMProType()
+		=> new(Left, Up, Right, Down);
+
 	public static FourSides Zero => new(0, 0, 0, 0);
 	public static FourSides Even(float v) => new(v, v, v, v);
 }
