@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // this file will probably not be used in final but here for temporary 
+// this is being used alot more than im expecting man im ngl
 public class WindowManager : MonoBehaviour {
 	public List<LiveWindow> windows;
 	public WindowRealiser realiser;
@@ -28,7 +29,9 @@ public class WindowManager : MonoBehaviour {
 
 	void StartWindows() {
 		RealiseWindows(TestWindows.Windows);
-		RealiseWindows(RightClickTest.Windows);
+
+		CWindow rct = MenuUtil.ConvertWindow(RightClickMenus.testWindow);
+		RealiseWindows(new[] { rct });
 	}
 
 	void RealiseWindows(CWindow[] torealise) {
@@ -37,7 +40,6 @@ public class WindowManager : MonoBehaviour {
 			windows.Add(realised);
 		}
 	}
-
 
 	void CreatePreviewWindow() {
 		GameObject newObj = new("Window Preview");

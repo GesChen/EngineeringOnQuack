@@ -30,9 +30,14 @@ public static partial class Config {
 			public static readonly float FadeDuration = .05f;
 		}
 
+		public static class RightClick {
+			public static readonly int WindowPadding	= 2;
+		}
+
 		public static class Locations {
-			public static readonly string FlyoutTriggerOpenSprite	= "Icons/dropdown open";
-			public static readonly string FlyoutTriggerClosedSprite	= "Icons/dropdown closed";
+			public static readonly string IconsFolder				= "Icons/";
+			public static readonly string FlyoutTriggerOpenSprite	= IconsFolder + "dropdown open";
+			public static readonly string FlyoutTriggerClosedSprite	= IconsFolder + "dropdown closed";
 		}
 
 		public static class Window {
