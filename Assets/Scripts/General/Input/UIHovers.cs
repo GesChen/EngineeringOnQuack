@@ -5,28 +5,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIHovers : MonoBehaviour {
-	#region singleton
-	private static UIHovers _instance;
-	public static UIHovers Instance { get { return _instance; } }
-	void Awake() { UpdateSingleton(); }
-	private void OnEnable() { UpdateSingleton(); }
-	void UpdateSingleton() {
-		if (_instance != null && _instance != this) {
-			Destroy(this);
-		} else {
-			_instance = this;
-		}
-	}
+public class UIHovers : Singleton<UIHovers> {
 	
 	static void PerformCheck() {
-		if (_instance == null) {
-			throw new("UIHovers singleton missing!");
-		}
-		if (_instance.canvases.Count == 0)
+		if (Instance.canvases.Count == 0)
 			Debug.LogWarning("UIHovers canvases list is empty");
 	}
-	#endregion
 
 	public List<Canvas> canvases; // Assign in Inspector or pass programmatically
 	private List<GraphicRaycaster> graphicRaycasters = new();

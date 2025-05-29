@@ -32,26 +32,8 @@ struct SerializableSubassembly
 	public List<int> partIds;
 }
 
-public class BuildingManager : MonoBehaviour
+public class BuildingManager : Singleton<BuildingManager>
 {
-	#region singleton
-	private static BuildingManager _instance;
-	public static BuildingManager Instance { get { return _instance; } }
-	void Awake() { UpdateSingleton(); }
-	private void OnEnable() { UpdateSingleton(); }
-	void UpdateSingleton()
-	{
-		if (_instance != null && _instance != this)
-		{
-			Destroy(this);
-		}
-		else
-		{
-			_instance = this;
-		}
-	}
-	#endregion
-
 	public Transform mainPartsContainer;
 	public List<BasePart> BaseParts;
 	public List<Part> Parts;
