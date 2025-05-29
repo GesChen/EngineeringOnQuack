@@ -5,11 +5,13 @@ using UnityEngine.UI;
 
 public class HoverTarget : MonoBehaviour {
 	public bool Hovering { get; private set; }
-	private bool m_Hovering;
+	private bool m_Hovering = false;
 
-	public Color NormalColor;
-	public Color HoverColor;
-	public float FadeDuration;
+	public bool AlreadyHasButton = false;
+
+	public Color NormalColor = Config.UI.Button.DefaultColor;
+	public Color HoverColor = Config.UI.Button.HoverColor;
+	public float FadeDuration = Config.UI.Button.FadeDuration;
 
 	public delegate void HoverStateChangeEvent(bool state);
 	public event HoverStateChangeEvent OnHoverStateChange;
@@ -22,12 +24,16 @@ public class HoverTarget : MonoBehaviour {
 	}
 
 	void OnDisable() {
-		im.color = NormalColor;
+		if (!AlreadyHasButton)
+			im.color = NormalColor;
 	}
 
 	void Start() {
 		im = GetComponent<Image>();
-		im.color = NormalColor;
+		AlreadyHasButton = GetComponent<Button>() != null;
+
+		if (!AlreadyHasButton)
+			im.color = NormalColor;
 	}
 
 	void Update() {
@@ -37,7 +43,7 @@ public class HoverTarget : MonoBehaviour {
 		if (m_Hovering != lastHovering) {
 			OnHoverStateChange?.Invoke(m_Hovering);
 
-			if (im != null) {
+			if (im != null && !AlreadyHasButton) {
 				Color targetColor = m_Hovering ? HoverColor : NormalColor;
 				StartCoroutine(LerpColor(im, targetColor, FadeDuration));
 			}

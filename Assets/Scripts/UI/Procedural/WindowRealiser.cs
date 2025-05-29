@@ -340,6 +340,10 @@ public class WindowRealiser : MonoBehaviour {
 				var dsComp = newObj.AddComponent<Description>();
 				dsComp.Text = ds.Text;
 				break;
+
+			case PComponents.FlyoutHider:
+				newObj.AddComponent<FlyoutHider>();
+				break;
 		}
 	}
 

@@ -72,11 +72,15 @@ public class WindowItem {
 	public void AddDescription(string description) {
 		Construction.Add(new PComponents.Description(description));
 	}
+	public WindowItem AddComponents(params PComponents.Component[] comps) {
+		Construction.AddRange(comps);
+		return this;
+	}
 	public WindowItem SetLayoutElement(PComponents.LayoutElement element) {
 		Construction.Add(element);
 		return this;
 	}
-	
+
 	private WindowItem(
 		string name, 
 		LayoutConfig layout, 
@@ -164,5 +168,19 @@ public class WindowItem {
 			);
 	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout)
 		=> NewFlyoutTrigger("Flyout Trigger", trigger, layout);
+
+	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout)
+		=> new(
+			name,
+			layout,
+			new() {
+				new PComponents.Image(),
+				hover,
+				trigger },
+			null
+			);
+	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout)
+		=> NewFlyoutTrigger("Flyout Trigger", trigger, hover, layout);
+
 	#endregion
 }

@@ -35,25 +35,42 @@ public class PComponents {
 
 	public class Button : Component {
 		public bool Enabled = true;
-		public Color NormalColor = Config.UI.Button.DefaultColor;
-		public Color HighlightedColor = Config.UI.Button.HoverColor;
-		public Color PressedColor = Config.UI.Button.PressedColor;
-		public Color DisabledColor = Config.UI.Button.DisabledColor;
+		public Color NormalColor		= Config.UI.Button.DefaultColor;
+		public Color HighlightedColor	= Config.UI.Button.HoverColor;
+		public Color PressedColor		= Config.UI.Button.PressedColor;
+		public Color DisabledColor		= Config.UI.Button.DisabledColor;
 		public List<UnityEngine.Events.UnityAction> OnClick = new();
 
 		public Button(
-				bool enabled,
-				Color normalColor,
-				Color highlightedColor,
-				Color pressedColor,
-				Color disabledColor,
-				List<UnityEngine.Events.UnityAction> onClick) {
+			bool enabled,
+			Color normalColor,
+			Color highlightedColor,
+			Color pressedColor,
+			Color disabledColor,
+			List<UnityEngine.Events.UnityAction> onClick) {
 			Enabled = enabled;
 			NormalColor = normalColor;
 			HighlightedColor = highlightedColor;
 			PressedColor = pressedColor;
 			DisabledColor = disabledColor;
 			OnClick = onClick;
+		}
+
+		// less efficient full customization
+		public Button(
+			List<UnityEngine.Events.UnityAction> onClick,
+			bool enabled = true,
+			Color? normalColor = null,
+			Color? highlightedColor = null,
+			Color? pressedColor = null,
+			Color? disabledColor = null) {
+
+			OnClick = onClick;
+			Enabled = enabled;
+			NormalColor			= normalColor		?? Config.UI.Button.DefaultColor;
+			HighlightedColor	= highlightedColor	?? Config.UI.Button.HoverColor;
+			PressedColor		= pressedColor		?? Config.UI.Button.PressedColor;
+			DisabledColor		= disabledColor		?? Config.UI.Button.DisabledColor;
 		}
 
 		public Button(List<UnityEngine.Events.UnityAction> onClick) {
@@ -243,14 +260,23 @@ public class PComponents {
 	}
 
 	public class HoverTarget : Component {
-		public Color NormalColor = Config.UI.Button.DefaultColor;
-		public Color HoverColor = Config.UI.Button.HoverColor;
-		public float FadeDuration = Config.UI.Button.FadeDuration;
+		public Color NormalColor	= Config.UI.Button.DefaultColor;
+		public Color HoverColor		= Config.UI.Button.HoverColor;
+		public float FadeDuration	= Config.UI.Button.FadeDuration;
 
 		public HoverTarget(Color normalColor, Color hoverColor, float fadeDuration) {
 			NormalColor = normalColor;
 			HoverColor = hoverColor;
 			FadeDuration = fadeDuration;
+		}
+		public HoverTarget(
+			Color? normalColor	= null, 
+			Color? hoverColor	= null, 
+			float? fadeDuration	= null) {
+			
+			NormalColor		= normalColor	?? Config.UI.Button.DefaultColor;
+			HoverColor		= hoverColor	?? Config.UI.Button.HoverColor;
+			FadeDuration	= fadeDuration	?? Config.UI.Button.FadeDuration;
 		}
 
 		public HoverTarget() { }
@@ -284,6 +310,13 @@ public class PComponents {
 
 		public Description(string text) {
 			Text = text;
+		}
+	}
+
+	public class FlyoutHider : Component {
+		// this literally just exists to exist
+		public FlyoutHider() {
+
 		}
 	}
 }

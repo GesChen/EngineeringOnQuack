@@ -8,11 +8,14 @@ public class Flyout : MonoBehaviour {
 	// no serialized members either
 
 	[HideInNormalInspector] public bool mouseInRange;
-	[HideInNormalInspector] public Flyout childFlyout;
-	[HideInNormalInspector] public bool childOpen;
+	[HideInNormalInspector] public Flyout openChildFlyout;
+	FlyoutTrigger[] childTriggers = new FlyoutTrigger[0];
 	RectTransform rt;
 	Canvas canvas;
 	FlyoutTrigger thisTrigger;
+	bool childOpen;
+
+	int lastChildCount = 0;
 
 	void Start() {
 		rt = GetComponent<RectTransform>();
@@ -38,9 +41,20 @@ public class Flyout : MonoBehaviour {
 
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
 
+		childOpen = openChildFlyout != null && openChildFlyout.gameObject.activeSelf;
 		if (!mouseInRange && !childOpen && !thisTrigger.selfHoverTarget.Hovering) {
 			Hide();
 		}
+
+		int count = transform.childCount;
+		if (count != lastChildCount) {
+			GetChildTriggers();
+		}
+		lastChildCount = count;
+	}
+
+	void GetChildTriggers() {
+		childTriggers = GetComponentsInChildren<FlyoutTrigger>();
 	}
 
 	public bool CheckMouseValidity(float margin) {
@@ -97,9 +111,21 @@ public class Flyout : MonoBehaviour {
 	}
 
 	public void Hide() {
-		if (childFlyout != null)
-			childFlyout.Hide();
+		if (openChildFlyout != null)
+			openChildFlyout.Hide();
 
 		gameObject.SetActive(false);
+	}
+
+	public void HideAllChildFlyouts() {
+		foreach(var trigger in childTriggers) {
+			trigger.targetFlyout.Hide();
+		}
+	}
+	public void HideAllChildFlyoutsExcept(Transform t) {
+		foreach (var trigger in childTriggers) {
+			if (trigger.transform != t)
+				trigger.targetFlyout.Hide();
+		}
 	}
 }

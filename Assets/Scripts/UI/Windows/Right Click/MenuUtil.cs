@@ -42,7 +42,7 @@ public class MenuUtil : MonoBehaviour {
 			public string Description;
 			public bool HasDescription = false;
 
-			public Item(string label, string description = null, string iconName = null) {
+			protected Item(string label, string description = null, string iconName = null) {
 				Label = label;
 
 				IconName = iconName;
@@ -51,6 +51,11 @@ public class MenuUtil : MonoBehaviour {
 				Description = description;
 				HasDescription = description != null && description != "";
 			}
+		}
+
+		public class Text : Item {
+			public Text(string label, string description = null, string iconName = null)
+				: base(label, description, iconName) { }
 		}
 
 		public class Button : Item {
@@ -186,10 +191,12 @@ public class MenuUtil : MonoBehaviour {
 					Debug.LogError($"Forgot to generate the subwindow of flyout {flyout.Label}");
 
 				newItem = WindowItem.NewFlyoutTrigger(
-						item.Label,
-						new(subWindow, indicator),
-						layout
-					).WithSubItems(subs);
+					item.Label,
+					new(subWindow, indicator),
+					new(normalColor: Config.UI.Visual.BackgroundColor),
+					layout
+					).WithSubItems(subs)
+					.AddComponents(new PComponents.FlyoutHider());
 				break;
 
 			case Window.Button button:
@@ -199,14 +206,20 @@ public class MenuUtil : MonoBehaviour {
 				else action = new() { };
 				
 				newItem = WindowItem.NewButton(
-						new(action),
-						layout
-					).WithSubItems(subs);
+					item.Label,
+					new(
+						action,
+						normalColor: Config.UI.Visual.BackgroundColor
+						),
+					layout
+					).WithSubItems(subs)
+					.AddComponents(new PComponents.FlyoutHider());
 				break;
 
-			case Window.Item:
-				newItem = WindowItem.NewImage(
-					new(Config.UI.Visual.BackgroundColor),
+			case Window.Text:
+				newItem = WindowItem.NewText(
+					item.Label,
+					new(item.Label),
 					layout
 				).WithSubItems(subs);
 				break;

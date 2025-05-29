@@ -3,17 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(HoverTarget))]
 public class FlyoutTrigger : MonoBehaviour {
-	public HoverTarget selfHoverTarget;
 	public Flyout targetFlyout;
 
 	public Image openIndicator;
 	public Sprite openSprite;
 	public Sprite closedSprite;
 
+	[HideInNormalInspector] public HoverTarget selfHoverTarget;
+
 	// potentially null until it gets realised
 	[HideInNormalInspector] public CWindow targetCWindow;
-	[HideInInspector] public RectTransform rt;
+	[HideInNormalInspector] public RectTransform rt;
 
 	bool parentIsFlyout;
 	Flyout parentFlyout;
@@ -23,6 +25,7 @@ public class FlyoutTrigger : MonoBehaviour {
 	void Start() {
 		rt = GetComponent<RectTransform>();
 
+		selfHoverTarget = GetComponent<HoverTarget>();
 		selfHoverTarget.OnHoverStateChange += HoverStateChange;
 
 		openIndicator.sprite = closedSprite;
@@ -74,17 +77,7 @@ public class FlyoutTrigger : MonoBehaviour {
 			return;
 		}
 
-		if (state) {
-			
-			// hide all other flyouts of siblings
-			foreach (Transform child in rt.parent) {
-				if (child != transform) {
-					if (child.TryGetComponent<FlyoutTrigger>(out var trigger)) {
-						trigger.targetFlyout.Hide();
-					}
-				}
-			}
-			
+		if (state) {			
 			targetFlyout.Show(this);
 		} else {
 
@@ -93,8 +86,7 @@ public class FlyoutTrigger : MonoBehaviour {
 		}
 
 		if (parentIsFlyout) {
-			parentFlyout.childFlyout = targetFlyout;
-			parentFlyout.childOpen = open;
+			parentFlyout.openChildFlyout = targetFlyout;
 		}
 	}
 }
