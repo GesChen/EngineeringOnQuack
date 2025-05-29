@@ -44,6 +44,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 			}
 
 			_instance = this as T;
+			_applicationIsQuitting = false;
 
 			// Optional: Persist singleton across scenes
 			if (ShouldPersist()) {
@@ -63,19 +64,21 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 			_applicationIsQuitting = true;
 		}
 	}
-
+	// ask chatgpt again about this idfk
+/*
 #if UNITY_EDITOR
 	// Clear instance on domain reload / script recompilation in Editor to avoid stale references
 	[UnityEditor.InitializeOnLoadMethod]
-	private static void EditorInitialize() {
+	protected static void EditorInitialize() {
 		_instance = null;
 		_applicationIsQuitting = false;
 	}
 #endif
 
-	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-	private static void RuntimeInitialize() {
+	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+	public static void RuntimeInitialize() {
+		Debug.Log("reset");
 		_instance = null;
 		_applicationIsQuitting = false;
-	}
+	}*/
 }

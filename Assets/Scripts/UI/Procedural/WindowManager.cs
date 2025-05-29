@@ -19,25 +19,17 @@ public class WindowManager : MonoBehaviour {
 
 	public bool anyDragging = false;
 
-	void Start() {
-		StartWindows();
-
-		canvas = GetComponent<Canvas>();
-		canvasRect = canvas.GetComponent<RectTransform>();
-		CreatePreviewWindow();
-	}
-
-	void StartWindows() {
-		//RealiseWindows(TestWindows.Windows);
-		//RealiseWindows(RightClickTest.Windows);
-		RealiseWindows(RightClickMenus.GetWindows());
-	}
-
-	void RealiseWindows(CWindow[] torealise) {
+	public void RealiseWindows(params CWindow[] torealise) {
 		foreach (var window in torealise) {
 			var realised = realiser.Realise(window);
 			windows.Add(realised);
 		}
+	}
+
+	void Start() {
+		canvas = GetComponent<Canvas>();
+		canvasRect = canvas.GetComponent<RectTransform>();
+		CreatePreviewWindow();
 	}
 
 	void CreatePreviewWindow() {
