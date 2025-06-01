@@ -1,47 +1,68 @@
-public class EditingContext : IContext {
-	public string Name => "EditingContext";
-	public IContext Parent { get; }
-	public EditingContext() { Parent = null; }
-}
+using System;
 
-
-public class SceneSelection : IContext {
-	public string Name => "SceneSelection";
-	public IContext Parent { get; }
-	public SceneSelection(EditingContext parent = null) {
-		Parent = parent ?? throw new System.ArgumentNullException(nameof(parent));
+namespace Contexts {
+	public class Main : IContext {
+		public string Name => "Main";
+		public IContext Parent { get; set; }
+		public Type ParentType => null;
+		public Main() { }
 	}
-}
 
-public class NoSelection : IContext {
-	public string Name => "NoSelection";
-	public IContext Parent { get; }
-	public NoSelection(SceneSelection parent = null) {
-		Parent = parent ?? throw new System.ArgumentNullException(nameof(parent));
+	public class Editing : IContext {
+		public string Name => "Editing";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(Main);
+		public Editing(IContext parent) => ((IContext)this).SetParent(parent);
+		public Editing() { }
 	}
-}
 
-public class SingleSelection : IContext {
-	public string Name => "SingleSelection";
-	public IContext Parent { get; }
-	public SingleSelection(SceneSelection parent = null) {
-		Parent = parent ?? throw new System.ArgumentNullException(nameof(parent));
+	public class InWorld : IContext {
+		public string Name => "InWorld";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(Editing);
+		public InWorld(IContext parent) => ((IContext)this).SetParent(parent);
+		public InWorld() { }
 	}
-}
 
-public class MultipleSelection : IContext {
-	public string Name => "MultipleSelection";
-	public IContext Parent { get; }
-	public MultipleSelection(SceneSelection parent = null) {
-		Parent = parent ?? throw new System.ArgumentNullException(nameof(parent));
+	public class NoSelection : IContext {
+		public string Name => "NoSelection";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(InWorld);
+		public NoSelection(IContext parent) => ((IContext)this).SetParent(parent);
+		public NoSelection() { }
 	}
-}
 
-
-public class UISelection : IContext {
-	public string Name => "UISelection";
-	public IContext Parent { get; }
-	public UISelection(EditingContext parent = null) {
-		Parent = parent ?? throw new System.ArgumentNullException(nameof(parent));
+	public class SingleSelection : IContext {
+		public string Name => "SingleSelection";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(InWorld);
+		public SingleSelection(IContext parent) => ((IContext)this).SetParent(parent);
+		public SingleSelection() { }
 	}
+
+	public class MultiSelection : IContext {
+		public string Name => "MultiSelection";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(InWorld);
+		public MultiSelection(IContext parent) => ((IContext)this).SetParent(parent);
+		public MultiSelection() { }
+	}
+
+	public class OverUI : IContext {
+		public string Name => "OverUI";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(Editing);
+		public OverUI(IContext parent) => ((IContext)this).SetParent(parent);
+		public OverUI() { }
+	}
+
+	/*
+	 * main 
+	 * editing
+	 * inworld
+	 * noselection
+	 * singleselection
+	 * multiselection
+	 * overui
+	 */
 }

@@ -24,6 +24,10 @@ public class UIHovers : Singleton<UIHovers> {
 	private PointerEventData pointerEventData;
 	private EventSystem eventSystem;
 
+	public static bool AnyHovers() {
+		return hovers.Count != 0;
+	}
+
 	public static bool CheckIgnoreOrder(Transform t) {
 		PerformCheck();
 		return hovers.Contains(t);

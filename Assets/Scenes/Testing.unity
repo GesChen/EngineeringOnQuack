@@ -5104,8 +5104,8 @@ GameObject:
   - component: {fileID: 1569215799}
   - component: {fileID: 1569215800}
   - component: {fileID: 1569215801}
-  - component: {fileID: 1569215803}
   - component: {fileID: 1569215804}
+  - component: {fileID: 1569215805}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -5153,21 +5153,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd02b984e6e914049a455a13fc0ba9aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1569215803
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1569215798}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 154fc94c9b4ac0b43b21b3ae67c927ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contextPreview: 0
-  mouseOverWindow: 0
-  selectionStatus: 0
 --- !u!114 &1569215804
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5181,6 +5166,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   samplingRate: 500
+--- !u!114 &1569215805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569215798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e751a4377c9cc794fba1df1ecfd0bbe5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debug_currentContext: 
+  selectionCount: 0
 --- !u!4 &1577646648 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5028631425214081430, guid: 7f302dbe3f22d224eb4b483b4aee3301,

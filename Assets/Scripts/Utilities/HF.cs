@@ -238,7 +238,7 @@ public static class HF {
 	public static float Mod(float a, float b) => (Mathf.Abs(a * b) + a) % b;
 	public static int Mod(int a, int b) => (Mathf.Abs(a * b) + a) % b;
 
-	public static void Test(Action toTest, int iters) {
+	public static void Test(Action toTest, int iters = 1) {
 		System.Diagnostics.Stopwatch sw = new();
 		sw.Start();
 
