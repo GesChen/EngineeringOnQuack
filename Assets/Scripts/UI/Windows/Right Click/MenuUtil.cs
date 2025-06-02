@@ -137,6 +137,8 @@ public class MenuUtil : MonoBehaviour {
 		cw.Items = new[] { finalLayoutItem };
 		rcw.CWindow = cw;
 
+		cw.Config.IsFlyout = true; // all menus should be flyouts? might change this later idk
+
 		return cw;
 	}
 

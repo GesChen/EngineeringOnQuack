@@ -16,10 +16,12 @@ public class LiveWindow : MonoBehaviour {
 	WindowSizeNode TR;
 	WindowSizeNode BL;
 	WindowSizeNode BR;
+	Canvas canvas;
 
 	void Start() {
 		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
+		canvas = GetComponentInParent<Canvas>();
 	}
 
 	public void FlipNodesVertically() {
@@ -121,5 +123,42 @@ public class LiveWindow : MonoBehaviour {
 
 	void CheckNodes() {
 		anyNodesDragging = cornerNodes.Any(n => n.dragging);
+	}
+
+	/// <summary>
+	/// Try to put this window at some corners
+	/// </summary>
+	/// <param name="corners">4 corner array of the possible positions</param>
+	public void PlaceAt(Vector3[] corners) {
+		// check fits
+		float rightX = corners[2].x + global::Config.UI.Behaviour.FlyoutDistance;
+		float leftX = corners[1].x - global::Config.UI.Behaviour.FlyoutDistance;
+		bool fitsOnRight = rightX + rt.rect.width < canvas.renderingDisplaySize.x;
+
+		float yOfBottomDownwards = corners[2].y - rt.rect.height;
+		//float yOfTopUpwards = corners[4].y + rt.rect.height;
+		bool fitsDownwards = yOfBottomDownwards > 0;
+
+		int targetCorner;
+		if (fitsOnRight) targetCorner = fitsDownwards ? 1 : 0;
+		else targetCorner = fitsDownwards ? 2 : 3;
+
+		Vector2 pos = new(
+			fitsOnRight ? rightX : leftX,
+			fitsDownwards ? corners[1].y : corners[0].y);
+
+		SetWorldCorner(rt, pos, targetCorner);
+	}
+
+	// 0-BL 1-TL 2-TR 3-BR
+	public void SetWorldCorner(RectTransform rect, Vector3 targetWorldPosition, int corner) {
+		Vector3[] worldCorners = new Vector3[4];
+		rect.GetWorldCorners(worldCorners);
+
+		Vector3 currentCornerPos = worldCorners[corner];
+
+		Vector3 offset = targetWorldPosition - currentCornerPos;
+
+		rect.position += offset;
 	}
 }

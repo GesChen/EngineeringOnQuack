@@ -36,6 +36,9 @@ public class CWindow {
 		// scales with the content, overrides resizing
 		public bool ContentDynamic			= false;
 		public FourSides DynamicPadding		= FourSides.Zero;
+
+		// temporary till i can think of a better solution
+		public bool IsFlyout				= false;
 	}
 
 	public Configuration Config = new();

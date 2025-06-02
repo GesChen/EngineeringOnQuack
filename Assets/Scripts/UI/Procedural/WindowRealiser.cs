@@ -35,12 +35,17 @@ public class WindowRealiser : MonoBehaviour {
 		// 4 corner nodes
 		List<WindowSizeNode> nodes = MakeCornerNodes(windowRT);
 
+
 		// set up live window component
-		LiveWindow component = newWindow.AddComponent<LiveWindow>();
+		var component = newWindow.AddComponent<LiveWindow>();
 		component.Config = window.Config;
 		component.backgroundImage = bgRT;
 		component.cornerNodes = nodes;
 		component.contentsContainer = contentParent;
+
+		// flyout if its there
+		if (window.Config.IsFlyout)
+			newWindow.AddComponent<Flyout>();
 
 		// set up dynamic window
 		if (window.Config.ContentDynamic) {

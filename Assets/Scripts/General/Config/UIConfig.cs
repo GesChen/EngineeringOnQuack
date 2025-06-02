@@ -17,7 +17,7 @@ public static partial class Config {
 		}
 
 		public static class Behaviour {
-			public static readonly int MaxFramesForRealization	= 5;
+			public static readonly int MaxFramesForRealization	= 3;
 			public static readonly float WindowMinDragDist		= 10;
 			public static readonly float FlyoutDistance			= 5;
 			public static readonly float FlyoutHoverMargin		= 50;

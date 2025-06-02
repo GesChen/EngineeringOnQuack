@@ -1,3 +1,4 @@
+using Codice.Client.BaseCommands;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,19 +12,19 @@ public class Flyout : MonoBehaviour {
 	[HideInNormalInspector] public Flyout openChildFlyout;
 	FlyoutTrigger[] childTriggers = new FlyoutTrigger[0];
 	RectTransform rt;
-	Canvas canvas;
 	FlyoutTrigger thisTrigger;
+	LiveWindow lw;
 	bool childOpen;
 
 	int lastChildCount = 0;
 
 	void Start() {
 		rt = GetComponent<RectTransform>();
+		lw = GetComponent<LiveWindow>();
 		// this thing doesnt work for shit for some reason
 		//LayoutRebuilder.ForceRebuildLayoutImmediate(rt); // hides instantly so must recalculate
 		//if (TryGetComponent(out ScaleToContents scale))
 			//scale.
-		canvas = GetComponentInParent<Canvas>();
 		//gameObject.SetActive(false);
 
 	}
@@ -42,7 +43,7 @@ public class Flyout : MonoBehaviour {
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
 
 		childOpen = openChildFlyout != null && openChildFlyout.gameObject.activeSelf;
-		if (!mouseInRange && !childOpen && !thisTrigger.selfHoverTarget.Hovering) {
+		if (!mouseInRange && !childOpen && (thisTrigger == null || !thisTrigger.selfHoverTarget.Hovering)) {
 			Hide();
 		}
 
@@ -81,33 +82,14 @@ public class Flyout : MonoBehaviour {
 		Vector3[] corners = new Vector3[4];
 		trigger.rt.GetWorldCorners(corners);
 
-		// check if would fit at right
-		Vector2 triggerTopRight = (Vector2)corners[2] +
-				Config.UI.Behaviour.FlyoutDistance * Vector2.right;
-
-		bool wouldFit = triggerTopRight.x + rt.rect.width < canvas.renderingDisplaySize.x;
-
-		if (wouldFit) { // place top left at top right
-			SetWorldCorner(rt, triggerTopRight, 1);
-		} else {
-			// place top right corner of dropdown at top left
-			Vector2 triggerTopLeft = (Vector2)corners[1] +
-				-Config.UI.Behaviour.FlyoutDistance * Vector2.right;
-
-			SetWorldCorner(rt, triggerTopLeft, 2);
-		}
+		lw.PlaceAt(corners);
 	}
 
-	// 0-BL 1-TL 2-TR 3-BR
-	public void SetWorldCorner(RectTransform rect, Vector3 targetWorldPosition, int corner) {
-		Vector3[] worldCorners = new Vector3[4];
-		rect.GetWorldCorners(worldCorners);
+	public void Show(Vector3 at) {
+		gameObject.SetActive(true);
+		transform.SetAsLastSibling();
 
-		Vector3 currentCornerPos = worldCorners[corner];
-
-		Vector3 offset = targetWorldPosition - currentCornerPos;
-
-		rect.position += offset;
+		lw.PlaceAt(new[] { at, at, at, at });
 	}
 
 	public void Hide() {
