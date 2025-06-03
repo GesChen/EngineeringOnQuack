@@ -2,6 +2,16 @@ using UnityEngine;
 
 public static class MoreColors
 {
+	// Default
+	public static Color Black => new(0, 0, 0);
+	public static Color White => new(1, 1, 1);
+	public static Color Red => new(1, 0, 0);
+	public static Color Green => new(0, 1, 0);
+	public static Color Blue => new(0, 0, 1);
+	public static Color Cyan => new(1, 1, 0);
+	public static Color Yellow => new(0, 1, 1);
+	public static Color Magenta => new(1, 0, 1);
+
 	// Warm Colors
 	public static Color Orange => new(1f, 0.647f, 0f);
 	public static Color Coral => new(1f, 0.498f, 0.314f);
@@ -24,8 +34,6 @@ public static class MoreColors
 	public static Color Sienna => new(0.627f, 0.322f, 0.176f);
 
 	// Vibrant Colors
-	public static Color Magenta => new(1f, 0f, 1f);
-	public static Color Lime => new(0f, 1f, 0f);
 	public static Color Crimson => new(0.863f, 0.078f, 0.235f);
 	public static Color HotPink => new(1f, 0.412f, 0.706f);
 	public static Color DeepSkyBlue => new(0f, 0.749f, 1f);

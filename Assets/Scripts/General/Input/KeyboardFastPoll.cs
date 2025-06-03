@@ -4,21 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
-public class KeyboardFastPoll : MonoBehaviour {
-	#region singleton
-	private static KeyboardFastPoll _instance;
-	public static KeyboardFastPoll Instance { get { return _instance; } }
-	void Awake() { UpdateSingleton(); }
-	private void OnEnable() { UpdateSingleton(); }
-	void UpdateSingleton() {
-		if (_instance != null && _instance != this) {
-			Destroy(this);
-		} else {
-			_instance = this;
-		}
-	}
-	#endregion
-
+public class KeyboardFastPoll : Singleton<KeyboardFastPoll> {
 
 	public float samplingRate = 500;
 	private Coroutine pollingCoroutine;
@@ -77,8 +63,7 @@ public class KeyboardFastPoll : MonoBehaviour {
 	}
 
 	public static List<Key> GetAllPressedKeys() {
-		if (_instance == null)
-			Debug.LogError("No KeyboardFastPoll instance in scene");
+		var _ = Instance;
 
 		lock (lockObject) {
 			var copy = new List<Key>(pressedKeys);

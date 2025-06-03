@@ -6,6 +6,23 @@ using UnityEngine;
 using Newtonsoft.Json;
 using System.Linq;
 
+struct PureVector3 {
+	public float x, y, z;
+}
+struct PureQuaternion {
+	public float x, y, z, w;
+}
+struct PartInfo {
+	public string basePartName;
+	public int id;
+	public PureVector3 position;
+	public PureQuaternion rotation;
+	public PureVector3 scale;
+}
+struct SerializableSubassembly {
+	public List<int> partIds;
+}
+
 public class SaveLoad : MonoBehaviour
 {
 	public BuildingManager BuildingManager;

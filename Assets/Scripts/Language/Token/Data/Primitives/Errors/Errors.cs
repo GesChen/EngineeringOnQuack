@@ -9,7 +9,7 @@ public static class Errors {
 		=> new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got)
 		=> new($"Function \"{funcName}\" expects {expected} in argument {index}, got {got} instead");
-	public static Error UnknownName(Token.Reference reference)
+	public static Error UnknownName(Token.T_Reference reference)
 		=> new($"Unknown name \"{reference.Name}\"");
 	public static Error UnknownName(string name)
 		=>	new($"Unknown name \"{name}\"");

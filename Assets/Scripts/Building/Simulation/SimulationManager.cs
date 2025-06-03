@@ -2,31 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SimulationManager : MonoBehaviour
+public class SimulationManager : Singleton<SimulationManager>
 {
-	#region singleton
-	private static SimulationManager _instance;
-	public static SimulationManager Instance { get { return _instance; } }
-	void Awake() { UpdateSingleton(); }
-	private void OnEnable() { UpdateSingleton(); }
-	void UpdateSingleton()
-	{
-		if (_instance != null && _instance != this)
-		{
-			Destroy(this);
-		}
-		else
-		{
-			_instance = this;
-		}
-	}
-	#endregion
-
 	public List<Assembler.AssembledSubassembly> assembledSubassemblies = new();
 
 	public void StartSimulating()
 	{
-		Assembler.Instance.Assemble(out List<Assembler.Subassembly>  computed);
+		Assembler.Instance.Assemble(out List<Assembler.Subassembly> computed);
 		CalculateTotalMasses(computed);
 	}
 

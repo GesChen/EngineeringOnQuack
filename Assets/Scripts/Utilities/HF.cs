@@ -33,6 +33,12 @@ public static class HF {
 
 	public static Vector2 Vector2Abs(Vector2 v)
 		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
+
+	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
+		=> new(
+			Mathf.Clamp(v.x, min.x, max.x),
+			Mathf.Clamp(v.y, min.y, max.y));
+
 	#endregion
 
 	private static void OldLogColor(string str, Color color) {
@@ -232,7 +238,7 @@ public static class HF {
 	public static float Mod(float a, float b) => (Mathf.Abs(a * b) + a) % b;
 	public static int Mod(int a, int b) => (Mathf.Abs(a * b) + a) % b;
 
-	public static void Test(Action toTest, int iters) {
+	public static void Test(Action toTest, int iters = 1) {
 		System.Diagnostics.Stopwatch sw = new();
 		sw.Start();
 

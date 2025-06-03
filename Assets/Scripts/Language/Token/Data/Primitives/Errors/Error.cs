@@ -4,7 +4,7 @@ public partial class Error : Primitive {
 	public static Error Default = new("");
 
 	// defines internal type with name and memory
-	public static Type InternalType = new("Error", new Dictionary<string, Data>() {
+	public static Type InternalType = new("Error", new Dictionary<string, T_Data>() {
 	});
 
 	public string Value; // internal value

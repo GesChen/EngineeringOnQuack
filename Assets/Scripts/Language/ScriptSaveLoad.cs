@@ -115,19 +115,19 @@ public class ScriptSaveLoad : MonoBehaviour
 				
 				foreach (Token oToken in oLine.Tokens) {
 					sToken newToken = new();
-					if (oToken is Token.Operator op) {
+					if (oToken is Token.T_Operator op) {
 						newToken.Type = 0;
 						newToken.StringValue = op.StringValue;
 					}
-					else if (oToken is Token.Name n) {
+					else if (oToken is Token.T_Name n) {
 						newToken.Type = 1;
 						newToken.StringValue = n.Value;
 					}
-					else if (oToken is Token.Keyword kw) {
+					else if (oToken is Token.T_Keyword kw) {
 						newToken.Type = 2;
 						newToken.StringValue = kw.StringValue;
 					}
-					else if (oToken is Data d) {
+					else if (oToken is T_Data d) {
 						sReference newRef = new();
 						if (d is Primitive.Number num) {
 							newRef.PrimitiveType = 0;
@@ -207,9 +207,9 @@ public class ScriptSaveLoad : MonoBehaviour
 
 				foreach (sToken sToken in sLine.Tokens) {
 					Token oToken = sToken.Type switch {
-						0 => new Token.Operator(sToken.StringValue),
-						1 => new Token.Name(sToken.StringValue),
-						2 => new Token.Keyword(sToken.StringValue),
+						0 => new Token.T_Operator(sToken.StringValue),
+						1 => new Token.T_Name(sToken.StringValue),
+						2 => new Token.T_Keyword(sToken.StringValue),
 						3 => sToken.ReferenceValue.PrimitiveType == 0 ?
 								new Primitive.Number(sToken.ReferenceValue.NumberValue) :
 								new Primitive.String(sToken.ReferenceValue.StringValue),

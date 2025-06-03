@@ -17,8 +17,6 @@ public class Scale : MonoBehaviour
 
 	bool over;
 	bool lastOver;
-	bool mouseDown;
-	bool lastMouseDown;
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
@@ -62,11 +60,10 @@ public class Scale : MonoBehaviour
 		localAxes = main.transform.rotation * axis;
 
 		over = MouseOver() && !main.specialCenterCase;
-		mouseDown = Conatrols.IM.Transform.Drag.IsPressed();
 
-		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime)
 			ResetTransform();
-		if (mouseDown != lastMouseDown && !mouseDown) resetting = false;
+		if (Conatrols.Mouse.Left.ReleasedThisFrame) resetting = false;
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
@@ -74,9 +71,9 @@ public class Scale : MonoBehaviour
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown && !resetting)
+		if (Conatrols.Mouse.Left.PressedThisFrame && !resetting)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 
 		UpdateVisuals();
@@ -88,9 +85,8 @@ public class Scale : MonoBehaviour
 		
 		UseAxisIndicator();
 
-		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
+		if (Conatrols.Mouse.Left.PressedThisFrame) lastMouseDownTime = Time.time;
 		lastOver = over;
-		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
 	void ResetTransform()
@@ -139,7 +135,7 @@ public class Scale : MonoBehaviour
 			maxScreen = Vector2.Max(maxScreen, ssPos);
 		}
 
-		Vector2 mousePos = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Conatrols.Mouse.Position;
 		bool inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
 						mousePos.y >= minScreen.y + main.boundsOffset && mousePos.y <= maxScreen.y - main.boundsOffset;
 		return inBounds;
@@ -183,7 +179,7 @@ public class Scale : MonoBehaviour
 			// axis indicator code here if going to use 
 			UpdateAxisIndicators();
 
-			dragStartMousePos = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>();
+			dragStartMousePos = Conatrols.Mouse.Position;
 			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
 			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			dragStartPos = main.transform.position;
@@ -244,7 +240,7 @@ public class Scale : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		Vector3 mouseScreenSpace = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
+		Vector3 mouseScreenSpace = Conatrols.Mouse.Position - mouseOffset;
 		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
 		Vector3 cameraPos = Camera.main.transform.position;
@@ -290,7 +286,7 @@ public class Scale : MonoBehaviour
 	{
 		if (!dragging) return;
 		
-		Vector2 mouseScreenSpace = Conatrols.IM.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mouseScreenSpace = Conatrols.Mouse.Position;
 
 		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
 

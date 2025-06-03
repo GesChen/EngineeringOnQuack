@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public partial class Token {
-	public partial class Keyword : Token {
+	public partial class T_Keyword : Token {
 		public static readonly List<string> Keywords = new()
 		{
 			"if",
@@ -40,7 +40,7 @@ public partial class Token {
 		public Kws Value;
 		public string StringValue;
 
-		public Keyword(string keyword) {
+		public T_Keyword(string keyword) {
 			StringValue = keyword;
 			Value = keyword switch {
 				"if"		=> Kws.If,

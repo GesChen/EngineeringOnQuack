@@ -28,19 +28,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""242ca290-21f9-4781-8792-e7fdc4ef943c"",
             ""actions"": [
                 {
-                    ""name"": ""Mouse"",
-                    ""type"": ""Value"",
-                    ""id"": ""3598dc3d-4099-49f0-a865-c27aaa69a24b"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""PerfOrbit"",
                     ""type"": ""Button"",
                     ""id"": ""b686a359-b3b3-4316-9df6-ac7632c4dc22"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -76,19 +67,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""Focus"",
                     ""type"": ""Button"",
                     ""id"": ""781b16df-b033-4077-94c2-99b98f6636a9"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": ""MultiTap(tapDelay=0.2)"",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""MousePos"",
-                    ""type"": ""Value"",
-                    ""id"": ""d0dc1153-1b31-4421-a26b-62ae4135f726"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""KeyboardMovement"",
@@ -109,17 +91,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""PerfOrbit"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""058fe2b0-3daf-45b0-a04e-210f9e88b1a6"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Mouse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -164,17 +135,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Focus"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""92bc5792-09fb-419e-bfd1-a1052a9360ea"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MousePos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -269,24 +229,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Look"",
-                    ""type"": ""Value"",
-                    ""id"": ""5f73bf31-f5fd-4122-a041-904d492c4343"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Fire"",
-                    ""type"": ""Button"",
-                    ""id"": ""f4e8e56a-43a9-43f3-af22-5d9ea5b8d50c"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -421,99 +363,443 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
+                }
+            ]
+        },
+        {
+            ""name"": ""UI"",
+            ""id"": ""9b813f4d-5d4a-484c-bae2-1e7ef93affc8"",
+            ""actions"": [
+                {
+                    ""name"": ""WindowSnap"",
+                    ""type"": ""Button"",
+                    ""id"": ""03d47b1b-3d60-4fd0-bb27-bd63ba0e5669"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
                 {
                     ""name"": """",
-                    ""id"": ""c1f7a91b-d0fd-4a62-997e-7fb9b69bf235"",
-                    ""path"": ""<Gamepad>/rightStick"",
+                    ""id"": ""9179955f-19d8-49c5-907d-58d3bcba9668"",
+                    ""path"": ""<Keyboard>/ctrl"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Gamepad"",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8c8e490b-c610-4785-884f-f04217b23ca4"",
-                    ""path"": ""<Pointer>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse;Touch"",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""3e5f5442-8668-4b27-a940-df99bad7e831"",
-                    ""path"": ""<Joystick>/{Hatswitch}"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Joystick"",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""143bb1cd-cc10-4eca-a2f0-a3664166fe91"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Gamepad"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""05f6913d-c316-48b2-a6bb-e225f14c7960"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""886e731e-7071-4ae4-95c0-e61739dad6fd"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Touch"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""ee3d0cd2-254e-47a7-a8cb-bc94d9658c54"",
-                    ""path"": ""<Joystick>/trigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Joystick"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8255d333-5683-4943-a58a-ccb207ff1dce"",
-                    ""path"": ""<XRController>/{PrimaryAction}"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""XR"",
-                    ""action"": ""Fire"",
+                    ""groups"": """",
+                    ""action"": ""WindowSnap"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
             ]
         },
         {
-            ""name"": ""UI"",
+            ""name"": ""Building"",
+            ""id"": ""297336b0-56e8-4ba3-9cd4-6f2e0a013637"",
+            ""actions"": [
+                {
+                    ""name"": ""Distance"",
+                    ""type"": ""Value"",
+                    ""id"": ""c6e56127-3100-482d-b2d4-612547e030db"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Snap"",
+                    ""type"": ""Button"",
+                    ""id"": ""7ca2703a-3181-4a84-bff1-04fa5c79d948"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Multiselect"",
+                    ""type"": ""Button"",
+                    ""id"": ""3fd35f05-4a03-44cb-b60a-87acafc6de99"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CancelSelection"",
+                    ""type"": ""Button"",
+                    ""id"": ""8b7c9d73-61a2-41db-bf43-d1aec7ae079b"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c890ece1-2083-417d-b949-54ebbc9ee3fc"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Distance"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b4ef4bc2-a714-4e0b-8157-6bfb2c13b587"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Snap"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8681c5db-1ef7-403d-ad6b-54a9d957e002"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Multiselect"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""35e635a9-78ae-45f8-85b5-d5b5697717e2"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CancelSelection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Mouse"",
+            ""id"": ""da424276-1895-4953-91a7-e697f6f8ca71"",
+            ""actions"": [
+                {
+                    ""name"": ""Left"",
+                    ""type"": ""Button"",
+                    ""id"": ""8003c41a-5d2a-4114-a173-4ef1d543a76e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Right"",
+                    ""type"": ""Button"",
+                    ""id"": ""7333182b-58d1-4fc9-b365-fb14a4fe14fd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Middle"",
+                    ""type"": ""Button"",
+                    ""id"": ""c3828302-e2e8-4c1d-97e3-2fd1c8125750"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Forward"",
+                    ""type"": ""Button"",
+                    ""id"": ""5e10bb4e-55fd-4d29-883e-5fba57e0f906"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Back"",
+                    ""type"": ""Button"",
+                    ""id"": ""f970aff9-2d56-4305-b498-3907ce4e19d4"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Press"",
+                    ""type"": ""Button"",
+                    ""id"": ""d0d10bf8-e30d-4dec-a2c9-2741d7232166"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Position"",
+                    ""type"": ""Value"",
+                    ""id"": ""9c20bd90-425c-4edf-aa51-895dcad31fd5"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Delta"",
+                    ""type"": ""Value"",
+                    ""id"": ""77bcb7ad-2702-452d-8220-bfbff8fc105b"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Scroll"",
+                    ""type"": ""Value"",
+                    ""id"": ""f5216818-db4c-4102-a197-e8cd18192a12"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""95ae7dd4-03e4-448c-8ddd-e44b701c42d5"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Left"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""72d0afc6-3346-4d3f-8462-5b6b6c338a19"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Right"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""171c2592-9502-4193-bf66-c90b16dfdda5"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Middle"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c21cec67-f84f-4981-aeb4-6aaa460774d8"",
+                    ""path"": ""<Mouse>/forwardButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Forward"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c3aed07f-a5e3-4e39-97d8-f95c1570a1b5"",
+                    ""path"": ""<Mouse>/backButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Back"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""73a9c704-ef70-4ff6-9ba5-7771487f74a1"",
+                    ""path"": ""<Mouse>/press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Press"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""32b573b9-ace4-41e4-b4c0-dcb14492656c"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Position"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7469be8c-c098-4715-934a-8c53ab903108"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Delta"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6392a70c-c2cf-4203-ac7b-6581e3c5f378"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Scroll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""TextEditor"",
+            ""id"": ""77842c35-44f9-40cb-bdab-f38997357467"",
+            ""actions"": [
+                {
+                    ""name"": ""LeftClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""714b66db-8cbe-4453-aabb-51df3a6cf93f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""20f31ab6-f0b2-4c65-bd32-6d7c7cc85100"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""MiddleClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""bf49013c-4df3-4d3a-b250-08b2d4087a1c"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Ctrl"",
+                    ""type"": ""Button"",
+                    ""id"": ""b0136dcb-db16-4f52-abe7-cd6c3a7841c5"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Shift"",
+                    ""type"": ""Button"",
+                    ""id"": ""745bbb49-107d-4b43-aa2e-89b8a955f504"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Alt"",
+                    ""type"": ""Button"",
+                    ""id"": ""4efd7639-6cf7-499d-baa4-ff440dff1799"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c5976752-0227-4248-a1f2-0fef5beda45d"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LeftClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""21ab7b9c-b62b-4f44-ae20-45ffb5564d48"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8c329dbf-6984-4cf2-8d57-60263426c8bc"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MiddleClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b81a180e-27c2-4a8e-8d07-7e1cf7d7d7ca"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Ctrl"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""06c774c8-0fbb-4762-b15d-ded2492a930f"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Shift"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b3488399-9a83-4c3a-beaf-99376c3fdbbf"",
+                    ""path"": ""<Keyboard>/alt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Alt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""original_UI"",
             ""id"": ""23095e8f-2a1f-471d-a9cb-b7080d38d1a3"",
             ""actions"": [
                 {
@@ -1027,518 +1313,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
-        },
-        {
-            ""name"": ""Transform"",
-            ""id"": ""cac43080-c997-4558-825f-b6c7d559e3a2"",
-            ""actions"": [
-                {
-                    ""name"": ""MousePos"",
-                    ""type"": ""Value"",
-                    ""id"": ""17fb18cd-05d1-4693-9e93-5479aba3c24f"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Drag"",
-                    ""type"": ""Button"",
-                    ""id"": ""1c6241ac-eff0-4881-8a12-d6c70a3f8b24"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Distance"",
-                    ""type"": ""Value"",
-                    ""id"": ""e9370fb7-be84-44ac-8fb9-2f1a6862c92a"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""MouseDelta"",
-                    ""type"": ""Value"",
-                    ""id"": ""0c161e5b-ff1a-41cd-979c-9f0f565fbb79"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Snap"",
-                    ""type"": ""Button"",
-                    ""id"": ""3c4386f9-ae95-45b8-ab0c-a726291548a7"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""c2e78431-8889-4a08-a9eb-14760fa6738e"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MousePos"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""5ac106d3-89fd-44d3-9b28-14a4dfe94a7e"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Drag"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""1ba61eba-a226-4469-9d94-77082eb0383e"",
-                    ""path"": ""<Mouse>/scroll"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Distance"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""a20bf459-dda9-41b0-bc2e-e88adc69eab6"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MouseDelta"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c2650720-7b32-403d-87f5-9b8c85b14762"",
-                    ""path"": ""<Keyboard>/ctrl"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Snap"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
-            ""name"": ""Selection"",
-            ""id"": ""8df1483b-7e67-47ac-8ca6-5fecb0753c88"",
-            ""actions"": [
-                {
-                    ""name"": ""MousePos"",
-                    ""type"": ""Value"",
-                    ""id"": ""363cb0c3-edc4-46a4-9388-9d83823f925f"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Drag"",
-                    ""type"": ""Button"",
-                    ""id"": ""685e1efa-3e3c-44ab-9f7e-f225571ef079"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Multiselect"",
-                    ""type"": ""Button"",
-                    ""id"": ""166c9b83-3ac1-4fc9-b6b2-770106878e51"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""a98cad9a-512d-4f88-aed0-19305e0b3f97"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MousePos"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""cb01d1a6-fa72-404d-a2f8-9586cbee2ac1"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Drag"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""d6b17f4d-7276-4d3c-9f03-bf26bc43c396"",
-                    ""path"": ""<Keyboard>/leftShift"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Multiselect"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
-            ""name"": ""Mouse"",
-            ""id"": ""da424276-1895-4953-91a7-e697f6f8ca71"",
-            ""actions"": [
-                {
-                    ""name"": ""Left"",
-                    ""type"": ""Button"",
-                    ""id"": ""8003c41a-5d2a-4114-a173-4ef1d543a76e"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Right"",
-                    ""type"": ""Button"",
-                    ""id"": ""7333182b-58d1-4fc9-b365-fb14a4fe14fd"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Middle"",
-                    ""type"": ""Button"",
-                    ""id"": ""c3828302-e2e8-4c1d-97e3-2fd1c8125750"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Forward"",
-                    ""type"": ""Button"",
-                    ""id"": ""5e10bb4e-55fd-4d29-883e-5fba57e0f906"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Back"",
-                    ""type"": ""Button"",
-                    ""id"": ""f970aff9-2d56-4305-b498-3907ce4e19d4"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Press"",
-                    ""type"": ""Button"",
-                    ""id"": ""d0d10bf8-e30d-4dec-a2c9-2741d7232166"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Position"",
-                    ""type"": ""Value"",
-                    ""id"": ""9c20bd90-425c-4edf-aa51-895dcad31fd5"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Delta"",
-                    ""type"": ""Value"",
-                    ""id"": ""77bcb7ad-2702-452d-8220-bfbff8fc105b"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Scroll"",
-                    ""type"": ""Value"",
-                    ""id"": ""f5216818-db4c-4102-a197-e8cd18192a12"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""95ae7dd4-03e4-448c-8ddd-e44b701c42d5"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Left"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""72d0afc6-3346-4d3f-8462-5b6b6c338a19"",
-                    ""path"": ""<Mouse>/rightButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Right"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""171c2592-9502-4193-bf66-c90b16dfdda5"",
-                    ""path"": ""<Mouse>/middleButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Middle"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c21cec67-f84f-4981-aeb4-6aaa460774d8"",
-                    ""path"": ""<Mouse>/forwardButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Forward"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c3aed07f-a5e3-4e39-97d8-f95c1570a1b5"",
-                    ""path"": ""<Mouse>/backButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Back"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""73a9c704-ef70-4ff6-9ba5-7771487f74a1"",
-                    ""path"": ""<Mouse>/press"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Press"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""32b573b9-ace4-41e4-b4c0-dcb14492656c"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Position"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""7469be8c-c098-4715-934a-8c53ab903108"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Delta"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""6392a70c-c2cf-4203-ac7b-6581e3c5f378"",
-                    ""path"": ""<Mouse>/scroll"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Scroll"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
-            ""name"": ""TextEditor"",
-            ""id"": ""77842c35-44f9-40cb-bdab-f38997357467"",
-            ""actions"": [
-                {
-                    ""name"": ""LeftClick"",
-                    ""type"": ""Button"",
-                    ""id"": ""714b66db-8cbe-4453-aabb-51df3a6cf93f"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""RightClick"",
-                    ""type"": ""Button"",
-                    ""id"": ""20f31ab6-f0b2-4c65-bd32-6d7c7cc85100"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""MiddleClick"",
-                    ""type"": ""Button"",
-                    ""id"": ""bf49013c-4df3-4d3a-b250-08b2d4087a1c"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Ctrl"",
-                    ""type"": ""Button"",
-                    ""id"": ""b0136dcb-db16-4f52-abe7-cd6c3a7841c5"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Shift"",
-                    ""type"": ""Button"",
-                    ""id"": ""745bbb49-107d-4b43-aa2e-89b8a955f504"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Alt"",
-                    ""type"": ""Button"",
-                    ""id"": ""4efd7639-6cf7-499d-baa4-ff440dff1799"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Scroll"",
-                    ""type"": ""Value"",
-                    ""id"": ""69af3937-ac69-4d33-aa8d-83bdde7cf980"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""c5976752-0227-4248-a1f2-0fef5beda45d"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""LeftClick"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""21ab7b9c-b62b-4f44-ae20-45ffb5564d48"",
-                    ""path"": ""<Mouse>/rightButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""RightClick"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8c329dbf-6984-4cf2-8d57-60263426c8bc"",
-                    ""path"": ""<Mouse>/middleButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MiddleClick"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b81a180e-27c2-4a8e-8d07-7e1cf7d7d7ca"",
-                    ""path"": ""<Keyboard>/ctrl"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Ctrl"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""06c774c8-0fbb-4762-b15d-ded2492a930f"",
-                    ""path"": ""<Keyboard>/shift"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Shift"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b3488399-9a83-4c3a-beaf-99376c3fdbbf"",
-                    ""path"": ""<Keyboard>/alt"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Alt"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""11832599-a7f6-453a-9754-9c57b0f3dc77"",
-                    ""path"": ""<Mouse>/scroll"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Scroll"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
         }
     ],
     ""controlSchemes"": [
@@ -1606,43 +1380,24 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 }");
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
-        m_Camera_Mouse = m_Camera.FindAction("Mouse", throwIfNotFound: true);
         m_Camera_PerfOrbit = m_Camera.FindAction("PerfOrbit", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_Move = m_Camera.FindAction("Move", throwIfNotFound: true);
         m_Camera_Precision = m_Camera.FindAction("Precision", throwIfNotFound: true);
         m_Camera_Focus = m_Camera.FindAction("Focus", throwIfNotFound: true);
-        m_Camera_MousePos = m_Camera.FindAction("MousePos", throwIfNotFound: true);
         m_Camera_KeyboardMovement = m_Camera.FindAction("KeyboardMovement", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-        m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
-        m_Player_Fire = m_Player.FindAction("Fire", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
-        m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
-        m_UI_Submit = m_UI.FindAction("Submit", throwIfNotFound: true);
-        m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
-        m_UI_Point = m_UI.FindAction("Point", throwIfNotFound: true);
-        m_UI_Click = m_UI.FindAction("Click", throwIfNotFound: true);
-        m_UI_ScrollWheel = m_UI.FindAction("ScrollWheel", throwIfNotFound: true);
-        m_UI_MiddleClick = m_UI.FindAction("MiddleClick", throwIfNotFound: true);
-        m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
-        m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
-        m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
-        // Transform
-        m_Transform = asset.FindActionMap("Transform", throwIfNotFound: true);
-        m_Transform_MousePos = m_Transform.FindAction("MousePos", throwIfNotFound: true);
-        m_Transform_Drag = m_Transform.FindAction("Drag", throwIfNotFound: true);
-        m_Transform_Distance = m_Transform.FindAction("Distance", throwIfNotFound: true);
-        m_Transform_MouseDelta = m_Transform.FindAction("MouseDelta", throwIfNotFound: true);
-        m_Transform_Snap = m_Transform.FindAction("Snap", throwIfNotFound: true);
-        // Selection
-        m_Selection = asset.FindActionMap("Selection", throwIfNotFound: true);
-        m_Selection_MousePos = m_Selection.FindAction("MousePos", throwIfNotFound: true);
-        m_Selection_Drag = m_Selection.FindAction("Drag", throwIfNotFound: true);
-        m_Selection_Multiselect = m_Selection.FindAction("Multiselect", throwIfNotFound: true);
+        m_UI_WindowSnap = m_UI.FindAction("WindowSnap", throwIfNotFound: true);
+        // Building
+        m_Building = asset.FindActionMap("Building", throwIfNotFound: true);
+        m_Building_Distance = m_Building.FindAction("Distance", throwIfNotFound: true);
+        m_Building_Snap = m_Building.FindAction("Snap", throwIfNotFound: true);
+        m_Building_Multiselect = m_Building.FindAction("Multiselect", throwIfNotFound: true);
+        m_Building_CancelSelection = m_Building.FindAction("CancelSelection", throwIfNotFound: true);
         // Mouse
         m_Mouse = asset.FindActionMap("Mouse", throwIfNotFound: true);
         m_Mouse_Left = m_Mouse.FindAction("Left", throwIfNotFound: true);
@@ -1662,7 +1417,18 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_TextEditor_Ctrl = m_TextEditor.FindAction("Ctrl", throwIfNotFound: true);
         m_TextEditor_Shift = m_TextEditor.FindAction("Shift", throwIfNotFound: true);
         m_TextEditor_Alt = m_TextEditor.FindAction("Alt", throwIfNotFound: true);
-        m_TextEditor_Scroll = m_TextEditor.FindAction("Scroll", throwIfNotFound: true);
+        // original_UI
+        m_original_UI = asset.FindActionMap("original_UI", throwIfNotFound: true);
+        m_original_UI_Navigate = m_original_UI.FindAction("Navigate", throwIfNotFound: true);
+        m_original_UI_Submit = m_original_UI.FindAction("Submit", throwIfNotFound: true);
+        m_original_UI_Cancel = m_original_UI.FindAction("Cancel", throwIfNotFound: true);
+        m_original_UI_Point = m_original_UI.FindAction("Point", throwIfNotFound: true);
+        m_original_UI_Click = m_original_UI.FindAction("Click", throwIfNotFound: true);
+        m_original_UI_ScrollWheel = m_original_UI.FindAction("ScrollWheel", throwIfNotFound: true);
+        m_original_UI_MiddleClick = m_original_UI.FindAction("MiddleClick", throwIfNotFound: true);
+        m_original_UI_RightClick = m_original_UI.FindAction("RightClick", throwIfNotFound: true);
+        m_original_UI_TrackedDevicePosition = m_original_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
+        m_original_UI_TrackedDeviceOrientation = m_original_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -1670,10 +1436,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Camera.enabled, "This will cause a leak and performance issues, InputMaster.Camera.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, InputMaster.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, InputMaster.UI.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_Transform.enabled, "This will cause a leak and performance issues, InputMaster.Transform.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_Selection.enabled, "This will cause a leak and performance issues, InputMaster.Selection.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Building.enabled, "This will cause a leak and performance issues, InputMaster.Building.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Mouse.enabled, "This will cause a leak and performance issues, InputMaster.Mouse.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_TextEditor.enabled, "This will cause a leak and performance issues, InputMaster.TextEditor.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_original_UI.enabled, "This will cause a leak and performance issues, InputMaster.original_UI.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -1735,25 +1501,21 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Camera
     private readonly InputActionMap m_Camera;
     private List<ICameraActions> m_CameraActionsCallbackInterfaces = new List<ICameraActions>();
-    private readonly InputAction m_Camera_Mouse;
     private readonly InputAction m_Camera_PerfOrbit;
     private readonly InputAction m_Camera_Zoom;
     private readonly InputAction m_Camera_Move;
     private readonly InputAction m_Camera_Precision;
     private readonly InputAction m_Camera_Focus;
-    private readonly InputAction m_Camera_MousePos;
     private readonly InputAction m_Camera_KeyboardMovement;
     public struct CameraActions
     {
         private @InputMaster m_Wrapper;
         public CameraActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Mouse => m_Wrapper.m_Camera_Mouse;
         public InputAction @PerfOrbit => m_Wrapper.m_Camera_PerfOrbit;
         public InputAction @Zoom => m_Wrapper.m_Camera_Zoom;
         public InputAction @Move => m_Wrapper.m_Camera_Move;
         public InputAction @Precision => m_Wrapper.m_Camera_Precision;
         public InputAction @Focus => m_Wrapper.m_Camera_Focus;
-        public InputAction @MousePos => m_Wrapper.m_Camera_MousePos;
         public InputAction @KeyboardMovement => m_Wrapper.m_Camera_KeyboardMovement;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
@@ -1764,9 +1526,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_CameraActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_CameraActionsCallbackInterfaces.Add(instance);
-            @Mouse.started += instance.OnMouse;
-            @Mouse.performed += instance.OnMouse;
-            @Mouse.canceled += instance.OnMouse;
             @PerfOrbit.started += instance.OnPerfOrbit;
             @PerfOrbit.performed += instance.OnPerfOrbit;
             @PerfOrbit.canceled += instance.OnPerfOrbit;
@@ -1782,9 +1541,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Focus.started += instance.OnFocus;
             @Focus.performed += instance.OnFocus;
             @Focus.canceled += instance.OnFocus;
-            @MousePos.started += instance.OnMousePos;
-            @MousePos.performed += instance.OnMousePos;
-            @MousePos.canceled += instance.OnMousePos;
             @KeyboardMovement.started += instance.OnKeyboardMovement;
             @KeyboardMovement.performed += instance.OnKeyboardMovement;
             @KeyboardMovement.canceled += instance.OnKeyboardMovement;
@@ -1792,9 +1548,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 
         private void UnregisterCallbacks(ICameraActions instance)
         {
-            @Mouse.started -= instance.OnMouse;
-            @Mouse.performed -= instance.OnMouse;
-            @Mouse.canceled -= instance.OnMouse;
             @PerfOrbit.started -= instance.OnPerfOrbit;
             @PerfOrbit.performed -= instance.OnPerfOrbit;
             @PerfOrbit.canceled -= instance.OnPerfOrbit;
@@ -1810,9 +1563,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Focus.started -= instance.OnFocus;
             @Focus.performed -= instance.OnFocus;
             @Focus.canceled -= instance.OnFocus;
-            @MousePos.started -= instance.OnMousePos;
-            @MousePos.performed -= instance.OnMousePos;
-            @MousePos.canceled -= instance.OnMousePos;
             @KeyboardMovement.started -= instance.OnKeyboardMovement;
             @KeyboardMovement.performed -= instance.OnKeyboardMovement;
             @KeyboardMovement.canceled -= instance.OnKeyboardMovement;
@@ -1838,15 +1588,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
-    private readonly InputAction m_Player_Look;
-    private readonly InputAction m_Player_Fire;
     public struct PlayerActions
     {
         private @InputMaster m_Wrapper;
         public PlayerActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
         public InputAction @Move => m_Wrapper.m_Player_Move;
-        public InputAction @Look => m_Wrapper.m_Player_Look;
-        public InputAction @Fire => m_Wrapper.m_Player_Fire;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1859,12 +1605,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
-            @Look.started += instance.OnLook;
-            @Look.performed += instance.OnLook;
-            @Look.canceled += instance.OnLook;
-            @Fire.started += instance.OnFire;
-            @Fire.performed += instance.OnFire;
-            @Fire.canceled += instance.OnFire;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -1872,12 +1612,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
-            @Look.started -= instance.OnLook;
-            @Look.performed -= instance.OnLook;
-            @Look.canceled -= instance.OnLook;
-            @Fire.started -= instance.OnFire;
-            @Fire.performed -= instance.OnFire;
-            @Fire.canceled -= instance.OnFire;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1899,30 +1633,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // UI
     private readonly InputActionMap m_UI;
     private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
-    private readonly InputAction m_UI_Navigate;
-    private readonly InputAction m_UI_Submit;
-    private readonly InputAction m_UI_Cancel;
-    private readonly InputAction m_UI_Point;
-    private readonly InputAction m_UI_Click;
-    private readonly InputAction m_UI_ScrollWheel;
-    private readonly InputAction m_UI_MiddleClick;
-    private readonly InputAction m_UI_RightClick;
-    private readonly InputAction m_UI_TrackedDevicePosition;
-    private readonly InputAction m_UI_TrackedDeviceOrientation;
+    private readonly InputAction m_UI_WindowSnap;
     public struct UIActions
     {
         private @InputMaster m_Wrapper;
         public UIActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Navigate => m_Wrapper.m_UI_Navigate;
-        public InputAction @Submit => m_Wrapper.m_UI_Submit;
-        public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
-        public InputAction @Point => m_Wrapper.m_UI_Point;
-        public InputAction @Click => m_Wrapper.m_UI_Click;
-        public InputAction @ScrollWheel => m_Wrapper.m_UI_ScrollWheel;
-        public InputAction @MiddleClick => m_Wrapper.m_UI_MiddleClick;
-        public InputAction @RightClick => m_Wrapper.m_UI_RightClick;
-        public InputAction @TrackedDevicePosition => m_Wrapper.m_UI_TrackedDevicePosition;
-        public InputAction @TrackedDeviceOrientation => m_Wrapper.m_UI_TrackedDeviceOrientation;
+        public InputAction @WindowSnap => m_Wrapper.m_UI_WindowSnap;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1932,70 +1648,16 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_UIActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_UIActionsCallbackInterfaces.Add(instance);
-            @Navigate.started += instance.OnNavigate;
-            @Navigate.performed += instance.OnNavigate;
-            @Navigate.canceled += instance.OnNavigate;
-            @Submit.started += instance.OnSubmit;
-            @Submit.performed += instance.OnSubmit;
-            @Submit.canceled += instance.OnSubmit;
-            @Cancel.started += instance.OnCancel;
-            @Cancel.performed += instance.OnCancel;
-            @Cancel.canceled += instance.OnCancel;
-            @Point.started += instance.OnPoint;
-            @Point.performed += instance.OnPoint;
-            @Point.canceled += instance.OnPoint;
-            @Click.started += instance.OnClick;
-            @Click.performed += instance.OnClick;
-            @Click.canceled += instance.OnClick;
-            @ScrollWheel.started += instance.OnScrollWheel;
-            @ScrollWheel.performed += instance.OnScrollWheel;
-            @ScrollWheel.canceled += instance.OnScrollWheel;
-            @MiddleClick.started += instance.OnMiddleClick;
-            @MiddleClick.performed += instance.OnMiddleClick;
-            @MiddleClick.canceled += instance.OnMiddleClick;
-            @RightClick.started += instance.OnRightClick;
-            @RightClick.performed += instance.OnRightClick;
-            @RightClick.canceled += instance.OnRightClick;
-            @TrackedDevicePosition.started += instance.OnTrackedDevicePosition;
-            @TrackedDevicePosition.performed += instance.OnTrackedDevicePosition;
-            @TrackedDevicePosition.canceled += instance.OnTrackedDevicePosition;
-            @TrackedDeviceOrientation.started += instance.OnTrackedDeviceOrientation;
-            @TrackedDeviceOrientation.performed += instance.OnTrackedDeviceOrientation;
-            @TrackedDeviceOrientation.canceled += instance.OnTrackedDeviceOrientation;
+            @WindowSnap.started += instance.OnWindowSnap;
+            @WindowSnap.performed += instance.OnWindowSnap;
+            @WindowSnap.canceled += instance.OnWindowSnap;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
         {
-            @Navigate.started -= instance.OnNavigate;
-            @Navigate.performed -= instance.OnNavigate;
-            @Navigate.canceled -= instance.OnNavigate;
-            @Submit.started -= instance.OnSubmit;
-            @Submit.performed -= instance.OnSubmit;
-            @Submit.canceled -= instance.OnSubmit;
-            @Cancel.started -= instance.OnCancel;
-            @Cancel.performed -= instance.OnCancel;
-            @Cancel.canceled -= instance.OnCancel;
-            @Point.started -= instance.OnPoint;
-            @Point.performed -= instance.OnPoint;
-            @Point.canceled -= instance.OnPoint;
-            @Click.started -= instance.OnClick;
-            @Click.performed -= instance.OnClick;
-            @Click.canceled -= instance.OnClick;
-            @ScrollWheel.started -= instance.OnScrollWheel;
-            @ScrollWheel.performed -= instance.OnScrollWheel;
-            @ScrollWheel.canceled -= instance.OnScrollWheel;
-            @MiddleClick.started -= instance.OnMiddleClick;
-            @MiddleClick.performed -= instance.OnMiddleClick;
-            @MiddleClick.canceled -= instance.OnMiddleClick;
-            @RightClick.started -= instance.OnRightClick;
-            @RightClick.performed -= instance.OnRightClick;
-            @RightClick.canceled -= instance.OnRightClick;
-            @TrackedDevicePosition.started -= instance.OnTrackedDevicePosition;
-            @TrackedDevicePosition.performed -= instance.OnTrackedDevicePosition;
-            @TrackedDevicePosition.canceled -= instance.OnTrackedDevicePosition;
-            @TrackedDeviceOrientation.started -= instance.OnTrackedDeviceOrientation;
-            @TrackedDeviceOrientation.performed -= instance.OnTrackedDeviceOrientation;
-            @TrackedDeviceOrientation.canceled -= instance.OnTrackedDeviceOrientation;
+            @WindowSnap.started -= instance.OnWindowSnap;
+            @WindowSnap.performed -= instance.OnWindowSnap;
+            @WindowSnap.canceled -= instance.OnWindowSnap;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -2014,145 +1676,75 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public UIActions @UI => new UIActions(this);
 
-    // Transform
-    private readonly InputActionMap m_Transform;
-    private List<ITransformActions> m_TransformActionsCallbackInterfaces = new List<ITransformActions>();
-    private readonly InputAction m_Transform_MousePos;
-    private readonly InputAction m_Transform_Drag;
-    private readonly InputAction m_Transform_Distance;
-    private readonly InputAction m_Transform_MouseDelta;
-    private readonly InputAction m_Transform_Snap;
-    public struct TransformActions
+    // Building
+    private readonly InputActionMap m_Building;
+    private List<IBuildingActions> m_BuildingActionsCallbackInterfaces = new List<IBuildingActions>();
+    private readonly InputAction m_Building_Distance;
+    private readonly InputAction m_Building_Snap;
+    private readonly InputAction m_Building_Multiselect;
+    private readonly InputAction m_Building_CancelSelection;
+    public struct BuildingActions
     {
         private @InputMaster m_Wrapper;
-        public TransformActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @MousePos => m_Wrapper.m_Transform_MousePos;
-        public InputAction @Drag => m_Wrapper.m_Transform_Drag;
-        public InputAction @Distance => m_Wrapper.m_Transform_Distance;
-        public InputAction @MouseDelta => m_Wrapper.m_Transform_MouseDelta;
-        public InputAction @Snap => m_Wrapper.m_Transform_Snap;
-        public InputActionMap Get() { return m_Wrapper.m_Transform; }
+        public BuildingActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Distance => m_Wrapper.m_Building_Distance;
+        public InputAction @Snap => m_Wrapper.m_Building_Snap;
+        public InputAction @Multiselect => m_Wrapper.m_Building_Multiselect;
+        public InputAction @CancelSelection => m_Wrapper.m_Building_CancelSelection;
+        public InputActionMap Get() { return m_Wrapper.m_Building; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
         public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(TransformActions set) { return set.Get(); }
-        public void AddCallbacks(ITransformActions instance)
+        public static implicit operator InputActionMap(BuildingActions set) { return set.Get(); }
+        public void AddCallbacks(IBuildingActions instance)
         {
-            if (instance == null || m_Wrapper.m_TransformActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_TransformActionsCallbackInterfaces.Add(instance);
-            @MousePos.started += instance.OnMousePos;
-            @MousePos.performed += instance.OnMousePos;
-            @MousePos.canceled += instance.OnMousePos;
-            @Drag.started += instance.OnDrag;
-            @Drag.performed += instance.OnDrag;
-            @Drag.canceled += instance.OnDrag;
+            if (instance == null || m_Wrapper.m_BuildingActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_BuildingActionsCallbackInterfaces.Add(instance);
             @Distance.started += instance.OnDistance;
             @Distance.performed += instance.OnDistance;
             @Distance.canceled += instance.OnDistance;
-            @MouseDelta.started += instance.OnMouseDelta;
-            @MouseDelta.performed += instance.OnMouseDelta;
-            @MouseDelta.canceled += instance.OnMouseDelta;
             @Snap.started += instance.OnSnap;
             @Snap.performed += instance.OnSnap;
             @Snap.canceled += instance.OnSnap;
-        }
-
-        private void UnregisterCallbacks(ITransformActions instance)
-        {
-            @MousePos.started -= instance.OnMousePos;
-            @MousePos.performed -= instance.OnMousePos;
-            @MousePos.canceled -= instance.OnMousePos;
-            @Drag.started -= instance.OnDrag;
-            @Drag.performed -= instance.OnDrag;
-            @Drag.canceled -= instance.OnDrag;
-            @Distance.started -= instance.OnDistance;
-            @Distance.performed -= instance.OnDistance;
-            @Distance.canceled -= instance.OnDistance;
-            @MouseDelta.started -= instance.OnMouseDelta;
-            @MouseDelta.performed -= instance.OnMouseDelta;
-            @MouseDelta.canceled -= instance.OnMouseDelta;
-            @Snap.started -= instance.OnSnap;
-            @Snap.performed -= instance.OnSnap;
-            @Snap.canceled -= instance.OnSnap;
-        }
-
-        public void RemoveCallbacks(ITransformActions instance)
-        {
-            if (m_Wrapper.m_TransformActionsCallbackInterfaces.Remove(instance))
-                UnregisterCallbacks(instance);
-        }
-
-        public void SetCallbacks(ITransformActions instance)
-        {
-            foreach (var item in m_Wrapper.m_TransformActionsCallbackInterfaces)
-                UnregisterCallbacks(item);
-            m_Wrapper.m_TransformActionsCallbackInterfaces.Clear();
-            AddCallbacks(instance);
-        }
-    }
-    public TransformActions @Transform => new TransformActions(this);
-
-    // Selection
-    private readonly InputActionMap m_Selection;
-    private List<ISelectionActions> m_SelectionActionsCallbackInterfaces = new List<ISelectionActions>();
-    private readonly InputAction m_Selection_MousePos;
-    private readonly InputAction m_Selection_Drag;
-    private readonly InputAction m_Selection_Multiselect;
-    public struct SelectionActions
-    {
-        private @InputMaster m_Wrapper;
-        public SelectionActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @MousePos => m_Wrapper.m_Selection_MousePos;
-        public InputAction @Drag => m_Wrapper.m_Selection_Drag;
-        public InputAction @Multiselect => m_Wrapper.m_Selection_Multiselect;
-        public InputActionMap Get() { return m_Wrapper.m_Selection; }
-        public void Enable() { Get().Enable(); }
-        public void Disable() { Get().Disable(); }
-        public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(SelectionActions set) { return set.Get(); }
-        public void AddCallbacks(ISelectionActions instance)
-        {
-            if (instance == null || m_Wrapper.m_SelectionActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_SelectionActionsCallbackInterfaces.Add(instance);
-            @MousePos.started += instance.OnMousePos;
-            @MousePos.performed += instance.OnMousePos;
-            @MousePos.canceled += instance.OnMousePos;
-            @Drag.started += instance.OnDrag;
-            @Drag.performed += instance.OnDrag;
-            @Drag.canceled += instance.OnDrag;
             @Multiselect.started += instance.OnMultiselect;
             @Multiselect.performed += instance.OnMultiselect;
             @Multiselect.canceled += instance.OnMultiselect;
+            @CancelSelection.started += instance.OnCancelSelection;
+            @CancelSelection.performed += instance.OnCancelSelection;
+            @CancelSelection.canceled += instance.OnCancelSelection;
         }
 
-        private void UnregisterCallbacks(ISelectionActions instance)
+        private void UnregisterCallbacks(IBuildingActions instance)
         {
-            @MousePos.started -= instance.OnMousePos;
-            @MousePos.performed -= instance.OnMousePos;
-            @MousePos.canceled -= instance.OnMousePos;
-            @Drag.started -= instance.OnDrag;
-            @Drag.performed -= instance.OnDrag;
-            @Drag.canceled -= instance.OnDrag;
+            @Distance.started -= instance.OnDistance;
+            @Distance.performed -= instance.OnDistance;
+            @Distance.canceled -= instance.OnDistance;
+            @Snap.started -= instance.OnSnap;
+            @Snap.performed -= instance.OnSnap;
+            @Snap.canceled -= instance.OnSnap;
             @Multiselect.started -= instance.OnMultiselect;
             @Multiselect.performed -= instance.OnMultiselect;
             @Multiselect.canceled -= instance.OnMultiselect;
+            @CancelSelection.started -= instance.OnCancelSelection;
+            @CancelSelection.performed -= instance.OnCancelSelection;
+            @CancelSelection.canceled -= instance.OnCancelSelection;
         }
 
-        public void RemoveCallbacks(ISelectionActions instance)
+        public void RemoveCallbacks(IBuildingActions instance)
         {
-            if (m_Wrapper.m_SelectionActionsCallbackInterfaces.Remove(instance))
+            if (m_Wrapper.m_BuildingActionsCallbackInterfaces.Remove(instance))
                 UnregisterCallbacks(instance);
         }
 
-        public void SetCallbacks(ISelectionActions instance)
+        public void SetCallbacks(IBuildingActions instance)
         {
-            foreach (var item in m_Wrapper.m_SelectionActionsCallbackInterfaces)
+            foreach (var item in m_Wrapper.m_BuildingActionsCallbackInterfaces)
                 UnregisterCallbacks(item);
-            m_Wrapper.m_SelectionActionsCallbackInterfaces.Clear();
+            m_Wrapper.m_BuildingActionsCallbackInterfaces.Clear();
             AddCallbacks(instance);
         }
     }
-    public SelectionActions @Selection => new SelectionActions(this);
+    public BuildingActions @Building => new BuildingActions(this);
 
     // Mouse
     private readonly InputActionMap m_Mouse;
@@ -2273,7 +1865,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_TextEditor_Ctrl;
     private readonly InputAction m_TextEditor_Shift;
     private readonly InputAction m_TextEditor_Alt;
-    private readonly InputAction m_TextEditor_Scroll;
     public struct TextEditorActions
     {
         private @InputMaster m_Wrapper;
@@ -2284,7 +1875,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         public InputAction @Ctrl => m_Wrapper.m_TextEditor_Ctrl;
         public InputAction @Shift => m_Wrapper.m_TextEditor_Shift;
         public InputAction @Alt => m_Wrapper.m_TextEditor_Alt;
-        public InputAction @Scroll => m_Wrapper.m_TextEditor_Scroll;
         public InputActionMap Get() { return m_Wrapper.m_TextEditor; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2312,9 +1902,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Alt.started += instance.OnAlt;
             @Alt.performed += instance.OnAlt;
             @Alt.canceled += instance.OnAlt;
-            @Scroll.started += instance.OnScroll;
-            @Scroll.performed += instance.OnScroll;
-            @Scroll.canceled += instance.OnScroll;
         }
 
         private void UnregisterCallbacks(ITextEditorActions instance)
@@ -2337,9 +1924,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Alt.started -= instance.OnAlt;
             @Alt.performed -= instance.OnAlt;
             @Alt.canceled -= instance.OnAlt;
-            @Scroll.started -= instance.OnScroll;
-            @Scroll.performed -= instance.OnScroll;
-            @Scroll.canceled -= instance.OnScroll;
         }
 
         public void RemoveCallbacks(ITextEditorActions instance)
@@ -2357,6 +1941,124 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         }
     }
     public TextEditorActions @TextEditor => new TextEditorActions(this);
+
+    // original_UI
+    private readonly InputActionMap m_original_UI;
+    private List<IOriginal_UIActions> m_Original_UIActionsCallbackInterfaces = new List<IOriginal_UIActions>();
+    private readonly InputAction m_original_UI_Navigate;
+    private readonly InputAction m_original_UI_Submit;
+    private readonly InputAction m_original_UI_Cancel;
+    private readonly InputAction m_original_UI_Point;
+    private readonly InputAction m_original_UI_Click;
+    private readonly InputAction m_original_UI_ScrollWheel;
+    private readonly InputAction m_original_UI_MiddleClick;
+    private readonly InputAction m_original_UI_RightClick;
+    private readonly InputAction m_original_UI_TrackedDevicePosition;
+    private readonly InputAction m_original_UI_TrackedDeviceOrientation;
+    public struct Original_UIActions
+    {
+        private @InputMaster m_Wrapper;
+        public Original_UIActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Navigate => m_Wrapper.m_original_UI_Navigate;
+        public InputAction @Submit => m_Wrapper.m_original_UI_Submit;
+        public InputAction @Cancel => m_Wrapper.m_original_UI_Cancel;
+        public InputAction @Point => m_Wrapper.m_original_UI_Point;
+        public InputAction @Click => m_Wrapper.m_original_UI_Click;
+        public InputAction @ScrollWheel => m_Wrapper.m_original_UI_ScrollWheel;
+        public InputAction @MiddleClick => m_Wrapper.m_original_UI_MiddleClick;
+        public InputAction @RightClick => m_Wrapper.m_original_UI_RightClick;
+        public InputAction @TrackedDevicePosition => m_Wrapper.m_original_UI_TrackedDevicePosition;
+        public InputAction @TrackedDeviceOrientation => m_Wrapper.m_original_UI_TrackedDeviceOrientation;
+        public InputActionMap Get() { return m_Wrapper.m_original_UI; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(Original_UIActions set) { return set.Get(); }
+        public void AddCallbacks(IOriginal_UIActions instance)
+        {
+            if (instance == null || m_Wrapper.m_Original_UIActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_Original_UIActionsCallbackInterfaces.Add(instance);
+            @Navigate.started += instance.OnNavigate;
+            @Navigate.performed += instance.OnNavigate;
+            @Navigate.canceled += instance.OnNavigate;
+            @Submit.started += instance.OnSubmit;
+            @Submit.performed += instance.OnSubmit;
+            @Submit.canceled += instance.OnSubmit;
+            @Cancel.started += instance.OnCancel;
+            @Cancel.performed += instance.OnCancel;
+            @Cancel.canceled += instance.OnCancel;
+            @Point.started += instance.OnPoint;
+            @Point.performed += instance.OnPoint;
+            @Point.canceled += instance.OnPoint;
+            @Click.started += instance.OnClick;
+            @Click.performed += instance.OnClick;
+            @Click.canceled += instance.OnClick;
+            @ScrollWheel.started += instance.OnScrollWheel;
+            @ScrollWheel.performed += instance.OnScrollWheel;
+            @ScrollWheel.canceled += instance.OnScrollWheel;
+            @MiddleClick.started += instance.OnMiddleClick;
+            @MiddleClick.performed += instance.OnMiddleClick;
+            @MiddleClick.canceled += instance.OnMiddleClick;
+            @RightClick.started += instance.OnRightClick;
+            @RightClick.performed += instance.OnRightClick;
+            @RightClick.canceled += instance.OnRightClick;
+            @TrackedDevicePosition.started += instance.OnTrackedDevicePosition;
+            @TrackedDevicePosition.performed += instance.OnTrackedDevicePosition;
+            @TrackedDevicePosition.canceled += instance.OnTrackedDevicePosition;
+            @TrackedDeviceOrientation.started += instance.OnTrackedDeviceOrientation;
+            @TrackedDeviceOrientation.performed += instance.OnTrackedDeviceOrientation;
+            @TrackedDeviceOrientation.canceled += instance.OnTrackedDeviceOrientation;
+        }
+
+        private void UnregisterCallbacks(IOriginal_UIActions instance)
+        {
+            @Navigate.started -= instance.OnNavigate;
+            @Navigate.performed -= instance.OnNavigate;
+            @Navigate.canceled -= instance.OnNavigate;
+            @Submit.started -= instance.OnSubmit;
+            @Submit.performed -= instance.OnSubmit;
+            @Submit.canceled -= instance.OnSubmit;
+            @Cancel.started -= instance.OnCancel;
+            @Cancel.performed -= instance.OnCancel;
+            @Cancel.canceled -= instance.OnCancel;
+            @Point.started -= instance.OnPoint;
+            @Point.performed -= instance.OnPoint;
+            @Point.canceled -= instance.OnPoint;
+            @Click.started -= instance.OnClick;
+            @Click.performed -= instance.OnClick;
+            @Click.canceled -= instance.OnClick;
+            @ScrollWheel.started -= instance.OnScrollWheel;
+            @ScrollWheel.performed -= instance.OnScrollWheel;
+            @ScrollWheel.canceled -= instance.OnScrollWheel;
+            @MiddleClick.started -= instance.OnMiddleClick;
+            @MiddleClick.performed -= instance.OnMiddleClick;
+            @MiddleClick.canceled -= instance.OnMiddleClick;
+            @RightClick.started -= instance.OnRightClick;
+            @RightClick.performed -= instance.OnRightClick;
+            @RightClick.canceled -= instance.OnRightClick;
+            @TrackedDevicePosition.started -= instance.OnTrackedDevicePosition;
+            @TrackedDevicePosition.performed -= instance.OnTrackedDevicePosition;
+            @TrackedDevicePosition.canceled -= instance.OnTrackedDevicePosition;
+            @TrackedDeviceOrientation.started -= instance.OnTrackedDeviceOrientation;
+            @TrackedDeviceOrientation.performed -= instance.OnTrackedDeviceOrientation;
+            @TrackedDeviceOrientation.canceled -= instance.OnTrackedDeviceOrientation;
+        }
+
+        public void RemoveCallbacks(IOriginal_UIActions instance)
+        {
+            if (m_Wrapper.m_Original_UIActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IOriginal_UIActions instance)
+        {
+            foreach (var item in m_Wrapper.m_Original_UIActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_Original_UIActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public Original_UIActions @original_UI => new Original_UIActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -2404,47 +2106,27 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public interface ICameraActions
     {
-        void OnMouse(InputAction.CallbackContext context);
         void OnPerfOrbit(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMove(InputAction.CallbackContext context);
         void OnPrecision(InputAction.CallbackContext context);
         void OnFocus(InputAction.CallbackContext context);
-        void OnMousePos(InputAction.CallbackContext context);
         void OnKeyboardMovement(InputAction.CallbackContext context);
     }
     public interface IPlayerActions
     {
         void OnMove(InputAction.CallbackContext context);
-        void OnLook(InputAction.CallbackContext context);
-        void OnFire(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
-        void OnNavigate(InputAction.CallbackContext context);
-        void OnSubmit(InputAction.CallbackContext context);
-        void OnCancel(InputAction.CallbackContext context);
-        void OnPoint(InputAction.CallbackContext context);
-        void OnClick(InputAction.CallbackContext context);
-        void OnScrollWheel(InputAction.CallbackContext context);
-        void OnMiddleClick(InputAction.CallbackContext context);
-        void OnRightClick(InputAction.CallbackContext context);
-        void OnTrackedDevicePosition(InputAction.CallbackContext context);
-        void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
+        void OnWindowSnap(InputAction.CallbackContext context);
     }
-    public interface ITransformActions
+    public interface IBuildingActions
     {
-        void OnMousePos(InputAction.CallbackContext context);
-        void OnDrag(InputAction.CallbackContext context);
         void OnDistance(InputAction.CallbackContext context);
-        void OnMouseDelta(InputAction.CallbackContext context);
         void OnSnap(InputAction.CallbackContext context);
-    }
-    public interface ISelectionActions
-    {
-        void OnMousePos(InputAction.CallbackContext context);
-        void OnDrag(InputAction.CallbackContext context);
         void OnMultiselect(InputAction.CallbackContext context);
+        void OnCancelSelection(InputAction.CallbackContext context);
     }
     public interface IMouseActions
     {
@@ -2466,6 +2148,18 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnCtrl(InputAction.CallbackContext context);
         void OnShift(InputAction.CallbackContext context);
         void OnAlt(InputAction.CallbackContext context);
-        void OnScroll(InputAction.CallbackContext context);
+    }
+    public interface IOriginal_UIActions
+    {
+        void OnNavigate(InputAction.CallbackContext context);
+        void OnSubmit(InputAction.CallbackContext context);
+        void OnCancel(InputAction.CallbackContext context);
+        void OnPoint(InputAction.CallbackContext context);
+        void OnClick(InputAction.CallbackContext context);
+        void OnScrollWheel(InputAction.CallbackContext context);
+        void OnMiddleClick(InputAction.CallbackContext context);
+        void OnRightClick(InputAction.CallbackContext context);
+        void OnTrackedDevicePosition(InputAction.CallbackContext context);
+        void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
     }
 }
