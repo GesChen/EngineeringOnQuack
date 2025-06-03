@@ -30,6 +30,8 @@ public class CWindow {
 		public bool Resizable				= true;
 		public bool Movable					= true;
 		public Color Color					= global::Config.UI.Visual.BackgroundColor;
+		public (float size, Color color) Outline	
+			= (global::Config.UI.Visual.OutlineThickness, global::Config.UI.Visual.OutlineColor);
 		public SizeData Size				= FreeSize(new(100, 100));
 		public UIPosition Position			= UIPosition.AnchoredAt(UIPosition.MiddleCenter);
 

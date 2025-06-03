@@ -12,9 +12,6 @@ using System.Linq;
 // so i dont have to keep JDFLKJLK:DSLK:JFL stupid thing
 
 public class Conatrols : MonoBehaviour {
-	public static float clickMaxDist = 5;
-	public static float clickMaxTime = .1f;
-
 	public static InputMaster IM;
 	Keyboard CurrentKeyboard;
 	Mouse CurrentMouse;

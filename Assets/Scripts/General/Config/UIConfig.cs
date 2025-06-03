@@ -8,12 +8,14 @@ public static partial class Config {
 			public static readonly float Smoothness = 20;
 			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
+
 			public static TMP_FontAsset DefaultFont { get { return Fonts.Roboto; } }
 			public static readonly FontWeight DefaultWeight		= FontWeight.Light;
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
 			public static readonly float FontSize				= 22;
+
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
-			public static readonly int OutlineThickness			= 2;
+			public static readonly float OutlineThickness		= 2;
 		}
 
 		public static class Behaviour {

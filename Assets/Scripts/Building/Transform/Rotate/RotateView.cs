@@ -16,8 +16,6 @@ public class RotateView : MonoBehaviour
 	
 	bool over;
 	bool lastOver;
-	bool mouseDown;
-	bool lastMouseDown;
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
@@ -51,9 +49,8 @@ public class RotateView : MonoBehaviour
 	void Update()
 	{
 		over = MouseOver();
-		mouseDown = Conatrols.IM.Transform.Drag.IsPressed();
 
-		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime)
 			ResetTransform();
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
@@ -62,18 +59,17 @@ public class RotateView : MonoBehaviour
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 
 		UpdateVisuals();
 
 		PerformRotating();
 
-		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
+		if (Conatrols.Mouse.Left.PressedThisFrame) lastMouseDownTime = Time.time;
 		lastOver = over;
-		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
 	void ResetTransform()

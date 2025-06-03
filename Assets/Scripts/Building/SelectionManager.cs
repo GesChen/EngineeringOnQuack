@@ -4,8 +4,8 @@ using UnityEngine;
 public class SelectionManager : Singleton<SelectionManager> {
 	public bool selectionBoxDragging;
 
-	public int testInterval;
-	public int minPixelsMovedForRetest;
+	//public int testInterval;
+	//public int minPixelsMovedForRetest;
 	[Tooltip("Makes sure tiny boxes dont select a bunch of stuff by accident")]
 	public float minBoxSize;
 
@@ -30,6 +30,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void HandleInput() {
 		if (ContextManager.IsInContext<Contexts.OverUI>()) return;
+		CheckCancel();
 
 		mousePos = Conatrols.Mouse.Position;
 
@@ -49,8 +50,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 		if (Conatrols.Mouse.Left.ReleasedThisFrame && !BuildingManager.Instance.TransformTools.hovering) {
 			dragging = false;
 
-			if (Time.time - mouseDownStartTime < Conatrols.clickMaxTime &&
-				Vector2.Distance(mousePos, mouseDownStartPos) < Conatrols.clickMaxDist) { // counts as a click
+			if (Time.time - mouseDownStartTime < Config.Input.clickMaxTimeMs / 1000f &&
+				Vector2.Distance(mousePos, mouseDownStartPos) < Config.Input.clickMaxDist) { // counts as a click
 				ClickCheck();
 			} else
 				FindObjectsInsideBounds(dragStart, mousePos);
@@ -61,6 +62,13 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		if (dragging) {
 			HandleBox();
+		}
+	}
+
+	void CheckCancel() {
+		if (Conatrols.IM.Building.CancelSelection.WasPressedThisFrame()) {
+			selection.Clear(); // it cant be this simple rights
+			selectionChanged = true;
 		}
 	}
 
@@ -82,7 +90,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		if ((boundsStart - boundsEnd).sqrMagnitude < minBoxSize) return;
 
 		// handle multiselection
-		if (Conatrols.IM.Selection.Multiselect.IsPressed())
+		if (Conatrols.IM.Building.Multiselect.IsPressed())
 			selection = dragStartSelections;
 		else
 			selection = new();
@@ -269,12 +277,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 
 		if (selected == null) {
-			if (!Conatrols.IM.Selection.Multiselect.IsPressed())
+			if (!Conatrols.IM.Building.Multiselect.IsPressed())
 				selection = new();
 			return;
 		}
 
-		if (Conatrols.IM.Selection.Multiselect.IsPressed()) {   // toggle object in selection
+		if (Conatrols.IM.Building.Multiselect.IsPressed()) {   // toggle object in selection
 			if (selection.Contains(selected))
 				selection.Remove(selected);
 			else
@@ -341,5 +349,9 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void UpdateContext() {
 		ContextObserver.Instance.selectionCount = selection.Count;
+	}
+
+	public void Clear() {
+		selection.Clear();
 	}
 }

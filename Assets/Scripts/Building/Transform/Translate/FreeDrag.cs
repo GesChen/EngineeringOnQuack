@@ -5,8 +5,6 @@ public class FreeDrag : MonoBehaviour
 	public TransformTools main;
 
 	Vector2 mousePos;
-	bool mouseDown;
-	bool lastMouseDown;
 	
 	bool dragging;
 	Transform draggingObj;
@@ -17,17 +15,13 @@ public class FreeDrag : MonoBehaviour
 	void Update()
 	{
 		mousePos = Conatrols.Mouse.Position;
-		mouseDown = Conatrols.IM.Transform.Drag.IsPressed();
 
-		if (mouseDown != lastMouseDown && mouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 		
 		PerformDragging();
-
-		lastMouseDown = mouseDown;
-
 	}
 	void StartClicking()
 	{

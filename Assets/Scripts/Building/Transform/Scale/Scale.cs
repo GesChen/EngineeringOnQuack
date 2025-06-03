@@ -17,8 +17,6 @@ public class Scale : MonoBehaviour
 
 	bool over;
 	bool lastOver;
-	bool mouseDown;
-	bool lastMouseDown;
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
@@ -62,11 +60,10 @@ public class Scale : MonoBehaviour
 		localAxes = main.transform.rotation * axis;
 
 		over = MouseOver() && !main.specialCenterCase;
-		mouseDown = Conatrols.IM.Transform.Drag.IsPressed();
 
-		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime)
 			ResetTransform();
-		if (mouseDown != lastMouseDown && !mouseDown) resetting = false;
+		if (Conatrols.Mouse.Left.ReleasedThisFrame) resetting = false;
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
@@ -74,9 +71,9 @@ public class Scale : MonoBehaviour
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown && !resetting)
+		if (Conatrols.Mouse.Left.PressedThisFrame && !resetting)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 
 		UpdateVisuals();
@@ -88,9 +85,8 @@ public class Scale : MonoBehaviour
 		
 		UseAxisIndicator();
 
-		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
+		if (Conatrols.Mouse.Left.PressedThisFrame) lastMouseDownTime = Time.time;
 		lastOver = over;
-		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
 	void ResetTransform()

@@ -7,9 +7,9 @@ using RCM = RightClickMenus;
 
 // will defo come up with a better system for ts later
 // temporary solution for now tho
-public class RightClick : MonoBehaviour {
+public class RightClick : Singleton<RightClick> {
 	public WindowManager windowManager;
-	Vector2 downPos;
+	[HideInNormalInspector] public Vector2 downPos;
 	Flyout currentOpen;
 
 	void Awake() {
@@ -24,7 +24,7 @@ public class RightClick : MonoBehaviour {
 			if (currentOpen != null && currentOpen.gameObject.activeInHierarchy &&
 				(Conatrols.Mouse.Position - downPos).sqrMagnitude >
 				Config.UI.Behaviour.MaxMouseMovementForClick * Config.UI.Behaviour.MaxMouseMovementForClick)
-				currentOpen.Hide();
+				Hide();
 		}
 	}
 
@@ -45,14 +45,14 @@ public class RightClick : MonoBehaviour {
 		}
 	}
 
-	Dictionary<Type, MenuUtil.Window> ContextWindowLookup = new(){
-		{ typeof(C.InWorld), RightClickMenus.inworldDefaultPanel },
-	};
-
 	MenuUtil.Window WindowLookupFunc(IContext context)
 		=> context switch {
 			C.InWorld or C.NoSelection => RCM.inworldDefaultPanel,
 			C.SingleSelection => RCM.inworldSinglePanel,
 			_ => null
 		};
+
+	public void Hide() {
+		currentOpen.Hide();
+	}
 }

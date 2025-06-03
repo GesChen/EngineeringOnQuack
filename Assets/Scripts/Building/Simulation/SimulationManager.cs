@@ -8,7 +8,7 @@ public class SimulationManager : Singleton<SimulationManager>
 
 	public void StartSimulating()
 	{
-		Assembler.Instance.Assemble(out List<Assembler.Subassembly>  computed);
+		Assembler.Instance.Assemble(out List<Assembler.Subassembly> computed);
 		CalculateTotalMasses(computed);
 	}
 

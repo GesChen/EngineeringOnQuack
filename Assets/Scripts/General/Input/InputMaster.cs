@@ -229,15 +229,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Fire"",
-                    ""type"": ""Button"",
-                    ""id"": ""f4e8e56a-43a9-43f3-af22-5d9ea5b8d50c"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -372,61 +363,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""143bb1cd-cc10-4eca-a2f0-a3664166fe91"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Gamepad"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""05f6913d-c316-48b2-a6bb-e225f14c7960"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""886e731e-7071-4ae4-95c0-e61739dad6fd"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Touch"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""ee3d0cd2-254e-47a7-a8cb-bc94d9658c54"",
-                    ""path"": ""<Joystick>/trigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Joystick"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8255d333-5683-4943-a58a-ccb207ff1dce"",
-                    ""path"": ""<XRController>/{PrimaryAction}"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""XR"",
-                    ""action"": ""Fire"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -459,22 +395,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ]
         },
         {
-            ""name"": ""Transform"",
-            ""id"": ""cac43080-c997-4558-825f-b6c7d559e3a2"",
+            ""name"": ""Building"",
+            ""id"": ""297336b0-56e8-4ba3-9cd4-6f2e0a013637"",
             ""actions"": [
-                {
-                    ""name"": ""Drag"",
-                    ""type"": ""Button"",
-                    ""id"": ""1c6241ac-eff0-4881-8a12-d6c70a3f8b24"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
                 {
                     ""name"": ""Distance"",
                     ""type"": ""Value"",
-                    ""id"": ""e9370fb7-be84-44ac-8fb9-2f1a6862c92a"",
+                    ""id"": ""c6e56127-3100-482d-b2d4-612547e030db"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -483,7 +410,25 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""Snap"",
                     ""type"": ""Button"",
-                    ""id"": ""3c4386f9-ae95-45b8-ab0c-a726291548a7"",
+                    ""id"": ""7ca2703a-3181-4a84-bff1-04fa5c79d948"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Multiselect"",
+                    ""type"": ""Button"",
+                    ""id"": ""3fd35f05-4a03-44cb-b60a-87acafc6de99"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CancelSelection"",
+                    ""type"": ""Button"",
+                    ""id"": ""8b7c9d73-61a2-41db-bf43-d1aec7ae079b"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -493,18 +438,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""bindings"": [
                 {
                     ""name"": """",
-                    ""id"": ""5ac106d3-89fd-44d3-9b28-14a4dfe94a7e"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Drag"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""1ba61eba-a226-4469-9d94-77082eb0383e"",
+                    ""id"": ""c890ece1-2083-417d-b949-54ebbc9ee3fc"",
                     ""path"": ""<Mouse>/scroll"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -515,7 +449,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""c2650720-7b32-403d-87f5-9b8c85b14762"",
+                    ""id"": ""b4ef4bc2-a714-4e0b-8157-6bfb2c13b587"",
                     ""path"": ""<Keyboard>/ctrl"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -523,52 +457,26 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""action"": ""Snap"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
-            ""name"": ""Selection"",
-            ""id"": ""8df1483b-7e67-47ac-8ca6-5fecb0753c88"",
-            ""actions"": [
-                {
-                    ""name"": ""Drag"",
-                    ""type"": ""Button"",
-                    ""id"": ""685e1efa-3e3c-44ab-9f7e-f225571ef079"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Multiselect"",
-                    ""type"": ""Button"",
-                    ""id"": ""166c9b83-3ac1-4fc9-b6b2-770106878e51"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""cb01d1a6-fa72-404d-a2f8-9586cbee2ac1"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Drag"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""d6b17f4d-7276-4d3c-9f03-bf26bc43c396"",
+                    ""id"": ""8681c5db-1ef7-403d-ad6b-54a9d957e002"",
                     ""path"": ""<Keyboard>/leftShift"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Multiselect"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""35e635a9-78ae-45f8-85b5-d5b5697717e2"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CancelSelection"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1481,19 +1389,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-        m_Player_Fire = m_Player.FindAction("Fire", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_WindowSnap = m_UI.FindAction("WindowSnap", throwIfNotFound: true);
-        // Transform
-        m_Transform = asset.FindActionMap("Transform", throwIfNotFound: true);
-        m_Transform_Drag = m_Transform.FindAction("Drag", throwIfNotFound: true);
-        m_Transform_Distance = m_Transform.FindAction("Distance", throwIfNotFound: true);
-        m_Transform_Snap = m_Transform.FindAction("Snap", throwIfNotFound: true);
-        // Selection
-        m_Selection = asset.FindActionMap("Selection", throwIfNotFound: true);
-        m_Selection_Drag = m_Selection.FindAction("Drag", throwIfNotFound: true);
-        m_Selection_Multiselect = m_Selection.FindAction("Multiselect", throwIfNotFound: true);
+        // Building
+        m_Building = asset.FindActionMap("Building", throwIfNotFound: true);
+        m_Building_Distance = m_Building.FindAction("Distance", throwIfNotFound: true);
+        m_Building_Snap = m_Building.FindAction("Snap", throwIfNotFound: true);
+        m_Building_Multiselect = m_Building.FindAction("Multiselect", throwIfNotFound: true);
+        m_Building_CancelSelection = m_Building.FindAction("CancelSelection", throwIfNotFound: true);
         // Mouse
         m_Mouse = asset.FindActionMap("Mouse", throwIfNotFound: true);
         m_Mouse_Left = m_Mouse.FindAction("Left", throwIfNotFound: true);
@@ -1532,8 +1436,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Camera.enabled, "This will cause a leak and performance issues, InputMaster.Camera.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, InputMaster.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, InputMaster.UI.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_Transform.enabled, "This will cause a leak and performance issues, InputMaster.Transform.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_Selection.enabled, "This will cause a leak and performance issues, InputMaster.Selection.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Building.enabled, "This will cause a leak and performance issues, InputMaster.Building.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Mouse.enabled, "This will cause a leak and performance issues, InputMaster.Mouse.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_TextEditor.enabled, "This will cause a leak and performance issues, InputMaster.TextEditor.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_original_UI.enabled, "This will cause a leak and performance issues, InputMaster.original_UI.Disable() has not been called.");
@@ -1685,13 +1588,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
-    private readonly InputAction m_Player_Fire;
     public struct PlayerActions
     {
         private @InputMaster m_Wrapper;
         public PlayerActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
         public InputAction @Move => m_Wrapper.m_Player_Move;
-        public InputAction @Fire => m_Wrapper.m_Player_Fire;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1704,9 +1605,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
-            @Fire.started += instance.OnFire;
-            @Fire.performed += instance.OnFire;
-            @Fire.canceled += instance.OnFire;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -1714,9 +1612,6 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
-            @Fire.started -= instance.OnFire;
-            @Fire.performed -= instance.OnFire;
-            @Fire.canceled -= instance.OnFire;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1781,121 +1676,75 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public UIActions @UI => new UIActions(this);
 
-    // Transform
-    private readonly InputActionMap m_Transform;
-    private List<ITransformActions> m_TransformActionsCallbackInterfaces = new List<ITransformActions>();
-    private readonly InputAction m_Transform_Drag;
-    private readonly InputAction m_Transform_Distance;
-    private readonly InputAction m_Transform_Snap;
-    public struct TransformActions
+    // Building
+    private readonly InputActionMap m_Building;
+    private List<IBuildingActions> m_BuildingActionsCallbackInterfaces = new List<IBuildingActions>();
+    private readonly InputAction m_Building_Distance;
+    private readonly InputAction m_Building_Snap;
+    private readonly InputAction m_Building_Multiselect;
+    private readonly InputAction m_Building_CancelSelection;
+    public struct BuildingActions
     {
         private @InputMaster m_Wrapper;
-        public TransformActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Drag => m_Wrapper.m_Transform_Drag;
-        public InputAction @Distance => m_Wrapper.m_Transform_Distance;
-        public InputAction @Snap => m_Wrapper.m_Transform_Snap;
-        public InputActionMap Get() { return m_Wrapper.m_Transform; }
+        public BuildingActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Distance => m_Wrapper.m_Building_Distance;
+        public InputAction @Snap => m_Wrapper.m_Building_Snap;
+        public InputAction @Multiselect => m_Wrapper.m_Building_Multiselect;
+        public InputAction @CancelSelection => m_Wrapper.m_Building_CancelSelection;
+        public InputActionMap Get() { return m_Wrapper.m_Building; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
         public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(TransformActions set) { return set.Get(); }
-        public void AddCallbacks(ITransformActions instance)
+        public static implicit operator InputActionMap(BuildingActions set) { return set.Get(); }
+        public void AddCallbacks(IBuildingActions instance)
         {
-            if (instance == null || m_Wrapper.m_TransformActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_TransformActionsCallbackInterfaces.Add(instance);
-            @Drag.started += instance.OnDrag;
-            @Drag.performed += instance.OnDrag;
-            @Drag.canceled += instance.OnDrag;
+            if (instance == null || m_Wrapper.m_BuildingActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_BuildingActionsCallbackInterfaces.Add(instance);
             @Distance.started += instance.OnDistance;
             @Distance.performed += instance.OnDistance;
             @Distance.canceled += instance.OnDistance;
             @Snap.started += instance.OnSnap;
             @Snap.performed += instance.OnSnap;
             @Snap.canceled += instance.OnSnap;
+            @Multiselect.started += instance.OnMultiselect;
+            @Multiselect.performed += instance.OnMultiselect;
+            @Multiselect.canceled += instance.OnMultiselect;
+            @CancelSelection.started += instance.OnCancelSelection;
+            @CancelSelection.performed += instance.OnCancelSelection;
+            @CancelSelection.canceled += instance.OnCancelSelection;
         }
 
-        private void UnregisterCallbacks(ITransformActions instance)
+        private void UnregisterCallbacks(IBuildingActions instance)
         {
-            @Drag.started -= instance.OnDrag;
-            @Drag.performed -= instance.OnDrag;
-            @Drag.canceled -= instance.OnDrag;
             @Distance.started -= instance.OnDistance;
             @Distance.performed -= instance.OnDistance;
             @Distance.canceled -= instance.OnDistance;
             @Snap.started -= instance.OnSnap;
             @Snap.performed -= instance.OnSnap;
             @Snap.canceled -= instance.OnSnap;
-        }
-
-        public void RemoveCallbacks(ITransformActions instance)
-        {
-            if (m_Wrapper.m_TransformActionsCallbackInterfaces.Remove(instance))
-                UnregisterCallbacks(instance);
-        }
-
-        public void SetCallbacks(ITransformActions instance)
-        {
-            foreach (var item in m_Wrapper.m_TransformActionsCallbackInterfaces)
-                UnregisterCallbacks(item);
-            m_Wrapper.m_TransformActionsCallbackInterfaces.Clear();
-            AddCallbacks(instance);
-        }
-    }
-    public TransformActions @Transform => new TransformActions(this);
-
-    // Selection
-    private readonly InputActionMap m_Selection;
-    private List<ISelectionActions> m_SelectionActionsCallbackInterfaces = new List<ISelectionActions>();
-    private readonly InputAction m_Selection_Drag;
-    private readonly InputAction m_Selection_Multiselect;
-    public struct SelectionActions
-    {
-        private @InputMaster m_Wrapper;
-        public SelectionActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Drag => m_Wrapper.m_Selection_Drag;
-        public InputAction @Multiselect => m_Wrapper.m_Selection_Multiselect;
-        public InputActionMap Get() { return m_Wrapper.m_Selection; }
-        public void Enable() { Get().Enable(); }
-        public void Disable() { Get().Disable(); }
-        public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(SelectionActions set) { return set.Get(); }
-        public void AddCallbacks(ISelectionActions instance)
-        {
-            if (instance == null || m_Wrapper.m_SelectionActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_SelectionActionsCallbackInterfaces.Add(instance);
-            @Drag.started += instance.OnDrag;
-            @Drag.performed += instance.OnDrag;
-            @Drag.canceled += instance.OnDrag;
-            @Multiselect.started += instance.OnMultiselect;
-            @Multiselect.performed += instance.OnMultiselect;
-            @Multiselect.canceled += instance.OnMultiselect;
-        }
-
-        private void UnregisterCallbacks(ISelectionActions instance)
-        {
-            @Drag.started -= instance.OnDrag;
-            @Drag.performed -= instance.OnDrag;
-            @Drag.canceled -= instance.OnDrag;
             @Multiselect.started -= instance.OnMultiselect;
             @Multiselect.performed -= instance.OnMultiselect;
             @Multiselect.canceled -= instance.OnMultiselect;
+            @CancelSelection.started -= instance.OnCancelSelection;
+            @CancelSelection.performed -= instance.OnCancelSelection;
+            @CancelSelection.canceled -= instance.OnCancelSelection;
         }
 
-        public void RemoveCallbacks(ISelectionActions instance)
+        public void RemoveCallbacks(IBuildingActions instance)
         {
-            if (m_Wrapper.m_SelectionActionsCallbackInterfaces.Remove(instance))
+            if (m_Wrapper.m_BuildingActionsCallbackInterfaces.Remove(instance))
                 UnregisterCallbacks(instance);
         }
 
-        public void SetCallbacks(ISelectionActions instance)
+        public void SetCallbacks(IBuildingActions instance)
         {
-            foreach (var item in m_Wrapper.m_SelectionActionsCallbackInterfaces)
+            foreach (var item in m_Wrapper.m_BuildingActionsCallbackInterfaces)
                 UnregisterCallbacks(item);
-            m_Wrapper.m_SelectionActionsCallbackInterfaces.Clear();
+            m_Wrapper.m_BuildingActionsCallbackInterfaces.Clear();
             AddCallbacks(instance);
         }
     }
-    public SelectionActions @Selection => new SelectionActions(this);
+    public BuildingActions @Building => new BuildingActions(this);
 
     // Mouse
     private readonly InputActionMap m_Mouse;
@@ -2267,22 +2116,17 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     public interface IPlayerActions
     {
         void OnMove(InputAction.CallbackContext context);
-        void OnFire(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
         void OnWindowSnap(InputAction.CallbackContext context);
     }
-    public interface ITransformActions
+    public interface IBuildingActions
     {
-        void OnDrag(InputAction.CallbackContext context);
         void OnDistance(InputAction.CallbackContext context);
         void OnSnap(InputAction.CallbackContext context);
-    }
-    public interface ISelectionActions
-    {
-        void OnDrag(InputAction.CallbackContext context);
         void OnMultiselect(InputAction.CallbackContext context);
+        void OnCancelSelection(InputAction.CallbackContext context);
     }
     public interface IMouseActions
     {

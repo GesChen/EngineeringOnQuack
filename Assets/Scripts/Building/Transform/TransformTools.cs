@@ -61,7 +61,9 @@ public class TransformTools : Singleton<TransformTools> {
 	public float axisIndicatorLengthOffset;
 
 	[Header("Debug")]
-	public dynamic currentlyUsingTransformObj;
+	// this is really old code so i dont know what i was doing here
+	// they shoulda been put until a transformtools class but im too lazy to refactor it all now
+	//public dynamic currentlyUsingTransformObj;
 	public bool hovering;
 	public List<Transform> hoveringTransforms;
 	public bool dragging;
@@ -88,12 +90,7 @@ public class TransformTools : Singleton<TransformTools> {
 		else if (!local)
 			transform.rotation = Quaternion.identity;
 
-		if (Input.GetKeyDown(KeyCode.Escape)) {
-			currentlyUsingTransformObj.StopOver();
-			hovering = false;
-		}
-
-		snapping = Conatrols.IM.Transform.Snap.IsPressed();
+		snapping = Conatrols.IM.Building.Snap.IsPressed();
 	}
 	public void UpdatePosition() {
 		transform.position = selectionContainer.position;

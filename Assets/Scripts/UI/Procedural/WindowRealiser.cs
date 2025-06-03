@@ -22,6 +22,11 @@ public class WindowRealiser : MonoBehaviour {
 		var (bgRT, _) = MakeNewImageObj("Background", windowRT, window.Config.Color);
 		SetFull(bgRT);
 
+		// add outline
+		var outline = bgRT.gameObject.AddComponent<Outline>();
+		outline.effectDistance = window.Config.Outline.size * Vector2.one;
+		outline.effectColor = window.Config.Outline.color;
+
 		// content parent
 		var (_, contentParent) =
 			MakeNewRT("Content", windowRT);

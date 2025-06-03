@@ -4,36 +4,50 @@ using UnityEngine;
 using W = MenuUtil.Window;
 
 public class RightClickMenus : MonoBehaviour {
+
+	public delegate void NewPartEvent(string name);
+	public static event NewPartEvent OnNewPartMade;
+
+	public static void ClearEvent() {
+		OnNewPartMade = null;
+	}
+
+	static void MakeNewPart(string name) {
+		RightClick.Instance.Hide(); // hide the menu
+
+		OnNewPartMade?.Invoke(name);
+	}
+
 	// will have to add more later for other contexts but for now this is enough
 
 	// todo: some grouping system to put them all under one parent
 	public static readonly W digital = new(
 		200,
 		new(){
-				new W.Button(null,	"cpu",		"",		"cpu"),
-				new W.Button(null,	"ram 8kb",	"",		"ram"),
-				new W.Button(null,	"display",	"",		"display"),
-				new W.Button(null,	"script",	"",		"script")
+				new W.Button(() => MakeNewPart("cpu"),		"cpu",		"",		"cpu"),
+				new W.Button(() => MakeNewPart("ram"),		"ram",		"",		"ram"),
+				new W.Button(() => MakeNewPart("display"),	"display",	"",		"display"),
+				new W.Button(() => MakeNewPart("script"),	"script",	"",		"script")
 			});
 
 	public static readonly W mechanical = new(
 		200,
 		new(){
-				new W.Button(null,	"motor 1",		"", "motor 1"),
-				new W.Button(null,	"motor 2",		"", "motor 2"),
-				new W.Button(null,	"piston 1",		"", "piston 1"),
-				new W.Button(null,	"piston 1",		"", "piston 2"),
-				new W.Button(null,	"servo 1",		"", "servo 1"),
-				new W.Button(null,	"servo 1",		"", "servo 2")
+				new W.Button(() => MakeNewPart("motor 1"),	"motor 1",		"", "motor 1"),
+				new W.Button(() => MakeNewPart("motor 2"),	"motor 2",		"", "motor 2"),
+				new W.Button(() => MakeNewPart("piston 1"),	"piston 1",		"", "piston 1"),
+				new W.Button(() => MakeNewPart("piston 1"),	"piston 1",		"", "piston 2"),
+				new W.Button(() => MakeNewPart("servo 1"),	"servo 1",		"", "servo 1"),
+				new W.Button(() => MakeNewPart("servo 1"),	"servo 1",		"", "servo 2")
 		});
 
 	public static readonly W structural = new(
 		200,
 		new(){
-				new W.Button(null,	"cube",			"",	"cube"),
-				new W.Button(null,	"sphere",		"",	"sphere"),
-				new W.Button(null,	"cylinder",		"",	"cylinder"),
-				new W.Button(null,	"wedge",		"",	"wedge")
+				new W.Button(() => MakeNewPart("cube"),		"cube",			"",	"cube"),
+				new W.Button(() => MakeNewPart("sphere"),	"sphere",		"",	"sphere"),
+				new W.Button(() => MakeNewPart("cylinder"),	"cylinder",		"",	"cylinder"),
+				new W.Button(() => MakeNewPart("wedge"),	"wedge",		"",	"wedge")
 		});
 
 	public static readonly W newPart = new(
@@ -42,7 +56,7 @@ public class RightClickMenus : MonoBehaviour {
 			new W.Flyout(structural,	"structural",	"", "structural"),
 			new W.Flyout(mechanical,	"mechanical",	"", "mechanical"),
 			new W.Flyout(digital,		"digital",		"", "digital"),
-			new W.Button(null,			"cable",		"", "cable")
+			new W.Button(() => MakeNewPart("cable"),			"cable",		"", "cable")
 		});
 
 	// yagni for now we're just doing multiple variations of the same main panel
