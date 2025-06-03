@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PComponents {
 	public class Component {
@@ -39,7 +40,9 @@ public class PComponents {
 		public Color HighlightedColor	= Config.UI.Button.HoverColor;
 		public Color PressedColor		= Config.UI.Button.PressedColor;
 		public Color DisabledColor		= Config.UI.Button.DisabledColor;
-		public List<UnityEngine.Events.UnityAction> OnClick = new();
+
+		public delegate void ClickEvent();
+		public event ClickEvent OnClick;
 
 		public Button(
 			bool enabled,
@@ -47,7 +50,7 @@ public class PComponents {
 			Color highlightedColor,
 			Color pressedColor,
 			Color disabledColor,
-			List<UnityEngine.Events.UnityAction> onClick) {
+			ClickEvent onClick) {
 			Enabled = enabled;
 			NormalColor = normalColor;
 			HighlightedColor = highlightedColor;
@@ -58,7 +61,7 @@ public class PComponents {
 
 		// less efficient full customization
 		public Button(
-			List<UnityEngine.Events.UnityAction> onClick,
+			ClickEvent onClick,
 			bool enabled = true,
 			Color? normalColor = null,
 			Color? highlightedColor = null,
@@ -73,7 +76,7 @@ public class PComponents {
 			DisabledColor		= disabledColor		?? Config.UI.Button.DisabledColor;
 		}
 
-		public Button(List<UnityEngine.Events.UnityAction> onClick) {
+		public Button(ClickEvent onClick) {
 			OnClick = onClick;
 		}
 
@@ -83,7 +86,11 @@ public class PComponents {
 			Config.UI.Button.HoverColor,
 			Config.UI.Button.PressedColor,
 			Config.UI.Button.DisabledColor,
-			new()) { }
+			null) { }
+
+		public void TriggerClick() {
+			OnClick?.Invoke();
+		}
 	}
 
 	public class Text : Component {

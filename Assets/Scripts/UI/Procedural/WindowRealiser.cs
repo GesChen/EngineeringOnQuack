@@ -205,10 +205,7 @@ public class WindowRealiser : MonoBehaviour {
 				};
 				button.navigation = navigation;
 
-				Button.ButtonClickedEvent buttonClicked = new();
-				foreach (var action in bt.OnClick)
-					buttonClicked.AddListener(action);
-				button.onClick = buttonClicked;
+				button.onClick.AddListener(bt.TriggerClick);
 
 				break;
 

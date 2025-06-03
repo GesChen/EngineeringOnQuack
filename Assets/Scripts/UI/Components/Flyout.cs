@@ -37,8 +37,10 @@ public class Flyout : MonoBehaviour {
 		// sorry future me
 		if (Time.frameCount == Config.UI.Behaviour.MaxFramesForRealization)
 			gameObject.SetActive(false);
-		if (Time.frameCount <= Config.UI.Behaviour.MaxFramesForRealization)
+		if (Time.frameCount <= Config.UI.Behaviour.MaxFramesForRealization) {
+			transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
 			return;
+		}
 
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
 

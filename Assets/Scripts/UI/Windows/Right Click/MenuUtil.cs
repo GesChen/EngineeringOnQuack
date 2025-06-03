@@ -59,10 +59,9 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		public class Button : Item {
-			public delegate void ButtonClickEvent();
-			public ButtonClickEvent OnButtonClick;
+			public PComponents.Button.ClickEvent OnButtonClick;
 
-			public Button(ButtonClickEvent onButtonClick, string label, string description = null, string iconName = null)
+			public Button(PComponents.Button.ClickEvent onButtonClick, string label, string description = null, string iconName = null)
 				: base(label, description, iconName) {
 				OnButtonClick = onButtonClick;
 			}
@@ -202,15 +201,11 @@ public class MenuUtil : MonoBehaviour {
 				break;
 
 			case Window.Button button:
-				List<UnityEngine.Events.UnityAction> action;
-				if (button.OnButtonClick != null)
-					action = new() { new(button.OnButtonClick) };
-				else action = new() { };
-				
+
 				newItem = WindowItem.NewButton(
 					item.Label,
 					new(
-						action,
+						button.OnButtonClick,
 						normalColor: Config.UI.Visual.BackgroundColor
 						),
 					layout

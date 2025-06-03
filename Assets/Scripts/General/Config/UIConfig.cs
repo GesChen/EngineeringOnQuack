@@ -22,6 +22,7 @@ public static partial class Config {
 			public static readonly float FlyoutDistance			= 5;
 			public static readonly float FlyoutHoverMargin		= 50;
 			public static readonly int DescriptionHoverMs		= 500;
+			public static readonly float MaxMouseMovementForClick	= 5;
 		}
 
 		public static class Button {

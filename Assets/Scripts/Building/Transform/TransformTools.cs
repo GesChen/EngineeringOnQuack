@@ -1,11 +1,10 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TransformTools : MonoBehaviour
-{
+public class TransformTools : Singleton<TransformTools> {
 	public bool active;
 	[Space]
+	public WindowManager windowManager;
 	public Transform selectionContainer;
 	public BuildingManager buildingManager;
 	[Space]
@@ -55,7 +54,7 @@ public class TransformTools : MonoBehaviour
 	public float draggingScale = 1.2f;
 	public float draggingOutset = .07f;
 	public float draggingAlpha = .01f;
-	
+
 	[Header ("Axis Indicator")]
 	public AxisIndicatorManager axisIndicatorManager;
 	public float axisIndicatorAlpha;
@@ -73,29 +72,47 @@ public class TransformTools : MonoBehaviour
 	public bool rotating;
 	public bool scaling;
 
-	void Update()
-	{
+	void Start() {
+		Controls();
+	}
+
+	void Update() {
 		// dont display while selecting, issues pop up with interference in hovering and stuff
-		currentSize = (active && !SelectionManager.Instance.selectionBoxDragging)? size : 0;
+		currentSize = (active && !SelectionManager.Instance.selectionBoxDragging) ? size : 0;
 
 		if (!dragging)
 			transform.localScale = Vector3.Distance(Camera.main.transform.position, selectionContainer.position) * currentSize * Vector3.one;
-		
+
 		if (local && !dragging)
 			transform.rotation = selectionContainer.rotation;
 		else if (!local)
 			transform.rotation = Quaternion.identity;
 
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
+		if (Input.GetKeyDown(KeyCode.Escape)) {
 			currentlyUsingTransformObj.StopOver();
 			hovering = false;
 		}
 
 		snapping = Conatrols.IM.Transform.Snap.IsPressed();
 	}
-	public void UpdatePosition()
-	{
+	public void UpdatePosition() {
 		transform.position = selectionContainer.position;
 	}
+
+	void Controls() {
+		TransformToolsMenu.onTranslatePressed = null;
+		TransformToolsMenu.onTranslatePressed += ToggleTranslate;
+
+		TransformToolsMenu.onRotatePressed = null;
+		TransformToolsMenu.onRotatePressed += ToggleRotate;
+
+		TransformToolsMenu.onScalePressed = null;
+		TransformToolsMenu.onScalePressed += ToggleScale;
+
+		windowManager.RealiseWindows(TransformToolsMenu.Windows);
+	}
+
+	void ToggleTranslate() => translating = !translating;
+	void ToggleRotate() => rotating = !rotating;
+	void ToggleScale() => scaling = !scaling;
 }

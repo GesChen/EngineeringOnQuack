@@ -9,6 +9,8 @@ using RCM = RightClickMenus;
 // temporary solution for now tho
 public class RightClick : MonoBehaviour {
 	public WindowManager windowManager;
+	Vector2 downPos;
+	Flyout currentOpen;
 
 	void Awake() {
 		windowManager.RealiseWindows(RCM.GetWindows());
@@ -17,17 +19,29 @@ public class RightClick : MonoBehaviour {
 	void Update() {
 		if (Conatrols.Mouse.Right.PressedThisFrame) {
 			Click();
+		}else 
+		if (Conatrols.Mouse.Right.Pressed) {
+			if (currentOpen != null && currentOpen.gameObject.activeInHierarchy &&
+				(Conatrols.Mouse.Position - downPos).sqrMagnitude >
+				Config.UI.Behaviour.MaxMouseMovementForClick * Config.UI.Behaviour.MaxMouseMovementForClick)
+				currentOpen.Hide();
 		}
 	}
 
 	void Click() {
+		if (Conatrols.Mouse.SmoothDelta.sqrMagnitude >
+			Config.UI.Behaviour.MaxMouseMovementForClick * Config.UI.Behaviour.MaxMouseMovementForClick)
+			return;
+
+		downPos = Conatrols.Mouse.Position;
+
 		var window = WindowLookupFunc(ContextManager.Current);
 
 		if (window != null) {
 			// don't optimize this if not needed 
-			var live = window.CWindow.RealisedWindow.GetComponent<Flyout>();
+			currentOpen = window.CWindow.RealisedWindow.GetComponent<Flyout>();
 
-			live.Show(Conatrols.Mouse.Position);
+			currentOpen.Show(Conatrols.Mouse.Position);
 		}
 	}
 

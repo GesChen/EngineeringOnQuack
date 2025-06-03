@@ -18,7 +18,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 	Vector2 mousePos;
 	Vector2 dragStart;
 	bool dragging;
-	bool lastMouseDown;
 	Vector2 mouseDownStartPos;
 	float mouseDownStartTime;
 	bool selectionChanged;
@@ -30,11 +29,14 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void HandleInput() {
-		bool mouseDown = Conatrols.IM.Selection.Drag.IsPressed();
+		if (ContextManager.IsInContext<Contexts.OverUI>()) return;
+
 		mousePos = Conatrols.Mouse.Position;
 
 		// detect mouse down
-		if (mouseDown && mouseDown != lastMouseDown) {
+		if (Conatrols.Mouse.Left.PressedThisFrame) {
+			dragging = !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
+			
 			dragStart = mousePos;
 			dragStartSelections = selection;
 			mouseDownStartTime = Time.time;
@@ -44,7 +46,9 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// detect drag start
 
 		// detect mouse up
-		if (!mouseDown && mouseDown != lastMouseDown && !BuildingManager.Instance.TransformTools.hovering) {
+		if (Conatrols.Mouse.Left.ReleasedThisFrame && !BuildingManager.Instance.TransformTools.hovering) {
+			dragging = false;
+
 			if (Time.time - mouseDownStartTime < Conatrols.clickMaxTime &&
 				Vector2.Distance(mousePos, mouseDownStartPos) < Conatrols.clickMaxDist) { // counts as a click
 				ClickCheck();
@@ -52,15 +56,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 				FindObjectsInsideBounds(dragStart, mousePos);
 		}
 
-		dragging = mouseDown && !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
 		selectionBoxDragging = dragging;
 		UIBox.gameObject.SetActive(dragging);
 
 		if (dragging) {
 			HandleBox();
 		}
-
-		lastMouseDown = mouseDown;
 	}
 
 	void HandleContainer() {
