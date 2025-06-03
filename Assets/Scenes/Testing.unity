@@ -3940,12 +3940,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionBoxDragging: 0
-  testInterval: 3
-  minPixelsMovedForRetest: 10
-  minBoxSize: 10
+  minBoxSize: 0
   selection: []
   selectionContainer: {fileID: 658128959}
   UIBox: {fileID: 32971815}
+  dragStartTime: 0
 --- !u!4 &1057437594
 Transform:
   m_ObjectHideFlags: 0
@@ -5036,6 +5035,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   windowManager: {fileID: 916857752}
+  downPos: {x: 0, y: 0}
 --- !u!114 &1569215807
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5534,7 +5534,7 @@ Camera:
   m_FOVAxisMode: 0
   m_Iso: 200
   m_ShutterSpeed: 0.005
-  m_Aperture: 2.8
+  m_Aperture: 1.4
   m_FocusDistance: 10
   m_FocalLength: 15
   m_BladeCount: 5

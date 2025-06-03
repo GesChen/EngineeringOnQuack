@@ -92,10 +92,10 @@ MonoBehaviour:
     m_Value: 1
   m_MinSmoothness:
     m_OverrideState: 1
-    m_Value: 0.6
+    m_Value: 0.603
   m_SmoothnessFadeStart:
     m_OverrideState: 1
-    m_Value: 0.906
+    m_Value: 0.603
   reflectSky:
     m_OverrideState: 1
     m_Value: 1
@@ -104,10 +104,10 @@ MonoBehaviour:
     m_Value: 0
   depthBufferThickness:
     m_OverrideState: 1
-    m_Value: 0.01
+    m_Value: 0.469
   screenFadeDistance:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   accumulationFactor:
     m_OverrideState: 1
     m_Value: 0.75
@@ -131,7 +131,7 @@ MonoBehaviour:
     m_Value: 1
   enableWorldSpeedRejection:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   m_RayMaxIterations:
     m_OverrideState: 1
     m_Value: 64
@@ -203,7 +203,7 @@ MonoBehaviour:
     m_Value: 1
   focusDistance:
     m_OverrideState: 1
-    m_Value: 16.84
+    m_Value: 0.52
   focusDistanceMode:
     m_OverrideState: 1
     m_Value: 0
@@ -933,17 +933,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   active: 0
   intensity:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.19
   xMultiplier:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   yMultiplier:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   center:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: {x: 0.5, y: 0.5}
   scale:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1

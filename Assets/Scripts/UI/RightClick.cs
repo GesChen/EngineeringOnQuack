@@ -12,14 +12,14 @@ public class RightClick : Singleton<RightClick> {
 	[HideInNormalInspector] public Vector2 downPos;
 	Flyout currentOpen;
 
-	void Awake() {
+	protected override void Awake() {
+		base.Awake();
 		windowManager.RealiseWindows(RCM.GetWindows());
 	}
-
 	void Update() {
 		if (Conatrols.Mouse.Right.PressedThisFrame) {
 			Click();
-		}else 
+		} else 
 		if (Conatrols.Mouse.Right.Pressed) {
 			if (currentOpen != null && currentOpen.gameObject.activeInHierarchy &&
 				(Conatrols.Mouse.Position - downPos).sqrMagnitude >

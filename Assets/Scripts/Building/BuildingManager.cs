@@ -25,29 +25,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// hit that bell for more epic code (this is garbage)
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
-		RightClickMenus.ClearEvent();
+		RightClickMenus.ClearEvents();
 		RightClickMenus.OnNewPartMade += MakeNewPart;
+		RightClickMenus.OnDelete += DeleteSelection;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
-	}
-
-	void MakeNewPart(string name) {
-		var newpart = GeneratePart(name);
-
-		// place part
-		// the container provides all the functionality i need already
-		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
-		Vector3 planeDir = (Camera.main.transform.position - planeOrigin).normalized;
-		Ray ray = Camera.main.ScreenPointToRay(RightClick.Instance.downPos); // use right click pos not current
-
-		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
-		newpart.transform.position = pos;
-
-		Parts.Add(newpart);
-
-		PartsUpdated();
-
 	}
 
 	void Update() {
@@ -80,6 +63,39 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	public void PartsUpdated() {
 		UpdateIds();
+	}
+
+	void MakeNewPart(string name) {
+		var newpart = GeneratePart(name);
+
+		// place part
+		// the container provides all the functionality i need already
+		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
+		Vector3 planeDir = (Camera.main.transform.position - planeOrigin).normalized;
+		Ray ray = Camera.main.ScreenPointToRay(RightClick.Instance.downPos); // use right click pos not current
+
+		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
+		newpart.transform.position = pos;
+
+		Parts.Add(newpart);
+
+		PartsUpdated();
+	}
+
+	void DeleteSelection() {
+		// delete current selection
+		foreach (var t in SelectionManager.Instance.selection) {
+			if (t.TryGetComponent(out Part part)) {
+				if (!Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
+				else
+					Parts.Remove(part);
+
+				Destroy(part.gameObject);
+			}
+		}
+
+		SelectionManager.Instance.Clear();
+		PartsUpdated();
 	}
 
 	void UpdateIds() {

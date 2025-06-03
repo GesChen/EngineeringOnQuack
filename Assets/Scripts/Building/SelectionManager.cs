@@ -18,9 +18,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 	Vector2 mousePos;
 	Vector2 dragStart;
 	bool dragging;
-	Vector2 mouseDownStartPos;
-	float mouseDownStartTime;
 	bool selectionChanged;
+	[HideInNormalInspector] public float dragStartTime;
 
 	void Update() {
 		HandleInput();
@@ -40,21 +39,23 @@ public class SelectionManager : Singleton<SelectionManager> {
 			
 			dragStart = mousePos;
 			dragStartSelections = selection;
-			mouseDownStartTime = Time.time;
-			mouseDownStartPos = mousePos;
+
+			if (dragging)
+				dragStartTime = Time.time;
 		}
 
 		// detect drag start
 
 		// detect mouse up
-		if (Conatrols.Mouse.Left.ReleasedThisFrame && !BuildingManager.Instance.TransformTools.hovering) {
+		if (!Conatrols.Mouse.Left.Pressed && !BuildingManager.Instance.TransformTools.hovering) {
+			if (dragging)	
+				FindObjectsInsideBounds(dragStart, mousePos);
 			dragging = false;
-
+/*
 			if (Time.time - mouseDownStartTime < Config.Input.clickMaxTimeMs / 1000f &&
 				Vector2.Distance(mousePos, mouseDownStartPos) < Config.Input.clickMaxDist) { // counts as a click
 				ClickCheck();
-			} else
-				FindObjectsInsideBounds(dragStart, mousePos);
+			} else*/
 		}
 
 		selectionBoxDragging = dragging;
@@ -353,5 +354,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	public void Clear() {
 		selection.Clear();
+
+		selectionChanged = true;
 	}
 }

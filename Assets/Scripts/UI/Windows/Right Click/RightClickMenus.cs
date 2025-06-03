@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using W = MenuUtil.Window;
 
@@ -7,9 +9,19 @@ public class RightClickMenus : MonoBehaviour {
 
 	public delegate void NewPartEvent(string name);
 	public static event NewPartEvent OnNewPartMade;
+	public static event Action OnUndo;
+	public static event Action OnRedo;
+	public static event Action OnCopy;
+	public static event Action OnPaste;
+	public static event Action OnDelete;
 
-	public static void ClearEvent() {
-		OnNewPartMade = null;
+	public static void ClearEvents() {
+		OnNewPartMade	= null;
+		OnUndo			= null;
+		OnRedo			= null;
+		OnCopy			= null;
+		OnPaste			= null;
+		OnDelete		= null;
 	}
 
 	static void MakeNewPart(string name) {
@@ -17,6 +29,13 @@ public class RightClickMenus : MonoBehaviour {
 
 		OnNewPartMade?.Invoke(name);
 	}
+
+	// i wanna dry but kiss is more important
+	static void Undo() {	RightClick.Instance.Hide();	OnUndo?.Invoke(); }
+	static void Redo(){		RightClick.Instance.Hide();	OnRedo?.Invoke(); }
+	static void Copy(){		RightClick.Instance.Hide();	OnCopy?.Invoke(); }
+	static void Paste(){	RightClick.Instance.Hide();	OnPaste?.Invoke(); }
+	static void Delete(){	RightClick.Instance.Hide();	OnDelete?.Invoke(); }
 
 	// will have to add more later for other contexts but for now this is enough
 
@@ -73,12 +92,12 @@ public class RightClickMenus : MonoBehaviour {
 
 	public static readonly W inworldSinglePanel = new(
 		"Editing", 200, new() {
-			new W.Flyout(newPart,	"new part",	"",	"plus"),
-			new W.Button(null,		"undo",		"",	"undo"),
-			new W.Button(null,		"redo",		"",	"redo"),
-			new W.Button(null,		"copy",		"",	"copy"),
-			new W.Button(null,		"paste",	""),
-			new W.Button(null,		"delete",	"",	"delete"),
+			new W.Flyout(newPart,	"new part", "", "plus"),
+			new W.Button(() => Undo(),		"undo",		"",	"undo"),
+			new W.Button(() => Redo(),		"redo",		"",	"redo"),
+			new W.Button(() => Copy(),		"copy",		"",	"copy"),
+			new W.Button(() => Paste(),		"paste",	""),
+			new W.Button(() => Delete(),	"delete",	"",	"delete"),
 		});
 
 	public static CWindow[] GetWindows()
