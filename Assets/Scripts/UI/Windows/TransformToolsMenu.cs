@@ -26,32 +26,32 @@ public class TransformToolsMenu {
 						FourSides.Zero
 					),
 					new() {
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomImage(
 							"Translate",
 							new(() => onTranslatePressed?.Invoke()),
+							new PComponents.Image("Icons/move"),
 							new() {
 								Position = new(0, 2/3f, 0, 0),
 								Margins = new(5)
-							},
-							new PComponents.Image("Icons/move")
+							}
 						),
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomImage(
 							"Rotate",
 							new(() => onRotatePressed?.Invoke()),
+							new PComponents.Image("Icons/rotate"),
 							new() {
 								Position = new(0, 1/3f, 0, 1/3f),
 								Margins = new(5)
-							},
-							new PComponents.Image("Icons/rotate")
+							}
 						),
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomImage(
 							"Scale",
 							new(() => onScalePressed?.Invoke()),
+							new PComponents.Image("Icons/scale"),
 							new() {
 								Position = new(0, 0, 0, 2/3f),
 								Margins = new(5)
-							},
-							new PComponents.Image("Icons/scale")
+							}
 						)
 					})
 			}

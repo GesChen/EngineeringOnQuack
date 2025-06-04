@@ -113,7 +113,25 @@ public class WindowItem {
 	public static WindowItem NewText(PComponents.Text text, LayoutConfig layout)
 		=> NewText("Text", text, layout);
 
-	public static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout, PComponents.Component inner)
+	// theres GOTTA be a better way other than overloading the fuck out of these but i cant think of one rn
+	// im just gonna give em unique names for now idk
+
+	public static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout)
+		=> new(
+			name,
+			layout,
+			new() {
+				new PComponents.Image(),
+				button
+			},
+			null
+		);
+	public static WindowItem NewButton(PComponents.Button button, LayoutConfig layout)
+		=> NewButton("Button", button, layout);
+
+
+	// privating these for now cuz they're kinda weird? idk
+	private static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout, PComponents.Component inner)
 		=> new(
 			name,
 			layout,
@@ -130,21 +148,14 @@ public class WindowItem {
 					)
 			}
 		);
-	public static WindowItem NewButton(PComponents.Button button, LayoutConfig layout, PComponents.Component inner)
+	private static WindowItem NewButton(PComponents.Button button, LayoutConfig layout, PComponents.Component inner)
 		=> NewButton("Button", button, layout, inner);
 
-	public static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout)
-		=> new(
-			name,
-			layout,
-			new() {
-				new PComponents.Image(),
-				button
-			},
-			null
-		);
-	public static WindowItem NewButton(PComponents.Button button, LayoutConfig layout)
-		=> NewButton("Button", button, layout);
+	public static WindowItem NewButtonCustomImage(string name, PComponents.Button button, PComponents.Image image, LayoutConfig layout)
+		=> NewButton(name, button, layout, image);
+	public static WindowItem NewButtonCustomImage(PComponents.Button button, PComponents.Image image, LayoutConfig layout)
+		=> NewButtonCustomImage("Button", button, image, layout);
+
 
 	public static WindowItem NewLayout(string name, PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items)
 		=> new(

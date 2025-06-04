@@ -33,7 +33,7 @@ public static partial class Config {
 			public static readonly Color PressedColor	= new(.45f, .45f, .45f);
 			public static readonly Color DisabledColor	= new(.16f, .16f, .16f);
 			public static readonly Color ToggledColor	= new(.33f, .33f, .33f);
-			public static readonly float FadeDuration = .05f;
+			public static readonly float FadeDuration = .01f;
 		}
 
 		public static class RightClick {
@@ -46,6 +46,17 @@ public static partial class Config {
 			public static readonly float FontSize			= 18;
 			public static readonly FontWeight FontWeight	= FontWeight.Light;
 			public static readonly Vector2 CursorOffset		= new(0, -30);
+		}
+
+		public static class Menu {
+			public static readonly float TitleHeight			= 30;
+			public static readonly float ItemSpacing			= 0;
+			public static readonly float ItemHeight				= 30;
+			public static readonly float ItemPadding			= 5;
+			public static readonly float IconSize				= 20;
+			public static readonly float IconLabelSpacing		= 10;
+			public static readonly float FlyoutIndicatorSize	= 20;
+			public static readonly float FontSize				= Visual.FontSize - 2;
 		}
 
 		public static class Locations {

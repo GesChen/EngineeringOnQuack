@@ -94,43 +94,51 @@ public class PComponents {
 	}
 
 	public class Text : Component {
-		public string Content;
-		public TMP_FontAsset Font = Config.UI.Visual.DefaultFont;
-		public FontStyles Style = FontStyles.Normal;
-		public FontWeight Weight = Config.UI.Visual.DefaultWeight;
-		public float FontSize = Config.UI.Visual.FontSize;
-		public Color Color = Config.UI.Visual.TextColor;
-		public TextAlignmentOptions Alignment = TextAlignmentOptions.TopLeft;
+		public string				Content;
+		public TMP_FontAsset		Font		= Config.UI.Visual.DefaultFont;
+		public FontStyles			Style		= FontStyles.Normal;
+		public FontWeight			Weight		= Config.UI.Visual.DefaultWeight;
+		public float				FontSize	= Config.UI.Visual.FontSize;
+		public Color				Color		= Config.UI.Visual.TextColor;
+		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.TopLeft;
 
 		public Text(
 				string content,
 				TMP_FontAsset font,
 				FontStyles style,
+				FontWeight weight,
 				float fontSize,
 				Color color,
 				TextAlignmentOptions alignment) {
 			Content = content;
 			Font = font;
 			Style = style;
+			Weight = weight;
 			FontSize = fontSize;
 			Color = color;
 			Alignment = alignment;
 		}
 
+		public Text(
+				string					content,
+				TMP_FontAsset			font		= null,
+				FontStyles?				style		= null,
+				FontWeight?				weight		= null,
+				float?					fontSize	= null,
+				Color?					color		= null,
+				TextAlignmentOptions?	alignment	= null) {
+			Content = content;
+
+			Font		= font != null ? font : Config.UI.Visual.DefaultFont;
+			Style		= style		?? FontStyles.Normal;
+			Weight		= weight	?? Config.UI.Visual.DefaultWeight;
+			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
+			Color		= color		?? Config.UI.Visual.TextColor;
+			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
+		}
+
 		public Text(string content) {
 			Content = content;
-		}
-
-		public Text(string content, Color color) {
-			Content = content;
-			Color = color;
-		}
-
-		public Text(
-				string content,
-				TextAlignmentOptions alignment) {
-			Content = content;
-			Alignment = alignment;
 		}
 	}
 

@@ -43,39 +43,39 @@ public class RightClickMenus : MonoBehaviour {
 	public static readonly W digital = new(
 		200,
 		new(){
-				new W.Button(() => MakeNewPart("cpu"),		"cpu",		"",		"cpu"),
-				new W.Button(() => MakeNewPart("ram"),		"ram",		"",		"ram"),
-				new W.Button(() => MakeNewPart("display"),	"display",	"",		"display"),
-				new W.Button(() => MakeNewPart("script"),	"script",	"",		"script")
-			});
+			new W.Button(() => MakeNewPart("cpu"),		"cpu",		"",	"cpu"),
+			new W.Button(() => MakeNewPart("ram"),		"ram",		"",	"ram"),
+			new W.Button(() => MakeNewPart("display"),	"display",	"",	"display"),
+			new W.Button(() => MakeNewPart("script"),	"script",	"",	"script")
+		});
 
 	public static readonly W mechanical = new(
 		200,
 		new(){
-				new W.Button(() => MakeNewPart("motor 1"),	"motor 1",		"", "motor 1"),
-				new W.Button(() => MakeNewPart("motor 2"),	"motor 2",		"", "motor 2"),
-				new W.Button(() => MakeNewPart("piston 1"),	"piston 1",		"", "piston 1"),
-				new W.Button(() => MakeNewPart("piston 1"),	"piston 1",		"", "piston 2"),
-				new W.Button(() => MakeNewPart("servo 1"),	"servo 1",		"", "servo 1"),
-				new W.Button(() => MakeNewPart("servo 1"),	"servo 1",		"", "servo 2")
+			new W.Button(() => MakeNewPart("motor 1"),	"motor 1",	"", "motor 1"),
+			new W.Button(() => MakeNewPart("motor 2"),	"motor 2",	"", "motor 2"),
+			new W.Button(() => MakeNewPart("piston 1"),	"piston 1",	"", "piston 1"),
+			new W.Button(() => MakeNewPart("piston 1"),	"piston 1",	"", "piston 2"),
+			new W.Button(() => MakeNewPart("servo 1"),	"servo 1",	"", "servo 1"),
+			new W.Button(() => MakeNewPart("servo 1"),	"servo 1",	"", "servo 2")
 		});
 
 	public static readonly W structural = new(
 		200,
 		new(){
-				new W.Button(() => MakeNewPart("cube"),		"cube",			"",	"cube"),
-				new W.Button(() => MakeNewPart("sphere"),	"sphere",		"",	"sphere"),
-				new W.Button(() => MakeNewPart("cylinder"),	"cylinder",		"",	"cylinder"),
-				new W.Button(() => MakeNewPart("wedge"),	"wedge",		"",	"wedge")
+			new W.Button(() => MakeNewPart("cube"),		"cube",		"",	"cube"),
+			new W.Button(() => MakeNewPart("sphere"),	"sphere",	"",	"sphere"),
+			new W.Button(() => MakeNewPart("cylinder"),	"cylinder",	"",	"cylinder"),
+			new W.Button(() => MakeNewPart("wedge"),	"wedge",	"",	"wedge")
 		});
 
 	public static readonly W newPart = new(
 		200,
 		new() {
-			new W.Flyout(structural,	"structural",	"", "structural"),
-			new W.Flyout(mechanical,	"mechanical",	"", "mechanical"),
-			new W.Flyout(digital,		"digital",		"", "digital"),
-			new W.Button(() => MakeNewPart("cable"),			"cable",		"", "cable")
+			new W.Flyout(structural,	"structural",	"",	"structural"),
+			new W.Flyout(mechanical,	"mechanical",	"",	"mechanical"),
+			new W.Flyout(digital,		"digital",		"",	"digital"),
+			new W.Button(() => MakeNewPart("cable"),	"cable",	"", "cable")
 		});
 
 	// yagni for now we're just doing multiple variations of the same main panel
@@ -90,14 +90,65 @@ public class RightClickMenus : MonoBehaviour {
 			new W.Button(null,		"redo",		"",	"redo"),
 		});
 
+	public static readonly WindowItem modifierList =
+		WindowItem.NewLayout(
+			PComponents.Layout.HorizontalFixed(
+				0,
+				TextAnchor.UpperLeft,
+				true,
+				true),
+			WindowItem.LayoutConfig.FixedLayout(
+				UIPosition.AnchoredAt(UIPosition.TopLeft),
+				new (200, 45),
+				new (5)
+			),
+			new (){
+				WindowItem.NewButtonCustomImage(
+					"Undo",
+					new(() => Undo()),
+					new("Icons/undo"),
+					WindowItem.LayoutConfig.FillLayout)
+				.WithDescription("Undo"),
+
+				WindowItem.NewButtonCustomImage(
+					"Redo",
+					new(() => Redo()),
+					new("Icons/redo"),
+					WindowItem.LayoutConfig.FillLayout)
+				.WithDescription("Redo"),
+
+				WindowItem.NewButtonCustomImage(
+					"Copy",
+					new(() => Copy()),
+					new("Icons/copy"),
+					WindowItem.LayoutConfig.FillLayout)
+				.WithDescription("Copy"),
+
+				WindowItem.NewButtonCustomImage(
+					"Paste",
+					new(() => Paste()),
+					new(""),//"Icons/undo"),
+					WindowItem.LayoutConfig.FillLayout)
+				.WithDescription("Paste"),
+
+				WindowItem.NewButtonCustomImage(
+					"Delete",
+					new(() => Delete()),
+					new("Icons/delete"),
+					WindowItem.LayoutConfig.FillLayout)
+				.WithDescription("Delete")
+			});
+
 	public static readonly W inworldSinglePanel = new(
 		"Editing", 200, new() {
 			new W.Flyout(newPart,	"new part", "", "plus"),
+			new W.CustomItem(modifierList)
+/*
 			new W.Button(() => Undo(),		"undo",		"",	"undo"),
 			new W.Button(() => Redo(),		"redo",		"",	"redo"),
 			new W.Button(() => Copy(),		"copy",		"",	"copy"),
 			new W.Button(() => Paste(),		"paste",	""),
-			new W.Button(() => Delete(),	"delete",	"",	"delete"),
+			new W.Button(() => Delete(),	"delete",	"",	"delete"),*/
 		});
 
 	public static CWindow[] GetWindows()

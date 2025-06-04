@@ -433,6 +433,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Delete"",
+                    ""type"": ""Button"",
+                    ""id"": ""19d66a4a-dd90-482f-be32-a7f778b2782f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -477,6 +486,28 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""CancelSelection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""96ffd0f6-6cab-4319-bbff-6be6d3d61c3f"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Delete"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2f1c76b3-bdb5-46ba-a49b-cb43ba47f23c"",
+                    ""path"": ""<Keyboard>/delete"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Delete"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1398,6 +1429,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Building_Snap = m_Building.FindAction("Snap", throwIfNotFound: true);
         m_Building_Multiselect = m_Building.FindAction("Multiselect", throwIfNotFound: true);
         m_Building_CancelSelection = m_Building.FindAction("CancelSelection", throwIfNotFound: true);
+        m_Building_Delete = m_Building.FindAction("Delete", throwIfNotFound: true);
         // Mouse
         m_Mouse = asset.FindActionMap("Mouse", throwIfNotFound: true);
         m_Mouse_Left = m_Mouse.FindAction("Left", throwIfNotFound: true);
@@ -1683,6 +1715,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Building_Snap;
     private readonly InputAction m_Building_Multiselect;
     private readonly InputAction m_Building_CancelSelection;
+    private readonly InputAction m_Building_Delete;
     public struct BuildingActions
     {
         private @InputMaster m_Wrapper;
@@ -1691,6 +1724,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         public InputAction @Snap => m_Wrapper.m_Building_Snap;
         public InputAction @Multiselect => m_Wrapper.m_Building_Multiselect;
         public InputAction @CancelSelection => m_Wrapper.m_Building_CancelSelection;
+        public InputAction @Delete => m_Wrapper.m_Building_Delete;
         public InputActionMap Get() { return m_Wrapper.m_Building; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1712,6 +1746,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @CancelSelection.started += instance.OnCancelSelection;
             @CancelSelection.performed += instance.OnCancelSelection;
             @CancelSelection.canceled += instance.OnCancelSelection;
+            @Delete.started += instance.OnDelete;
+            @Delete.performed += instance.OnDelete;
+            @Delete.canceled += instance.OnDelete;
         }
 
         private void UnregisterCallbacks(IBuildingActions instance)
@@ -1728,6 +1765,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @CancelSelection.started -= instance.OnCancelSelection;
             @CancelSelection.performed -= instance.OnCancelSelection;
             @CancelSelection.canceled -= instance.OnCancelSelection;
+            @Delete.started -= instance.OnDelete;
+            @Delete.performed -= instance.OnDelete;
+            @Delete.canceled -= instance.OnDelete;
         }
 
         public void RemoveCallbacks(IBuildingActions instance)
@@ -2127,6 +2167,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnSnap(InputAction.CallbackContext context);
         void OnMultiselect(InputAction.CallbackContext context);
         void OnCancelSelection(InputAction.CallbackContext context);
+        void OnDelete(InputAction.CallbackContext context);
     }
     public interface IMouseActions
     {

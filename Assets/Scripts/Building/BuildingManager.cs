@@ -36,8 +36,18 @@ public class BuildingManager : Singleton<BuildingManager> {
 	void Update() {
 		//Parts = mainPartsContainer.GetComponentsInChildren<Part>().OrderBy(part => part.ID).ToList(); // sort by id to make sure current stays in the same order
 
+		HandleInput();
+
 		foreach (Part part in Parts) {
 			part.Selected = SelectionManager.Instance.selection.Contains(part.transform);
+		}
+	}
+
+	void HandleInput() {
+
+		if (Conatrols.IM.Building.Delete.WasPressedThisFrame()) {
+			DeleteSelection();
+			RightClick.Instance.Hide();
 		}
 	}
 

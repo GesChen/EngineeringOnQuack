@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using M = Config.UI.Menu;
 
 // defo will change away from rcw name once i can think of another use and generalization for this
 // yeah its changed to menu now
 public class MenuUtil : MonoBehaviour {
-	static readonly float TitleHeight		= 30;
-	static readonly float ItemSpacing		= 0;
-	static readonly float ItemHeight		= 40;
-	static readonly float ItemPadding		= 5;
-	static readonly float IconSize			= 30;
-	static readonly float IconLabelSpacing	= 10;
-	static readonly float FlyoutIndicatorSize = 20;
+	// this layout should be used for custom items too !!!!!!!!!!!!!!!!
+	public static WindowItem.LayoutConfig WindowItemLayout(float windowWidth) =>
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredAt(UIPosition.TopLeft),
+			new (windowWidth, M.ItemHeight),
+			new (M.ItemPadding)
+		);
 
 	public class Window {
 		public string Title;
@@ -75,6 +76,16 @@ public class MenuUtil : MonoBehaviour {
 				SubWindow = subWindow;
 			}
 		}
+
+		public class CustomItem : Item {
+			// doesn't acutally use item's stuff but inherits so it can be stored together
+			public WindowItem item;
+
+			public CustomItem(WindowItem item)
+				: base("", null, null) {
+				this.item = item;
+			}
+		}
 	}
 
 	public static CWindow[] ConvertWindows(params Window[] rcws) {
@@ -108,11 +119,12 @@ public class MenuUtil : MonoBehaviour {
 			var title = WindowItem.NewText(
 				new(
 					rcw.Title,
-					TextAlignmentOptions.Center
+					fontSize: M.FontSize,
+					alignment: TextAlignmentOptions.Center
 					),
 				WindowItem.LayoutConfig.FixedLayout(
 					UIPosition.AnchoredAt(UIPosition.TopLeft),
-					new(rcw.Width, TitleHeight)
+					new(rcw.Width, M.TitleHeight)
 					)
 				);
 
@@ -126,7 +138,7 @@ public class MenuUtil : MonoBehaviour {
 		var finalLayoutItem =
 			WindowItem.NewLayout(
 				PComponents.Layout.VerticalDynamic(
-					ItemSpacing,
+					M.ItemSpacing,
 					TextAnchor.UpperLeft
 				),
 				WindowItem.LayoutConfig.FillLayout,
@@ -150,7 +162,7 @@ public class MenuUtil : MonoBehaviour {
 				new(Config.UI.Locations.IconsFolder + item.IconName),
 				WindowItem.LayoutConfig.FixedLayout(
 					UIPosition.AnchoredAt(UIPosition.MiddleLeft),
-					new(IconSize, IconSize)
+					new(M.IconSize, M.IconSize)
 				)
 			);
 
@@ -161,29 +173,28 @@ public class MenuUtil : MonoBehaviour {
 			"Label",
 			new(
 				item.Label,
-				TextAlignmentOptions.Left
+				fontSize: M.FontSize,
+				alignment : TextAlignmentOptions.Left
 			),
 			WindowItem.LayoutConfig.DynamicLayout(
-				new FourSides(0, 0, 0, IconSize + IconLabelSpacing),
+				new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing),
 				FourSides.Zero,
 				FourSides.Zero
 			)
 		);
 		subs[0] = label;
 
-		var layout = WindowItem.LayoutConfig.FixedLayout(
-			UIPosition.AnchoredAt(UIPosition.TopLeft),
-			new(rcw.Width, ItemHeight),
-			new(ItemPadding)
-		);
-
 		WindowItem newItem = null;
 		switch (item) {
+			case Window.CustomItem ci:
+				newItem = ci.item;
+				break;
+
 			case Window.Flyout flyout:
 				var indicator = WindowItem.NewImage(new(),
 					WindowItem.LayoutConfig.FixedLayout(
 						UIPosition.AnchoredAt(UIPosition.MiddleRight),
-						new(FlyoutIndicatorSize, FlyoutIndicatorSize)
+						new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
 					)
 				);
 
@@ -195,7 +206,7 @@ public class MenuUtil : MonoBehaviour {
 					item.Label,
 					new(subWindow, indicator),
 					new(normalColor: Config.UI.Visual.BackgroundColor),
-					layout
+					WindowItemLayout(rcw.Width)
 					).WithSubItems(subs)
 					.AddComponents(new PComponents.FlyoutHider());
 				break;
@@ -208,7 +219,7 @@ public class MenuUtil : MonoBehaviour {
 						button.OnButtonClick,
 						normalColor: Config.UI.Visual.BackgroundColor
 						),
-					layout
+					WindowItemLayout(rcw.Width)
 					).WithSubItems(subs)
 					.AddComponents(new PComponents.FlyoutHider());
 				break;
@@ -216,8 +227,11 @@ public class MenuUtil : MonoBehaviour {
 			case Window.Text:
 				newItem = WindowItem.NewText(
 					item.Label,
-					new(item.Label),
-					layout
+					new(
+						item.Label,
+						fontSize: M.FontSize
+						),
+					WindowItemLayout(rcw.Width)
 				).WithSubItems(subs);
 				break;
 		}
