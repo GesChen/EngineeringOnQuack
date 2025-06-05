@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -363,5 +364,11 @@ public class SelectionManager : Singleton<SelectionManager> {
 		selection.Clear();
 
 		selectionChanged = true;
+	}
+
+	public void Select(Transform[] transforms) {
+		selection = transforms.ToList();
+
+		selectionChanged = transform;
 	}
 }

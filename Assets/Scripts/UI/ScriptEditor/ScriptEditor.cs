@@ -111,11 +111,11 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void SubscribeToShortcuts() {
-		Shortcuts.SubscribeTo("copy", Copy);
-		Shortcuts.SubscribeTo("cut", Cut);
-		Shortcuts.SubscribeTo("paste", Paste);
-		Shortcuts.SubscribeTo("undo", history.Undo);
-		Shortcuts.SubscribeTo("redo", history.Redo);
+		Conatrols.IM.Editing.Copy.performed		+= (InputAction.CallbackContext _) => Copy();
+		Conatrols.IM.Editing.Cut.performed		+= (InputAction.CallbackContext _) => Cut();
+		Conatrols.IM.Editing.Paste.performed	+= (InputAction.CallbackContext _) => Paste();
+		Conatrols.IM.Editing.Undo.performed		+= (InputAction.CallbackContext _) => history.Undo();
+		Conatrols.IM.Editing.Redo.performed		+= (InputAction.CallbackContext _) => history.Redo();
 	}
 
 	void Update() {

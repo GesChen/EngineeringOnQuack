@@ -39,7 +39,7 @@ public class RightClickMenus : MonoBehaviour {
 
 	// will have to add more later for other contexts but for now this is enough
 
-	// todo: some grouping system to put them all under one parent
+	// TODO: some grouping system to put them all under one parent
 	public static readonly W digital = new(
 		200,
 		new(){
@@ -88,6 +88,7 @@ public class RightClickMenus : MonoBehaviour {
 			new W.Flyout(newPart,	"new part",	"",	"plus"),
 			new W.Button(null,		"undo",		"",	"undo"),
 			new W.Button(null,		"redo",		"",	"redo"),
+			new W.Button(() => Paste(),		"paste",	""),
 		});
 
 	public static readonly WindowItem modifierList =
@@ -127,7 +128,7 @@ public class RightClickMenus : MonoBehaviour {
 				WindowItem.NewButtonCustomImage(
 					"Paste",
 					new(() => Paste()),
-					new(""),//"Icons/undo"),
+					new(""), // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Paste"),
 

@@ -18,7 +18,11 @@ public class BuildingManager : Singleton<BuildingManager> {
 	public static Dictionary<string, BasePart> AllParts = new();
 	public GameObject templatePart;
 
+	BuildingClipboard clipboard;
+
 	void Start() {
+		clipboard = new();
+
 		Subscribe();
 	}
 
@@ -28,6 +32,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.ClearEvents();
 		RightClickMenus.OnNewPartMade += MakeNewPart;
 		RightClickMenus.OnDelete += DeleteSelection;
+		RightClickMenus.OnCopy += clipboard.Copy;
+		RightClickMenus.OnPaste += Paste;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
@@ -71,7 +77,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		ShowAllPartsAfterSimulation();
 	}
 
-	public void PartsUpdated() {
+	public void UpdateParts() {
 		UpdateIds();
 	}
 
@@ -80,16 +86,21 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		// place part
 		// the container provides all the functionality i need already
+		
+		newpart.transform.position = PlacePos();
+
+		Parts.Add(newpart);
+
+		UpdateParts();
+	}
+
+	Vector3 PlacePos() {
 		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
 		Vector3 planeDir = (Camera.main.transform.position - planeOrigin).normalized;
 		Ray ray = Camera.main.ScreenPointToRay(RightClick.Instance.downPos); // use right click pos not current
 
 		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
-		newpart.transform.position = pos;
-
-		Parts.Add(newpart);
-
-		PartsUpdated();
+		return pos;
 	}
 
 	void DeleteSelection() {
@@ -105,7 +116,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		}
 
 		SelectionManager.Instance.Clear();
-		PartsUpdated();
+		UpdateParts();
 	}
 
 	void UpdateIds() {
@@ -154,5 +165,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void DeselectAllParts() {
 		Parts.ForEach(p => { p.Selected = false; p.gameObject.layer = LayerMask.NameToLayer("Part"); });
+	}
+
+	void Paste() {
+		var newparts = clipboard.Paste(PlacePos(), true);
+		if (newparts == null) return; // failed, no objects to paste
+
+		Parts.AddRange(newparts);
+
+		UpdateParts();
 	}
 }

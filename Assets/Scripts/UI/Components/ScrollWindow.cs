@@ -63,7 +63,7 @@ public class ScrollWindow : MonoBehaviour {
 
 		xScrollAmount += Conatrols.Mouse.Scroll.x * sensitivity * Time.deltaTime;
 
-		if (Conatrols.IM.TextEditor.Shift.IsPressed())
+		if (Conatrols.Keyboard.Modifiers.Shift)
 			xScrollAmount -= Conatrols.Mouse.Scroll.y * sensitivity * Time.deltaTime;
 		else
 			yScrollAmount -= Conatrols.Mouse.Scroll.y * sensitivity * Time.deltaTime;
