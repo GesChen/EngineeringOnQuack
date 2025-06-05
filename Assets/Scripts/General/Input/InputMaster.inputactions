@@ -27,7 +27,7 @@
                     "name": "Move",
                     "type": "Button",
                     "id": "bdb817d0-025f-4a5c-bf63-baf8d69a8e70",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -65,6 +65,17 @@
                     "name": "",
                     "id": "88b00e85-4a89-4624-a4bc-49e76472de0a",
                     "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PerfOrbit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a12ce647-492b-48d7-91cf-e98412555501",
+                    "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

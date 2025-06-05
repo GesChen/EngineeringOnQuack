@@ -44,15 +44,15 @@ public class RightClick : Singleton<RightClick> {
 			currentOpen.Show(Conatrols.Mouse.Position);
 		}
 	}
+	public void Hide() {
+		currentOpen.Hide();
+	}
 
 	MenuUtil.Window WindowLookupFunc(IContext context)
 		=> context switch {
 			C.InWorld or C.NoSelection => RCM.inworldDefaultPanel,
 			C.SingleSelection => RCM.inworldSinglePanel,
+			C.MultiSelection => RCM.inworldMultiPanel,
 			_ => null
 		};
-
-	public void Hide() {
-		currentOpen.Hide();
-	}
 }

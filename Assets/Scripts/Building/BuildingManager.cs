@@ -30,10 +30,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
 		RightClickMenus.ClearEvents();
-		RightClickMenus.OnNewPartMade += MakeNewPart;
+		RightClickMenus.OnNewPartMade += 
+			(string name) => MakeNewPart(name, true);
 		RightClickMenus.OnDelete += DeleteSelection;
 		RightClickMenus.OnCopy += clipboard.Copy;
 		RightClickMenus.OnPaste += Paste;
+		RightClickMenus.OnDuplicate += Duplicate;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
@@ -81,13 +83,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		UpdateIds();
 	}
 
-	void MakeNewPart(string name) {
+	void MakeNewPart(string name, bool select) {
 		var newpart = GeneratePart(name);
 
 		// place part
 		// the container provides all the functionality i need already
 		
 		newpart.transform.position = PlacePos();
+
+		SelectionManager.Instance.Select(newpart.transform);
 
 		Parts.Add(newpart);
 
@@ -174,5 +178,10 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Parts.AddRange(newparts);
 
 		UpdateParts();
+	}
+
+	void Duplicate() {
+		clipboard.Copy();
+		Paste();
 	}
 }

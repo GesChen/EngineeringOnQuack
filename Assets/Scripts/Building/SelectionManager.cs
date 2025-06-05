@@ -10,7 +10,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	[Tooltip("Makes sure tiny boxes dont select a bunch of stuff by accident")]
 	public float minBoxSize;
 
-	public List<Transform> selection;
+	public List<Transform> selection { get; private set; }
 	public Transform selectionContainer;
 
 	public RectTransform UIBox;
@@ -22,6 +22,11 @@ public class SelectionManager : Singleton<SelectionManager> {
 	bool dragging;
 	bool selectionChanged;
 	[HideInNormalInspector] public float dragStartTime;
+
+	void Start() {
+		selection = new();
+	}
+
 
 	void Update() {
 		HandleInput();
@@ -366,7 +371,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		selectionChanged = true;
 	}
 
-	public void Select(Transform[] transforms) {
+	public void Select(params Transform[] transforms) {
 		selection = transforms.ToList();
 
 		selectionChanged = transform;

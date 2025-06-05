@@ -307,7 +307,7 @@ public class Intersections
 			if (aDists[0] > aDists[1]) (aDists[0], aDists[1]) = (aDists[1], aDists[0]);
 
 			// either point of b inside a
-			if ((bDists[0] > aDists[0] && bDists[0] < aDists[1]) ||
+			if ((bDists[0] > aDists[0] && bDists[0] < aDists[1]) || // TODO!!!!!!! figure out why this returns indexoutofbounds sometimes
 				(bDists[1] > aDists[1] && bDists[0] < aDists[1]))
 				return true;
 		}
