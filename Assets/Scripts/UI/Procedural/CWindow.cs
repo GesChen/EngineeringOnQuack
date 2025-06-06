@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // window, class form (class window, cwindow)
+/// <summary>
+/// Name, Items, Config
+/// </summary>
 public class CWindow {
 	public string Name;
 	public WindowItem[] Items;
@@ -41,6 +44,12 @@ public class CWindow {
 
 		// temporary till i can think of a better solution
 		public bool IsFlyout				= false;
+
+		public static Configuration FixedConfig(SizeData Size, UIPosition pos, bool flyout = false)
+			=> new() {
+				Resizable = false,
+				Movable = false,
+			}
 	}
 
 	public Configuration Config = new();

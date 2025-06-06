@@ -47,7 +47,7 @@ public class TransformToolsMenu {
 						WindowItem.NewButtonCustomImage(
 							"Scale",
 							new(() => onScalePressed?.Invoke()),
-							new PComponents.Image("Icons/scale"),
+							new PComponents.Image("Icons/scale2"),
 							new() {
 								Position = new(0, 0, 0, 2/3f),
 								Margins = new(5)

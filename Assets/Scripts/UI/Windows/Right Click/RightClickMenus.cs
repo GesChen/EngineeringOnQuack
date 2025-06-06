@@ -33,12 +33,12 @@ public class RightClickMenus : MonoBehaviour {
 	}
 
 	// i wanna dry but kiss is more important
-	static void Undo() {	RightClick.Instance.Hide();	OnUndo?.Invoke(); }
-	static void Redo(){		RightClick.Instance.Hide();	OnRedo?.Invoke(); }
-	static void Copy(){		RightClick.Instance.Hide();	OnCopy?.Invoke(); }
-	static void Paste(){	RightClick.Instance.Hide();	OnPaste?.Invoke(); }
-	static void Duplicate() {	RightClick.Instance.Hide(); OnDuplicate?.Invoke(); }
-	static void Delete(){	RightClick.Instance.Hide();	OnDelete?.Invoke(); }
+	static void Undo()		{	RightClick.Instance.Hide();	OnUndo?.Invoke(); }
+	static void Redo()		{	RightClick.Instance.Hide();	OnRedo?.Invoke(); }
+	static void Copy()		{	RightClick.Instance.Hide();	OnCopy?.Invoke(); }
+	static void Paste()		{	RightClick.Instance.Hide();	OnPaste?.Invoke(); }
+	static void Duplicate()	{	RightClick.Instance.Hide(); OnDuplicate?.Invoke(); }
+	static void Delete()	{	RightClick.Instance.Hide();	OnDelete?.Invoke(); }
 
 	// will have to add more later for other contexts but for now this is enough
 
@@ -46,10 +46,10 @@ public class RightClickMenus : MonoBehaviour {
 	public static readonly W digital = new(
 		200,
 		new(){
-			new W.Button(() => MakeNewPart("cpu"),		"cpu",		"",	"cpu"),
-			new W.Button(() => MakeNewPart("ram"),		"ram",		"",	"ram"),
-			new W.Button(() => MakeNewPart("display"),	"display",	"",	"display"),
-			new W.Button(() => MakeNewPart("script"),	"script",	"",	"script")
+			new W.Button(() => MakeNewPart("cpu"),		"cpu",		iconName: "cpu"),
+			new W.Button(() => MakeNewPart("ram"),		"ram",		iconName: "ram"),
+			new W.Button(() => MakeNewPart("display"),	"display",	iconName: "display"),
+			new W.Button(() => MakeNewPart("script"),	"script",	iconName: "script")
 		});
 
 	public static readonly W mechanical = new(
@@ -90,8 +90,8 @@ public class RightClickMenus : MonoBehaviour {
 		"Editing", 200, new() {
 			new W.Flyout(newPart,	"new part",	"",	"plus"),
 			new W.Button(() => Undo(),		"undo",	iconName: "undo"),
-			new W.Button(() => Redo(),		"redo", iconName: "redo"),
-			new W.Button(() => Paste(),		"paste"), // TODO
+			new W.Button(() => Redo(),		"redo",	iconName: "redo"),
+			new W.Button(() => Paste(),		"paste",iconName: "paste"), // TODO
 		});
 
 	public static readonly WindowItem modifierList =
@@ -124,14 +124,14 @@ public class RightClickMenus : MonoBehaviour {
 				WindowItem.NewButtonCustomImage(
 					"Copy",
 					new(() => Copy()),
-					new(""),
+					new("Icons/copy"),
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Copy"),
 
 				WindowItem.NewButtonCustomImage(
 					"Paste",
 					new(() => Paste()),
-					new(""), // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+					new("Icons/paste"),
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Paste"),
 
@@ -145,17 +145,17 @@ public class RightClickMenus : MonoBehaviour {
 
 	public static readonly W inworldSinglePanel = new(
 		"Editing", 200, new() {
-			new W.Flyout(newPart,			"new part",		iconName:"plus"),
+			new W.Flyout(newPart,			"new part",		iconName: "plus"),
 			new W.CustomItem(modifierList),
-			new W.Button(() => Duplicate(),	"duplicate",	iconName:"duplicate"),
+			new W.Button(() => Duplicate(),	"duplicate",	iconName: "duplicate"),
 		});
 	
 	public static readonly W inworldMultiPanel = new(
 		"Editing", 200, new() {
-			new W.Flyout(newPart,			"new part",		iconName:"plus"),
+			new W.Flyout(newPart,			"new part",		iconName: "plus"),
 			new W.CustomItem(modifierList),
-			new W.Button(() => Duplicate(),	"duplicate",	iconName:"duplicate"),
-			new W.Button(null,	"group"), // TODO
+			new W.Button(() => Duplicate(),	"duplicate",	iconName: "duplicate"),
+			new W.Button(null,	"group", iconName: "group"),
 		});
 
 	public static CWindow[] GetWindows()

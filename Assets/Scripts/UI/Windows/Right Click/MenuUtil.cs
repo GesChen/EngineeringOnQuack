@@ -69,9 +69,14 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		public class Flyout : Item {
-			public Window SubWindow;
+			public CWindow SubWindow;
 
 			public Flyout(Window subWindow, string label, string description = null, string iconName = null)
+				: base(label, description, iconName) {
+				SubWindow = subWindow.CWindow;
+			}
+
+			public Flyout(CWindow subWindow, string label, string description = null, string iconName = null)
 				: base(label, description, iconName) {
 				SubWindow = subWindow;
 			}
@@ -198,7 +203,7 @@ public class MenuUtil : MonoBehaviour {
 					)
 				);
 
-				CWindow subWindow = flyout.SubWindow.CWindow;
+				CWindow subWindow = flyout.SubWindow;
 				if (subWindow == null) 
 					Debug.LogError($"Forgot to generate the subwindow of flyout {flyout.Label}");
 
