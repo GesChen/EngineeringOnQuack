@@ -81,6 +81,15 @@ public class WindowItem {
 		return this;
 	}
 
+	public PComponents.Component GetComponent<T>() where T : PComponents.Component {
+		var tryFind = Construction.First(c=>c is T);
+		
+		if (tryFind == null)
+			Debug.LogError($"No component found of type {typeof(T).Name}");
+		
+		return tryFind;
+	}
+
 	private WindowItem(
 		string name, 
 		LayoutConfig layout, 

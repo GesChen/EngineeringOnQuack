@@ -39,6 +39,8 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	void Update() {
+		Config.Update();
+
 		SetNodesActive(Config.Resizable);
 
 		if (Config.Resizable) {

@@ -189,6 +189,8 @@ public class WindowRealiser : MonoBehaviour {
 					Sprite sprite = Resources.Load<Sprite>(im.SpriteResource);
 					image.sprite = sprite;
 				}
+
+				im.RealComponent = image;
 				break;
 
 			case PComponents.Button bt:
@@ -212,6 +214,7 @@ public class WindowRealiser : MonoBehaviour {
 
 				button.onClick.AddListener(bt.TriggerClick);
 
+				bt.RealComponent = button;
 				break;
 
 			case PComponents.Text tx:
@@ -227,6 +230,7 @@ public class WindowRealiser : MonoBehaviour {
 				if (!originalItem.Layout.IsFixed)
 					text.margin = originalItem.Layout.Padding.ToTMProType();
 
+				tx.RealComponent = text;
 				break;
 
 			case PComponents.Layout lt:
@@ -290,12 +294,16 @@ public class WindowRealiser : MonoBehaviour {
 					fitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
 					fitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
 				}
+
+				lt.RealComponent = layout;
 				break;
 
 			case PComponents.LayoutElement le:
 				var element = newObj.AddComponent<LayoutElement>();
 				element.flexibleWidth = le.SizeMultiplier;
 				element.flexibleHeight = le.SizeMultiplier;
+
+				le.RealComponent = element;
 				break;
 
 			case PComponents.HoverTarget ht:
@@ -305,6 +313,7 @@ public class WindowRealiser : MonoBehaviour {
 				htComp.HoverColor = ht.HoverColor;
 				htComp.FadeDuration = ht.FadeDuration;
 
+				ht.RealComponent = htComp;
 				break;
 
 			case PComponents.FlyoutTrigger ft:
@@ -341,15 +350,20 @@ public class WindowRealiser : MonoBehaviour {
 				else
 					Debug.LogError("Flyout trigger missing closed sprite location");
 
+				ft.RealComponent = ftComp;
 				break;
 
 			case PComponents.Description ds:
 				var dsComp = newObj.AddComponent<Description>();
 				dsComp.Text = ds.Text;
+
+				ds.RealComponent = dsComp;
 				break;
 
-			case PComponents.FlyoutHider:
-				newObj.AddComponent<FlyoutHider>();
+			case PComponents.FlyoutHider fh:
+				var fhComp = newObj.AddComponent<FlyoutHider>();
+
+				fh.RealComponent = fhComp;
 				break;
 		}
 	}

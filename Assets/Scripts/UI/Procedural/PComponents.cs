@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class PComponents {
 	public class Component {
-
+		public UnityEngine.Component RealComponent;
 	}
 
 	public class Image : Component {

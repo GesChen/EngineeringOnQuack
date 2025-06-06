@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,12 +50,23 @@ public class CWindow {
 			=> new() {
 				Resizable = false,
 				Movable = false,
-			}
+			};
+		
+		public event Action CustomUpdate;
+
+		public void Update() {
+			CustomUpdate?.Invoke();
+		}
 	}
 
 	public Configuration Config = new();
 
 	public LiveWindow RealisedWindow;
+
+	public CWindow AddUpdate(Action action) {
+		Config.CustomUpdate += action;
+		return this;
+	}
 }
 
 public class UIPosition {

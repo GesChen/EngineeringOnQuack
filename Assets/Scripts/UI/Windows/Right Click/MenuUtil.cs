@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,12 +37,20 @@ public class MenuUtil : MonoBehaviour {
 			Items = items;
 		}
 
+		public Window AddUpdateToCW(Action action) {
+			CWindow.AddUpdate(action);
+			return this;
+		}
+
+
 		public class Item {
 			public string Label;
 			public string IconName;
 			public bool HasIcon = false;
 			public string Description;
 			public bool HasDescription = false;
+
+			public WindowItem RealItem;
 
 			protected Item(string label, string description = null, string iconName = null) {
 				Label = label;
@@ -242,6 +251,8 @@ public class MenuUtil : MonoBehaviour {
 		}
 		if (item.HasDescription)
 			newItem.AddDescription(item.Description);
+
+		item.RealItem = newItem;
 
 		return newItem;
 	}

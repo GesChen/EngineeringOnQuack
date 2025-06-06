@@ -10,14 +10,45 @@ public class MaterialEditingMenu : MonoBehaviour {
 		Config = new(){
 			Movable = false,
 			Resizable = false,
-		}
-	}
+			ContentDynamic = true,
+			DynamicPadding = new(5)
+		},
+		Items = new WindowItem[] {
 
-	}
-	public static readonly W window = new(
+		}
+	};
+
+	// also rc version for now
+	public static readonly CWindow materialPicker = new(){
+		Name = "Material Picker",
+		Config = new(){
+			Movable = false,
+			Resizable = false,
+			ContentDynamic = true,
+			DynamicPadding = new(5)
+		},
+		Items = new WindowItem[] {
+
+		}
+	};
+	public static float size = 150;
+
+	public static readonly W window = new W(
 		"Material",
-		150,
+		size,
 		new(){
-			new W.Flyout()
+			new W.Flyout(colorPicker, "Color"),
+			new W.CustomItem(
+				WindowItem.NewFlyoutTrigger(
+					new(materialPicker),
+					WindowItem.LayoutConfig.FixedLayout(
+						UIPosition.AnchoredAt(UIPosition.TopLeft),
+						new (size, size)
+						)
+					)
+				)
+		}).AddUpdateToCW(()=>{
+			// update color
+			window.CWindow.Items[0].GetComponent<PComponents.>
 		});
 }
