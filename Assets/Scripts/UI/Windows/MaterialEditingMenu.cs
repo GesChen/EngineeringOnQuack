@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 using W = MenuUtil.Window;
 
 public class MaterialEditingMenu : MonoBehaviour {
@@ -37,18 +38,34 @@ public class MaterialEditingMenu : MonoBehaviour {
 		"Material",
 		size,
 		new(){
-			new W.Flyout(colorPicker, "Color"),
+			new W.Button(
+				, 
+				"Color"
+				).AddSubItems(
+					WindowItem.NewImage( // color preview
+						new(),
+						WindowItem.LayoutConfig.FillLayout // solid fill of color
+					)),
 			new W.CustomItem(
-				WindowItem.NewFlyoutTrigger(
-					new(materialPicker),
+				WindowItem.NewButton(
+					new(),
 					WindowItem.LayoutConfig.FixedLayout(
 						UIPosition.AnchoredAt(UIPosition.TopLeft),
 						new (size, size)
 						)
 					)
 				)
-		}).AddUpdateToCW(()=>{
-			// update color
-			window.CWindow.Items[0].GetComponent<PComponents.>
-		});
+		}).AddEventToCW(
+			CWindow.Configuration.Timings.Start,
+			() => {
+				// add materialeditor and set up 
+
+			}
+		);
+
+
+	public static void ShowColorPicker() {
+		colorPicker.RealisedWindow.PlaceAt()
+	}
+
 }

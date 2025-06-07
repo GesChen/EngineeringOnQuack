@@ -328,6 +328,9 @@ public class PComponents {
 		}
 	}
 
+	/// <summary>
+	/// Hides sibling flyouts when hovered, requires HoverTarget
+	/// </summary>
 	public class FlyoutHider : Component {
 		// this literally just exists to exist
 		public FlyoutHider() {

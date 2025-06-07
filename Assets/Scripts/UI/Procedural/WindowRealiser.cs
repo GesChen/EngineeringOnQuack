@@ -40,7 +40,6 @@ public class WindowRealiser : MonoBehaviour {
 		// 4 corner nodes
 		List<WindowSizeNode> nodes = MakeCornerNodes(windowRT);
 
-
 		// set up live window component
 		var component = newWindow.AddComponent<LiveWindow>();
 		component.Config = window.Config;
@@ -65,6 +64,7 @@ public class WindowRealiser : MonoBehaviour {
 		}
 
 		window.RealisedWindow = component;
+		component.Source = window;
 
 		return component;
 	}

@@ -18,7 +18,14 @@ public class LiveWindow : MonoBehaviour {
 	WindowSizeNode BR;
 	Canvas canvas;
 
+	public CWindow Source;
+
+	void Awake() {
+		Config.CallEvents(CWindow.Configuration.Timings.Awake, Source);
+	}
+
 	void Start() {
+		Config.CallEvents(CWindow.Configuration.Timings.Start, Source);
 		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
@@ -39,7 +46,7 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	void Update() {
-		Config.Update();
+		Config.CallEvents(CWindow.Configuration.Timings.Update, Source);
 
 		SetNodesActive(Config.Resizable);
 

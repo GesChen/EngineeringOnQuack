@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using M = Config.UI.Menu;
@@ -37,11 +35,10 @@ public class MenuUtil : MonoBehaviour {
 			Items = items;
 		}
 
-		public Window AddUpdateToCW(Action action) {
-			CWindow.AddUpdate(action);
+		public Window AddEventToCW(CWindow.Configuration.Timings timing, Action action) {
+			CWindow.AddEvent(timing, action);
 			return this;
 		}
-
 
 		public class Item {
 			public string Label;
@@ -49,6 +46,7 @@ public class MenuUtil : MonoBehaviour {
 			public bool HasIcon = false;
 			public string Description;
 			public bool HasDescription = false;
+			public List<WindowItem> ExtraSubItems;
 
 			public WindowItem RealItem;
 
@@ -60,6 +58,13 @@ public class MenuUtil : MonoBehaviour {
 
 				Description = description;
 				HasDescription = description != null && description != "";
+			}
+
+			public Item AddSubItems(params WindowItem[] subs) {
+				ExtraSubItems ??= new();
+
+				ExtraSubItems.AddRange(subs);
+				return this;
 			}
 		}
 
@@ -168,21 +173,9 @@ public class MenuUtil : MonoBehaviour {
 	}
 
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {
-		WindowItem[] subs = new WindowItem[item.HasIcon ? 2 : 1];
+		List<WindowItem> subList = new();
 
-		if (item.HasIcon) {
-			var icon = WindowItem.NewImage(
-				"Icon",
-				new(Config.UI.Locations.IconsFolder + item.IconName),
-				WindowItem.LayoutConfig.FixedLayout(
-					UIPosition.AnchoredAt(UIPosition.MiddleLeft),
-					new(M.IconSize, M.IconSize)
-				)
-			);
-
-			subs[1] = icon;
-		}
-
+		// add label
 		var label = WindowItem.NewText(
 			"Label",
 			new(
@@ -196,8 +189,30 @@ public class MenuUtil : MonoBehaviour {
 				FourSides.Zero
 			)
 		);
-		subs[0] = label;
+		subList.Add(label);
 
+		// add icon if it exists
+		WindowItem icon = null;
+		if (item.HasIcon) {
+			icon = WindowItem.NewImage(
+				"Icon",
+				new(Config.UI.Locations.IconsFolder + item.IconName),
+				WindowItem.LayoutConfig.FixedLayout(
+					UIPosition.AnchoredAt(UIPosition.MiddleLeft),
+					new(M.IconSize, M.IconSize)
+				)
+			);
+
+			subList.Add(icon);
+		}
+
+		// any extras
+		if (item.ExtraSubItems?.Count != 0)
+			subList.AddRange(item.ExtraSubItems);
+
+		WindowItem[] subs = subList.ToArray();
+
+		// actually generate the WI
 		WindowItem newItem = null;
 		switch (item) {
 			case Window.CustomItem ci:
@@ -226,7 +241,6 @@ public class MenuUtil : MonoBehaviour {
 				break;
 
 			case Window.Button button:
-
 				newItem = WindowItem.NewButton(
 					item.Label,
 					new(
@@ -246,7 +260,11 @@ public class MenuUtil : MonoBehaviour {
 						fontSize: M.FontSize
 						),
 					WindowItemLayout(rcw.Width)
-				).WithSubItems(subs);
+				);
+
+				if (icon != null)
+					newItem.AddSubItems(icon);
+
 				break;
 		}
 		if (item.HasDescription)

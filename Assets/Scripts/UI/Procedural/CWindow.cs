@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -51,11 +52,22 @@ public class CWindow {
 				Resizable = false,
 				Movable = false,
 			};
-		
-		public event Action CustomUpdate;
 
-		public void Update() {
-			CustomUpdate?.Invoke();
+		public List<(TimedEvent action, Timings timing)> CustomEvents;
+		public delegate void TimedEvent(CWindow window);
+		public enum Timings {
+			Awake,
+			Start,
+			Update
+		}
+		public void CallEvents(Timings timing, CWindow window) {
+			if (CustomEvents == null || CustomEvents.Count == 0) return;
+
+			var timedAction = CustomEvents?.Where(ce => ce.timing == timing).Select(ce => ce.action);
+
+			foreach (var a in timedAction) {
+				a?.Invoke(window);
+			}
 		}
 	}
 
@@ -63,8 +75,9 @@ public class CWindow {
 
 	public LiveWindow RealisedWindow;
 
-	public CWindow AddUpdate(Action action) {
-		Config.CustomUpdate += action;
+	public CWindow AddEvent(Configuration.Timings timing, Configuration.TimedEvent action) {
+		Config.CustomEvents ??= new();
+		Config.CustomEvents.Add((action, timing));
 		return this;
 	}
 }
