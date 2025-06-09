@@ -16,11 +16,19 @@ public class ScaleToContents : MonoBehaviour {
 	}
 	
 	void Scale() {
+		Vector2 padOffset = new Vector2(padding.Left + padding.Right, padding.Up + padding.Down);
+
+		if (transform.childCount == 0) {
+			//Debug.LogWarning($"ScaleToContents on {transform.name} has no children. This will cause unintended side effects.");
+			rt.sizeDelta = padOffset;
+			return;
+		}
+
 		Vector2 minPos = Vector2.positiveInfinity;
 		Vector2 maxPos = Vector2.negativeInfinity;
 		Vector3[] corners = new Vector3[4];
-		var children = rt.GetComponentsInChildren<RectTransform>();
 
+		var children = rt.GetComponentsInChildren<RectTransform>();
 		foreach (var child in children) {
 			if (child == rt) continue;
 
@@ -32,8 +40,7 @@ public class ScaleToContents : MonoBehaviour {
 			}
 		}
 
-		Vector2 size = maxPos - minPos +
-			new Vector2(padding.Left + padding.Right, padding.Up + padding.Down);
+		Vector2 size = maxPos - minPos + padOffset;
 
 		rt.sizeDelta = size;
 

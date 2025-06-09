@@ -9,6 +9,31 @@ struct Assembly {
 	// to add onto
 }
 
+// temporary i guess idk where else to put this
+public class Materials {
+	public abstract class Material {
+		protected abstract string IconLocation { get; }
+		protected abstract string MaterialLocation { get; }
+		protected abstract string PhysicsLocation { get; }
+
+		public abstract Sprite m_Icon { get; }
+		public abstract Sprite Icon { get; }
+
+	}
+	public class Wood : Material {
+		protected override string IconLocation => "woodicon";
+	}
+	public class Stone : Material {
+		protected override string IconLocation => "stoneicon";
+	}
+	public class Metal : Material {
+		protected override string IconLocation => "metalicon";
+	}
+	public class Glass : Material {
+		protected override string IconLocation => "glassicon";
+	}
+}
+
 public class BuildingManager : Singleton<BuildingManager> {
 	public Transform mainPartsContainer;
 	public List<BasePart> BaseParts;

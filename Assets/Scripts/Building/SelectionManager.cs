@@ -58,7 +58,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// detect mouse up
 		if (!Conatrols.Mouse.Left.Pressed && !BuildingManager.Instance.TransformTools.hovering) {
 			if (dragging) {
-				if (Vector2.Distance(mousePos, dragStartPos) < Config.Input.clickMaxDist)
+				if (Vector2.Distance(mousePos, dragStartPos) < Config.Input.clickMaxMovement)
 					ClickCheck();
 				else
 					FindObjectsInsideBounds(dragStart, mousePos);

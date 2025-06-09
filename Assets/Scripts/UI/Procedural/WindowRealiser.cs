@@ -63,7 +63,7 @@ public class WindowRealiser : MonoBehaviour {
 			contentParent.anchorMax = new(.5f, .5f);
 		}
 
-		window.RealisedWindow = component;
+		window.Realise(component);
 		component.Source = window;
 
 		return component;
@@ -160,6 +160,8 @@ public class WindowRealiser : MonoBehaviour {
 				rt.offsetMax = Vector2.zero;
 			}
 		}
+
+		item.RealObject = rt;
 
 		return rt;
 	}
@@ -329,26 +331,29 @@ public class WindowRealiser : MonoBehaviour {
 				ftComp.selfHoverTarget = htInstance;
 				ftComp.targetCWindow = ft.TargetFlyout;
 
-				// check for image component
-				if (!ft.IndicatorImage.Construction.Any(c=>c is PComponents.Image)) {
-					Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
-					break;
+				// allow null, and just dont use it
+				if (ft.IndicatorImage != null) {
+					// check for image component
+					if (!ft.IndicatorImage.Construction.Any(c => c is PComponents.Image)) {
+						Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
+						break;
+					}
+
+					// make and set indicator image
+					var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
+					ftComp.openIndicator = indicatorImage.GetComponent<Image>();
+
+					// get the open and closed sprites
+					if (ft.openSpriteLocation != null && ft.openSpriteLocation != "")
+						ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
+					else
+						Debug.LogError("Flyout trigger missing open sprite location");
+
+					if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "")
+						ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
+					else
+						Debug.LogError("Flyout trigger missing closed sprite location");
 				}
-
-				// make and set indicator image
-				var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
-				ftComp.openIndicator = indicatorImage.GetComponent<Image>();
-
-				// get the open and closed sprites
-				if (ft.openSpriteLocation != null && ft.openSpriteLocation != "") 
-					ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
-				else 
-					Debug.LogError("Flyout trigger missing open sprite location");
-				
-				if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "") 
-					ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
-				else
-					Debug.LogError("Flyout trigger missing closed sprite location");
 
 				ft.RealComponent = ftComp;
 				break;

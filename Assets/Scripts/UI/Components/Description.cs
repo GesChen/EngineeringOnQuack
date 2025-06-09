@@ -16,8 +16,12 @@ public class Description : MonoBehaviour {
 	bool userOfDescription;
 	bool attemptToBecomeUser;
 
+	void OnDisable() {
+		Close();
+	}
+
 	void Update() {
-		bool over = false;
+		bool over;
 		if (descriptionInstance.rt != null)
 			over = UIHovers.CheckFirstAllowing(transform, descriptionInstance.rt) || 
 				UIHovers.CheckFirstIgnoringChildren(transform);
@@ -33,16 +37,11 @@ public class Description : MonoBehaviour {
 		if (attemptToBecomeUser) AttemptUser();
 		attemptToBecomeUser = false;
 		if (DescriptionShowing != lastShowing) {
-			if (DescriptionShowing) {
-				AttemptUser();
-			} else {
-				if (userOfDescription) {
-					descriptionInUse = false;
-					userOfDescription = false;
 
-					CloseDescriptionAsUser();
-				}
-			}
+			if (DescriptionShowing)
+				AttemptUser();
+			else
+				Close();
 		}
 
 		// actually set position
@@ -59,26 +58,34 @@ public class Description : MonoBehaviour {
 			descriptionInUse = true;
 			userOfDescription = true;
 
-			OpenDescriptionAsUser();
+			OpenAsUser();
 		} else {
 			attemptToBecomeUser = true;
 		}
 	}
 
-	void OpenDescriptionAsUser() {
+	void OpenAsUser() {
 		if (descriptionInstance.rt == null) 
-			GenerateDescription();
+			Generate();
 
 		descriptionInstance.text.text = Text;
 		descriptionInstance.rt.gameObject.SetActive(true);
 		descriptionInstance.rt.SetAsLastSibling();
 	}
 
-	void CloseDescriptionAsUser() {
+	void Close() {
+		if (userOfDescription)
+			CloseAsUser();
+	}
+
+	void CloseAsUser() {
+		descriptionInUse = false;
+		userOfDescription = false;
+		
 		descriptionInstance.rt.gameObject.SetActive(false);
 	}
 
-	void GenerateDescription() {
+	void Generate() {
 		var newObj = new GameObject("Description");
 		newObj.SetActive(false);
 

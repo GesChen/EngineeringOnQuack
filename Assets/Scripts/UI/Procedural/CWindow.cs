@@ -73,12 +73,27 @@ public class CWindow {
 
 	public Configuration Config = new();
 
-	public LiveWindow RealisedWindow;
+	private LiveWindow m_realisedWindow;
+	public LiveWindow RealisedWindow {
+		get {
+			if (m_realisedWindow == null) {
+				throw new($"{Name} window not realised!");
+			}
+			return m_realisedWindow;
+		}
+	}
+	public void Realise(LiveWindow live) {
+		m_realisedWindow = live;
+	}
 
 	public CWindow AddEvent(Configuration.Timings timing, Configuration.TimedEvent action) {
 		Config.CustomEvents ??= new();
 		Config.CustomEvents.Add((action, timing));
 		return this;
+	}
+
+	public override string ToString() {
+		return $"CW {Name}";
 	}
 }
 

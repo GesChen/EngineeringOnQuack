@@ -28,7 +28,8 @@ public class FlyoutTrigger : MonoBehaviour {
 		selfHoverTarget = GetComponent<HoverTarget>();
 		selfHoverTarget.OnHoverStateChange += HoverStateChange;
 
-		openIndicator.sprite = closedSprite;
+		if (openIndicator != null)
+			openIndicator.sprite = closedSprite;
 	}
 
 	void Update() {
@@ -38,11 +39,12 @@ public class FlyoutTrigger : MonoBehaviour {
 		}
 
 		CheckRealization();
+		if (targetFlyout == null) return; // give it time
 
 		open = targetFlyout.gameObject.activeSelf;
-		if (openIndicator != null) {
+
+		if (openIndicator != null)
 			openIndicator.sprite = open ? openSprite : closedSprite;
-		}
 	}
 
 	void CheckRealization() {

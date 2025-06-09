@@ -56,6 +56,8 @@ public class WindowItem {
 	public List<PComponents.Component> Construction = new();
 
 	public List<WindowItem> SubItems = new();
+	
+	public RectTransform RealObject;
 
 	public WindowItem WithSubItems(params WindowItem[] subs) {
 		SubItems = subs.ToList();
@@ -82,7 +84,7 @@ public class WindowItem {
 	}
 
 	public PComponents.Component GetComponent<T>() where T : PComponents.Component {
-		var tryFind = Construction.First(c=>c is T);
+		var tryFind = Construction.FirstOrDefault(c => c is T);
 		
 		if (tryFind == null)
 			Debug.LogError($"No component found of type {typeof(T).Name}");
@@ -183,7 +185,9 @@ public class WindowItem {
 			new() {
 				new PComponents.Image(),
 				new PComponents.HoverTarget(),
-				trigger },
+				new PComponents.FlyoutHider(),
+				trigger
+			},
 			null
 			);
 	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout)
@@ -196,11 +200,17 @@ public class WindowItem {
 			new() {
 				new PComponents.Image(),
 				hover,
-				trigger },
+				new PComponents.FlyoutHider(),
+				trigger
+			},
 			null
 			);
 	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout)
 		=> NewFlyoutTrigger("Flyout Trigger", trigger, hover, layout);
 
 	#endregion
+
+	public override string ToString() {
+		return $"WI {Name}";
+	}
 }

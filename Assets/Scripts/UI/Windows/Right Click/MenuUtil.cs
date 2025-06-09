@@ -20,14 +20,32 @@ public class MenuUtil : MonoBehaviour {
 		public bool ShowTitle;
 		public float Width;
 		public List<Item> Items;
+		public bool AllowDrag = false;
+		public bool IsFlyout = true;
 
-		public CWindow CWindow;
+		private CWindow m_cwindow;
+		public CWindow CWindow {
+			get {
+				m_cwindow ??= ConvertWindow(this);
+				return m_cwindow;
+			}
+			// no setter because it is done by the getter
+		}
 
-		public Window(string title, float width, List<Item> items, bool showTitle = true) {
+		public Window(
+			string title, 
+			float width, 
+			List<Item> items, 
+			bool showTitle = true, 
+			bool allowDrag = false,
+			bool isFlyout = true) {
+
 			Title = title;
 			ShowTitle = showTitle;
 			Width = width;
 			Items = items;
+			AllowDrag = allowDrag;
+			IsFlyout = isFlyout;
 		}
 		public Window(float width, List<Item> items) {
 			ShowTitle = false;
@@ -35,7 +53,10 @@ public class MenuUtil : MonoBehaviour {
 			Items = items;
 		}
 
-		public Window AddEventToCW(CWindow.Configuration.Timings timing, Action action) {
+		public Window AddEventToCW(
+			CWindow.Configuration.Timings timing, 
+			CWindow.Configuration.TimedEvent action) {
+
 			CWindow.AddEvent(timing, action);
 			return this;
 		}
@@ -107,13 +128,14 @@ public class MenuUtil : MonoBehaviour {
 		}
 	}
 
+	/*
 	public static CWindow[] ConvertWindows(params Window[] rcws) {
 		CWindow[] converted = new CWindow[rcws.Length];
 		for (int i = 0; i < rcws.Length; i++)
-			converted[i] = ConvertWindow(rcws[i]);
+			converted[i] = ConvertWindow(ref rcws[i]);
 
 		return converted;
-	}
+	}*/
 
 	public static CWindow ConvertWindow(Window rcw) {
 		if (rcw == null) {
@@ -125,7 +147,7 @@ public class MenuUtil : MonoBehaviour {
 			Name = rcw.ShowTitle ? rcw.Title : "Menu",
 			Config = new() {
 				Resizable = false,
-				Movable = false,
+				Movable = rcw.AllowDrag,
 				ContentDynamic = true,
 				DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding)
 			}
@@ -165,9 +187,10 @@ public class MenuUtil : MonoBehaviour {
 			);
 
 		cw.Items = new[] { finalLayoutItem };
-		rcw.CWindow = cw;
 
-		cw.Config.IsFlyout = true; // all menus should be flyouts? might change this later idk
+		//cw.Config.IsFlyout = true; // all menus should be flyouts? might change this later idk
+		// yeah i changed it
+		cw.Config.IsFlyout = rcw.AllowDrag;
 
 		return cw;
 	}
@@ -207,7 +230,7 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		// any extras
-		if (item.ExtraSubItems?.Count != 0)
+		if (item.ExtraSubItems != null && item.ExtraSubItems.Count != 0)
 			subList.AddRange(item.ExtraSubItems);
 
 		WindowItem[] subs = subList.ToArray();

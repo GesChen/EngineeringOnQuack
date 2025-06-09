@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -15,15 +16,18 @@ public class RightClickMenus : MonoBehaviour {
 	public static event Action OnPaste;
 	public static event Action OnDuplicate;
 	public static event Action OnDelete;
+	public delegate void TabOpenEvent(WindowItem source);
+	public static event TabOpenEvent OnMaterial;
 
 	public static void ClearEvents() {
-		OnNewPartMade	= null;
-		OnUndo			= null;
-		OnRedo			= null;
-		OnCopy			= null;
-		OnPaste			= null;
-		OnDuplicate		= null;
-		OnDelete		= null;
+		OnNewPartMade = null;
+		OnUndo = null;
+		OnRedo = null;
+		OnCopy = null;
+		OnPaste = null;
+		OnDuplicate = null;
+		OnDelete = null;
+		OnMaterial = null;
 	}
 
 	static void MakeNewPart(string name) {
@@ -33,12 +37,17 @@ public class RightClickMenus : MonoBehaviour {
 	}
 
 	// i wanna dry but kiss is more important
-	static void Undo()		{	RightClick.Instance.Hide();	OnUndo?.Invoke(); }
-	static void Redo()		{	RightClick.Instance.Hide();	OnRedo?.Invoke(); }
-	static void Copy()		{	RightClick.Instance.Hide();	OnCopy?.Invoke(); }
-	static void Paste()		{	RightClick.Instance.Hide();	OnPaste?.Invoke(); }
-	static void Duplicate()	{	RightClick.Instance.Hide(); OnDuplicate?.Invoke(); }
-	static void Delete()	{	RightClick.Instance.Hide();	OnDelete?.Invoke(); }
+	static void Undo() { RightClick.Instance.Hide(); OnUndo?.Invoke(); }
+	static void Redo() { RightClick.Instance.Hide(); OnRedo?.Invoke(); }
+	static void Copy() { RightClick.Instance.Hide(); OnCopy?.Invoke(); }
+	static void Paste() { RightClick.Instance.Hide(); OnPaste?.Invoke(); }
+	static void Duplicate() { RightClick.Instance.Hide(); OnDuplicate?.Invoke(); }
+	static void Delete() { RightClick.Instance.Hide(); OnDelete?.Invoke(); }
+	static void Material(W source, int index) {
+		WindowItem item = source.Items[index].RealItem;
+
+		OnMaterial?.Invoke(item);
+	}
 
 	// will have to add more later for other contexts but for now this is enough
 
@@ -46,39 +55,39 @@ public class RightClickMenus : MonoBehaviour {
 	public static readonly W digital = new(
 		200,
 		new(){
-			new W.Button(() => MakeNewPart("cpu"),		"cpu",		iconName: "cpu"),
-			new W.Button(() => MakeNewPart("ram"),		"ram",		iconName: "ram"),
-			new W.Button(() => MakeNewPart("display"),	"display",	iconName: "display"),
-			new W.Button(() => MakeNewPart("script"),	"script",	iconName: "script")
+			new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "cpu"),
+			new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "ram"),
+			new W.Button(() => MakeNewPart("display"),  "display",  iconName: "display"),
+			new W.Button(() => MakeNewPart("script"),   "script",   iconName: "script")
 		});
 
 	public static readonly W mechanical = new(
 		200,
 		new(){
-			new W.Button(() => MakeNewPart("motor 1"),	"motor 1",	iconName: "motor 1"),
-			new W.Button(() => MakeNewPart("motor 2"),	"motor 2",	iconName: "motor 2"),
-			new W.Button(() => MakeNewPart("piston 1"),	"piston 1",	iconName: "piston 1"),
-			new W.Button(() => MakeNewPart("piston 1"),	"piston 1",	iconName: "piston 2"),
-			new W.Button(() => MakeNewPart("servo 1"),	"servo 1",	iconName: "servo 1"),
-			new W.Button(() => MakeNewPart("servo 1"),	"servo 1",	iconName: "servo 2")
+			new W.Button(() => MakeNewPart("motor 1"),  "motor 1",  iconName: "motor 1"),
+			new W.Button(() => MakeNewPart("motor 2"),  "motor 2",  iconName: "motor 2"),
+			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "piston 1"),
+			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "piston 2"),
+			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "servo 1"),
+			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "servo 2")
 		});
 
 	public static readonly W structural = new(
 		200,
 		new(){
-			new W.Button(() => MakeNewPart("cube"),		"cube",		iconName: "cube"),
-			new W.Button(() => MakeNewPart("sphere"),	"sphere",	iconName: "sphere"),
-			new W.Button(() => MakeNewPart("cylinder"),	"cylinder",	iconName: "cylinder"),
-			new W.Button(() => MakeNewPart("wedge"),	"wedge",	iconName: "wedge")
+			new W.Button(() => MakeNewPart("cube"),     "cube",     iconName: "cube"),
+			new W.Button(() => MakeNewPart("sphere"),   "sphere",   iconName: "sphere"),
+			new W.Button(() => MakeNewPart("cylinder"), "cylinder", iconName: "cylinder"),
+			new W.Button(() => MakeNewPart("wedge"),    "wedge",    iconName: "wedge")
 		});
 
 	public static readonly W newPart = new(
 		200,
 		new() {
-			new W.Flyout(structural,	"structural",	iconName: "structural"),
-			new W.Flyout(mechanical,	"mechanical",	iconName: "mechanical"),
-			new W.Flyout(digital,		"digital",		iconName: "digital"),
-			new W.Button(() => MakeNewPart("cable"),	"cable",	iconName: "cable")
+			new W.Flyout(structural,    "structural",   iconName: "structural"),
+			new W.Flyout(mechanical,    "mechanical",   iconName: "mechanical"),
+			new W.Flyout(digital,       "digital",      iconName: "digital"),
+			new W.Button(() => MakeNewPart("cable"),    "cable",    iconName: "cable")
 		});
 
 	// yagni for now we're just doing multiple variations of the same main panel
@@ -86,12 +95,21 @@ public class RightClickMenus : MonoBehaviour {
 	// or something to dynamically update the contents based on which variation is needed
 	// but look i dont have that time right now once it gets too laggy we can do that
 
-	public static readonly W inworldDefaultPanel = new(
+	static readonly W.Item newpart = 
+		new W.Flyout(newPart, "new part", iconName: "plus");
+
+	static readonly W.Item duplicate = 
+		new W.Button(() => Duplicate(), "duplicate", iconName: "duplicate");
+
+	static W.Item materialItem(W source, int index) =>
+		new W.Button(() => Material(source, index), "material");
+			
+	public static readonly W inWorldDefaultPanel = new(
 		"Editing", 200, new() {
-			new W.Flyout(newPart,	"new part",	"",	"plus"),
-			new W.Button(() => Undo(),		"undo",	iconName: "undo"),
-			new W.Button(() => Redo(),		"redo",	iconName: "redo"),
-			new W.Button(() => Paste(),		"paste",iconName: "paste"), // TODO
+			newpart,
+			new W.Button(() => Undo(),	"undo",		iconName: "undo"),
+			new W.Button(() => Redo(),	"redo",		iconName: "redo"),
+			new W.Button(() => Paste(),	"paste",	iconName: "paste"),
 		});
 
 	public static readonly WindowItem modifierList =
@@ -143,28 +161,57 @@ public class RightClickMenus : MonoBehaviour {
 				.WithDescription("Delete")
 			});
 
-	public static readonly W inworldSinglePanel = new(
-		"Editing", 200, new() {
-			new W.Flyout(newPart,			"new part",		iconName: "plus"),
-			new W.CustomItem(modifierList),
-			new W.Button(() => Duplicate(),	"duplicate",	iconName: "duplicate"),
-		});
-	
-	public static readonly W inworldMultiPanel = new(
-		"Editing", 200, new() {
-			new W.Flyout(newPart,			"new part",		iconName: "plus"),
-			new W.CustomItem(modifierList),
-			new W.Button(() => Duplicate(),	"duplicate",	iconName: "duplicate"),
-			new W.Button(null,	"group", iconName: "group"),
-		});
 
-	public static CWindow[] GetWindows()
-		=> MenuUtil.ConvertWindows(
-			digital,
-			mechanical,
-			structural,
-			newPart,
-			inworldDefaultPanel,
-			inworldSinglePanel,
-			inworldMultiPanel);
+	// complicatd readonly property setup to allow for self referencing in the materialitem
+	private static W m_inWorldSinglePanel;
+
+	public static W inWorldSinglePanel {
+		get {
+			if (m_inWorldSinglePanel == null) {
+				m_inWorldSinglePanel = new(
+					"Editing", 200, new() {
+						newpart,
+						new W.CustomItem(modifierList),
+						duplicate,
+						null // replaced with materialitem 
+					});
+
+				m_inWorldSinglePanel.Items[3] = materialItem(m_inWorldSinglePanel, 3); // manual reflection lol
+			}
+			
+			return m_inWorldSinglePanel;
+		}
+	}
+
+	private static W m_inWorldMultiPanel;
+	
+	public static W inWorldMultiPanel {
+		get {
+			if (m_inWorldMultiPanel == null) {
+				m_inWorldMultiPanel = new(
+					"Editing", 200, new() {
+						newpart,
+						new W.CustomItem(modifierList),
+						duplicate,
+						null, // replaced with materialitem 
+						new W.Button(null, "group", iconName: "group"),
+					});
+
+				m_inWorldMultiPanel.Items[3] = materialItem(m_inWorldMultiPanel, 3); // manual reflection lol
+			}
+			return m_inWorldMultiPanel;
+		}
+	}
+
+	private static readonly W[] windows = new[]{
+		digital,
+		mechanical,
+		structural,
+		newPart,
+		inWorldDefaultPanel,
+		inWorldSinglePanel,
+		inWorldMultiPanel
+	};
+
+	public static CWindow[] Windows => windows.Select(w => w.CWindow).ToArray();
 }

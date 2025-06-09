@@ -109,7 +109,6 @@ public class TransformTools : Singleton<TransformTools> {
 		TransformToolsMenu.onScalePressed = null;
 		TransformToolsMenu.onScalePressed += ToggleScale;
 
-		windowManager.RealiseWindows(TransformToolsMenu.Windows);
 	}
 
 	void ToggleTranslate() => translating = !translating;

@@ -14,7 +14,6 @@ public class RightClick : Singleton<RightClick> {
 
 	protected override void Awake() {
 		base.Awake();
-		windowManager.RealiseWindows(RCM.GetWindows());
 	}
 	void Update() {
 		if (Conatrols.Mouse.Right.PressedThisFrame) {
@@ -50,9 +49,9 @@ public class RightClick : Singleton<RightClick> {
 
 	MenuUtil.Window WindowLookupFunc(IContext context)
 		=> context switch {
-			C.InWorld or C.NoSelection => RCM.inworldDefaultPanel,
-			C.SingleSelection => RCM.inworldSinglePanel,
-			C.MultiSelection => RCM.inworldMultiPanel,
+			C.InWorld or C.NoSelection => RCM.inWorldDefaultPanel,
+			C.SingleSelection => RCM.inWorldSinglePanel,
+			C.MultiSelection => RCM.inWorldMultiPanel,
 			_ => null
 		};
 }

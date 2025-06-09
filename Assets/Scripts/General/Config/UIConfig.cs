@@ -63,6 +63,7 @@ public static partial class Config {
 			public static readonly string IconsFolder				= "Icons/";
 			public static readonly string FlyoutTriggerOpenSprite	= IconsFolder + "dropdown open";
 			public static readonly string FlyoutTriggerClosedSprite	= IconsFolder + "dropdown closed";
+			public static readonly string CloseIcon					= IconsFolder + "close";
 		}
 
 		public static class Window {
@@ -70,11 +71,18 @@ public static partial class Config {
 
 			public static class CornerNode {
 				public static readonly Color Color = new(1, 1, 1);
+				public static readonly Color CloseButtonColor = Color.red;
 				public static readonly float NormalSize = 15;
 				public static readonly float HoverSize = 20;
 				public static readonly float DragSize = 10;
 				public static readonly float ExpansionStartDist = 60;
 				public static readonly float ExpansionEndDist = 40;
+
+				public static readonly bool DoubleClickToClose = false;
+
+				private static Sprite m_closeSprite;
+				public static Sprite CloseSprite => 
+					HF.LoadCached(ref m_closeSprite, Locations.CloseIcon);
 
 				public static float EasingFunction(float x) {
 					if (x <= 0) return 0;

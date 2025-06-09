@@ -19,6 +19,14 @@ public class WindowManager : MonoBehaviour {
 
 	public bool anyDragging = false;
 
+	void Awake() {
+		AllWindows.Init(this);
+	}
+
+	/// <summary>
+	/// stop calling this from individual classes, instead put them all into
+	/// allwindows and windowmanager will do it
+	/// </summary>
 	public void RealiseWindows(params CWindow[] torealise) {
 		foreach (var window in torealise) {
 			var realised = realiser.Realise(window);

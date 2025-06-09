@@ -15,6 +15,9 @@ public class Flyout : MonoBehaviour {
 	FlyoutTrigger thisTrigger;
 	LiveWindow lw;
 	bool childOpen;
+	
+	bool startOverride = false;
+	bool overrideProtection = false;
 
 	int lastChildCount = 0;
 
@@ -44,8 +47,14 @@ public class Flyout : MonoBehaviour {
 
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
 
+		if (mouseInRange)
+			overrideProtection = false;
+		if (!mouseInRange && !overrideProtection)
+			startOverride = false;
+
 		childOpen = openChildFlyout != null && openChildFlyout.gameObject.activeSelf;
-		if (!mouseInRange && !childOpen && (thisTrigger == null || !thisTrigger.selfHoverTarget.Hovering)) {
+		if (!(mouseInRange || childOpen || startOverride) 
+			&& (thisTrigger == null || !thisTrigger.selfHoverTarget.Hovering)) {
 			Hide();
 		}
 
@@ -81,10 +90,7 @@ public class Flyout : MonoBehaviour {
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		Vector3[] corners = new Vector3[4];
-		trigger.rt.GetWorldCorners(corners);
-
-		lw.PlaceAt(corners);
+		lw.PlaceAt(trigger.rt);
 	}
 
 	public void Show(Vector3 at) {
@@ -111,5 +117,10 @@ public class Flyout : MonoBehaviour {
 			if (trigger.transform != t)
 				trigger.targetFlyout.Hide();
 		}
+	}
+
+	public void OverrideStart() {
+		startOverride = true;
+		overrideProtection = true;
 	}
 }

@@ -134,6 +134,13 @@ public class LiveWindow : MonoBehaviour {
 		anyNodesDragging = cornerNodes.Any(n => n.dragging);
 	}
 
+	public void PlaceAt(RectTransform target) {
+		Vector3[] corners = new Vector3[4];
+		target.GetWorldCorners(corners);
+
+		PlaceAt(corners);
+	}
+
 	/// <summary>
 	/// Try to put this window at some corners
 	/// </summary>

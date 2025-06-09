@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using cfg = Config.UI.Window.CornerNode;
 
 public class WindowSizeNode : MonoBehaviour {
@@ -20,13 +21,21 @@ public class WindowSizeNode : MonoBehaviour {
 	bool oppositeVert;
 	bool oppositeHori;
 
+	bool isClose;
+
 	[HideInInspector] public RectTransform rt;
+	Image im;
+	
 	void Start() {
 		main = GetComponentInParent<LiveWindow>();
 		rt = GetComponent<RectTransform>();
+		im = GetComponent<Image>();
 	}
 
 	void Update() {
+		isClose = position == Positions.TopRight;
+		UpdateCloseSprite();
+
 		rt.anchoredPosition = Vector2.zero;
 		if (main.Config.Resizable) {
 			CheckHover();
@@ -53,7 +62,46 @@ public class WindowSizeNode : MonoBehaviour {
 		rt.sizeDelta = curSize * Vector2.one;
 	}
 
+	RectTransform closeIcon;
+	bool lastWasClose = false;
+	void UpdateCloseSprite() {
+		if (isClose != lastWasClose) {
+			if (isClose)
+				ShowClose();
+			else
+				HideClose();
+		}
+		lastWasClose = isClose;
+	}
+
+	void ShowClose() {
+		GameObject obj = new("Close Icon");
+		closeIcon = obj.AddComponent<RectTransform>();
+		closeIcon.SetParent(transform);
+		closeIcon.anchorMin = Vector2.zero;
+		closeIcon.anchorMax = Vector2.one;
+		closeIcon.offsetMin = Vector2.zero;
+		closeIcon.offsetMax = Vector2.zero;
+
+		var image = obj.AddComponent<Image>();
+		image.sprite = cfg.CloseSprite;
+		image.color = cfg.CloseButtonColor;
+		image.raycastTarget = false;
+	}
+
+	void HideClose() {
+		Destroy(closeIcon.gameObject);
+	}
+
 	void HandleMouse() {
+		if (isClose && hovered) {
+			bool criteria = cfg.DoubleClickToClose
+				? Conatrols.Mouse.Left.DoubleClicked
+				: Conatrols.Mouse.Left.SingleClicked;
+
+			if (criteria) Close();
+		}
+
 		bool notHoverOrDrag = !(hovered || dragging);
 		bool anyDraggingNotThis = main.manager.anyDragging && !dragging;
 
@@ -89,6 +137,10 @@ public class WindowSizeNode : MonoBehaviour {
 			if (oppositeHori)
 				main.FlipNodesHorizontally();
 		}
+	}
+
+	void Close() {
+		main.gameObject.SetActive(false);
 	}
 
 	Vector2 otherCornerPos;

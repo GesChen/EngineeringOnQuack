@@ -32,14 +32,14 @@ public class MaterialEditingMenu : MonoBehaviour {
 
 		}
 	};
-	public static float size = 150;
+	static readonly float size = 100;
 
-	public static readonly W window = new W(
+	public static readonly W editor = new W(
 		"Material",
 		size,
 		new(){
-			new W.Button(
-				, 
+			new W.Flyout(
+				colorPicker,
 				"Color"
 				).AddSubItems(
 					WindowItem.NewImage( // color preview
@@ -47,25 +47,65 @@ public class MaterialEditingMenu : MonoBehaviour {
 						WindowItem.LayoutConfig.FillLayout // solid fill of color
 					)),
 			new W.CustomItem(
-				WindowItem.NewButton(
-					new(),
+				WindowItem.NewFlyoutTrigger(
+					new(materialPicker),
 					WindowItem.LayoutConfig.FixedLayout(
 						UIPosition.AnchoredAt(UIPosition.TopLeft),
 						new (size, size)
 						)
 					)
 				)
-		}).AddEventToCW(
+		},
+		allowDrag: true,
+		isFlyout: false
+		).AddEventToCW(
 			CWindow.Configuration.Timings.Start,
-			() => {
-				// add materialeditor and set up 
+			(cw) => {
+				colorPickerButton = cw.Items[0].SubItems[1].RealObject;
+				materialPickerButton = cw.Items[0].SubItems[2].RealObject;
 
+				// add materialeditor and set up 
+				var editor = cw.RealisedWindow.gameObject.AddComponent<MaterialEditor>();
+
+				int imageSubitemIndex = 1;
+				editor.ColorPreview = (UnityEngine.UI.Image)
+					cw.Items[0].SubItems[1].SubItems[imageSubitemIndex]
+					.Construction[0].RealComponent;
+
+				imageSubitemIndex = 1;
+				editor.MaterialPreview = (UnityEngine.UI.Image)
+					cw.Items[0].SubItems[2]
+					.Construction[0].RealComponent;
+
+				// subscribe
+				RightClickMenus.OnMaterial += ShowMenu;
 			}
 		);
 
+	static void ShowMenu(WindowItem source) {
+		RectTransform rt = source.RealObject;
 
-	public static void ShowColorPicker() {
-		colorPicker.RealisedWindow.PlaceAt()
+		editor.CWindow.RealisedWindow.PlaceAt(rt);
+		editor.CWindow.RealisedWindow.gameObject.SetActive(true);
+
+		editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
+	}
+
+	public static CWindow[] Windows => new[] {
+		colorPicker,
+		materialPicker,
+		editor.CWindow
+	};
+
+	static RectTransform colorPickerButton;
+	static RectTransform materialPickerButton;
+	static void ShowColorPicker() {
+		colorPicker.RealisedWindow.PlaceAt(colorPickerButton);
+		colorPicker.RealisedWindow.gameObject.SetActive(true);
+	}
+	static void ShowMaterialPicker() {
+		materialPicker.RealisedWindow.PlaceAt(materialPickerButton);
+		materialPicker.RealisedWindow.gameObject.SetActive(true);
 	}
 
 }
