@@ -5,6 +5,12 @@ using System;
 using W = MenuUtil.Window;
 
 public class MaterialEditingMenu : MonoBehaviour {
+	public delegate void StartEvent(CWindow cw,
+		ref RectTransform colorPickerButton,
+		ref RectTransform materialPickerButton);
+
+	public static event StartEvent OnStart;
+
 	// right click version for now
 	public static readonly CWindow colorPicker = new(){
 		Name = "Color Picker",
@@ -56,39 +62,23 @@ public class MaterialEditingMenu : MonoBehaviour {
 					)
 				)
 		},
-		allowDrag: true,
-		isFlyout: false
+		movable: true,
+		isFlyout: false,
+		closable: true
 		).AddEventToCW(
 			CWindow.Configuration.Timings.Start,
 			(cw) => {
-				colorPickerButton = cw.Items[0].SubItems[1].RealObject;
-				materialPickerButton = cw.Items[0].SubItems[2].RealObject;
-
-				// add materialeditor and set up 
-				var editor = cw.RealisedWindow.gameObject.AddComponent<MaterialEditor>();
-
-				int imageSubitemIndex = 1;
-				editor.ColorPreview = (UnityEngine.UI.Image)
-					cw.Items[0].SubItems[1].SubItems[imageSubitemIndex]
-					.Construction[0].RealComponent;
-
-				imageSubitemIndex = 1;
-				editor.MaterialPreview = (UnityEngine.UI.Image)
-					cw.Items[0].SubItems[2]
-					.Construction[0].RealComponent;
-
-				// subscribe
-				RightClickMenus.OnMaterial += ShowMenu;
+				OnStart?.Invoke(cw, ref colorPickerButton, ref materialPickerButton);
 			}
 		);
 
-	static void ShowMenu(WindowItem source) {
+	public static void ShowMenu(WindowItem source) {
 		RectTransform rt = source.RealObject;
 
 		editor.CWindow.RealisedWindow.PlaceAt(rt);
 		editor.CWindow.RealisedWindow.gameObject.SetActive(true);
 
-		editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
+		//editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
 	}
 
 	public static CWindow[] Windows => new[] {

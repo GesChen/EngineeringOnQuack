@@ -25,23 +25,37 @@ public class WindowSizeNode : MonoBehaviour {
 
 	[HideInInspector] public RectTransform rt;
 	Image im;
-	
+
+	void OnEnable() {
+		rt = GetComponent<RectTransform>();
+		rt.sizeDelta = Vector2.zero;
+	}
+
 	void Start() {
 		main = GetComponentInParent<LiveWindow>();
-		rt = GetComponent<RectTransform>();
 		im = GetComponent<Image>();
 	}
 
 	void Update() {
+		Debug.Log("active???"); 
+
 		isClose = position == Positions.TopRight;
 		UpdateCloseSprite();
 
 		rt.anchoredPosition = Vector2.zero;
-		if (main.Config.Resizable) {
+		if (main.Config.Resizable)
 			CheckHover();
+
+		if (main.Config.Resizable || main.Config.Closable)
 			UpdateSize();
+		
+		if (main.Config.Resizable)
 			HandleMouse();
-		}
+
+		if (main.Config.Closable && isClose)
+			HandleClose();
+
+		throw new("test");
 	}
 
 	void CheckHover() {
@@ -51,6 +65,7 @@ public class WindowSizeNode : MonoBehaviour {
 	void UpdateSize() {
 		float mouseDist = Vector2.Distance(transform.position, Conatrols.Mouse.Position);
 		float t = Mathf.InverseLerp(cfg.ExpansionStartDist, cfg.ExpansionEndDist, mouseDist);
+		Debug.Log(mouseDist);
 
 		float size = cfg.EasingFunction(t) * cfg.NormalSize;
 
@@ -93,7 +108,7 @@ public class WindowSizeNode : MonoBehaviour {
 		Destroy(closeIcon.gameObject);
 	}
 
-	void HandleMouse() {
+	void HandleClose() {
 		if (isClose && hovered) {
 			bool criteria = cfg.DoubleClickToClose
 				? Conatrols.Mouse.Left.DoubleClicked
@@ -101,7 +116,9 @@ public class WindowSizeNode : MonoBehaviour {
 
 			if (criteria) Close();
 		}
+	}
 
+	void HandleMouse() {
 		bool notHoverOrDrag = !(hovered || dragging);
 		bool anyDraggingNotThis = main.manager.anyDragging && !dragging;
 

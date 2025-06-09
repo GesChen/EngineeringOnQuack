@@ -12,6 +12,7 @@ public class CWindow {
 	public string Name;
 	public WindowItem[] Items;
 
+	[Serializable]
 	public class Configuration {
 		public static SizeData FixedSize(Vector2 oneSize)
 			=> new(oneSize, oneSize, oneSize);
@@ -34,6 +35,7 @@ public class CWindow {
 
 		public bool Resizable				= true;
 		public bool Movable					= true;
+
 		public Color Color					= global::Config.UI.Visual.BackgroundColor;
 		public (float size, Color color) Outline	
 			= (global::Config.UI.Visual.OutlineThickness, global::Config.UI.Visual.OutlineColor);
@@ -46,6 +48,9 @@ public class CWindow {
 
 		// temporary till i can think of a better solution
 		public bool IsFlyout				= false;
+
+		// also temporary i guess
+		public bool Closable				= true;
 
 		public static Configuration FixedConfig(SizeData Size, UIPosition pos, bool flyout = false)
 			=> new() {

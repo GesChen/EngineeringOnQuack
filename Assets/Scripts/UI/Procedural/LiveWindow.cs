@@ -20,6 +20,8 @@ public class LiveWindow : MonoBehaviour {
 
 	public CWindow Source;
 
+	public bool HideOnStart = true; // might turn into connfig
+
 	void Awake() {
 		Config.CallEvents(CWindow.Configuration.Timings.Awake, Source);
 	}
@@ -46,15 +48,27 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	void Update() {
+		if (HideOnStart) {
+			if (Time.frameCount == global::Config.UI.Behaviour.MaxFramesForRealization)
+				gameObject.SetActive(false);
+			if (Time.frameCount <= global::Config.UI.Behaviour.MaxFramesForRealization) {
+				transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
+				return;
+			}
+		}
+
 		Config.CallEvents(CWindow.Configuration.Timings.Update, Source);
 
 		SetNodesActive(Config.Resizable);
+		SetCloseActive(Config.Closable || Config.Resizable);
 
-		if (Config.Resizable) {
+		if (Config.Resizable || Config.Closable) {
 			Find();
 			SetAnchors();
-			CheckNodes();
 		}
+		if (Config.Resizable)
+			CheckNodes();
+
 		CheckSize();
 		if (Config.Movable) {
 			HandleDrag();
@@ -64,7 +78,12 @@ public class LiveWindow : MonoBehaviour {
 	void SetNodesActive(bool state) {
 		cornerNodes.ForEach(n => n.gameObject.SetActive(state));
 	}
-
+	void SetCloseActive(bool state) {
+		foreach (var node in cornerNodes.Where(n => n.position == WindowSizeNode.Positions.TopRight)) {
+			node.gameObject.SetActive(state);
+		}
+	}
+	
 	void Find() {
 		TL = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.TopLeft);
 		TR = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.TopRight);

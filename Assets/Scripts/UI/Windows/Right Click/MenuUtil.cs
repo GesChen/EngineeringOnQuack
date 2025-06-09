@@ -20,8 +20,10 @@ public class MenuUtil : MonoBehaviour {
 		public bool ShowTitle;
 		public float Width;
 		public List<Item> Items;
-		public bool AllowDrag = false;
+
+		public bool Movable = false;
 		public bool IsFlyout = true;
+		public bool Closable = false;
 
 		private CWindow m_cwindow;
 		public CWindow CWindow {
@@ -37,15 +39,18 @@ public class MenuUtil : MonoBehaviour {
 			float width, 
 			List<Item> items, 
 			bool showTitle = true, 
-			bool allowDrag = false,
-			bool isFlyout = true) {
+			bool movable = false,
+			bool isFlyout = true,
+			bool closable = false) {
 
 			Title = title;
 			ShowTitle = showTitle;
 			Width = width;
 			Items = items;
-			AllowDrag = allowDrag;
+
+			Movable = movable;
 			IsFlyout = isFlyout;
+			Closable = closable;
 		}
 		public Window(float width, List<Item> items) {
 			ShowTitle = false;
@@ -147,9 +152,11 @@ public class MenuUtil : MonoBehaviour {
 			Name = rcw.ShowTitle ? rcw.Title : "Menu",
 			Config = new() {
 				Resizable = false,
-				Movable = rcw.AllowDrag,
+				Movable = rcw.Movable,
 				ContentDynamic = true,
-				DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding)
+				DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding),
+				IsFlyout = rcw.IsFlyout,
+				Closable = rcw.Closable,
 			}
 		};
 
@@ -190,7 +197,6 @@ public class MenuUtil : MonoBehaviour {
 
 		//cw.Config.IsFlyout = true; // all menus should be flyouts? might change this later idk
 		// yeah i changed it
-		cw.Config.IsFlyout = rcw.AllowDrag;
 
 		return cw;
 	}

@@ -8,7 +8,31 @@ public class MaterialEditor : MonoBehaviour {
 	public Image MaterialPreview;
 
 	Color currentColor;
-	Materials.Material currentMaterial;
+	Materials.IMaterial currentMaterial;
+
+	public static void SetupComponent(
+		CWindow cw, 
+		ref RectTransform colorPickerButton, 
+		ref RectTransform materialPickerButton) {
+		colorPickerButton = cw.Items[0].SubItems[1].RealObject;
+		materialPickerButton = cw.Items[0].SubItems[2].RealObject;
+
+		// add materialeditor and set up 
+		var editor = cw.RealisedWindow.gameObject.AddComponent<MaterialEditor>();
+
+		int imageSubitemIndex = 1;
+		editor.ColorPreview = (UnityEngine.UI.Image)
+			cw.Items[0].SubItems[1].SubItems[imageSubitemIndex]
+			.Construction[0].RealComponent;
+
+		//imageSubitemIndex = 1;
+		editor.MaterialPreview = (UnityEngine.UI.Image)
+			cw.Items[0].SubItems[2]
+			.Construction[0].RealComponent;
+
+		// subscribe
+		RightClickMenus.OnMaterial += MaterialEditingMenu.ShowMenu;
+	}
 
 	void Update() {
 
@@ -19,7 +43,7 @@ public class MaterialEditor : MonoBehaviour {
 		UpdatePreviews();
 	}
 
-	public void SetMaterial(Materials.Material material) {
+	public void SetMaterial(Materials.IMaterial material) {
 		currentMaterial = material;
 		UpdatePreviews();
 	}

@@ -11,27 +11,19 @@ struct Assembly {
 
 // temporary i guess idk where else to put this
 public class Materials {
-	public abstract class Material {
-		protected abstract string IconLocation { get; }
-		protected abstract string MaterialLocation { get; }
-		protected abstract string PhysicsLocation { get; }
+	public interface IMaterial {
+		protected string IconLocation { get; }
+		protected string MaterialLocation { get; }
+		protected string PhysicsLocation { get; }
 
-		public abstract Sprite m_Icon { get; }
-		public abstract Sprite Icon { get; }
+		public Sprite m_Icon { get; }
+		public Sprite Icon { get; }
 
 	}
-	public class Wood : Material {
-		protected override string IconLocation => "woodicon";
-	}
-	public class Stone : Material {
-		protected override string IconLocation => "stoneicon";
-	}
-	public class Metal : Material {
-		protected override string IconLocation => "metalicon";
-	}
-	public class Glass : Material {
-		protected override string IconLocation => "glassicon";
-	}
+	//wood
+	//stone
+	//metal
+	//glass
 }
 
 public class BuildingManager : Singleton<BuildingManager> {
@@ -45,10 +37,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	BuildingClipboard clipboard;
 
-	void Start() {
+	protected override void Awake() {
+		base.Awake();
 		clipboard = new();
 
 		Subscribe();
+		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 	}
 
 	// hit that bell for more epic code (this is garbage)
