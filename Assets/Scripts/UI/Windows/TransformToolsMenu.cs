@@ -19,14 +19,14 @@ public class TransformToolsMenu {
 			Items = new WindowItem[] {
 				WindowItem.NewLayout(
 					"Transform controls",
-					PComponents.Layout.Dynamic(5f),
+					PComponents.Layout.DynamicAll(5f),
 					WindowItem.LayoutConfig.DynamicLayout(
 						FourSides.Zero,
 						FourSides.Even(5),
 						FourSides.Zero
 					),
 					new() {
-						WindowItem.NewButtonCustomImage(
+						WindowItem.NewButtonCustomImageOverlay(
 							"Translate",
 							new(() => onTranslatePressed?.Invoke()),
 							new PComponents.Image(Config.UI.Locations.IconsFolder + "move"),
@@ -35,7 +35,7 @@ public class TransformToolsMenu {
 								Margins = new(5)
 							}
 						),
-						WindowItem.NewButtonCustomImage(
+						WindowItem.NewButtonCustomImageOverlay(
 							"Rotate",
 							new(() => onRotatePressed?.Invoke()),
 							new PComponents.Image(Config.UI.Locations.IconsFolder + "rotate"),
@@ -44,7 +44,7 @@ public class TransformToolsMenu {
 								Margins = new(5)
 							}
 						),
-						WindowItem.NewButtonCustomImage(
+						WindowItem.NewButtonCustomImageOverlay(
 							"Scale",
 							new(() => onScalePressed?.Invoke()),
 							new PComponents.Image(Config.UI.Locations.IconsFolder + "scale2"),

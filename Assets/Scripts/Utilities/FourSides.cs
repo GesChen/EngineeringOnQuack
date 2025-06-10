@@ -1,10 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-[System.Serializable]
-public class FourSides {
+[Serializable]
+public struct FourSides { // changed to struct but might break shit so might turn it back
 	public float Up;
 	public float Right;
 	public float Down;
@@ -17,14 +18,36 @@ public class FourSides {
 	}
 	public FourSides(float x) : this(x, x, x, x) { }
 
-	public RectOffset ToUnityType() // for padding and large number typed. 
-		=> new((int)Left, (int)Right, (int)Up, (int)Down);
+	public readonly RectOffset ToUnityType() => // for padding and large number typed. 
+		new((int)Left, (int)Right, (int)Up, (int)Down);
 
-	public Vector4 ToTMProType()
-		=> new(Left, Up, Right, Down);
+	public readonly Vector4 ToTMProType() => 
+		new(Left, Up, Right, Down);
 
 	public static FourSides Zero => new(0, 0, 0, 0);
 	public static FourSides Even(float v) => new(v, v, v, v);
+
+	public override readonly int GetHashCode() {
+		return HashCode.Combine(Up, Right, Down, Left);
+	}
+
+	public override readonly bool Equals(object obj) {
+		if (obj is not FourSides fs)
+			throw new InvalidOperationException("Cannot compare FourSides with a different type.");
+
+		return 
+			fs.Up == Up
+			&& fs.Right == Right
+			&& fs.Down == Down
+			&& fs.Left == Left;
+	}
+
+	public static bool operator ==(FourSides a, FourSides b) => 
+		a.Equals(b);
+	public static bool operator !=(FourSides a, FourSides b) => 
+		!a.Equals(b);
+	public override readonly string ToString() => 
+		$"FourSides(Up: {Up}, Right: {Right}, Down: {Down}, Left: {Left})";
 }
 
 // thanks chatgpt

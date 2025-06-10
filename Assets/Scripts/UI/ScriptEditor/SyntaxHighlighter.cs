@@ -440,8 +440,8 @@ public class SyntaxHighlighter : MonoBehaviour {
 	public string TypeArrayToString(Types[] array) => new(array.Select(t => "_KFVUSLT#"[(int)t]).ToArray());
 
 	public string TagLine(string line, Types[] types) {
-		string generateTag(Types type)
-			=> $"<#{TypeToHex[type]}>";
+		string generateTag(Types type) => 
+			$"<#{TypeToHex[type]}>";
 		string endColor = "</color>";
 
 		StringBuilder sb = new();

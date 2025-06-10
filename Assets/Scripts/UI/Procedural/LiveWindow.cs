@@ -59,8 +59,7 @@ public class LiveWindow : MonoBehaviour {
 
 		Config.CallEvents(CWindow.Configuration.Timings.Update, Source);
 
-		SetNodesActive(Config.Resizable);
-		SetCloseActive(Config.Closable || Config.Resizable);
+		SetNodesActive(Config.Resizable, Config.Closable);
 
 		if (Config.Resizable || Config.Closable) {
 			Find();
@@ -75,15 +74,15 @@ public class LiveWindow : MonoBehaviour {
 		}
 	}
 
-	void SetNodesActive(bool state) {
-		cornerNodes.ForEach(n => n.gameObject.SetActive(state));
-	}
-	void SetCloseActive(bool state) {
-		foreach (var node in cornerNodes.Where(n => n.position == WindowSizeNode.Positions.TopRight)) {
-			node.gameObject.SetActive(state);
+	void SetNodesActive(bool state, bool closeState) {
+		foreach (var n in cornerNodes) {
+			if (n.position == WindowSizeNode.Positions.TopRight)
+				n.gameObject.SetActive(state || closeState);
+			else
+				n.gameObject.SetActive(state);
 		}
 	}
-	
+
 	void Find() {
 		TL = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.TopLeft);
 		TR = cornerNodes.Find(n => n.position == WindowSizeNode.Positions.TopRight);

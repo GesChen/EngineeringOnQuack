@@ -117,7 +117,7 @@ public class WindowRealiser : MonoBehaviour {
 			// layouts have their own padding
 			// and items have to be directly inside so no padding object
 			bool isLayout = item.Construction.Any(c => c is PComponents.Layout);
-			if (item.Layout.Padding != null && !isLayout) {
+			if (item.Layout.Padding != FourSides.Zero && !isLayout) {
 				var (_, padRT) =
 					MakeNewRT("Contents", rt);
 
@@ -152,7 +152,7 @@ public class WindowRealiser : MonoBehaviour {
 			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
 			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
 
-			if (item.Layout.Margins != null) {
+			if (item.Layout.Margins != FourSides.Zero) {
 				rt.offsetMin = new(item.Layout.Margins.Left, item.Layout.Margins.Down);
 				rt.offsetMax = new(-item.Layout.Margins.Right, -item.Layout.Margins.Up);
 			} else {

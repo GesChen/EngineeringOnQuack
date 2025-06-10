@@ -14,12 +14,12 @@ public class CWindow {
 
 	[Serializable]
 	public class Configuration {
-		public static SizeData FixedSize(Vector2 oneSize)
-			=> new(oneSize, oneSize, oneSize);
-		public static SizeData FreeSize(Vector2 defaultSize)
-			=> new(defaultSize, Vector2.zero, Vector2.positiveInfinity);
-		public static SizeData BoundedSize(Vector2 @default, Vector2 min, Vector2 max)
-			=> new(@default, min, max);
+		public static SizeData FixedSize(Vector2 oneSize) => 
+			new(oneSize, oneSize, oneSize);
+		public static SizeData FreeSize(Vector2 defaultSize) => 
+			new(defaultSize, Vector2.zero, Vector2.positiveInfinity);
+		public static SizeData BoundedSize(Vector2 @default, Vector2 min, Vector2 max) => 
+			new(@default, min, max);
 
 		public class SizeData {
 			public Vector2 Default;
@@ -52,12 +52,12 @@ public class CWindow {
 		// also temporary i guess
 		public bool Closable				= true;
 
-		public static Configuration FixedConfig(SizeData Size, UIPosition pos, bool flyout = false)
+		/*public static Configuration FixedConfig(SizeData Size, UIPosition pos, bool flyout = false)
 			=> new() {
 				Resizable = false,
 				Movable = false,
 			};
-
+*/
 		public List<(TimedEvent action, Timings timing)> CustomEvents;
 		public delegate void TimedEvent(CWindow window);
 		public enum Timings {
@@ -127,15 +127,13 @@ public class UIPosition {
 
 	public UIPosition(Vector2 anchorMin, Vector2 anchorMax, Vector2 position)
 		: this(anchorMin, anchorMax, position, new(.5f,.5f)) { }
-	
-	public static UIPosition AnchoredAt(Vector2 pos) {
-		return new(pos, pos, pos, Vector2.zero);
-	}
 
-	public static UIPosition AnchoredOffset(Vector2 pos, Vector2 offset) {
-		return new(pos, pos, pos, offset);
-	}
+	public static UIPosition AnchoredAt(Vector2 pos) => 
+		new(pos, pos, pos, Vector2.zero);
 
-	public static UIPosition CenterAnchoredAt(Vector2 pos, Vector2 offset)
-		=> new(pos, pos, new(.5f, .5f), offset);
+	public static UIPosition AnchoredOffset(Vector2 pos, Vector2 offset) => 
+		new(pos, pos, pos, offset);
+
+	public static UIPosition CenterAnchoredAt(Vector2 pos, Vector2 offset) =>
+		new(pos, pos, new(.5f, .5f), offset);
 }

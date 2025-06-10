@@ -15,11 +15,11 @@ public static class HF {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 
-	public static Vector3 MV3(Vector3 a, Vector3 b)
-		=> new(a.x * b.x, a.y * b.y, a.z * b.z);
+	public static Vector3 MV3(Vector3 a, Vector3 b) => 
+		new(a.x * b.x, a.y * b.y, a.z * b.z);
 
-	public static Vector3 Vector3Round(Vector3 v)
-		=> new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
+	public static Vector3 Vector3Round(Vector3 v) => 
+		new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 
 	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t) {
 		return new Vector3(
@@ -28,14 +28,14 @@ public static class HF {
 			Mathf.Lerp(a.z, b.z, t.z));
 	}
 
-	public static Vector2 Vector2Round(Vector2 v)
-		=> new(Mathf.Round(v.x), Mathf.Round(v.y));
+	public static Vector2 Vector2Round(Vector2 v) => 
+		new(Mathf.Round(v.x), Mathf.Round(v.y));
 
-	public static Vector2 Vector2Abs(Vector2 v)
-		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
+	public static Vector2 Vector2Abs(Vector2 v) => 
+		new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 
-	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
-		=> new(
+	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) => 
+		new(
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
 
@@ -137,11 +137,11 @@ public static class HF {
 		return Vector2InAABB(point, min, max);
 	}
 
-	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
-		=> Vector3.Dot(point - reference, direction);
+	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction) => 
+		Vector3.Dot(point - reference, direction);
 
-	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir)
-		=> new(Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
+	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir) => 
+		new(Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
 
 	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal) {
 		float dist = Vector3.Dot(point - planeOrig, planeNormal);
@@ -151,11 +151,11 @@ public static class HF {
 	/// <summary>
 	/// Replaces section of string with another, chars at start and end index are both replaced too
 	/// </summary>
-	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
-		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
+	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith) => 
+		original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static string RemoveSection(string original, int start, int end)
-		=> original.Remove(start, end - start);
+	public static string RemoveSection(string original, int start, int end) => 
+		original.Remove(start, end - start);
 
 	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
 		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);

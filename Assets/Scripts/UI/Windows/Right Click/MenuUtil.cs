@@ -185,7 +185,7 @@ public class MenuUtil : MonoBehaviour {
 
 		var finalLayoutItem =
 			WindowItem.NewLayout(
-				PComponents.Layout.VerticalDynamic(
+				PComponents.Layout.Vertical.Dynamic(
 					M.ItemSpacing,
 					TextAnchor.UpperLeft
 				),

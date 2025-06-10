@@ -33,10 +33,10 @@ public class Evaluator {
 
 		return op.Value switch {
 			T_Operator.Ops.Equality				=> eq,
-			T_Operator.Ops.NotEquals				=> new Primitive.Bool(!equals), // (!=) = (! ==)
+			T_Operator.Ops.NotEquals			=> new Primitive.Bool(!equals), // (!=) = (! ==)
 			T_Operator.Ops.LessThan				=> lt,
 			T_Operator.Ops.GreaterThan			=> new Primitive.Bool(!(lessthan || equals)), // (>) = (!<=) 
-			T_Operator.Ops.LessThanOrEqualTo		=> new Primitive.Bool(lessthan || equals), // (<=) = (< || ==)
+			T_Operator.Ops.LessThanOrEqualTo	=> new Primitive.Bool(lessthan || equals), // (<=) = (< || ==)
 			T_Operator.Ops.GreaterThanOrEqualTo	=> new Primitive.Bool(!lessthan), // (>=) = (! <)
 			_ => Errors.CannotCompare(a.Type.Name, b.Type.Name),
 		};
@@ -605,7 +605,7 @@ public class Evaluator {
 		T_Operator.Ops pairing = highestTokenAsOp.Value switch {
 			T_Operator.Ops.OpenParentheses	=> T_Operator.Ops.CloseParentheses,
 			T_Operator.Ops.OpenBracket		=> T_Operator.Ops.CloseBracket,
-			T_Operator.Ops.OpenBrace			=> T_Operator.Ops.CloseBrace,
+			T_Operator.Ops.OpenBrace		=> T_Operator.Ops.CloseBrace,
 			_ => T_Operator.Ops.None
 		};
 		if (pairing == T_Operator.Ops.None) return Errors.CouldntParse(line.OriginalString);
@@ -987,7 +987,7 @@ public class Evaluator {
 
 		bool result = op.Value switch {
 			T_Operator.Ops.And	=> a && b,
-			T_Operator.Ops.Or		=> a || b,
+			T_Operator.Ops.Or	=> a || b,
 			T_Operator.Ops.Nand	=> !(a && b),
 			T_Operator.Ops.Nor	=> !(a || b),
 			T_Operator.Ops.Xor	=> a != b,
@@ -1038,12 +1038,12 @@ public class Evaluator {
 				return Errors.UnknownName(leftRef);
 
 			string opToPerform = op.Value switch {
-				T_Operator.Ops.PlusEquals			=> "+",
+				T_Operator.Ops.PlusEquals		=> "+",
 				T_Operator.Ops.MinusEquals		=> "-",
-				T_Operator.Ops.MultiplyEquals		=> "*",
+				T_Operator.Ops.MultiplyEquals	=> "*",
 				T_Operator.Ops.DivideEquals		=> "/",
 				T_Operator.Ops.PowerEquals		=> "^",
-				T_Operator.Ops.ModEquals			=> "%",
+				T_Operator.Ops.ModEquals		=> "%",
 				_ => ""
 			};
 			T_Operator inlineOp = new(opToPerform); // sets it up so i dont have to

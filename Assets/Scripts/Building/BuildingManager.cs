@@ -21,7 +21,7 @@ public class Materials {
 
 	}
 	//wood
-	//stone
+	//concrete
 	//metal
 	//glass
 }

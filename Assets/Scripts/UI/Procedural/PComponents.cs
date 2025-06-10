@@ -169,99 +169,76 @@ public class PComponents {
 
 		public Layout(
 			Type layoutType,
-			float spacing,
-			TextAnchor itemAlignment,
+			float? spacing,
+			TextAnchor? itemAlignment,
 			bool fixedSize,
 			bool fillDimension,
 			bool matchOtherDimension) {
 
-			LayoutType = layoutType;
-			Spacing = spacing;
-			ItemAlignment = itemAlignment;
-			FixedSize = fixedSize;
-			FillDimension = fillDimension;
-			MatchOtherDimension = matchOtherDimension;
+			LayoutType				= layoutType;
+			Spacing					= spacing ?? Config.UI.Visual.DefaultLayoutSpacing;
+			ItemAlignment			= itemAlignment ?? TextAnchor.UpperLeft;
+			FixedSize				= fixedSize;
+			FillDimension			= fillDimension;
+			MatchOtherDimension		= matchOtherDimension;
 		}
 
-		public static Layout Horizontal(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fixedSize,
-			bool fillHorizontally,
-			bool matchOtherDimension)
-			=> new(
-				Type.Horizontal,
-				spacing,
-				itemAlignment,
-				fixedSize,
-				fillHorizontally,
-				matchOtherDimension);
+		public static readonly HorizontalDirection Horizontal = new();
+		public static readonly VerticalDirection Vertical = new();
 
-		public static Layout HorizontalFixed(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fillHorizontally,
-			bool matchOtherDimension)
-			=> new(
-				Type.Horizontal,
-				spacing,
-				itemAlignment,
-				true,
-				fillHorizontally,
-				matchOtherDimension);
+		public abstract class Direction {
+			// i would REALLY want this to be 
+			public abstract Type Type { get; }
+			public Layout Layout(
+				bool fixedSize,
+				bool fillHorizontally,
+				bool matchOtherDimension,
+				float? spacing				= null,
+				TextAnchor? itemAlignment	= null) => 
+				new(
+					Type,
+					spacing,
+					itemAlignment,
+					fixedSize,
+					fillHorizontally,
+					matchOtherDimension);
 
-		public static Layout HorizontalDynamic(
-			float spacing,
-			TextAnchor itemAlignment)
-			=> new(
-				Type.Horizontal,
-				spacing,
-				itemAlignment,
-				false,
-				false,
-				false);
+			public Layout Fixed(
+				bool fillHorizontally,
+				bool matchOtherDimension,
+				float? spacing				= null,
+				TextAnchor? itemAlignment	= null) => 
+				new(
+					Type,
+					spacing,
+					itemAlignment,
+					true,
+					fillHorizontally,
+					matchOtherDimension);
 
-		public static Layout Vertical(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fixedSize,
-			bool fillVertically,
-			bool matchOtherDimension)
-			=> new(
-				Type.Vertical,
-				spacing,
-				itemAlignment,
-				fixedSize,
-				fillVertically,
-				matchOtherDimension);
+			public Layout Dynamic(
+				float? spacing				= null,
+				TextAnchor? itemAlignment	= null) => 
+				new(
+					Type,
+					spacing,
+					itemAlignment,
+					false,
+					false,
+					false);
+		}
 
-		public static Layout VerticalFixed(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fillVertically,
-			bool matchOtherDimension)
-			=> new(
-				Type.Vertical,
-				spacing,
-				itemAlignment,
-				true,
-				fillVertically,
-				matchOtherDimension);
+		public class HorizontalDirection : Direction {
+			public override Type Type => Type.Horizontal;
+		}
 
-		public static Layout VerticalDynamic(
-			float spacing,
-			TextAnchor itemAlignment)
-			=> new(
-				Type.Vertical,
-				spacing,
-				itemAlignment,
-				false,
-				false,
-				false);
+		public class VerticalDirection : Direction {
+			public override Type Type => Type.Vertical;
+		}
 
-		public static Layout Dynamic(
-			float spacing)
-			=> new(
+		public static Layout DynamicAll(
+			float spacing) => 
+			new(
 				Type.Dynamic,
 				spacing,
 				TextAnchor.MiddleCenter, // this makes no sense either, no differences

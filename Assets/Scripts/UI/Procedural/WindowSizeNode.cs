@@ -37,8 +37,6 @@ public class WindowSizeNode : MonoBehaviour {
 	}
 
 	void Update() {
-		Debug.Log("active???"); 
-
 		isClose = position == Positions.TopRight;
 		UpdateCloseSprite();
 
@@ -54,8 +52,6 @@ public class WindowSizeNode : MonoBehaviour {
 
 		if (main.Config.Closable && isClose)
 			HandleClose();
-
-		throw new("test");
 	}
 
 	void CheckHover() {
@@ -65,7 +61,6 @@ public class WindowSizeNode : MonoBehaviour {
 	void UpdateSize() {
 		float mouseDist = Vector2.Distance(transform.position, Conatrols.Mouse.Position);
 		float t = Mathf.InverseLerp(cfg.ExpansionStartDist, cfg.ExpansionEndDist, mouseDist);
-		Debug.Log(mouseDist);
 
 		float size = cfg.EasingFunction(t) * cfg.NormalSize;
 

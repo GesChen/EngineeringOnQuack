@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,8 @@ public class MaterialEditingMenu : MonoBehaviour {
 
 	public static event StartEvent OnStart;
 
+	public static Action<Color> OnColorSelection;
+
 	// right click version for now
 	public static readonly CWindow colorPicker = new(){
 		Name = "Color Picker",
@@ -18,10 +21,26 @@ public class MaterialEditingMenu : MonoBehaviour {
 			Movable = false,
 			Resizable = false,
 			ContentDynamic = true,
-			DynamicPadding = new(5)
+			DynamicPadding = new(5),
+			Closable = false
 		},
 		Items = new WindowItem[] {
+			WindowItem.NewLayout(
+				PComponents.Layout.Horizontal.Dynamic(),
+				WindowItem.LayoutConfig.FillLayout,
+				Config.Building.Colors.Select(c => 
 
+					// make the color button for each one
+					WindowItem.NewButtonCustomImageComponent(
+						new (() => OnColorSelection(c)),
+						new (c), // might make the color part an inner element
+						WindowItem.LayoutConfig.LayoutElement(
+							Config.Building.ColorPickerItemSize,
+							new(0)
+							)
+						)
+					).ToList()
+				)
 		}
 	};
 
@@ -32,7 +51,8 @@ public class MaterialEditingMenu : MonoBehaviour {
 			Movable = false,
 			Resizable = false,
 			ContentDynamic = true,
-			DynamicPadding = new(5)
+			DynamicPadding = new(5),
+			Closable = false
 		},
 		Items = new WindowItem[] {
 

@@ -16,6 +16,8 @@ public static partial class Config {
 
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
 			public static readonly float OutlineThickness		= 2;
+
+			public static readonly float DefaultLayoutSpacing   = 5; // temproary???
 		}
 
 		public static class Behaviour {
@@ -25,6 +27,10 @@ public static partial class Config {
 			public static readonly float FlyoutHoverMargin		= 50;
 			public static readonly int DescriptionHoverMs		= 500;
 			public static readonly float MaxMouseMovementForClick	= 5;
+		}
+
+		public struct ColorBlock {
+
 		}
 
 		public static class Button {
@@ -48,6 +54,13 @@ public static partial class Config {
 			public static readonly Vector2 CursorOffset		= new(0, -30);
 		}
 
+		public static class Locations {
+			public static readonly string IconsFolder				= "Icons/";
+			public static readonly string FlyoutTriggerOpenSprite	= IconsFolder + "dropdown open";
+			public static readonly string FlyoutTriggerClosedSprite	= IconsFolder + "dropdown closed";
+			public static readonly string CloseIcon					= IconsFolder + "close";
+		}
+
 		public static class Menu {
 			public static readonly float TitleHeight			= 30;
 			public static readonly float ItemSpacing			= 0;
@@ -58,14 +71,7 @@ public static partial class Config {
 			public static readonly float FlyoutIndicatorSize	= 20;
 			public static readonly float FontSize				= Visual.FontSize - 2;
 		}
-
-		public static class Locations {
-			public static readonly string IconsFolder				= "Icons/";
-			public static readonly string FlyoutTriggerOpenSprite	= IconsFolder + "dropdown open";
-			public static readonly string FlyoutTriggerClosedSprite	= IconsFolder + "dropdown closed";
-			public static readonly string CloseIcon					= IconsFolder + "close";
-		}
-
+		
 		public static class Window {
 			public static readonly float CenterSnapRange = .65f; // 0-1: 0=no center 1=full center
 

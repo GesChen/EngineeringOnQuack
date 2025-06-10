@@ -114,46 +114,46 @@ public class RightClickMenus : MonoBehaviour {
 
 	public static readonly WindowItem modifierList =
 		WindowItem.NewLayout(
-			PComponents.Layout.HorizontalFixed(
-				0,
-				TextAnchor.UpperLeft,
+			PComponents.Layout.Horizontal.Fixed(
 				true,
-				true),
+				true,
+				0,
+				TextAnchor.UpperLeft),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.AnchoredAt(UIPosition.TopLeft),
 				new (200, 45),
 				new (5)
 			),
 			new (){
-				WindowItem.NewButtonCustomImage(
+				WindowItem.NewButtonCustomImageOverlay(
 					"Undo",
 					new(() => Undo()),
 					new("Icons/undo"),
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Undo"),
 
-				WindowItem.NewButtonCustomImage(
+				WindowItem.NewButtonCustomImageOverlay(
 					"Redo",
 					new(() => Redo()),
 					new("Icons/redo"),
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Redo"),
 
-				WindowItem.NewButtonCustomImage(
+				WindowItem.NewButtonCustomImageOverlay(
 					"Copy",
 					new(() => Copy()),
 					new("Icons/copy"),
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Copy"),
 
-				WindowItem.NewButtonCustomImage(
+				WindowItem.NewButtonCustomImageOverlay(
 					"Paste",
 					new(() => Paste()),
 					new("Icons/paste"),
 					WindowItem.LayoutConfig.FillLayout)
 				.WithDescription("Paste"),
 
-				WindowItem.NewButtonCustomImage(
+				WindowItem.NewButtonCustomImageOverlay(
 					"Delete",
 					new(() => Delete()),
 					new("Icons/delete"),
