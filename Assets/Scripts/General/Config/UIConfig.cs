@@ -9,7 +9,7 @@ public static partial class Config {
 			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
 
-			public static TMP_FontAsset DefaultFont { get { return Fonts.Roboto; } }
+			public static TMP_FontAsset DefaultFont				=> Fonts.Roboto;
 			public static readonly FontWeight DefaultWeight		= FontWeight.Light;
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
 			public static readonly float FontSize				= 22;
@@ -17,7 +17,25 @@ public static partial class Config {
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
 			public static readonly float OutlineThickness		= 2;
 
-			public static readonly float DefaultLayoutSpacing   = 5; // temproary???
+			public static readonly float DefaultLayoutSpacing   = 5; // might delete
+
+			public static readonly ColorBlock DefaultColorBlock = new(){
+				NormalColor	= new(.27f, .27f, .27f),
+				HoverColor		= new(.39f, .39f, .39f),
+				PressedColor	= new(.45f, .45f, .45f),
+				DisabledColor	= new(.16f, .16f, .16f),
+				ToggledColor	= new(.33f, .33f, .33f),
+				FadeDuration	= .01f
+			};
+
+			public static readonly ColorBlock WhiteColorBlock = new(){
+				NormalColor	= new(1f, 1f, 1f),
+				HoverColor		= new(0.88f, 0.88f, 0.88f),
+				PressedColor	= new(0.82f, 0.82f, 0.82f),
+				DisabledColor	= new(0.70f, 0.70f, 0.70f),
+				ToggledColor	= new(0.94f, 0.94f, 0.94f),
+				FadeDuration	= .01f
+			};
 		}
 
 		public static class Behaviour {
@@ -29,17 +47,17 @@ public static partial class Config {
 			public static readonly float MaxMouseMovementForClick	= 5;
 		}
 
+		// experimental design change
 		public struct ColorBlock {
-
+			public Color NormalColor;
+			public Color HoverColor;
+			public Color PressedColor;
+			public Color DisabledColor;
+			public Color ToggledColor;
+			public float FadeDuration;
 		}
 
 		public static class Button {
-			public static readonly Color DefaultColor	= new(.27f, .27f, .27f);
-			public static readonly Color HoverColor		= new(.39f, .39f, .39f);
-			public static readonly Color PressedColor	= new(.45f, .45f, .45f);
-			public static readonly Color DisabledColor	= new(.16f, .16f, .16f);
-			public static readonly Color ToggledColor	= new(.33f, .33f, .33f);
-			public static readonly float FadeDuration = .01f;
 		}
 
 		public static class RightClick {

@@ -200,13 +200,13 @@ public class WindowRealiser : MonoBehaviour {
 
 				button.interactable = bt.Enabled;
 				button.colors = new() {
-					normalColor = bt.NormalColor,
-					highlightedColor = bt.HighlightedColor,
-					selectedColor = bt.NormalColor,
-					pressedColor = bt.PressedColor,
-					disabledColor = bt.DisabledColor,
-					colorMultiplier = 1,
-					fadeDuration = Config.UI.Button.FadeDuration
+					normalColor			= bt.Colors.NormalColor,
+					highlightedColor	= bt.Colors.HoverColor,
+					selectedColor		= bt.Colors.NormalColor,
+					pressedColor		= bt.Colors.PressedColor,
+					disabledColor		= bt.Colors.DisabledColor,
+					colorMultiplier		= 1,
+					fadeDuration		= bt.Colors.FadeDuration
 				};
 
 				Navigation navigation = new() {
@@ -311,9 +311,7 @@ public class WindowRealiser : MonoBehaviour {
 			case PComponents.HoverTarget ht:
 				var htComp = newObj.AddComponent<HoverTarget>();
 
-				htComp.NormalColor = ht.NormalColor;
-				htComp.HoverColor = ht.HoverColor;
-				htComp.FadeDuration = ht.FadeDuration;
+				htComp.Colors = ht.Colors;
 
 				ht.RealComponent = htComp;
 				break;

@@ -36,26 +36,16 @@ public class PComponents {
 
 	public class Button : Component {
 		public bool Enabled = true;
-		public Color NormalColor		= Config.UI.Button.DefaultColor;
-		public Color HighlightedColor	= Config.UI.Button.HoverColor;
-		public Color PressedColor		= Config.UI.Button.PressedColor;
-		public Color DisabledColor		= Config.UI.Button.DisabledColor;
-
+		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
 		public delegate void ClickEvent();
 		public event ClickEvent OnClick;
 
 		public Button(
 			bool enabled,
-			Color normalColor,
-			Color highlightedColor,
-			Color pressedColor,
-			Color disabledColor,
+			Config.UI.ColorBlock colors,
 			ClickEvent onClick) {
 			Enabled = enabled;
-			NormalColor = normalColor;
-			HighlightedColor = highlightedColor;
-			PressedColor = pressedColor;
-			DisabledColor = disabledColor;
+			Colors = colors;
 			OnClick = onClick;
 		}
 
@@ -70,10 +60,12 @@ public class PComponents {
 
 			OnClick = onClick;
 			Enabled = enabled;
-			NormalColor			= normalColor		?? Config.UI.Button.DefaultColor;
-			HighlightedColor	= highlightedColor	?? Config.UI.Button.HoverColor;
-			PressedColor		= pressedColor		?? Config.UI.Button.PressedColor;
-			DisabledColor		= disabledColor		?? Config.UI.Button.DisabledColor;
+			Colors = new() {
+				NormalColor		= normalColor		?? Config.UI.Visual.DefaultColorBlock.NormalColor,
+				HoverColor		= highlightedColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
+				PressedColor	= pressedColor		?? Config.UI.Visual.DefaultColorBlock.PressedColor,
+				DisabledColor	= disabledColor		?? Config.UI.Visual.DefaultColorBlock.DisabledColor
+			};
 		}
 
 		public Button(ClickEvent onClick) {
@@ -82,10 +74,7 @@ public class PComponents {
 
 		public Button() : this(
 			true,
-			Config.UI.Button.DefaultColor,
-			Config.UI.Button.HoverColor,
-			Config.UI.Button.PressedColor,
-			Config.UI.Button.DisabledColor,
+			Config.UI.Visual.DefaultColorBlock,
 			null) { }
 
 		public void TriggerClick() {
@@ -252,23 +241,18 @@ public class PComponents {
 	}
 
 	public class HoverTarget : Component {
-		public Color NormalColor	= Config.UI.Button.DefaultColor;
-		public Color HoverColor		= Config.UI.Button.HoverColor;
-		public float FadeDuration	= Config.UI.Button.FadeDuration;
+		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
 
-		public HoverTarget(Color normalColor, Color hoverColor, float fadeDuration) {
-			NormalColor = normalColor;
-			HoverColor = hoverColor;
-			FadeDuration = fadeDuration;
-		}
 		public HoverTarget(
 			Color? normalColor	= null, 
 			Color? hoverColor	= null, 
 			float? fadeDuration	= null) {
 			
-			NormalColor		= normalColor	?? Config.UI.Button.DefaultColor;
-			HoverColor		= hoverColor	?? Config.UI.Button.HoverColor;
-			FadeDuration	= fadeDuration	?? Config.UI.Button.FadeDuration;
+			Colors = new() { 
+				NormalColor		= normalColor	?? Config.UI.Visual.DefaultColorBlock.NormalColor,
+				HoverColor		= hoverColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
+				FadeDuration	= fadeDuration	?? Config.UI.Visual.DefaultColorBlock.FadeDuration,
+			};
 		}
 
 		public HoverTarget() { }
