@@ -68,6 +68,13 @@ public class PComponents {
 			};
 		}
 
+		public Button(
+			ClickEvent onClick,
+			Config.UI.ColorBlock colors) {
+			OnClick = onClick;
+			Colors = colors;
+		}
+
 		public Button(ClickEvent onClick) {
 			OnClick = onClick;
 		}
@@ -253,6 +260,10 @@ public class PComponents {
 				HoverColor		= hoverColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
 				FadeDuration	= fadeDuration	?? Config.UI.Visual.DefaultColorBlock.FadeDuration,
 			};
+		}
+
+		public HoverTarget(Config.UI.ColorBlock colors) {
+			Colors = colors;
 		}
 
 		public HoverTarget() { }

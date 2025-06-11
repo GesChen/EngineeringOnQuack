@@ -8,7 +8,7 @@ public class MaterialEditor : MonoBehaviour {
 	public Image MaterialPreview;
 
 	Color currentColor;
-	Materials.IMaterial currentMaterial;
+	Composition currentComposition;
 
 	public static void SetupComponent(
 		CWindow cw, 
@@ -20,18 +20,22 @@ public class MaterialEditor : MonoBehaviour {
 		// add materialeditor and set up 
 		var editor = cw.RealisedWindow.gameObject.AddComponent<MaterialEditor>();
 
-		int imageSubitemIndex = 1;
-		editor.ColorPreview = (UnityEngine.UI.Image)
-			cw.Items[0].SubItems[1].SubItems[imageSubitemIndex]
+		int imageSubitemIndex = 0;
+		editor.ColorPreview = (Image)
+			cw.Items[0].SubItems[1]
+			.SubItems[imageSubitemIndex]
 			.Construction[0].RealComponent;
 
 		//imageSubitemIndex = 1;
-		editor.MaterialPreview = (UnityEngine.UI.Image)
-			cw.Items[0].SubItems[2]
+		editor.MaterialPreview = (Image)
+			cw.Items[0]
+			.SubItems[2]
 			.Construction[0].RealComponent;
 
 		// subscribe
 		RightClickMenus.OnMaterial += MaterialEditingMenu.ShowMenu;
+		MaterialEditingMenu.OnColorSelection += editor.SetColor;
+		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
 	}
 
 	void Update() {
@@ -43,12 +47,13 @@ public class MaterialEditor : MonoBehaviour {
 		UpdatePreviews();
 	}
 
-	public void SetMaterial(Materials.IMaterial material) {
-		currentMaterial = material;
+	public void SetComposition(int compIndex) {
+		currentComposition = BuildingManager.AllCompositions[compIndex];
 		UpdatePreviews();
 	}
 
 	void UpdatePreviews() {
 		ColorPreview.color = currentColor;
+		MaterialPreview.sprite = currentComposition.Icon;
 	}
 }

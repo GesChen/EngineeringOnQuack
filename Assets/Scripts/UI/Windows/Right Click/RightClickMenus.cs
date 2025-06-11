@@ -130,35 +130,35 @@ public class RightClickMenus : MonoBehaviour {
 					new(() => Undo()),
 					new("Icons/undo"),
 					WindowItem.LayoutConfig.FillLayout)
-				.WithDescription("Undo"),
+				.AddDescription("Undo"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Redo",
 					new(() => Redo()),
 					new("Icons/redo"),
 					WindowItem.LayoutConfig.FillLayout)
-				.WithDescription("Redo"),
+				.AddDescription("Redo"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Copy",
 					new(() => Copy()),
 					new("Icons/copy"),
 					WindowItem.LayoutConfig.FillLayout)
-				.WithDescription("Copy"),
+				.AddDescription("Copy"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Paste",
 					new(() => Paste()),
 					new("Icons/paste"),
 					WindowItem.LayoutConfig.FillLayout)
-				.WithDescription("Paste"),
+				.AddDescription("Paste"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Delete",
 					new(() => Delete()),
 					new("Icons/delete"),
 					WindowItem.LayoutConfig.FillLayout)
-				.WithDescription("Delete")
+				.AddDescription("Delete")
 			});
 
 

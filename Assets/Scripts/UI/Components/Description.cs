@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// TODO: figure out why it flickers when moving between different options sometimes
 public class Description : MonoBehaviour {
 	public string Text;
 	[HideInNormalInspector] public bool DescriptionShowing = false;
@@ -13,6 +14,8 @@ public class Description : MonoBehaviour {
 	
 	static (RectTransform rt, TextMeshProUGUI text) descriptionInstance;
 	static bool descriptionInUse;
+	static float closeTime;
+
 	bool userOfDescription;
 	bool attemptToBecomeUser;
 
@@ -21,6 +24,8 @@ public class Description : MonoBehaviour {
 	}
 
 	void Update() {
+		if (descriptionInUse && !userOfDescription) return; // save some resources
+
 		bool over;
 		if (descriptionInstance.rt != null)
 			over = UIHovers.CheckFirstAllowing(transform, descriptionInstance.rt) || 
@@ -31,7 +36,9 @@ public class Description : MonoBehaviour {
 			mouseOverTime = Time.time;
 		}
 
-		DescriptionShowing = over && Time.time - mouseOverTime > Config.UI.Behaviour.DescriptionHoverMs / 1000f;
+		bool hoveredLongEnough = Time.time - mouseOverTime > Config.UI.Behaviour.DescriptionHoverMs / 1000f;
+		bool inBetweenTime = Time.time - closeTime < Config.UI.Behaviour.TimeForDescriptionChangeMs / 1000f;
+		DescriptionShowing = over && (hoveredLongEnough || inBetweenTime);
 
 		// handle multiple users
 		if (attemptToBecomeUser) AttemptUser();
@@ -54,6 +61,9 @@ public class Description : MonoBehaviour {
 	}
 
 	void AttemptUser() {
+		// already user
+		if (userOfDescription) return;
+
 		if (!descriptionInUse) {
 			descriptionInUse = true;
 			userOfDescription = true;
@@ -71,6 +81,7 @@ public class Description : MonoBehaviour {
 		descriptionInstance.text.text = Text;
 		descriptionInstance.rt.gameObject.SetActive(true);
 		descriptionInstance.rt.SetAsLastSibling();
+		LayoutRebuilder.ForceRebuildLayoutImmediate(descriptionInstance.rt); // plz work bru
 	}
 
 	void Close() {
@@ -83,6 +94,7 @@ public class Description : MonoBehaviour {
 		userOfDescription = false;
 		
 		descriptionInstance.rt.gameObject.SetActive(false);
+		closeTime = Time.time;
 	}
 
 	void Generate() {

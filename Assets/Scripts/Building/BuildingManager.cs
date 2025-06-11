@@ -1,30 +1,6 @@
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-
-struct Assembly {
-	public string name;
-	public List<PartInfo> parts;
-	public bool didPrecomputations;
-	public List<SerializableSubassembly> precomputedSubassemblies;
-	// to add onto
-}
-
-// temporary i guess idk where else to put this
-public class Materials {
-	public interface IMaterial {
-		protected string IconLocation { get; }
-		protected string MaterialLocation { get; }
-		protected string PhysicsLocation { get; }
-
-		public Sprite m_Icon { get; }
-		public Sprite Icon { get; }
-
-	}
-	//wood
-	//concrete
-	//metal
-	//glass
-}
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Transform mainPartsContainer;
@@ -37,20 +13,28 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	BuildingClipboard clipboard;
 
+	public static Composition[] AllCompositions = {
+		Compositions.Wood,
+		Compositions.Concrete,
+		Compositions.Metal,
+		Compositions.Glass
+	};
+
 	protected override void Awake() {
 		base.Awake();
 		clipboard = new();
 
 		Subscribe();
-		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 	}
 
 	// hit that bell for more epic code (this is garbage)
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
 		RightClickMenus.ClearEvents();
+		MaterialEditingMenu.ClearEvents();
+
 		RightClickMenus.OnNewPartMade += 
-			(string name) => MakeNewPart(name, true);
+			name => MakeNewPart(name, true);
 		RightClickMenus.OnDelete += DeleteSelection;
 		RightClickMenus.OnCopy += clipboard.Copy;
 		RightClickMenus.OnPaste += Paste;
@@ -58,6 +42,22 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
+
+		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
+		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
+	}
+
+	WindowItem[] GenerateWindowItems() {
+		WindowItem[] items = AllCompositions.Select((c, i) =>
+			WindowItem.NewButtonCustomImageOverlay(
+				"Composition option",
+				new (() => MaterialEditingMenu.SelectComposition(i)),
+				new (c.IconLocation),
+				WindowItem.LayoutConfig.LayoutElement(new(MaterialEditingMenu.size, MaterialEditingMenu.size))
+				).AddDescription(c.Name)
+			).ToArray();
+
+		return items;
 	}
 
 	void Update() {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -45,9 +46,11 @@ public static partial class Config {
 			public static readonly float FlyoutHoverMargin		= 50;
 			public static readonly int DescriptionHoverMs		= 500;
 			public static readonly float MaxMouseMovementForClick	= 5;
+			public static readonly int TimeForDescriptionChangeMs    = 100;
 		}
 
 		// experimental design change
+		[Serializable]
 		public struct ColorBlock {
 			public Color NormalColor;
 			public Color HoverColor;

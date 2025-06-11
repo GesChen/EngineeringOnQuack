@@ -82,7 +82,7 @@ public class CWindow {
 	public LiveWindow RealisedWindow {
 		get {
 			if (m_realisedWindow == null) {
-				throw new($"{Name} window not realised!");
+				throw new($"{Name} window not realised!"); 
 			}
 			return m_realisedWindow;
 		}

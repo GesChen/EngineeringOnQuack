@@ -102,23 +102,41 @@ public class MenuUtil : MonoBehaviour {
 		public class Button : Item {
 			public PComponents.Button.ClickEvent OnButtonClick;
 
-			public Button(PComponents.Button.ClickEvent onButtonClick, string label, string description = null, string iconName = null)
+			public Button(PComponents.Button.ClickEvent onButtonClick,
+				string label,
+				string description = null,
+				string iconName = null)
 				: base(label, description, iconName) {
+
 				OnButtonClick = onButtonClick;
 			}
 		}
 
 		public class Flyout : Item {
 			public CWindow SubWindow;
+			public bool AddIndicator;
 
-			public Flyout(Window subWindow, string label, string description = null, string iconName = null)
+			public Flyout(
+				Window subWindow,
+				string label,
+				bool addIndicator = true,
+				string description = null,
+				string iconName = null)
 				: base(label, description, iconName) {
+
 				SubWindow = subWindow.CWindow;
+				AddIndicator = addIndicator;
 			}
 
-			public Flyout(CWindow subWindow, string label, string description = null, string iconName = null)
+			public Flyout(CWindow subWindow,
+				string label,
+				bool addIndicator = true,
+				string description = null,
+				string iconName = null)
 				: base(label, description, iconName) {
+
 				SubWindow = subWindow;
+				AddIndicator = addIndicator;
 			}
 		}
 
@@ -204,21 +222,23 @@ public class MenuUtil : MonoBehaviour {
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {
 		List<WindowItem> subList = new();
 
-		// add label
-		var label = WindowItem.NewText(
-			"Label",
-			new(
-				item.Label,
-				fontSize: M.FontSize,
-				alignment : TextAlignmentOptions.Left
-			),
-			WindowItem.LayoutConfig.DynamicLayout(
-				new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing),
-				FourSides.Zero,
-				FourSides.Zero
-			)
-		);
-		subList.Add(label);
+		// add label if its not empty or null
+		if (item.Label != null && item.Label != "") {
+			var label = WindowItem.NewText(
+				"Label",
+				new(
+					item.Label,
+					fontSize: M.FontSize,
+					alignment : TextAlignmentOptions.Left
+				),
+				WindowItem.LayoutConfig.DynamicLayout(
+					new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing),
+					FourSides.Zero,
+					FourSides.Zero
+				)
+			);
+			subList.Add(label);
+		}
 
 		// add icon if it exists
 		WindowItem icon = null;
@@ -249,12 +269,15 @@ public class MenuUtil : MonoBehaviour {
 				break;
 
 			case Window.Flyout flyout:
-				var indicator = WindowItem.NewImage(new(),
-					WindowItem.LayoutConfig.FixedLayout(
-						UIPosition.AnchoredAt(UIPosition.MiddleRight),
-						new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
-					)
-				);
+				WindowItem indicator = null;
+				
+				if (flyout.AddIndicator)
+					indicator = WindowItem.NewImage(new(),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.AnchoredAt(UIPosition.MiddleRight),
+							new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
+						)
+					);
 
 				CWindow subWindow = flyout.SubWindow;
 				if (subWindow == null) 

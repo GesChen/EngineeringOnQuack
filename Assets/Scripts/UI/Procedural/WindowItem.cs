@@ -70,12 +70,9 @@ public class WindowItem {
 		SubItems.AddRange(subs.ToList());
 		return this;
 	}
-	public WindowItem WithDescription(string description) {
+	public WindowItem AddDescription(string description) {
 		Construction.Add(new PComponents.Description(description));
 		return this;
-	}
-	public void AddDescription(string description) {
-		Construction.Add(new PComponents.Description(description));
 	}
 	public WindowItem AddComponents(params PComponents.Component[] comps) {
 		Construction.AddRange(comps);
@@ -165,11 +162,18 @@ public class WindowItem {
 	private static WindowItem NewButton(PComponents.Button button, LayoutConfig layout, PComponents.Component inner) => 
 		NewButton("Button", button, layout, inner);
 
+	/// <summary>
+	/// Adds extra subitem with the image instead of setting the button's image directly
+	/// </summary>
 	public static WindowItem NewButtonCustomImageOverlay(string name, PComponents.Button button, PComponents.Image image, LayoutConfig layout) => 
 		NewButton(name, button, layout, image);
 	public static WindowItem NewButtonCustomImageOverlay(PComponents.Button button, PComponents.Image image, LayoutConfig layout) => 
 		NewButtonCustomImageOverlay("Button", button, image, layout);
 
+	/// <summary>
+	/// Replaces the button's image with a custom one. This image's color will be affected by button
+	/// transition. Reccomended to use the whitecolorblock from config.ui for this's button
+	/// </summary>
 	public static WindowItem NewButtonCustomImageComponent(string name, PComponents.Button button, PComponents.Image image, LayoutConfig layout) =>
 		new(
 			name,

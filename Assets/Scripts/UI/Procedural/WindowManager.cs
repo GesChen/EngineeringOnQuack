@@ -1,4 +1,5 @@
 using System.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,6 +20,10 @@ public class WindowManager : MonoBehaviour {
 
 	public bool anyDragging = false;
 
+	// only good way i can think of for now to ensure that the 
+	// other awakes are called before init is to just delay this script's 
+	// execution order cuz every other method doesn't make sense or this class
+	// cant access it
 	void Awake() {
 		AllWindows.Init(this);
 	}
@@ -184,10 +189,10 @@ public class WindowManager : MonoBehaviour {
 				3 => 1,
 				_ => -1
 			};
-			var snapOther = SnapInside(snapTo, opposideQuad);
+			var (pos, size) = SnapInside(snapTo, opposideQuad);
 
-			snapTo.rt.position = snapOther.pos;
-			snapTo.rt.sizeDelta = snapOther.size;
+			snapTo.rt.position = pos;
+			snapTo.rt.sizeDelta = size;
 		}
 
 		target.rt.position = preview.position;
