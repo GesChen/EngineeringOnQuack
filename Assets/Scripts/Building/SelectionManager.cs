@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,8 +21,22 @@ public class SelectionManager : Singleton<SelectionManager> {
 	Vector2 dragStart;
 	Vector2 dragStartPos;
 	bool dragging;
-	bool selectionChanged;
+
+	bool m_changed;
+	bool selectionChanged = false;
+	
+	/*{
+		get { return m_changed; }
+		set {
+			if (value)
+				OnSelectionChanged?.Invoke();
+			
+			m_changed = value; 
+		}
+	}*/
 	[HideInNormalInspector] public float dragStartTime;
+
+	public event Action OnSelectionChanged;
 
 	void Start() {
 		selection = new();
@@ -359,6 +374,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 		foreach (Transform t in selection) {
 			t.SetParent(selectionContainer, true);
 		}
+
+		OnSelectionChanged.Invoke();
 	}
 
 	void UpdateContext() {

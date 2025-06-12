@@ -76,10 +76,9 @@ public static partial class Config {
 		}
 
 		public static class Locations {
-			public static readonly string IconsFolder				= "Icons/";
-			public static readonly string FlyoutTriggerOpenSprite	= IconsFolder + "dropdown open";
-			public static readonly string FlyoutTriggerClosedSprite	= IconsFolder + "dropdown closed";
-			public static readonly string CloseIcon					= IconsFolder + "close";
+			public static readonly string FlyoutTriggerOpenSprite	= Config.Locations.IconsFolder + "dropdown open";
+			public static readonly string FlyoutTriggerClosedSprite	= Config.Locations.IconsFolder + "dropdown closed";
+			public static readonly string CloseIcon					= Config.Locations.IconsFolder + "close";
 		}
 
 		public static class Menu {

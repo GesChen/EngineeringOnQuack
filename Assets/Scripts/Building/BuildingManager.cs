@@ -13,13 +13,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	BuildingClipboard clipboard;
 
-	public static Composition[] AllCompositions = {
-		Compositions.Wood,
-		Compositions.Concrete,
-		Compositions.Metal,
-		Compositions.Glass
-	};
-
 	protected override void Awake() {
 		base.Awake();
 		clipboard = new();
@@ -45,14 +38,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
+		
 	}
 
 	WindowItem[] GenerateWindowItems() {
-		WindowItem[] items = AllCompositions.Select((c, i) =>
+		WindowItem[] items = Compositions.All.Select((c, i) =>
 			WindowItem.NewButtonCustomImageOverlay(
 				"Composition option",
 				new (() => MaterialEditingMenu.SelectComposition(i)),
-				new (c.IconLocation),
+				new (c.Icon),
 				WindowItem.LayoutConfig.LayoutElement(new(MaterialEditingMenu.size, MaterialEditingMenu.size))
 				).AddDescription(c.Name)
 			).ToArray();

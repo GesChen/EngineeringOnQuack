@@ -29,7 +29,7 @@ public class TransformToolsMenu {
 						WindowItem.NewButtonCustomImageOverlay(
 							"Translate",
 							new(() => onTranslatePressed?.Invoke()),
-							new PComponents.Image(Config.UI.Locations.IconsFolder + "move"),
+							new PComponents.Image(Config.Locations.IconsFolder + "move"),
 							new() {
 								Position = new(0, 2/3f, 0, 0),
 								Margins = new(5)
@@ -38,7 +38,7 @@ public class TransformToolsMenu {
 						WindowItem.NewButtonCustomImageOverlay(
 							"Rotate",
 							new(() => onRotatePressed?.Invoke()),
-							new PComponents.Image(Config.UI.Locations.IconsFolder + "rotate"),
+							new PComponents.Image(Config.Locations.IconsFolder + "rotate"),
 							new() {
 								Position = new(0, 1/3f, 0, 1/3f),
 								Margins = new(5)
@@ -47,7 +47,7 @@ public class TransformToolsMenu {
 						WindowItem.NewButtonCustomImageOverlay(
 							"Scale",
 							new(() => onScalePressed?.Invoke()),
-							new PComponents.Image(Config.UI.Locations.IconsFolder + "scale2"),
+							new PComponents.Image(Config.Locations.IconsFolder + "scale2"),
 							new() {
 								Position = new(0, 0, 0, 2/3f),
 								Margins = new(5)

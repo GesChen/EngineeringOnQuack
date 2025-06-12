@@ -11,25 +11,42 @@ public class PComponents {
 
 	public class Image : Component {
 		public Color Color;
-		public string SpriteResource;
+		public string SpriteLocation; // will try to use the acutal sprite first
+		public Sprite SpriteAsset; // only use the loc if this doesn't exist
 		public bool PreserveAspect; // explicity set to false only in special cases needed
 									// otherwise it makes sense to have it always true
 
-		public Image(Color color, string spriteResourcePath, bool preserveAspect) {
-			Color = color;
-			SpriteResource = spriteResourcePath;
+		public Image(
+			Color? color = null,
+			string spriteLocation = null,
+			Sprite spriteAsset = null,
+			bool preserveAspect = true) {
+			Color = color ?? Color.white;
+			SpriteLocation = spriteLocation;
+			SpriteAsset = spriteAsset;
 			PreserveAspect = preserveAspect;
 		}
 		public Image(Color color) : this(
 			color,
 			null,
+			null,
 			true) { }
+
 		public Image(string spriteResourcePath) : this(
 			Color.white,
 			spriteResourcePath,
+			null,
 			true) { }
+
+		public Image(Sprite spriteAsset) : this(
+			Color.white,
+			null,
+			spriteAsset,
+			true) { }
+
 		public Image() : this(
 			Color.white,
+			null,
 			null,
 			true) { }
 	}

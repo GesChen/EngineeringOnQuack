@@ -187,8 +187,11 @@ public class WindowRealiser : MonoBehaviour {
 				image.color = im.Color;
 				image.preserveAspect = im.PreserveAspect;
 				
-				if (im.SpriteResource != null && im.SpriteResource != "") {
-					Sprite sprite = Resources.Load<Sprite>(im.SpriteResource);
+				if (im.SpriteAsset != null) {
+					image.sprite = im.SpriteAsset;
+				}
+				else if (im.SpriteLocation != null && im.SpriteLocation != "") {
+					Sprite sprite = Resources.Load<Sprite>(im.SpriteLocation);
 					image.sprite = sprite;
 				}
 

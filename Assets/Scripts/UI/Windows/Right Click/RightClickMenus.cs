@@ -102,7 +102,10 @@ public class RightClickMenus : MonoBehaviour {
 		new W.Button(() => Duplicate(), "duplicate", iconName: "duplicate");
 
 	static W.Item materialItem(W source, int index) =>
-		new W.Button(() => Material(source, index), "material");
+		new W.Button(
+			() => Material(source, index), 
+			"material",
+			iconSprite: Config.Building.MaterialIcon);
 			
 	public static readonly W inWorldDefaultPanel = new(
 		"Editing", 200, new() {
@@ -173,7 +176,7 @@ public class RightClickMenus : MonoBehaviour {
 						newpart,
 						new W.CustomItem(modifierList),
 						duplicate,
-						null // replaced with materialitem 
+						null // gets replaced with materialitem 
 					});
 
 				m_inWorldSinglePanel.Items[3] = materialItem(m_inWorldSinglePanel, 3); // manual reflection lol
@@ -193,7 +196,7 @@ public class RightClickMenus : MonoBehaviour {
 						newpart,
 						new W.CustomItem(modifierList),
 						duplicate,
-						null, // replaced with materialitem 
+						null, // gets replaced with materialitem 
 						new W.Button(null, "group", iconName: "group"),
 					});
 

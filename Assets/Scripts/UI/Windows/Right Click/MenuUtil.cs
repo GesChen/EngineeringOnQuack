@@ -68,7 +68,15 @@ public class MenuUtil : MonoBehaviour {
 
 		public class Item {
 			public string Label;
-			public string IconName;
+			
+			// repr for icons cuz there are multiple ways to represent an icon
+			public struct IconType {
+				public bool Exists;
+				public string Name;
+				public string Path;
+				public Sprite Sprite;
+			}
+			public IconType Icon;
 			public bool HasIcon = false;
 			public string Description;
 			public bool HasDescription = false;
@@ -76,11 +84,22 @@ public class MenuUtil : MonoBehaviour {
 
 			public WindowItem RealItem;
 
-			protected Item(string label, string description = null, string iconName = null) {
+			protected Item(
+				string label,
+				string description = null,
+				string iconName = null,
+				string iconPath = null,
+				Sprite iconSprite = null) {
 				Label = label;
 
-				IconName = iconName;
-				HasIcon = iconName != null;
+				Icon = new() {
+					Exists = iconName != null || iconPath != null || iconSprite != null,
+					Name = iconName,
+					Path = iconPath,
+					Sprite = iconSprite
+				};
+
+				HasIcon = Icon.Exists;
 
 				Description = description;
 				HasDescription = description != null && description != "";
@@ -95,8 +114,13 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		public class Text : Item {
-			public Text(string label, string description = null, string iconName = null)
-				: base(label, description, iconName) { }
+			public Text(
+				string label,
+				string description = null,
+				string iconName = null,
+				string iconPath = null,
+				Sprite iconSprite = null)
+				: base(label, description, iconName, iconPath, iconSprite) { }
 		}
 
 		public class Button : Item {
@@ -105,8 +129,10 @@ public class MenuUtil : MonoBehaviour {
 			public Button(PComponents.Button.ClickEvent onButtonClick,
 				string label,
 				string description = null,
-				string iconName = null)
-				: base(label, description, iconName) {
+				string iconName = null,
+				string iconPath = null,
+				Sprite iconSprite = null)
+				: base(label, description, iconName, iconPath, iconSprite) {
 
 				OnButtonClick = onButtonClick;
 			}
@@ -121,8 +147,10 @@ public class MenuUtil : MonoBehaviour {
 				string label,
 				bool addIndicator = true,
 				string description = null,
-				string iconName = null)
-				: base(label, description, iconName) {
+				string iconName = null,
+				string iconPath = null,
+				Sprite iconSprite = null)
+				: base(label, description, iconName, iconPath, iconSprite) {
 
 				SubWindow = subWindow.CWindow;
 				AddIndicator = addIndicator;
@@ -132,8 +160,10 @@ public class MenuUtil : MonoBehaviour {
 				string label,
 				bool addIndicator = true,
 				string description = null,
-				string iconName = null)
-				: base(label, description, iconName) {
+				string iconName = null,
+				string iconPath = null,
+				Sprite iconSprite = null)
+				: base(label, description, iconName, iconPath, iconSprite) {
 
 				SubWindow = subWindow;
 				AddIndicator = addIndicator;
@@ -243,9 +273,19 @@ public class MenuUtil : MonoBehaviour {
 		// add icon if it exists
 		WindowItem icon = null;
 		if (item.HasIcon) {
+
+			// get the pimage 
+			PComponents.Image image = null;
+			if (item.Icon.Sprite != null)
+				image = new(item.Icon.Sprite);
+			else if (item.Icon.Path != null)
+				image = new(item.Icon.Path);
+			else
+				image = new(Config.Locations.IconsFolder + item.Icon.Name);
+
 			icon = WindowItem.NewImage(
 				"Icon",
-				new(Config.UI.Locations.IconsFolder + item.IconName),
+				image,
 				WindowItem.LayoutConfig.FixedLayout(
 					UIPosition.AnchoredAt(UIPosition.MiddleLeft),
 					new(M.IconSize, M.IconSize)

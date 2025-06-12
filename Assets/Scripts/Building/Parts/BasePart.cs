@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BasePart : MonoBehaviour
-{
+public class BasePart : MonoBehaviour {
 	public string partName;
 	public Mesh basemesh;
 	public Mesh processingMesh;
@@ -13,8 +12,7 @@ public class BasePart : MonoBehaviour
 	public int[] allTris;
 	public Vector3[] allTriPositions;
 
-	void Awake()
-	{
+	void Awake() {
 		List<Vector3> all = new();
 		GetAllTriPositions(transform, ref all);
 		allTriPositions = all.ToArray();
@@ -30,13 +28,10 @@ public class BasePart : MonoBehaviour
 		BuildingManager.AllParts[partName] = this;
 	}
 
-	void GetAllTriPositions(Transform target, ref List<Vector3> allTriPoses)
-	{
-		if (target.TryGetComponent(out BasePart part))
-		{
+	void GetAllTriPositions(Transform target, ref List<Vector3> allTriPoses) {
+		if (target.TryGetComponent(out BasePart part)) {
 			Mesh mesh = part.processingMesh;
-			if (mesh != null)
-			{
+			if (mesh != null) {
 				Vector3[] verts = mesh.vertices;
 				foreach (int i in mesh.triangles)
 					allTriPoses.Add(verts[i]); // Add vertices to the combined list
@@ -44,19 +39,15 @@ public class BasePart : MonoBehaviour
 		}
 
 		// Recursively iterate through children
-		foreach (Transform child in target.transform)
-		{
+		foreach (Transform child in target.transform) {
 			GetAllTriPositions(child, ref allTriPoses);
 		}
 	}
 
-	void GetAllTris(Transform target, ref List<int> allTris)
-	{
-		if (target.TryGetComponent(out BasePart part))
-		{
+	void GetAllTris(Transform target, ref List<int> allTris) {
+		if (target.TryGetComponent(out BasePart part)) {
 			Mesh mesh = part.processingMesh;
-			if (mesh != null)
-			{
+			if (mesh != null) {
 				Vector3[] verts = mesh.vertices;
 				foreach (int i in mesh.triangles)
 					allTris.Add(i); // Add vertices to the combined list
@@ -64,27 +55,22 @@ public class BasePart : MonoBehaviour
 		}
 
 		// Recursively iterate through children
-		foreach (Transform child in target.transform)
-		{
+		foreach (Transform child in target.transform) {
 			GetAllTris(child, ref allTris);
 		}
 	}
 
 
-	void GetMeshVertices(Transform target, ref List<Vector3> allVertices)
-	{
-		if (target.TryGetComponent(out BasePart part))
-		{
+	void GetMeshVertices(Transform target, ref List<Vector3> allVertices) {
+		if (target.TryGetComponent(out BasePart part)) {
 			Mesh mesh = part.processingMesh;
-			if (mesh != null)
-			{
+			if (mesh != null) {
 				allVertices.AddRange(mesh.vertices); // Add vertices to the combined list
 			}
 		}
 
 		// Recursively iterate through children
-		foreach (Transform child in target.transform)
-		{
+		foreach (Transform child in target.transform) {
 			GetMeshVertices(child, ref allVertices);
 		}
 	}

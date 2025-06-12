@@ -54,7 +54,11 @@ public class Assembler : Singleton<Assembler> {
 		computedSubassemblies = subassemblies;
 	}
 
-
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="bm"></param>
+	/// <returns></returns>
 	public List<Subassembly> ComputeAssemblies(BuildingManager bm) {
 #if DEBUGMODE
 		Debug.Log("assembling");
@@ -180,10 +184,13 @@ public class Assembler : Singleton<Assembler> {
 	public List<AssembledSubassembly> CopyToSimulation(List<Subassembly> subs) {
 		List<AssembledSubassembly> assembleds = new();
 		foreach (Subassembly sub in subs) {
+
 			Transform subParent = new GameObject("subassembly").transform;
 			subParent.parent = bm.SimulationContainer;
+			
 			List<Transform> parts = new();
 			Vector3 accumPos = Vector3.zero;
+			
 			foreach (Part part in sub.parts) {
 				Transform newObject = Instantiate(part.gameObject).transform;
 				newObject.gameObject.SetActive(true);

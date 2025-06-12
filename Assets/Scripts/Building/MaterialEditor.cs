@@ -10,6 +10,8 @@ public class MaterialEditor : MonoBehaviour {
 	Color currentColor;
 	Composition currentComposition;
 
+	Part[] editingParts;
+
 	public static void SetupComponent(
 		CWindow cw, 
 		ref RectTransform colorPickerButton, 
@@ -34,6 +36,9 @@ public class MaterialEditor : MonoBehaviour {
 
 		// subscribe
 		RightClickMenus.OnMaterial += MaterialEditingMenu.ShowMenu;
+		RightClickMenus.OnMaterial += (_) => editor.UpdateParts();
+		SelectionManager.Instance.OnSelectionChanged += editor.UpdateParts;
+
 		MaterialEditingMenu.OnColorSelection += editor.SetColor;
 		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
 	}
@@ -42,18 +47,63 @@ public class MaterialEditor : MonoBehaviour {
 
 	}
 
+	public void UpdateParts() {
+		var sel = SelectionManager.Instance.selection;
+
+		if (sel.Count == 0)
+			UpdateNone();
+		else if (sel.Count == 1)
+			UpdateSingle(sel[0]);
+		else
+			UpdateMultiple(sel);
+
+		UpdatePreviews();
+	}
+
+	public void UpdateNone() {
+		currentColor = Color.white;
+		currentComposition = null;
+	}
+
+	public void UpdateSingle(Transform t) {
+		var part = t.GetComponent<Part>();
+
+		// set the currents to the part's current
+		currentColor = part.color;
+		currentComposition = part.composition;
+
+		editingParts = new[] { part };
+	}
+
+	public void UpdateMultiple(List<Transform> ts) {
+		//TODO
+		throw new System.NotImplementedException();
+	}
+
 	public void SetColor(Color color) {
 		currentColor = color;
+
+		foreach (var part in editingParts) {
+			part.SetColor(currentColor);
+		}
 		UpdatePreviews();
 	}
 
 	public void SetComposition(int compIndex) {
-		currentComposition = BuildingManager.AllCompositions[compIndex];
+		currentComposition = Compositions.All[compIndex];
+
+		foreach (var part in editingParts) {
+			part.SetComposition(currentComposition);
+		}
 		UpdatePreviews();
 	}
 
 	void UpdatePreviews() {
 		ColorPreview.color = currentColor;
-		MaterialPreview.sprite = currentComposition.Icon;
+
+		MaterialPreview.sprite =
+			currentComposition != null
+			? currentComposition.Icon 
+			: Config.Building.MaterialIcon;
 	}
 }
