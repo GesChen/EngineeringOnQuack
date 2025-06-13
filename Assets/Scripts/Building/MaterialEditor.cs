@@ -49,11 +49,11 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	public void UpdateParts() {
-		var sel = SelectionManager.Instance.selection;
+		var sel = SelectionManager.Instance.PartSelection;
 
-		if (sel.Count == 0)
+		if (sel.Length == 0)
 			UpdateNone();
-		else if (sel.Count == 1)
+		else if (sel.Length == 1)
 			UpdateSingle(sel[0]);
 		else
 			UpdateMultiple(sel);
@@ -66,7 +66,7 @@ public class MaterialEditor : MonoBehaviour {
 		currentComposition = null;
 	}
 
-	public void UpdateSingle(Transform t) {
+	public void UpdateSingle(Part t) {
 		var part = t.GetComponent<Part>();
 
 		// set the currents to the part's current
@@ -76,9 +76,7 @@ public class MaterialEditor : MonoBehaviour {
 		editingParts = new[] { part };
 	}
 
-	public void UpdateMultiple(List<Transform> ts) {
-		Part[] parts = ts.Select(t => t.GetComponent<Part>()).ToArray();
-
+	public void UpdateMultiple(Part[] parts) {
 		bool allSameColor = true;
 		bool allSameComposition = true;
 		for (int i = 0; i < parts.Length - 1; i++) {

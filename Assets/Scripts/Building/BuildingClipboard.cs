@@ -14,13 +14,12 @@ public class BuildingClipboard {
 	public PartRepr[] Clipboard;
 
 	public void Copy() {
-		var parts = SelectionManager.Instance.selection;
+		var parts = SelectionManager.Instance.PartSelection;
 
-		Clipboard = new PartRepr[parts.Count];
+		Clipboard = new PartRepr[parts.Length];
 
-		for (int i = 0; i < parts.Count; i++) {
-			var part = parts[i].GetComponent<Part>();
-			Clipboard[i] = PartToRepr(part);
+		for (int i = 0; i < parts.Length; i++) {
+			Clipboard[i] = PartToRepr(parts[i]);
 		}
 	}
 
@@ -63,7 +62,7 @@ public class BuildingClipboard {
 
 		// select
 		if (selectNew)
-			SelectionManager.Instance.Select(newTransforms);
+			SelectionManager.Instance.ManuallySelect(newTransforms);
 
 		return newParts;
 	}

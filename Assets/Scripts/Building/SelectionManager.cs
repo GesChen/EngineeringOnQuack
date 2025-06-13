@@ -6,7 +6,9 @@ using UnityEngine;
 public class SelectionManager : Singleton<SelectionManager> {
 	public bool selectionBoxDragging;
 
-	public List<Transform> selection { get; private set; }
+	public List<Transform> Selection { get; private set; }
+	public Part[] PartSelection { get; private set; }
+
 	public Transform selectionContainer;
 
 	public RectTransform UIBox;
@@ -33,13 +35,16 @@ public class SelectionManager : Singleton<SelectionManager> {
 	public event Action OnSelectionChanged;
 
 	void Start() {
-		selection = new();
+		Selection = new();
+		PartSelection = new Part[0];
 	}
 
 
 	void Update() {
 		HandleInput();
 		HandleContainer();
+
+
 		UpdateContext();
 	}
 
@@ -54,7 +59,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 			dragging = !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
 
 			dragStart = mousePos;
-			dragStartSelections = selection;
+			dragStartSelections = Selection;
 
 			if (dragging) {
 				dragStartPos = mousePos;
@@ -63,7 +68,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 
 		// no selection right click check
-		if (Conatrols.Mouse.Right.PressedThisFrame && selection.Count == 0)
+		if (Conatrols.Mouse.Right.PressedThisFrame && Selection.Count == 0)
 			ClickCheck();
 
 		// detect mouse up
@@ -92,13 +97,15 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void CheckCancel() {
 		if (Conatrols.IM.Building.CancelSelection.WasPressedThisFrame()) {
-			selection.Clear(); // it cant be this simple rights
+			Selection.Clear(); // it cant be this simple rights
 			selectionChanged = true;
 		}
 	}
 
 	void HandleContainer() {
 		if (selectionChanged) {
+			PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
+
 			UpdateContainer();
 			selectionChanged = false;
 		}
@@ -113,17 +120,17 @@ public class SelectionManager : Singleton<SelectionManager> {
 	void FindObjectsInsideBounds(Vector2 boundsStart, Vector2 boundsEnd) {
 		// handle multiselection
 		if (Conatrols.IM.Building.Multiselect.IsPressed())
-			selection = dragStartSelections;
+			Selection = dragStartSelections;
 		else
-			selection = new();
+			Selection = new();
 
 		Camera maincamera = Camera.main;
 		foreach (Part part in BuildingManager.Instance.Parts) {
 			if (part == null) continue;
 
 			if (PartIntersectsWithSelectionBox(part, boundsStart, boundsEnd, maincamera) &&
-				!selection.Contains(part.transform)) {
-				selection.Add(part.transform);
+				!Selection.Contains(part.transform)) {
+				Selection.Add(part.transform);
 			}
 		}
 
@@ -300,17 +307,17 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		if (selected == null) {
 			if (!Conatrols.IM.Building.Multiselect.IsPressed())
-				selection = new();
+				Selection = new();
 			return;
 		}
 
 		if (Conatrols.IM.Building.Multiselect.IsPressed()) {   // toggle object in selection
-			if (selection.Contains(selected))
-				selection.Remove(selected);
+			if (Selection.Contains(selected))
+				Selection.Remove(selected);
 			else
-				selection.Add(selected);
+				Selection.Add(selected);
 		} else
-			selection = new() { selected };
+			Selection = new() { selected };
 	}
 
 	void GetMeshVertices(Transform target, ref List<Vector3> allVertices) {
@@ -332,13 +339,13 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// (this is put before return, in case selection is empty then this will not happen
 		foreach (Part p in BuildingManager.Instance.Parts) {
 			Transform t = p.transform;
-			if (!selection.Contains(t)) {
+			if (!Selection.Contains(t)) {
 				t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
 			}
 		}
 
 		// then break if the selection is empty
-		if (selection.Count == 0) {
+		if (Selection.Count == 0) {
 			BuildingManager.Instance.TransformTools.active = false;
 			selectionContainer.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 			selectionContainer.transform.localScale = Vector3.one;
@@ -350,39 +357,39 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		// handle position
 		Vector3 totalPosition = Vector3.zero;
-		foreach (Transform t in selection) {
+		foreach (Transform t in Selection) {
 			t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
 			totalPosition += t.position;
 		}
 
-		selectionContainer.position = totalPosition / selection.Count;
+		selectionContainer.position = totalPosition / Selection.Count;
 		BuildingManager.Instance.TransformTools.UpdatePosition();
 
 		// handle rotation (local, single selection, otherwise will act globally)
-		if (selection.Count == 1 && BuildingManager.Instance.TransformTools.local)
-			selectionContainer.rotation = selection[0].transform.rotation;
+		if (Selection.Count == 1 && BuildingManager.Instance.TransformTools.local)
+			selectionContainer.rotation = Selection[0].transform.rotation;
 		else
 			selectionContainer.rotation = Quaternion.identity;
 
-		foreach (Transform t in selection) {
+		foreach (Transform t in Selection) {
 			t.SetParent(selectionContainer, true);
 		}
 
-		OnSelectionChanged.Invoke();
+		OnSelectionChanged?.Invoke();
 	}
 
 	void UpdateContext() {
-		ContextObserver.Instance.selectionCount = selection.Count;
+		ContextObserver.Instance.selectionCount = Selection.Count;
 	}
 
 	public void Clear() {
-		selection.Clear();
+		Selection.Clear();
 
 		selectionChanged = true;
 	}
 
-	public void Select(params Transform[] transforms) {
-		selection = transforms.ToList();
+	public void ManuallySelect(params Transform[] transforms) {
+		Selection = transforms.ToList();
 
 		selectionChanged = transform;
 	}

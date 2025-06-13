@@ -16,6 +16,8 @@ public class RightClickMenus : MonoBehaviour {
 	public static event Action OnPaste;
 	public static event Action OnDuplicate;
 	public static event Action OnDelete;
+	public static event Action OnGroup;
+	public static event Action OnUnGroup;
 	public delegate void TabOpenEvent(WindowItem source);
 	public static event TabOpenEvent OnMaterial;
 
@@ -28,6 +30,8 @@ public class RightClickMenus : MonoBehaviour {
 		OnDuplicate = null;
 		OnDelete = null;
 		OnMaterial = null;
+		OnGroup = null;
+		OnUnGroup = null;
 	}
 
 	static void MakeNewPart(string name) {
@@ -37,12 +41,7 @@ public class RightClickMenus : MonoBehaviour {
 	}
 
 	// i wanna dry but kiss is more important
-	static void Undo() { RightClick.Instance.Hide(); OnUndo?.Invoke(); }
-	static void Redo() { RightClick.Instance.Hide(); OnRedo?.Invoke(); }
-	static void Copy() { RightClick.Instance.Hide(); OnCopy?.Invoke(); }
-	static void Paste() { RightClick.Instance.Hide(); OnPaste?.Invoke(); }
-	static void Duplicate() { RightClick.Instance.Hide(); OnDuplicate?.Invoke(); }
-	static void Delete() { RightClick.Instance.Hide(); OnDelete?.Invoke(); }
+	static void Call(Action action) { RightClick.Instance.Hide(); action?.Invoke(); }
 	static void Material(W source, int index) {
 		WindowItem item = source.Items[index].RealItem;
 
@@ -99,7 +98,7 @@ public class RightClickMenus : MonoBehaviour {
 		new W.Flyout(newPart, "new part", iconName: "plus");
 
 	static readonly W.Item duplicate = 
-		new W.Button(() => Duplicate(), "duplicate", iconName: "duplicate");
+		new W.Button(() => Call(OnDuplicate), "duplicate", iconName: "duplicate");
 
 	static W.Item materialItem(W source, int index) =>
 		new W.Button(
@@ -110,9 +109,9 @@ public class RightClickMenus : MonoBehaviour {
 	public static readonly W inWorldDefaultPanel = new(
 		"Editing", 200, new() {
 			newpart,
-			new W.Button(() => Undo(),	"undo",		iconName: "undo"),
-			new W.Button(() => Redo(),	"redo",		iconName: "redo"),
-			new W.Button(() => Paste(),	"paste",	iconName: "paste"),
+			new W.Button(() => Call(OnUndo),	"undo",		iconName: "undo"),
+			new W.Button(() => Call(OnRedo),	"redo",		iconName: "redo"),
+			new W.Button(() => Call(OnPaste),	"paste",	iconName: "paste"),
 		});
 
 	public static readonly WindowItem modifierList =
@@ -130,35 +129,35 @@ public class RightClickMenus : MonoBehaviour {
 			new (){
 				WindowItem.NewButtonCustomImageOverlay(
 					"Undo",
-					new(() => Undo()),
+					new(() => Call(OnUndo)),
 					new("Icons/undo"),
 					WindowItem.LayoutConfig.FillLayout)
 				.AddDescription("Undo"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Redo",
-					new(() => Redo()),
+					new(() => Call(OnRedo)),
 					new("Icons/redo"),
 					WindowItem.LayoutConfig.FillLayout)
 				.AddDescription("Redo"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Copy",
-					new(() => Copy()),
+					new(() => Call(OnCopy)),
 					new("Icons/copy"),
 					WindowItem.LayoutConfig.FillLayout)
 				.AddDescription("Copy"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Paste",
-					new(() => Paste()),
+					new(() => Call(OnPaste)),
 					new("Icons/paste"),
 					WindowItem.LayoutConfig.FillLayout)
 				.AddDescription("Paste"),
 
 				WindowItem.NewButtonCustomImageOverlay(
 					"Delete",
-					new(() => Delete()),
+					new(() => Call(OnDelete)),
 					new("Icons/delete"),
 					WindowItem.LayoutConfig.FillLayout)
 				.AddDescription("Delete")
@@ -197,7 +196,7 @@ public class RightClickMenus : MonoBehaviour {
 						new W.CustomItem(modifierList),
 						duplicate,
 						null, // gets replaced with materialitem 
-						new W.Button(null, "group", iconName: "group"),
+						new W.Button(() => Call(OnGroup), "group", iconName: "group"),
 					});
 
 				m_inWorldMultiPanel.Items[3] = materialItem(m_inWorldMultiPanel, 3); // manual reflection lol

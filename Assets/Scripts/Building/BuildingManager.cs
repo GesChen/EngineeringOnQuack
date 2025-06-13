@@ -13,6 +13,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	BuildingClipboard clipboard;
 
+	#region Setup
 	protected override void Awake() {
 		base.Awake();
 		clipboard = new();
@@ -32,6 +33,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.OnCopy += clipboard.Copy;
 		RightClickMenus.OnPaste += Paste;
 		RightClickMenus.OnDuplicate += Duplicate;
+		RightClickMenus.OnGroup += GroupManager.Instance.GroupCurrentSelection;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
@@ -53,14 +55,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		return items;
 	}
+	#endregion
 
 	void Update() {
-		//Parts = mainPartsContainer.GetComponentsInChildren<Part>().OrderBy(part => part.ID).ToList(); // sort by id to make sure current stays in the same order
-
 		HandleInput();
 
+		// set selection state of parts
 		foreach (Part part in Parts) {
-			part.Selected = SelectionManager.Instance.selection.Contains(part.transform);
+			part.Selected = SelectionManager.Instance.PartSelection.Contains(part);
 		}
 	}
 
@@ -72,26 +74,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		}
 	}
 
-	public void StartSimulating() {
-		SelectionManager.Instance.Clear();
-		SelectionManager.Instance.enabled = false;
-		TransformTools.active = false;
-		//TransformTools.enabled = false;
-
-		DeselectAllParts();
-		ReturnAllPartsToMain();
-		HideAllPartsForSimulation();
-		SimulationManager.Instance.StartSimulating();
-	}
-
-	public void StopSimulating() {
-		SelectionManager.Instance.enabled = true;
-		//TransformTools.enabled = true;
-
-		SimulationManager.Instance.StopSimulating();
-		ShowAllPartsAfterSimulation();
-	}
-
+	#region Part Functions
 	public void UpdateParts() {
 		UpdateIds();
 	}
@@ -104,13 +87,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 		
 		newpart.transform.position = PlacePos();
 
-		SelectionManager.Instance.Select(newpart.transform);
+		SelectionManager.Instance.ManuallySelect(newpart.transform);
 
 		Parts.Add(newpart);
 
 		UpdateParts();
 	}
 
+	// function for getting a position for placing parts based on selection and mouse position
 	Vector3 PlacePos() {
 		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
 		Vector3 planeDir = (Camera.main.transform.position - planeOrigin).normalized;
@@ -118,22 +102,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
 		return pos;
-	}
-
-	void DeleteSelection() {
-		// delete current selection
-		foreach (var t in SelectionManager.Instance.selection) {
-			if (t.TryGetComponent(out Part part)) {
-				if (!Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
-				else
-					Parts.Remove(part);
-
-				Destroy(part.gameObject);
-			}
-		}
-
-		SelectionManager.Instance.Clear();
-		UpdateParts();
 	}
 
 	void UpdateIds() {
@@ -162,27 +130,67 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		return part;
 	}
+	#endregion
+
+	#region Simulation
+	public void StartSimulating() {
+		SelectionManager.Instance.Clear();
+		SelectionManager.Instance.enabled = false;
+		TransformTools.active = false;
+		//TransformTools.enabled = false;
+
+		DeselectAllParts();
+		ReturnAllPartsToMain();
+		HideAllPartsForSimulation();
+		SimulationManager.Instance.StartSimulating();
+	}
+
+	public void StopSimulating() {
+		SelectionManager.Instance.enabled = true;
+		//TransformTools.enabled = true;
+
+		SimulationManager.Instance.StopSimulating();
+		ShowAllPartsAfterSimulation();
+	}
 
 	public void ReturnAllPartsToMain() {
 		foreach (Part part in Parts) {
 			part.transform.parent = mainPartsContainer;
 		}
 	}
-
+	
 	void HideAllPartsForSimulation() {
 		foreach (Part part in Parts) {
 			part.gameObject.SetActive(false);
 		}
 	}
+	
 	void ShowAllPartsAfterSimulation() {
 		foreach (Part part in Parts) {
 			part.gameObject.SetActive(true);
 		}
 	}
+	#endregion
 
+	#region Selection
 	void DeselectAllParts() {
 		Parts.ForEach(p => { p.Selected = false; p.gameObject.layer = LayerMask.NameToLayer("Part"); });
 	}
+
+	void DeleteSelection() {
+		// delete current selection
+		foreach (var part in SelectionManager.Instance.PartSelection) {
+			if (!Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
+			else
+				Parts.Remove(part);
+
+			Destroy(part.gameObject);
+		}
+
+		SelectionManager.Instance.Clear();
+		UpdateParts();
+	}
+	#endregion
 
 	void Paste() {
 		var newparts = clipboard.Paste(PlacePos(), true);
