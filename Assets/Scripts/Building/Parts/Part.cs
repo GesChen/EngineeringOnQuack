@@ -21,6 +21,8 @@ public class Part : MonoBehaviour {
 		colliders = GetComponentsInChildren<Collider>();
 
 		color = Config.Building.Colors[Config.Building.PartDefaultColorIndex];
+		composition = Compositions.All[Config.Building.PartDefaultCompositionIndex];
+		UpdateMaterial();
 	}
 
 	void Update() {
@@ -49,13 +51,19 @@ public class Part : MonoBehaviour {
 		if (composition == null)
 			throw new("Composition is null");
 
-		Material newMat = new(composition.Material) {
-			color = color
-		};
+		Material newMat = new(composition.Material);
+		
+		// treat glass special
 
-		foreach (var renderer in renderers) {
-			renderer.material = newMat;  // sets first one, idk if i should use the method
+		if (composition.Material.color.a > .1f) {
+			newMat.color = color;
+		} else {
+			newMat.SetColor("_TransmittanceColor", color);
 		}
+
+			foreach (var renderer in renderers) {
+				renderer.material = newMat;  // sets first one, idk if i should use the method
+			}
 
 		foreach (var collider in colliders) {
 			collider.material = composition.PhysicsMaterial;

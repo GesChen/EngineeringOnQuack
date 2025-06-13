@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +8,7 @@ public class MaterialEditor : MonoBehaviour {
 	public Image ColorPreview;
 	public Image MaterialPreview;
 
-	Color currentColor;
+	Color? currentColor;
 	Composition currentComposition;
 
 	Part[] editingParts;
@@ -76,15 +77,32 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	public void UpdateMultiple(List<Transform> ts) {
-		//TODO
-		throw new System.NotImplementedException();
+		Part[] parts = ts.Select(t => t.GetComponent<Part>()).ToArray();
+
+		bool allSameColor = true;
+		bool allSameComposition = true;
+		for (int i = 0; i < parts.Length - 1; i++) {
+			if (parts[i].color != parts[i + 1].color) {
+				allSameColor = false;
+			}
+			if (parts[i].composition != parts[i + 1].composition) {
+				allSameComposition = false;
+			}
+		}
+
+		currentColor = allSameColor ? parts[0].color : null;
+		currentComposition = allSameComposition ? parts[0].composition : null;
+
+		editingParts = parts;
 	}
 
 	public void SetColor(Color color) {
+		// no null check cuz its getting set lol
+
 		currentColor = color;
 
 		foreach (var part in editingParts) {
-			part.SetColor(currentColor);
+			part.SetColor(currentColor.Value);
 		}
 		UpdatePreviews();
 	}
@@ -99,7 +117,16 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	void UpdatePreviews() {
-		ColorPreview.color = currentColor;
+
+		if (currentColor.HasValue) {
+			Color preview = currentColor.Value;
+			preview.a = 1f;
+			ColorPreview.color = preview;
+			ColorPreview.sprite = null;
+		} else {
+			ColorPreview.color = Config.UI.Visual.TextColor;
+			ColorPreview.sprite = Config.Building.ColorIcon;
+		}
 
 		MaterialPreview.sprite =
 			currentComposition != null

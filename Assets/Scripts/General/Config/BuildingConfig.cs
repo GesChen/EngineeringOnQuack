@@ -32,5 +32,9 @@ public static partial class Config {
 		private static Sprite m_MaterialIcon;
 		public static Sprite MaterialIcon =>
 			HF.LoadCached(ref m_MaterialIcon, Locations.IconsFolder + "Composition/material");
+
+		private static Sprite m_ColorIcon;
+		public static Sprite ColorIcon =>
+			HF.LoadCached(ref m_ColorIcon, Locations.IconsFolder + "Composition/color1");
 	}
 }

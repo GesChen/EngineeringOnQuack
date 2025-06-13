@@ -6,11 +6,6 @@ using UnityEngine;
 public class SelectionManager : Singleton<SelectionManager> {
 	public bool selectionBoxDragging;
 
-	//public int testInterval;
-	//public int minPixelsMovedForRetest;
-	[Tooltip("Makes sure tiny boxes dont select a bunch of stuff by accident")]
-	public float minBoxSize;
-
 	public List<Transform> selection { get; private set; }
 	public Transform selectionContainer;
 
@@ -22,7 +17,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 	Vector2 dragStartPos;
 	bool dragging;
 
-	bool m_changed;
 	bool selectionChanged = false;
 	
 	/*{
@@ -68,7 +62,9 @@ public class SelectionManager : Singleton<SelectionManager> {
 			}
 		}
 
-		// detect drag start
+		// no selection right click check
+		if (Conatrols.Mouse.Right.PressedThisFrame && selection.Count == 0)
+			ClickCheck();
 
 		// detect mouse up
 		if (!Conatrols.Mouse.Left.Pressed && !BuildingManager.Instance.TransformTools.hovering) {
@@ -115,9 +111,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void FindObjectsInsideBounds(Vector2 boundsStart, Vector2 boundsEnd) {
-		// check size
-		if ((boundsStart - boundsEnd).sqrMagnitude < minBoxSize) return;
-
 		// handle multiselection
 		if (Conatrols.IM.Building.Multiselect.IsPressed())
 			selection = dragStartSelections;

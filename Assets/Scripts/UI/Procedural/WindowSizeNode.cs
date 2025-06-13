@@ -41,12 +41,11 @@ public class WindowSizeNode : MonoBehaviour {
 		UpdateCloseSprite();
 
 		rt.anchoredPosition = Vector2.zero;
-		if (main.Config.Resizable)
+		if (main.Config.Resizable || main.Config.Closable) {
 			CheckHover();
-
-		if (main.Config.Resizable || main.Config.Closable)
 			UpdateSize();
-		
+		}
+
 		if (main.Config.Resizable)
 			HandleMouse();
 
