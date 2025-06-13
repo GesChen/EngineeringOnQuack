@@ -132,9 +132,8 @@ public class Assembler : Singleton<Assembler> {
 
 		//Parallel.ForEach(pairsTotest, pair =>
 		foreach (Pair pair in pairsTotest) {
-			if (Intersections.OptimizedMeshesIntersect(
-				pair.Averts, pair.Bverts, pair.Atris, pair.Btris,
-				pair.Amin, pair.Amax, pair.Bmin, pair.Bmax)) {
+			if (Intersections.MeshesIntersectRawMesh(
+				pair.Averts, pair.Bverts, pair.Atris, pair.Btris)) {
 				connections.Add(new() {
 					objA = pair.A.transform,
 					objB = pair.B.transform,

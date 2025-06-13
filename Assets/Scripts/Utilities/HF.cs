@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using Microsoft.Win32;
 
 public static class HF {
 	#region Base Class Extensions
@@ -406,47 +404,6 @@ public static class HF {
 
 
 		return (shiftedString, overflows, overRegion);
-	}
-
-
-	// chatgpt cant code for shit
-	static (string moved, bool overflows, string ofString) BSShiftRegion(string orig, int startInc, int endInc, int shift) {
-		if (string.IsNullOrEmpty(orig)) return (orig, false, null);
-		if (startInc < 0 || endInc >= orig.Length || startInc > endInc) return (orig, false, null);
-
-		string region = orig.Substring(startInc, endInc - startInc + 1);
-		string before = orig[..startInc];
-		string after = orig[(endInc + 1)..];
-		string withoutRegion = before + after;
-
-		int insertAt = startInc + shift;
-
-		// Default: no characters fall off
-		string overflowRegion = null;
-		bool overflows = false;
-
-		// Determine which part of the region can actually fit
-		int newStart = insertAt;
-		int newEnd = insertAt + region.Length - 1;
-
-		int truncateLeft = Math.Max(0, -newStart);
-		int truncateRight = Math.Max(0, newEnd - withoutRegion.Length + 1);
-
-		if (truncateLeft > 0 || truncateRight > 0) {
-			overflows = true;
-			overflowRegion = region[..truncateLeft];
-
-			if (truncateRight > 0)
-				overflowRegion += region.Substring(region.Length - truncateRight, truncateRight);
-
-			// Truncate region accordingly
-			region = region.Substring(truncateLeft, region.Length - truncateLeft - truncateRight);
-			newStart = Math.Max(0, newStart);
-		}
-
-		// Insert the truncated region
-		string result = region.Length > 0 ? withoutRegion.Insert(newStart, region) : withoutRegion;
-		return (result, overflows, overflowRegion);
 	}
 
 	// from geeksforgeeks look at it again if no understand lol i dont
