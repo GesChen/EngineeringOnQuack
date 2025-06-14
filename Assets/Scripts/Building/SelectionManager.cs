@@ -47,7 +47,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	bool UpdateGroupContext() {
-		// selection guaranteed to be multiple already 
+		// selection guaranteed to be multiple or 1 already 
 
 		bool allPartsOfOneGroup = true;
 		bool allGroupedParts = true;

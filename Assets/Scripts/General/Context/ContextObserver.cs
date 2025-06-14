@@ -28,13 +28,17 @@ public class ContextObserver : Singleton<ContextObserver> {
 			ContextManager.EnterContext<InWorld>();
 
 			if (selectionCount == 0) ContextManager.EnterContext<NoSelection>();
-			else if (selectionCount == 1) ContextManager.EnterContext<SingleSelection>();
 			else {
-
 				// groupcheck in selectionmanager will enter groupselection 
 				// by itself so only if it fails then enter 
-				if (!(GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!")))
-					ContextManager.EnterContext<MultiSelection>();
+				bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
+
+				if (!isGroup) {
+					if (selectionCount == 1)
+						ContextManager.EnterContext<SingleSelection>();
+					else
+						ContextManager.EnterContext<MultiSelection>();
+				}
 			}
 		}
 	}

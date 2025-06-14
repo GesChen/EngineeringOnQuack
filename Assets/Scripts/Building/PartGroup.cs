@@ -20,7 +20,7 @@ public class PartGroup {
 		Parts.Remove(part);
 	}
 
-	public static PartGroup MergeGroups(List<PartGroup> groups) {
+	public static PartGroup CombineGroups(List<PartGroup> groups) {
 		List<Part> allParts = new();
 
 		// might want to add duplicate checking but not sure how that would happen

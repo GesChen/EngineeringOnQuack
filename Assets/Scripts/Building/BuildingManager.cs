@@ -40,7 +40,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
-		
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -87,7 +86,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		
 		newpart.transform.position = PlacePos();
 
-		SelectionManager.Instance.ManuallySelect(newpart.transform);
+		if (select)
+			SelectionManager.Instance.ManuallySelect(newpart.transform);
 
 		Parts.Add(newpart);
 

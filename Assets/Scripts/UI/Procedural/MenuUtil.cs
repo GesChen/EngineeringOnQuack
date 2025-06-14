@@ -24,6 +24,7 @@ public class MenuUtil : MonoBehaviour {
 		public bool Movable = false;
 		public bool IsFlyout = true;
 		public bool Closable = false;
+		public bool Switchable = false;
 
 		private CWindow m_cwindow;
 		public CWindow CWindow {
@@ -34,6 +35,16 @@ public class MenuUtil : MonoBehaviour {
 			// no setter because it is done by the getter
 		}
 
+		private SwitchableMenu m_dynamicComponent;
+		public SwitchableMenu SwitchingComponent {
+			get {
+				if (!Switchable) throw new("Tried getting Dynamic Component of a non dynamic window");
+				if (m_dynamicComponent == null) throw new("Dynamic Component not created!");
+				return m_dynamicComponent;
+			}
+			internal set { m_dynamicComponent = value; }
+		}
+
 		public Window(
 			string title, 
 			float width, 
@@ -41,7 +52,8 @@ public class MenuUtil : MonoBehaviour {
 			bool showTitle = true, 
 			bool movable = false,
 			bool isFlyout = true,
-			bool closable = false) {
+			bool closable = false,
+			bool switchable = false) {
 
 			Title = title;
 			ShowTitle = showTitle;
@@ -51,6 +63,7 @@ public class MenuUtil : MonoBehaviour {
 			Movable = movable;
 			IsFlyout = isFlyout;
 			Closable = closable;
+			Switchable = switchable;
 		}
 		public Window(float width, List<Item> items) {
 			ShowTitle = false;
@@ -246,6 +259,18 @@ public class MenuUtil : MonoBehaviour {
 		//cw.Config.IsFlyout = true; // all menus should be flyouts? might change this later idk
 		// yeah i changed it
 
+		// add dynamic menu and items
+		if (rcw.Switchable) {
+			cw.AddEvent(CWindow.Configuration.Timings.Start, (cw) => {
+				rcw.SwitchingComponent =
+					cw.RealisedWindow.gameObject.AddComponent<SwitchableMenu>();
+
+				rcw.SwitchingComponent.items = new(items);
+
+				if (rcw.ShowTitle) // don't want to include the title
+					rcw.SwitchingComponent.items.RemoveAt(0);
+			});
+		}
 		return cw;
 	}
 
@@ -275,7 +300,7 @@ public class MenuUtil : MonoBehaviour {
 		if (item.HasIcon) {
 
 			// get the pimage 
-			PComponents.Image image = null;
+			PComponents.Image image;
 			if (item.Icon.Sprite != null)
 				image = new(item.Icon.Sprite);
 			else if (item.Icon.Path != null)
