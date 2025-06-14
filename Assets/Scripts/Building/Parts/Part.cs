@@ -7,6 +7,8 @@ public class Part : MonoBehaviour {
 	public BasePart basePart;
 	public bool Selected;
 
+	public PartGroup Group;
+
 	// might turn this into a separate class later but somehow not conflict or confuse with 
 	// unnity's material class
 	public Color color;

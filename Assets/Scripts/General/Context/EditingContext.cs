@@ -48,6 +48,26 @@ namespace Contexts {
 		public MultiSelection() { }
 	}
 
+	public class GroupSelection : IContext {
+		public string Name => "GroupSelection";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(InWorld);
+		public GroupSelection(IContext parent) => ((IContext)this).SetParent(parent);
+		public GroupSelection() { }
+
+		public bool AllGroupedParts; // all selected parts are part of a group
+		public bool AllPartsOfOneGroup; // or has parts from other groups in it
+		public bool AllGroupPartsSelected; // only applies when both above are true
+		/*
+		 * AGP F & APOOG F - multiple groups and also non grouped parts 
+		 * AGP T & APOOG F - multiple groups
+		 * AGP F & APOOG T - one group with other non group parts
+		 * AGP T & APOOG T 
+		 *   AGPS T - all parts in one group 
+		 *   AGPS F - invididual member(s) of only one group 
+		 */
+	}
+
 	public class OverUI : IContext {
 		public string Name => "OverUI";
 		public IContext Parent { get; set; }
@@ -55,6 +75,7 @@ namespace Contexts {
 		public OverUI(IContext parent) => ((IContext)this).SetParent(parent);
 		public OverUI() { }
 	}
+
 
 	/*
 	 * main 

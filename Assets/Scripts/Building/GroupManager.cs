@@ -11,11 +11,15 @@ public class GroupManager : Singleton<GroupManager> {
 	}
 
 	public void Group(Part[] parts) {
-		PartGroup group = new(parts.ToList());
+		var list = parts.ToList();
+		PartGroup group = new(list);
+
+		list.ForEach(p => p.Group = group);
+
 		Groups.Add(group);
 	}
 
-	public bool IsPartInGroup(Part part, out PartGroup group) {
+	private bool IsPartInGroup(Part part, out PartGroup group) {
 		foreach (var partGroup in Groups) {
 			if (partGroup.Parts.Contains(part)) {
 				group = partGroup;

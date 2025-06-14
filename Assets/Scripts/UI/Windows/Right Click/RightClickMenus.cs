@@ -167,6 +167,8 @@ public class RightClickMenus : MonoBehaviour {
 	// complicatd readonly property setup to allow for self referencing in the materialitem
 	private static W m_inWorldSinglePanel;
 
+	// bout to get really WET if i keep doing this for all contexts. we gotta switch :| 
+	// not gonna like this :|
 	public static W inWorldSinglePanel {
 		get {
 			if (m_inWorldSinglePanel == null) {

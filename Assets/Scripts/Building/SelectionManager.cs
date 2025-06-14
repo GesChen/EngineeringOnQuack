@@ -20,6 +20,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	bool dragging;
 
 	bool selectionChanged = false;
+	bool overrideGroupSelect = false;
 	
 	/*{
 		get { return m_changed; }
@@ -37,19 +38,68 @@ public class SelectionManager : Singleton<SelectionManager> {
 	void Start() {
 		Selection = new();
 		PartSelection = new Part[0];
+
+		Subscribe();
 	}
 
+	void Subscribe() {
+		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
+	}
+
+	bool UpdateGroupContext() {
+		// selection guaranteed to be multiple already 
+
+		bool allPartsOfOneGroup = true;
+		bool allGroupedParts = true;
+		PartGroup group = null;
+		foreach (var part in PartSelection) {
+			if (part.Group != null) {
+				group ??= part.Group;
+
+				if (group != part.Group) {
+					allPartsOfOneGroup = false;
+				}
+			} else {
+				allGroupedParts = false;
+			}
+		}
+
+		// group should not be null if any were in group
+		if (group == null) return false;
+
+		var context = ContextManager.EnterContext<Contexts.GroupSelection>();
+		context.AllGroupedParts = allGroupedParts;
+		context.AllPartsOfOneGroup = allPartsOfOneGroup;
+		context.AllGroupPartsSelected = false;
+
+		if (allPartsOfOneGroup && allGroupedParts) {
+			// check if all part in group are selected
+			// naive approach is just best KISS
+			bool allSelected = true;
+			foreach (var part in group.Parts) {
+				if (!PartSelection.Contains(part)) {
+					allSelected = false;
+					break;
+				}
+			}
+
+			context.AllGroupPartsSelected = allSelected;
+		}
+		return true;
+	}
 
 	void Update() {
 		HandleInput();
 		HandleContainer();
 
+		CheckForGroups();
+		HandleContainer(); // selection might have changed from groups
 
 		UpdateContext();
 	}
 
 	void HandleInput() {
-		if (ContextManager.IsInContext<Contexts.OverUI>()) return;
+		if (ContextManager.IsInContext<Contexts.OverUI>(out _)) return;
 		CheckCancel();
 
 		mousePos = Conatrols.Mouse.Position;
@@ -108,6 +158,20 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 			UpdateContainer();
 			selectionChanged = false;
+		}
+	}
+
+	void CheckForGroups() {
+		if (overrideGroupSelect) return;
+
+		// if any selected part is in a group, select parts in that group not already in selection
+		foreach (var part in PartSelection) {
+			if (part.Group != null)
+				foreach (var item in part.Group.Parts)
+					if (!PartSelection.Contains(item)) {
+						Selection.Add(item.transform);
+						selectionChanged = true;
+					}
 		}
 	}
 
@@ -219,6 +283,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void ClickCheck() {
 		selectionChanged = true;
+		overrideGroupSelect = false;
 
 		Transform selected = null;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit)) {
@@ -233,13 +298,20 @@ public class SelectionManager : Singleton<SelectionManager> {
 			return;
 		}
 
-		if (Conatrols.IM.Building.Multiselect.IsPressed()) {   // toggle object in selection
+		if (Conatrols.IM.Building.Multiselect.IsPressed()) { // toggle object in selection
 			if (Selection.Contains(selected))
 				Selection.Remove(selected);
 			else
 				Selection.Add(selected);
-		} else
+		} else {
+			bool partOfGroup = selected.GetComponent<Part>().Group != null;
+			bool alreadySelected = Selection.Contains(selected);
+
+			if (partOfGroup && alreadySelected)
+				overrideGroupSelect = true;
+
 			Selection = new() { selected };
+		}
 	}
 
 	void GetMeshVertices(Transform target, ref List<Vector3> allVertices) {
@@ -313,6 +385,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 	public void ManuallySelect(params Transform[] transforms) {
 		Selection = transforms.ToList();
 
-		selectionChanged = transform;
+		selectionChanged = true;
 	}
 }
