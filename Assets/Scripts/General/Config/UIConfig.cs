@@ -85,9 +85,9 @@ public static partial class Config {
 			public static readonly float TitleHeight			= 30;
 			public static readonly float ItemSpacing			= 0;
 			public static readonly float ItemHeight				= 30;
-			public static readonly float ItemPadding			= 5;
+			public static readonly float ItemPadding			= 2;
 			public static readonly float IconSize				= 25;
-			public static readonly float IconLabelSpacing		= 10;
+			public static readonly float IconLabelSpacing		= 5;
 			public static readonly float FlyoutIndicatorSize	= 20;
 			public static readonly float FontSize				= Visual.FontSize - 2;
 		}

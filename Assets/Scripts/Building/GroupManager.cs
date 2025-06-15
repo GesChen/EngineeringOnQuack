@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 public class GroupManager : Singleton<GroupManager> {
-	public static List<PartGroup> Groups = new();
+	public List<PartGroup> Groups = new();
 
 	public void Subscribe() {
 		RightClickMenus.OnGroup				+= GroupCurrentSelection;
@@ -73,6 +73,8 @@ public class GroupManager : Singleton<GroupManager> {
 			group.Parts.Remove(part);
 			part.Group = null;
 		}
+
+		PreventSoloGroups();
 	}
 
 	void CombineGroupsCurrentSelection() {
@@ -106,6 +108,18 @@ public class GroupManager : Singleton<GroupManager> {
 	}
 
 	void PreventSoloGroups() {
+		List<int> toRemove = new();
+		for (int i = 0; i < Groups.Count; i++) {
+			PartGroup group = Groups[i];
+			if (group.Parts.Count == 1) {
+				group.Parts[0].Group = null;
+				toRemove.Add(i);
+			}
+		}
+		toRemove.Reverse(); // should be sorted low to high already from the loop
 
+		foreach (var part in toRemove) {
+			Groups.RemoveAt(part);
+		}
 	}
 }
