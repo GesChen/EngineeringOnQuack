@@ -33,13 +33,13 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.OnCopy += clipboard.Copy;
 		RightClickMenus.OnPaste += Paste;
 		RightClickMenus.OnDuplicate += Duplicate;
-		RightClickMenus.OnGroup += GroupManager.Instance.GroupCurrentSelection;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
+		GroupManager.Instance.Subscribe();
 	}
 
 	WindowItem[] GenerateWindowItems() {

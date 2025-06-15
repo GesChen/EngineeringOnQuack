@@ -12,14 +12,6 @@ public class PartGroup {
 		Parts = parts;
 	}
 
-	public void AddPart(Part part) {
-		Parts.Add(part);
-	}
-
-	public void RemovePart(Part part) {
-		Parts.Remove(part);
-	}
-
 	public static PartGroup CombineGroups(List<PartGroup> groups) {
 		List<Part> allParts = new();
 
