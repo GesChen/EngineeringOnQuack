@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// TODO: figure out why it flickers when moving between different options sometimes
 public class Description : MonoBehaviour {
 	public string Text;
 	[HideInNormalInspector] public bool DescriptionShowing = false;
@@ -13,11 +14,19 @@ public class Description : MonoBehaviour {
 	
 	static (RectTransform rt, TextMeshProUGUI text) descriptionInstance;
 	static bool descriptionInUse;
+	static float closeTime;
+
 	bool userOfDescription;
 	bool attemptToBecomeUser;
 
+	void OnDisable() {
+		Close();
+	}
+
 	void Update() {
-		bool over = false;
+		if (descriptionInUse && !userOfDescription) return; // save some resources
+
+		bool over;
 		if (descriptionInstance.rt != null)
 			over = UIHovers.CheckFirstAllowing(transform, descriptionInstance.rt) || 
 				UIHovers.CheckFirstIgnoringChildren(transform);
@@ -27,22 +36,19 @@ public class Description : MonoBehaviour {
 			mouseOverTime = Time.time;
 		}
 
-		DescriptionShowing = over && Time.time - mouseOverTime > Config.UI.Behaviour.DescriptionHoverMs / 1000f;
+		bool hoveredLongEnough = Time.time - mouseOverTime > Config.UI.Behaviour.DescriptionHoverMs / 1000f;
+		bool inBetweenTime = Time.time - closeTime < Config.UI.Behaviour.TimeForDescriptionChangeMs / 1000f;
+		DescriptionShowing = over && (hoveredLongEnough || inBetweenTime);
 
 		// handle multiple users
 		if (attemptToBecomeUser) AttemptUser();
 		attemptToBecomeUser = false;
 		if (DescriptionShowing != lastShowing) {
-			if (DescriptionShowing) {
-				AttemptUser();
-			} else {
-				if (userOfDescription) {
-					descriptionInUse = false;
-					userOfDescription = false;
 
-					CloseDescriptionAsUser();
-				}
-			}
+			if (DescriptionShowing)
+				AttemptUser();
+			else
+				Close();
 		}
 
 		// actually set position
@@ -55,30 +61,43 @@ public class Description : MonoBehaviour {
 	}
 
 	void AttemptUser() {
+		// already user
+		if (userOfDescription) return;
+
 		if (!descriptionInUse) {
 			descriptionInUse = true;
 			userOfDescription = true;
 
-			OpenDescriptionAsUser();
+			OpenAsUser();
 		} else {
 			attemptToBecomeUser = true;
 		}
 	}
 
-	void OpenDescriptionAsUser() {
+	void OpenAsUser() {
 		if (descriptionInstance.rt == null) 
-			GenerateDescription();
+			Generate();
 
 		descriptionInstance.text.text = Text;
 		descriptionInstance.rt.gameObject.SetActive(true);
 		descriptionInstance.rt.SetAsLastSibling();
+		LayoutRebuilder.ForceRebuildLayoutImmediate(descriptionInstance.rt); // plz work bru
 	}
 
-	void CloseDescriptionAsUser() {
+	void Close() {
+		if (userOfDescription)
+			CloseAsUser();
+	}
+
+	void CloseAsUser() {
+		descriptionInUse = false;
+		userOfDescription = false;
+		
 		descriptionInstance.rt.gameObject.SetActive(false);
+		closeTime = Time.time;
 	}
 
-	void GenerateDescription() {
+	void Generate() {
 		var newObj = new GameObject("Description");
 		newObj.SetActive(false);
 

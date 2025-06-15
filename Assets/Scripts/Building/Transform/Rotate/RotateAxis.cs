@@ -78,7 +78,7 @@ public class RotateAxis : MonoBehaviour
 	}
 	void ResetTransform()
 	{
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			Vector3 rotation = t.rotation.eulerAngles;
 			rotation.Scale(Vector3.one - axis);

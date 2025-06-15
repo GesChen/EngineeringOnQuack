@@ -18,7 +18,15 @@ public class LiveWindow : MonoBehaviour {
 	WindowSizeNode BR;
 	Canvas canvas;
 
+	public CWindow Source;
+
+
+	void Awake() {
+		Config.CallEvents(CWindow.Configuration.Timings.Awake, Source);
+	}
+
 	void Start() {
+		Config.CallEvents(CWindow.Configuration.Timings.Start, Source);
 		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
@@ -39,21 +47,39 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	void Update() {
-		SetNodesActive(Config.Resizable);
+		if (Config.HideOnStart) {
+			if (Time.frameCount == global::Config.UI.Behaviour.MaxFramesForRealization)
+				gameObject.SetActive(false);
+			if (Time.frameCount <= global::Config.UI.Behaviour.MaxFramesForRealization) {
+				transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
+				return;
+			}
+		}
 
-		if (Config.Resizable) {
+		Config.CallEvents(CWindow.Configuration.Timings.Update, Source);
+
+		SetNodesActive(Config.Resizable, Config.Closable);
+
+		if (Config.Resizable || Config.Closable) {
 			Find();
 			SetAnchors();
-			CheckNodes();
 		}
+		if (Config.Resizable)
+			CheckNodes();
+
 		CheckSize();
 		if (Config.Movable) {
 			HandleDrag();
 		}
 	}
 
-	void SetNodesActive(bool state) {
-		cornerNodes.ForEach(n => n.gameObject.SetActive(state));
+	void SetNodesActive(bool state, bool closeState) {
+		foreach (var n in cornerNodes) {
+			if (n.position == WindowSizeNode.Positions.TopRight)
+				n.gameObject.SetActive(state || closeState);
+			else
+				n.gameObject.SetActive(state);
+		}
 	}
 
 	void Find() {
@@ -107,6 +133,7 @@ public class LiveWindow : MonoBehaviour {
 			transform.position = Conatrols.Mouse.Position + dragOffset;
 
 			// prevent going off the sides
+			Vector2 padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding * Vector2.one;
 			Vector2 canvasSize = manager.canvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
@@ -114,8 +141,8 @@ public class LiveWindow : MonoBehaviour {
 
 			Vector2 clampedPos = HF.Vector2Clamp(
 				transform.position,
-				new(halfWidth, halfHeight),
-				new(canvasSize.x - halfWidth, canvasSize.y - halfHeight));
+				new Vector2(halfWidth, halfHeight) + padding,
+				new Vector2(canvasSize.x - halfWidth, canvasSize.y - halfHeight) - padding);
 
 			transform.position = clampedPos;
 		}
@@ -123,6 +150,13 @@ public class LiveWindow : MonoBehaviour {
 
 	void CheckNodes() {
 		anyNodesDragging = cornerNodes.Any(n => n.dragging);
+	}
+
+	public void PlaceAt(RectTransform target) {
+		Vector3[] corners = new Vector3[4];
+		target.GetWorldCorners(corners);
+
+		PlaceAt(corners);
 	}
 
 	/// <summary>

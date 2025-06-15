@@ -92,7 +92,7 @@ public class Scale : MonoBehaviour
 	void ResetTransform()
 	{
 		resetting = true;
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			Vector3 scaling = t.localScale;
 			scaling.Scale(Vector3.one - axis);
@@ -185,7 +185,7 @@ public class Scale : MonoBehaviour
 			dragStartPos = main.transform.position;
 
 			startScales = new();
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				startScales[t] = t.localScale;
 			}
@@ -262,13 +262,13 @@ public class Scale : MonoBehaviour
 		{
 			Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
 
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				t.localScale = HF.MV3(startScales[t], newScale);
 			}
 		}
 		else
-		{	foreach (Transform t in SelectionManager.Instance.selection)
+		{	foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				float currentScaleInAxis = HF.MV3(startScales[t], axis).magnitude;
 
@@ -296,21 +296,21 @@ public class Scale : MonoBehaviour
 		if (main.snapping)
 			scale = Mathf.Round(scale / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
 
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			t.localScale = startScales[t] * scale;
 		}
 	}
 	void UseAxisIndicator()
 	{
-		if (lastSelection != SelectionManager.Instance.selection) // selection changed, update axis indicator list
+		if (lastSelection != SelectionManager.Instance.Selection) // selection changed, update axis indicator list
 		{
 			UpdateAxisIndicators();
 		}
 
 		if (dragging && !full)
 		{
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				objectAxisIndicators[t].UpdateIndicator(
 					t.position,
@@ -320,7 +320,7 @@ public class Scale : MonoBehaviour
 			}
 		}
 
-		lastSelection = SelectionManager.Instance.selection;
+		lastSelection = SelectionManager.Instance.Selection;
 	}
 	void UpdateAxisIndicators()
 	{
@@ -330,7 +330,7 @@ public class Scale : MonoBehaviour
 
 			axisIndicators = new();
 			objectAxisIndicators = new();
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				AxisIndicator axisIndicator = main.axisIndicatorManager.NewIndicator();
 				axisIndicators.Add(axisIndicator);

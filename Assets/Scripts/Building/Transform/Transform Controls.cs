@@ -25,16 +25,16 @@ public class TransformControlsTemporary : MonoBehaviour
 		ColorBlock normalColors = new()
 		{
 			colorMultiplier = 1f,
-			normalColor = Config.UI.Button.DefaultColor,
-			highlightedColor = Config.UI.Button.HoverColor,
-			pressedColor = Config.UI.Button.PressedColor
+			normalColor = Config.UI.Visual.DefaultColorBlock.NormalColor,
+			highlightedColor = Config.UI.Visual.DefaultColorBlock.HoverColor,
+			pressedColor = Config.UI.Visual.DefaultColorBlock.PressedColor
 		};
 		ColorBlock enabledColors = new()
 		{
 			colorMultiplier = 1f,
-			normalColor = Config.UI.Button.ToggledColor,
-			highlightedColor = Config.UI.Button.HoverColor,
-			pressedColor = Config.UI.Button.PressedColor
+			normalColor = Config.UI.Visual.DefaultColorBlock.ToggledColor,
+			highlightedColor = Config.UI.Visual.DefaultColorBlock.HoverColor,
+			pressedColor = Config.UI.Visual.DefaultColorBlock.PressedColor
 		};
 
 		translate.colors = Tools.translating ? enabledColors : normalColors;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
+/*
 public class Shortcuts : MonoBehaviour {
 	public static Shortcut[] AllShortcuts;
 	
@@ -95,3 +95,4 @@ public class Shortcuts : MonoBehaviour {
 		}
 	}
 }
+*/

@@ -89,7 +89,7 @@ public class Translate : MonoBehaviour
 	void ResetTransform() // reset ALL transforms (except position)
 	{
 		resetting = true;
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			t.rotation = Quaternion.identity;
 			t.localScale = Vector3.one;

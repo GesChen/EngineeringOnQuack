@@ -13,11 +13,13 @@ public class ContextManager {
 		_current = context;
 	}
 
-	public static void EnterContext<T>() where T : IContext {
-		if (IsInContext<T>()) return;
-
+	public static T EnterContext<T>() where T : IContext {
+		if (IsInContext<T>(out T instance)) {
+			return instance;
+		}
 		// ????
 		_current = RerouteContextTo<T>(_current);
+		return (T)_current;
 	}
 
 	// the funky thing that i dont know what to call
@@ -71,13 +73,20 @@ public class ContextManager {
 		_current = _current?.Parent;
 	}
 
-	public static bool IsInContext<T>() where T : IContext {
-		return IsInContext<T>(_current);
+	public static bool IsInContext<T>(out T instance) where T : IContext {
+		bool isIn = IsInContext(_current, out T tcon);
+		instance = tcon;
+		return isIn;
 	}
 
-	static bool IsInContext<T>(IContext context) {
+	static bool IsInContext<T>(IContext context, out T instance) {
+		instance = default;
+
 		while (context != null) {
-			if (context is T) return true;
+			if (context is T tcon) {
+				instance = tcon;
+				return true;
+			}
 			context = context.Parent;
 		}
 		return false;

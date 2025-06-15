@@ -6,56 +6,63 @@ using UnityEngine.UI;
 
 public class PComponents {
 	public class Component {
-
+		public UnityEngine.Component RealComponent;
 	}
 
 	public class Image : Component {
 		public Color Color;
-		public string SpriteResource;
+		public string SpriteLocation; // will try to use the acutal sprite first
+		public Sprite SpriteAsset; // only use the loc if this doesn't exist
 		public bool PreserveAspect; // explicity set to false only in special cases needed
 									// otherwise it makes sense to have it always true
 
-		public Image(Color color, string spriteResourcePath, bool preserveAspect) {
-			Color = color;
-			SpriteResource = spriteResourcePath;
+		public Image(
+			Color? color = null,
+			string spriteLocation = null,
+			Sprite spriteAsset = null,
+			bool preserveAspect = true) {
+			Color = color ?? Color.white;
+			SpriteLocation = spriteLocation;
+			SpriteAsset = spriteAsset;
 			PreserveAspect = preserveAspect;
 		}
 		public Image(Color color) : this(
 			color,
 			null,
+			null,
 			true) { }
+
 		public Image(string spriteResourcePath) : this(
 			Color.white,
 			spriteResourcePath,
+			null,
 			true) { }
+
+		public Image(Sprite spriteAsset) : this(
+			Color.white,
+			null,
+			spriteAsset,
+			true) { }
+
 		public Image() : this(
 			Color.white,
+			null,
 			null,
 			true) { }
 	}
 
 	public class Button : Component {
 		public bool Enabled = true;
-		public Color NormalColor		= Config.UI.Button.DefaultColor;
-		public Color HighlightedColor	= Config.UI.Button.HoverColor;
-		public Color PressedColor		= Config.UI.Button.PressedColor;
-		public Color DisabledColor		= Config.UI.Button.DisabledColor;
-
+		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
 		public delegate void ClickEvent();
 		public event ClickEvent OnClick;
 
 		public Button(
 			bool enabled,
-			Color normalColor,
-			Color highlightedColor,
-			Color pressedColor,
-			Color disabledColor,
+			Config.UI.ColorBlock colors,
 			ClickEvent onClick) {
 			Enabled = enabled;
-			NormalColor = normalColor;
-			HighlightedColor = highlightedColor;
-			PressedColor = pressedColor;
-			DisabledColor = disabledColor;
+			Colors = colors;
 			OnClick = onClick;
 		}
 
@@ -70,10 +77,19 @@ public class PComponents {
 
 			OnClick = onClick;
 			Enabled = enabled;
-			NormalColor			= normalColor		?? Config.UI.Button.DefaultColor;
-			HighlightedColor	= highlightedColor	?? Config.UI.Button.HoverColor;
-			PressedColor		= pressedColor		?? Config.UI.Button.PressedColor;
-			DisabledColor		= disabledColor		?? Config.UI.Button.DisabledColor;
+			Colors = new() {
+				NormalColor		= normalColor		?? Config.UI.Visual.DefaultColorBlock.NormalColor,
+				HoverColor		= highlightedColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
+				PressedColor	= pressedColor		?? Config.UI.Visual.DefaultColorBlock.PressedColor,
+				DisabledColor	= disabledColor		?? Config.UI.Visual.DefaultColorBlock.DisabledColor
+			};
+		}
+
+		public Button(
+			ClickEvent onClick,
+			Config.UI.ColorBlock colors) {
+			OnClick = onClick;
+			Colors = colors;
 		}
 
 		public Button(ClickEvent onClick) {
@@ -82,10 +98,7 @@ public class PComponents {
 
 		public Button() : this(
 			true,
-			Config.UI.Button.DefaultColor,
-			Config.UI.Button.HoverColor,
-			Config.UI.Button.PressedColor,
-			Config.UI.Button.DisabledColor,
+			Config.UI.Visual.DefaultColorBlock,
 			null) { }
 
 		public void TriggerClick() {
@@ -94,43 +107,51 @@ public class PComponents {
 	}
 
 	public class Text : Component {
-		public string Content;
-		public TMP_FontAsset Font = Config.UI.Visual.DefaultFont;
-		public FontStyles Style = FontStyles.Normal;
-		public FontWeight Weight = Config.UI.Visual.DefaultWeight;
-		public float FontSize = Config.UI.Visual.FontSize;
-		public Color Color = Config.UI.Visual.TextColor;
-		public TextAlignmentOptions Alignment = TextAlignmentOptions.TopLeft;
+		public string				Content;
+		public TMP_FontAsset		Font		= Config.UI.Visual.DefaultFont;
+		public FontStyles			Style		= FontStyles.Normal;
+		public FontWeight			Weight		= Config.UI.Visual.DefaultWeight;
+		public float				FontSize	= Config.UI.Visual.FontSize;
+		public Color				Color		= Config.UI.Visual.TextColor;
+		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.TopLeft;
 
 		public Text(
 				string content,
 				TMP_FontAsset font,
 				FontStyles style,
+				FontWeight weight,
 				float fontSize,
 				Color color,
 				TextAlignmentOptions alignment) {
 			Content = content;
 			Font = font;
 			Style = style;
+			Weight = weight;
 			FontSize = fontSize;
 			Color = color;
 			Alignment = alignment;
 		}
 
+		public Text(
+				string					content,
+				TMP_FontAsset			font		= null,
+				FontStyles?				style		= null,
+				FontWeight?				weight		= null,
+				float?					fontSize	= null,
+				Color?					color		= null,
+				TextAlignmentOptions?	alignment	= null) {
+			Content = content;
+
+			Font		= font != null ? font : Config.UI.Visual.DefaultFont;
+			Style		= style		?? FontStyles.Normal;
+			Weight		= weight	?? Config.UI.Visual.DefaultWeight;
+			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
+			Color		= color		?? Config.UI.Visual.TextColor;
+			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
+		}
+
 		public Text(string content) {
 			Content = content;
-		}
-
-		public Text(string content, Color color) {
-			Content = content;
-			Color = color;
-		}
-
-		public Text(
-				string content,
-				TextAlignmentOptions alignment) {
-			Content = content;
-			Alignment = alignment;
 		}
 	}
 
@@ -161,99 +182,76 @@ public class PComponents {
 
 		public Layout(
 			Type layoutType,
-			float spacing,
-			TextAnchor itemAlignment,
+			float? spacing,
+			TextAnchor? itemAlignment,
 			bool fixedSize,
 			bool fillDimension,
 			bool matchOtherDimension) {
 
-			LayoutType = layoutType;
-			Spacing = spacing;
-			ItemAlignment = itemAlignment;
-			FixedSize = fixedSize;
-			FillDimension = fillDimension;
-			MatchOtherDimension = matchOtherDimension;
+			LayoutType				= layoutType;
+			Spacing					= spacing ?? Config.UI.Visual.DefaultLayoutSpacing;
+			ItemAlignment			= itemAlignment ?? TextAnchor.UpperLeft;
+			FixedSize				= fixedSize;
+			FillDimension			= fillDimension;
+			MatchOtherDimension		= matchOtherDimension;
 		}
 
-		public static Layout Horizontal(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fixedSize,
-			bool fillHorizontally,
-			bool matchOtherDimension)
-			=> new(
-				Type.Horizontal,
-				spacing,
-				itemAlignment,
-				fixedSize,
-				fillHorizontally,
-				matchOtherDimension);
+		public static readonly HorizontalDirection Horizontal = new();
+		public static readonly VerticalDirection Vertical = new();
 
-		public static Layout HorizontalFixed(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fillHorizontally,
-			bool matchOtherDimension)
-			=> new(
-				Type.Horizontal,
-				spacing,
-				itemAlignment,
-				true,
-				fillHorizontally,
-				matchOtherDimension);
+		public abstract class Direction {
+			// i would REALLY want this to be 
+			public abstract Type Type { get; }
+			public Layout Layout(
+				bool fixedSize,
+				bool fillHorizontally,
+				bool matchOtherDimension,
+				float? spacing				= null,
+				TextAnchor? itemAlignment	= null) => 
+				new(
+					Type,
+					spacing,
+					itemAlignment,
+					fixedSize,
+					fillHorizontally,
+					matchOtherDimension);
 
-		public static Layout HorizontalDynamic(
-			float spacing,
-			TextAnchor itemAlignment)
-			=> new(
-				Type.Horizontal,
-				spacing,
-				itemAlignment,
-				false,
-				false,
-				false);
+			public Layout Fixed(
+				bool fillHorizontally,
+				bool matchOtherDimension,
+				float? spacing				= null,
+				TextAnchor? itemAlignment	= null) => 
+				new(
+					Type,
+					spacing,
+					itemAlignment,
+					true,
+					fillHorizontally,
+					matchOtherDimension);
 
-		public static Layout Vertical(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fixedSize,
-			bool fillVertically,
-			bool matchOtherDimension)
-			=> new(
-				Type.Vertical,
-				spacing,
-				itemAlignment,
-				fixedSize,
-				fillVertically,
-				matchOtherDimension);
+			public Layout Dynamic(
+				float? spacing				= null,
+				TextAnchor? itemAlignment	= null) => 
+				new(
+					Type,
+					spacing,
+					itemAlignment,
+					false,
+					false,
+					false);
+		}
 
-		public static Layout VerticalFixed(
-			float spacing,
-			TextAnchor itemAlignment,
-			bool fillVertically,
-			bool matchOtherDimension)
-			=> new(
-				Type.Vertical,
-				spacing,
-				itemAlignment,
-				true,
-				fillVertically,
-				matchOtherDimension);
+		public class HorizontalDirection : Direction {
+			public override Type Type => Type.Horizontal;
+		}
 
-		public static Layout VerticalDynamic(
-			float spacing,
-			TextAnchor itemAlignment)
-			=> new(
-				Type.Vertical,
-				spacing,
-				itemAlignment,
-				false,
-				false,
-				false);
+		public class VerticalDirection : Direction {
+			public override Type Type => Type.Vertical;
+		}
 
-		public static Layout Dynamic(
-			float spacing)
-			=> new(
+		public static Layout DynamicAll(
+			float spacing) => 
+			new(
 				Type.Dynamic,
 				spacing,
 				TextAnchor.MiddleCenter, // this makes no sense either, no differences
@@ -267,23 +265,22 @@ public class PComponents {
 	}
 
 	public class HoverTarget : Component {
-		public Color NormalColor	= Config.UI.Button.DefaultColor;
-		public Color HoverColor		= Config.UI.Button.HoverColor;
-		public float FadeDuration	= Config.UI.Button.FadeDuration;
+		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
 
-		public HoverTarget(Color normalColor, Color hoverColor, float fadeDuration) {
-			NormalColor = normalColor;
-			HoverColor = hoverColor;
-			FadeDuration = fadeDuration;
-		}
 		public HoverTarget(
 			Color? normalColor	= null, 
 			Color? hoverColor	= null, 
 			float? fadeDuration	= null) {
 			
-			NormalColor		= normalColor	?? Config.UI.Button.DefaultColor;
-			HoverColor		= hoverColor	?? Config.UI.Button.HoverColor;
-			FadeDuration	= fadeDuration	?? Config.UI.Button.FadeDuration;
+			Colors = new() { 
+				NormalColor		= normalColor	?? Config.UI.Visual.DefaultColorBlock.NormalColor,
+				HoverColor		= hoverColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
+				FadeDuration	= fadeDuration	?? Config.UI.Visual.DefaultColorBlock.FadeDuration,
+			};
+		}
+
+		public HoverTarget(Config.UI.ColorBlock colors) {
+			Colors = colors;
 		}
 
 		public HoverTarget() { }
@@ -320,6 +317,9 @@ public class PComponents {
 		}
 	}
 
+	/// <summary>
+	/// Hides sibling flyouts when hovered, requires HoverTarget
+	/// </summary>
 	public class FlyoutHider : Component {
 		// this literally just exists to exist
 		public FlyoutHider() {

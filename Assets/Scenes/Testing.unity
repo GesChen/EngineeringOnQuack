@@ -1692,7 +1692,7 @@ MeshRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
+  - {fileID: 2100000, guid: 1b049128ed493f34084a17cddcb600dc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1776,7 +1776,7 @@ HingeJoint:
   m_Anchor: {x: 0, y: 0.50000006, z: 0}
   m_Axis: {x: 0, y: 1, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: 0, y: 0, z: 0}
+  m_ConnectedAnchor: {x: 0, y: 0.10538879, z: 0}
   serializedVersion: 2
   m_UseSpring: 0
   m_Spring:
@@ -3234,6 +3234,7 @@ GameObject:
   - component: {fileID: 825630085}
   - component: {fileID: 825630086}
   - component: {fileID: 825630087}
+  - component: {fileID: 825630088}
   m_Layer: 0
   m_Name: Building
   m_TagString: Untagged
@@ -3310,6 +3311,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BuildingManager: {fileID: 825630085}
+--- !u!114 &825630088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825630083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9eb8383affad4141955d2a3f8316c0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &828502815
 GameObject:
   m_ObjectHideFlags: 0
@@ -3648,7 +3661,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
+  m_VertexColorAlwaysGammaSpace: 1
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -3940,12 +3953,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionBoxDragging: 0
-  testInterval: 3
-  minPixelsMovedForRetest: 10
-  minBoxSize: 10
-  selection: []
   selectionContainer: {fileID: 658128959}
   UIBox: {fileID: 32971815}
+  dragStartTime: 0
 --- !u!4 &1057437594
 Transform:
   m_ObjectHideFlags: 0
@@ -5036,6 +5046,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   windowManager: {fileID: 916857752}
+  downPos: {x: 0, y: 0}
 --- !u!114 &1569215807
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5534,7 +5545,7 @@ Camera:
   m_FOVAxisMode: 0
   m_Iso: 200
   m_ShutterSpeed: 0.005
-  m_Aperture: 2.8
+  m_Aperture: 1.4
   m_FocusDistance: 10
   m_FocalLength: 15
   m_BladeCount: 5
@@ -6012,7 +6023,7 @@ MeshRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
+  - {fileID: 2100000, guid: 1b049128ed493f34084a17cddcb600dc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6226,7 +6237,7 @@ MeshRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
+  - {fileID: 2100000, guid: 1b049128ed493f34084a17cddcb600dc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9506,7 +9517,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 1b049128ed493f34084a17cddcb600dc, type: 2}
+      objectReference: {fileID: 2100000, guid: d1d5778c8220dae40996df0d27871ae3, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

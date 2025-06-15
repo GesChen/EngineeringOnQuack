@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,20 +36,22 @@ public class WindowItem {
 			Position = position
 		};
 
-		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size, FourSides padding) => new() {
+		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size, FourSides? padding = null) => new() {
 			IsFixed = true,
-			Padding = padding,
+			Padding = padding ?? FourSides.Zero,
 
 			SizeDelta = size,
 			FixedPosition = position
 		};
-		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size) => new() {
+
+		public static LayoutConfig LayoutElement(Vector2 size, FourSides? padding = null) => new() {
 			IsFixed = true,
-			Padding = FourSides.Zero,
+			Padding = padding ?? FourSides.Zero,
 
 			SizeDelta = size,
-			FixedPosition = position
+			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
 		};
+
 	}
 	public LayoutConfig Layout;
 
@@ -56,6 +59,8 @@ public class WindowItem {
 	public List<PComponents.Component> Construction = new();
 
 	public List<WindowItem> SubItems = new();
+	
+	public RectTransform RealObject;
 
 	public WindowItem WithSubItems(params WindowItem[] subs) {
 		SubItems = subs.ToList();
@@ -65,12 +70,9 @@ public class WindowItem {
 		SubItems.AddRange(subs.ToList());
 		return this;
 	}
-	public WindowItem WithDescription(string description) {
+	public WindowItem AddDescription(string description) {
 		Construction.Add(new PComponents.Description(description));
 		return this;
-	}
-	public void AddDescription(string description) {
-		Construction.Add(new PComponents.Description(description));
 	}
 	public WindowItem AddComponents(params PComponents.Component[] comps) {
 		Construction.AddRange(comps);
@@ -79,6 +81,15 @@ public class WindowItem {
 	public WindowItem SetLayoutElement(PComponents.LayoutElement element) {
 		Construction.Add(element);
 		return this;
+	}
+
+	public PComponents.Component GetComponent<T>() where T : PComponents.Component {
+		var tryFind = Construction.FirstOrDefault(c => c is T);
+		
+		if (tryFind == null)
+			Debug.LogError($"No component found of type {typeof(T).Name}");
+		
+		return tryFind;
 	}
 
 	private WindowItem(
@@ -93,28 +104,46 @@ public class WindowItem {
 	}
 
 	#region Custom Constructors
-	public static WindowItem NewImage(string name, PComponents.Image image, LayoutConfig layout) 
-		=> new(
+	public static WindowItem NewImage(string name, PComponents.Image image, LayoutConfig layout) => 
+		new(
 			name,
 			layout,
 			new() { image },
 			null
 		);
-	public static WindowItem NewImage(PComponents.Image image, LayoutConfig layout)
-		=> NewImage("Image", image, layout);
+	public static WindowItem NewImage(PComponents.Image image, LayoutConfig layout) => 
+		NewImage("Image", image, layout);
 
-	public static WindowItem NewText(string name, PComponents.Text text, LayoutConfig layout) 
-		=> new(
+	public static WindowItem NewText(string name, PComponents.Text text, LayoutConfig layout) => 
+		new(
 			name,
 			layout,
 			new() { text },
 			null
 		);
-	public static WindowItem NewText(PComponents.Text text, LayoutConfig layout)
-		=> NewText("Text", text, layout);
+	public static WindowItem NewText(PComponents.Text text, LayoutConfig layout) => 
+		NewText("Text", text, layout);
 
-	public static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout, PComponents.Component inner)
-		=> new(
+	// theres GOTTA be a better way other than overloading the fuck out of these but i cant think of one rn
+	// im just gonna give em unique names for now idk
+
+	public static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout) => 
+		new(
+			name,
+			layout,
+			new() {
+				new PComponents.Image(),
+				button
+			},
+			null
+			);
+	public static WindowItem NewButton(PComponents.Button button, LayoutConfig layout) => 
+		NewButton("Button", button, layout);
+
+
+	// privating these for now cuz they're kinda weird? idk
+	private static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout, PComponents.Component inner) => 
+		new(
 			name,
 			layout,
 			new() {
@@ -130,57 +159,78 @@ public class WindowItem {
 					)
 			}
 		);
-	public static WindowItem NewButton(PComponents.Button button, LayoutConfig layout, PComponents.Component inner)
-		=> NewButton("Button", button, layout, inner);
+	private static WindowItem NewButton(PComponents.Button button, LayoutConfig layout, PComponents.Component inner) => 
+		NewButton("Button", button, layout, inner);
 
-	public static WindowItem NewButton(string name, PComponents.Button button, LayoutConfig layout)
-		=> new(
+	/// <summary>
+	/// Adds extra subitem with the image instead of setting the button's image directly
+	/// </summary>
+	public static WindowItem NewButtonCustomImageOverlay(string name, PComponents.Button button, PComponents.Image image, LayoutConfig layout) => 
+		NewButton(name, button, layout, image);
+	public static WindowItem NewButtonCustomImageOverlay(PComponents.Button button, PComponents.Image image, LayoutConfig layout) => 
+		NewButtonCustomImageOverlay("Button", button, image, layout);
+
+	/// <summary>
+	/// Replaces the button's image with a custom one. This image's color will be affected by button
+	/// transition. Reccomended to use the whitecolorblock from config.ui for this's button
+	/// </summary>
+	public static WindowItem NewButtonCustomImageComponent(string name, PComponents.Button button, PComponents.Image image, LayoutConfig layout) =>
+		new(
 			name,
 			layout,
 			new() {
-				new PComponents.Image(),
+				image,
 				button
 			},
 			null
-		);
-	public static WindowItem NewButton(PComponents.Button button, LayoutConfig layout)
-		=> NewButton("Button", button, layout);
+			);
 
-	public static WindowItem NewLayout(string name, PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items)
-		=> new(
+	public static WindowItem NewButtonCustomImageComponent(PComponents.Button button, PComponents.Image image, LayoutConfig layout) =>
+		NewButtonCustomImageComponent("Button", button, image, layout);
+
+	public static WindowItem NewLayout(string name, PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items) => 
+		new(
 			name,
 			layout,
 			new() { layoutComponent },
 			items
 			);
-	public static WindowItem NewLayout(PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items)
-		=> NewLayout("Layout", layoutComponent, layout, items);
+	public static WindowItem NewLayout(PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items) => 
+		NewLayout("Layout", layoutComponent, layout, items);
 
-	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, LayoutConfig layout)
-		=> new(
+	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, LayoutConfig layout) => 
+		new(
 			name,
 			layout,
 			new() {
 				new PComponents.Image(),
 				new PComponents.HoverTarget(),
-				trigger },
+				new PComponents.FlyoutHider(),
+				trigger
+			},
 			null
 			);
-	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout)
-		=> NewFlyoutTrigger("Flyout Trigger", trigger, layout);
+	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout) => 
+		NewFlyoutTrigger("Flyout Trigger", trigger, layout);
 
-	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout)
-		=> new(
+	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout) => 
+		new(
 			name,
 			layout,
 			new() {
 				new PComponents.Image(),
 				hover,
-				trigger },
+				new PComponents.FlyoutHider(),
+				trigger
+			},
 			null
 			);
-	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout)
-		=> NewFlyoutTrigger("Flyout Trigger", trigger, hover, layout);
+	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout) => 
+		NewFlyoutTrigger("Flyout Trigger", trigger, hover, layout);
 
 	#endregion
+
+	public override string ToString() {
+		return $"WI {Name}";
+	}
 }

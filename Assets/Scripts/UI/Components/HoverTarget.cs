@@ -9,9 +9,7 @@ public class HoverTarget : MonoBehaviour {
 
 	public bool AlreadyHasButton = false;
 
-	public Color NormalColor = Config.UI.Button.DefaultColor;
-	public Color HoverColor = Config.UI.Button.HoverColor;
-	public float FadeDuration = Config.UI.Button.FadeDuration;
+	public Config.UI.ColorBlock Colors;
 
 	public delegate void HoverStateChangeEvent(bool state);
 	public event HoverStateChangeEvent OnHoverStateChange;
@@ -25,7 +23,7 @@ public class HoverTarget : MonoBehaviour {
 
 	void OnDisable() {
 		if (!AlreadyHasButton)
-			im.color = NormalColor;
+			im.color = Colors.NormalColor;
 	}
 
 	void Start() {
@@ -33,7 +31,7 @@ public class HoverTarget : MonoBehaviour {
 		AlreadyHasButton = GetComponent<Button>() != null;
 
 		if (!AlreadyHasButton)
-			im.color = NormalColor;
+			im.color = Colors.NormalColor;
 	}
 
 	void Update() {
@@ -44,8 +42,8 @@ public class HoverTarget : MonoBehaviour {
 			OnHoverStateChange?.Invoke(m_Hovering);
 
 			if (im != null && !AlreadyHasButton) {
-				Color targetColor = m_Hovering ? HoverColor : NormalColor;
-				StartCoroutine(LerpColor(im, targetColor, FadeDuration));
+				Color targetColor = m_Hovering ? Colors.HoverColor : Colors.NormalColor;
+				StartCoroutine(LerpColor(im, targetColor, Colors.FadeDuration));
 			}
 		}
 

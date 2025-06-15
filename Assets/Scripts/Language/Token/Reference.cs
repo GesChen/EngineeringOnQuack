@@ -47,23 +47,23 @@ public partial class Token {
 				ListIndex);
 		}
 
-		public static T_Reference ExistingGlobalReference(string name, T_Data data)
-			=> new(true, false, false, name, data, null, -1);
+		public static T_Reference ExistingGlobalReference(string name, T_Data data) => 
+			new(true, false, false, name, data, null, -1);
 
-		public static T_Reference ExistingGlobalReference(T_Data data)
-			=> new(true, false, false, "", data, null, -1);
+		public static T_Reference ExistingGlobalReference(T_Data data) => 
+			new(true, false, false, "", data, null, -1);
 
-		public static T_Reference NewGlobalReference(string name)
-			=> new(false, false, false, name, null, null, -1);
+		public static T_Reference NewGlobalReference(string name) => 
+			new(false, false, false, name, null, null, -1);
 
-		public static T_Reference ExistingMemberReference(T_Reference parent, T_Data data, string name)
-			=> new(true, true, false, name, data, parent.ThisReference, -1);
+		public static T_Reference ExistingMemberReference(T_Reference parent, T_Data data, string name) => 
+			new(true, true, false, name, data, parent.ThisReference, -1);
 
-		public static T_Reference NewMemberReference(T_Reference parent, string name)
-			=> new(false, true, false, name, null, parent.ThisReference, -1);
+		public static T_Reference NewMemberReference(T_Reference parent, string name) => 
+			new(false, true, false, name, null, parent.ThisReference, -1);
 
-		public static T_Reference ExistingListItemReference(T_Reference container, T_Data data, int index)
-			=> new(true, false, true, "", data, container.ThisReference, index);
+		public static T_Reference ExistingListItemReference(T_Reference container, T_Data data, int index) => 
+			new(true, false, true, "", data, container.ThisReference, index);
 
 		public T_Data GetData() {
 			if (!Exists)

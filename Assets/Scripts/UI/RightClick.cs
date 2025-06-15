@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,14 +13,13 @@ public class RightClick : Singleton<RightClick> {
 	[HideInNormalInspector] public Vector2 downPos;
 	Flyout currentOpen;
 
-	void Awake() {
-		windowManager.RealiseWindows(RCM.GetWindows());
+	protected override void Awake() {
+		base.Awake();
 	}
-
 	void Update() {
 		if (Conatrols.Mouse.Right.PressedThisFrame) {
 			Click();
-		}else 
+		} else 
 		if (Conatrols.Mouse.Right.Pressed) {
 			if (currentOpen != null && currentOpen.gameObject.activeInHierarchy &&
 				(Conatrols.Mouse.Position - downPos).sqrMagnitude >
@@ -35,24 +35,65 @@ public class RightClick : Singleton<RightClick> {
 
 		downPos = Conatrols.Mouse.Position;
 
-		var window = WindowLookupFunc(ContextManager.Current);
+		var window = WindowLookupFunc(ContextManager.Current, out int[] indices);
 
 		if (window != null) {
 			// don't optimize this if not needed 
 			currentOpen = window.CWindow.RealisedWindow.GetComponent<Flyout>();
 
 			currentOpen.Show(Conatrols.Mouse.Position);
+
+			if (window.Switchable) {
+				window.SwitchingComponent.UpdateActiveState(indices);
+			}
+		} else {
+			Debug.LogWarning($"No right click defined for {ContextManager.Current.Name}");
 		}
 	}
-
-	MenuUtil.Window WindowLookupFunc(IContext context)
-		=> context switch {
-			C.InWorld or C.NoSelection => RCM.inworldDefaultPanel,
-			C.SingleSelection => RCM.inworldSinglePanel,
-			_ => null
-		};
-
 	public void Hide() {
 		currentOpen.Hide();
+	}
+
+	MenuUtil.Window WindowLookupFunc(IContext context, out int[] menuMask) { 
+		MenuUtil.Window window =
+			context switch {
+				C.InWorld or 
+				C.NoSelection or 
+				C.SingleSelection or 
+				C.MultiSelection or
+				C.GroupSelection => RCM.inWorldUniversalMenu,
+				_ => null,
+			};
+
+		if (window == null) {
+			menuMask = null;
+			return null;
+		}
+
+		menuMask = context switch {
+			C.InWorld or C.NoSelection => RCM.UniversalIndices.Default,
+			C.SingleSelection => RCM.UniversalIndices.SingleSelection,
+			C.MultiSelection => RCM.UniversalIndices.MultiSelection,
+			C.GroupSelection gc => GetGroupIndices(gc),
+			_ => Enumerable.Range(0, window.Items.Count).ToArray() // default just select everything
+		};
+
+		return window;
+	}
+
+	/// <summary>
+	/// Gets the universal indices for the group contexts
+	/// which needs special processing
+	/// </summary>
+	int[] GetGroupIndices(C.GroupSelection context) {
+		switch ((context.AllGroupedParts, context.AllPartsOfOneGroup)) {
+			case (false, false):	return RCM.UniversalIndices.AGPF_APOOGF;
+			case (true, false):		return RCM.UniversalIndices.AGPT_APOOGF;
+			case (false, true):		return RCM.UniversalIndices.AGPF_APOOGT;
+			case (true, true):
+				if (context.AllGroupPartsSelected)
+					return RCM.UniversalIndices.AGPT_APOOGT_AGPST;
+				else return RCM.UniversalIndices.AGPT_APOOGT_AGPSF;
+		}
 	}
 }

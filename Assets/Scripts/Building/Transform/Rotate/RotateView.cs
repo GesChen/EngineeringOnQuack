@@ -74,7 +74,7 @@ public class RotateView : MonoBehaviour
 	}
 	void ResetTransform()
 	{
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			t.rotation = Quaternion.identity;
 		}

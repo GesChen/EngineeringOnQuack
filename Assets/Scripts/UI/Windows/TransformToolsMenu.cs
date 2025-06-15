@@ -14,44 +14,46 @@ public class TransformToolsMenu {
 				Movable = true,
 				Resizable = true,
 				Size = CWindow.Configuration.FreeSize(new Vector2(300, 100) * .75f),
-				Position = UIPosition.AnchoredOffset(UIPosition.BottomCenter, new(0, 100))
+				Position = UIPosition.AnchoredOffset(UIPosition.BottomCenter, new(0, 100)),
+				Closable = false,
+				HideOnStart = false
 			},
 			Items = new WindowItem[] {
 				WindowItem.NewLayout(
 					"Transform controls",
-					PComponents.Layout.Dynamic(5f),
+					PComponents.Layout.DynamicAll(5f),
 					WindowItem.LayoutConfig.DynamicLayout(
 						FourSides.Zero,
 						FourSides.Even(5),
 						FourSides.Zero
 					),
 					new() {
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomImageOverlay(
 							"Translate",
 							new(() => onTranslatePressed?.Invoke()),
+							new PComponents.Image(Config.Locations.IconsFolder + "move"),
 							new() {
 								Position = new(0, 2/3f, 0, 0),
 								Margins = new(5)
-							},
-							new PComponents.Image("Icons/move")
+							}
 						),
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomImageOverlay(
 							"Rotate",
 							new(() => onRotatePressed?.Invoke()),
+							new PComponents.Image(Config.Locations.IconsFolder + "rotate"),
 							new() {
 								Position = new(0, 1/3f, 0, 1/3f),
 								Margins = new(5)
-							},
-							new PComponents.Image("Icons/rotate")
+							}
 						),
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomImageOverlay(
 							"Scale",
 							new(() => onScalePressed?.Invoke()),
+							new PComponents.Image(Config.Locations.IconsFolder + "scale2"),
 							new() {
 								Position = new(0, 0, 0, 2/3f),
 								Margins = new(5)
-							},
-							new PComponents.Image("Icons/scale")
+							}
 						)
 					})
 			}

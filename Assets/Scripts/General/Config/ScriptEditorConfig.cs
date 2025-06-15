@@ -2,15 +2,15 @@ using UnityEngine;
 
 public static partial class Config {
 	public static class ScriptEditor {
-		public static readonly int		RepeatDelayMs = 500;
-		public static readonly int		RepeatRateCPS = 31;
-		public static readonly int		CursorBlinkRateMs = 530;
-		public static readonly int		MultiClickThresholdMs = 500;
+		public static readonly int	RepeatDelayMs = 500;
+		public static readonly int	RepeatRateCPS = 31;
+		public static readonly int	CursorBlinkRateMs = 530;
+		public static readonly int	MultiClickThresholdMs = 500;
 
-		public static readonly int		MaxClipboardSize = 100;
-		public static readonly int		MaxCaretViewRecoverySteps = 100;
-		public static readonly int		MaxHistoryLength = 100;
-		public static readonly int		NewHistoryPauseThresholdMs = 1500;
+		public static readonly int	MaxClipboardSize = 100;
+		public static readonly int	MaxCaretViewRecoverySteps = 100;
+		public static readonly int	MaxHistoryLength = 100;
+		public static readonly int	NewHistoryPauseThresholdMs = 1500;
 
 		public static class Colors {
 			public static readonly Color Keyword	= new Color(206	, 23	, 23	) / 255f;

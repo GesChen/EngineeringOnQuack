@@ -1,15 +1,14 @@
+using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class SelectionManager : Singleton<SelectionManager> {
 	public bool selectionBoxDragging;
 
-	//public int testInterval;
-	//public int minPixelsMovedForRetest;
-	[Tooltip("Makes sure tiny boxes dont select a bunch of stuff by accident")]
-	public float minBoxSize;
+	public List<Transform> Selection { get; private set; }
+	public Part[] PartSelection { get; private set; }
 
-	public List<Transform> selection;
 	public Transform selectionContainer;
 
 	public RectTransform UIBox;
@@ -17,19 +16,90 @@ public class SelectionManager : Singleton<SelectionManager> {
 	List<Transform> dragStartSelections;
 	Vector2 mousePos;
 	Vector2 dragStart;
+	Vector2 dragStartPos;
 	bool dragging;
-	Vector2 mouseDownStartPos;
-	float mouseDownStartTime;
-	bool selectionChanged;
+
+	bool selectionChanged = false;
+	bool overrideGroupSelect = false;
+	
+	/*{
+		get { return m_changed; }
+		set {
+			if (value)
+				OnSelectionChanged?.Invoke();
+			
+			m_changed = value; 
+		}
+	}*/
+	[HideInNormalInspector] public float dragStartTime;
+
+	public event Action OnSelectionChanged;
+
+	void Start() {
+		Selection = new();
+		PartSelection = new Part[0];
+
+		Subscribe();
+	}
+
+	void Subscribe() {
+		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
+	}
+
+	bool UpdateGroupContext() {
+		// selection guaranteed to be multiple or 1 already 
+
+		bool allPartsOfOneGroup = true;
+		bool allGroupedParts = true;
+		PartGroup group = null;
+		foreach (var part in PartSelection) {
+			if (part.Group != null) {
+				group ??= part.Group;
+
+				if (group != part.Group) {
+					allPartsOfOneGroup = false;
+				}
+			} else {
+				allGroupedParts = false;
+			}
+		}
+
+		// group should not be null if any were in group
+		if (group == null) return false;
+
+		var context = ContextManager.EnterContext<Contexts.GroupSelection>();
+		context.AllGroupedParts = allGroupedParts;
+		context.AllPartsOfOneGroup = allPartsOfOneGroup;
+		context.AllGroupPartsSelected = false;
+
+		if (allPartsOfOneGroup && allGroupedParts) {
+			// check if all part in group are selected
+			// naive approach is just best KISS
+			bool allSelected = true;
+			foreach (var part in group.Parts) {
+				if (!PartSelection.Contains(part)) {
+					allSelected = false;
+					break;
+				}
+			}
+
+			context.AllGroupPartsSelected = allSelected;
+		}
+		return true;
+	}
 
 	void Update() {
 		HandleInput();
 		HandleContainer();
+
+		CheckForGroups();
+		HandleContainer(); // selection might have changed from groups
+
 		UpdateContext();
 	}
 
 	void HandleInput() {
-		if (ContextManager.IsInContext<Contexts.OverUI>()) return;
+		if (ContextManager.IsInContext<Contexts.OverUI>(out _)) return;
 		CheckCancel();
 
 		mousePos = Conatrols.Mouse.Position;
@@ -37,24 +107,34 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// detect mouse down
 		if (Conatrols.Mouse.Left.PressedThisFrame) {
 			dragging = !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
-			
+
 			dragStart = mousePos;
-			dragStartSelections = selection;
-			mouseDownStartTime = Time.time;
-			mouseDownStartPos = mousePos;
+			dragStartSelections = Selection;
+
+			if (dragging) {
+				dragStartPos = mousePos;
+				dragStartTime = Time.time;
+			}
 		}
 
-		// detect drag start
+		// no selection right click check
+		if (Conatrols.Mouse.Right.PressedThisFrame && Selection.Count == 0)
+			ClickCheck();
 
 		// detect mouse up
-		if (Conatrols.Mouse.Left.ReleasedThisFrame && !BuildingManager.Instance.TransformTools.hovering) {
+		if (!Conatrols.Mouse.Left.Pressed && !BuildingManager.Instance.TransformTools.hovering) {
+			if (dragging) {
+				if (Vector2.Distance(mousePos, dragStartPos) < Config.Input.clickMaxMovement)
+					ClickCheck();
+				else
+					FindObjectsInsideBounds(dragStart, mousePos);
+			}
 			dragging = false;
-
+/*
 			if (Time.time - mouseDownStartTime < Config.Input.clickMaxTimeMs / 1000f &&
 				Vector2.Distance(mousePos, mouseDownStartPos) < Config.Input.clickMaxDist) { // counts as a click
 				ClickCheck();
-			} else
-				FindObjectsInsideBounds(dragStart, mousePos);
+			} else*/
 		}
 
 		selectionBoxDragging = dragging;
@@ -67,15 +147,31 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void CheckCancel() {
 		if (Conatrols.IM.Building.CancelSelection.WasPressedThisFrame()) {
-			selection.Clear(); // it cant be this simple rights
+			Selection.Clear(); // it cant be this simple rights
 			selectionChanged = true;
 		}
 	}
 
 	void HandleContainer() {
 		if (selectionChanged) {
+			PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
+
 			UpdateContainer();
 			selectionChanged = false;
+		}
+	}
+
+	void CheckForGroups() {
+		if (overrideGroupSelect) return;
+
+		// if any selected part is in a group, select parts in that group not already in selection
+		foreach (var part in PartSelection) {
+			if (part.Group != null)
+				foreach (var item in part.Group.Parts)
+					if (!PartSelection.Contains(item)) {
+						Selection.Add(item.transform);
+						selectionChanged = true;
+					}
 		}
 	}
 
@@ -86,22 +182,19 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void FindObjectsInsideBounds(Vector2 boundsStart, Vector2 boundsEnd) {
-		// check size
-		if ((boundsStart - boundsEnd).sqrMagnitude < minBoxSize) return;
-
 		// handle multiselection
 		if (Conatrols.IM.Building.Multiselect.IsPressed())
-			selection = dragStartSelections;
+			Selection = dragStartSelections;
 		else
-			selection = new();
+			Selection = new();
 
 		Camera maincamera = Camera.main;
 		foreach (Part part in BuildingManager.Instance.Parts) {
 			if (part == null) continue;
 
 			if (PartIntersectsWithSelectionBox(part, boundsStart, boundsEnd, maincamera) &&
-				!selection.Contains(part.transform)) {
-				selection.Add(part.transform);
+				!Selection.Contains(part.transform)) {
+				Selection.Add(part.transform);
 			}
 		}
 
@@ -126,7 +219,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 			Vector2 ss2 = maincamera.WorldToScreenPoint(v2);
 			Vector2 ss3 = maincamera.WorldToScreenPoint(v3);
 
-			bool intersect = RectangleTriangleIntersect(corner1, corner2, ss1, ss2, ss3);
+			bool intersect = Intersections.RectangleTriangle2D(corner1, corner2, ss1, ss2, ss3);
 
 			if (intersect)
 				return true;
@@ -188,86 +281,9 @@ public class SelectionManager : Singleton<SelectionManager> {
 		return intersecting;
 	}
 
-	bool RectangleTriangleIntersect(
-		Vector2 rectCorner1, Vector2 rectCorner2,
-		Vector2 triCorner1, Vector2 triCorner2, Vector2 triCorner3) {
-		Vector2 rectMin = Vector2.Min(rectCorner1, rectCorner2);
-		Vector2 rectMax = Vector2.Max(rectCorner1, rectCorner2);
-
-		Vector2 triMin = Vector2.Min(triCorner1, Vector2.Min(triCorner2, triCorner3));
-		Vector2 triMax = Vector2.Max(triCorner1, Vector2.Max(triCorner2, triCorner3));
-
-		// do the bounds not intersect/overlap?
-		if (rectMax.x < triMin.x || rectMin.x > triMax.x || rectMax.y < triMin.y || rectMin.y > triMax.y)
-			return false;
-
-		// any vert of tri in rect (axis aligned)
-		Vector2[] triCorners = new Vector2[3] { triCorner1, triCorner2, triCorner3 };
-		foreach (Vector2 p in triCorners) {
-			bool inBounds =
-				p.x >= rectMin.x && p.x <= rectMax.x &&
-				p.y >= rectMin.y && p.y <= rectMax.y;
-
-			if (inBounds)
-				return true;
-		}
-
-		// any vert of rect in tri
-		Vector2[] rectCorners = new Vector2[2] { rectCorner1, rectCorner2 };
-		foreach (Vector2 p in rectCorners) {
-			float d1, d2, d3;
-			bool has_neg, has_pos;
-
-			d1 = Sign(p, triCorner1, triCorner2);
-			d2 = Sign(p, triCorner2, triCorner3);
-			d3 = Sign(p, triCorner3, triCorner1);
-
-			has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-			has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-			if (!(has_neg && has_pos)) // intersecting
-				return true;
-		}
-
-		// any edges intersect
-		// optimization: only need to test 2 edges, at least one must intersect if they do
-		for (int i = 0; i < 2; i++) // triangle verts iter
-		{
-			// test all 4 edges of rectangle against edge
-			Vector2 triEdgep0 = triCorners[i];
-			Vector2 triEdgep1 = triCorners[(i + 1) % 3];
-			if (LineSegmentsIntersect(triEdgep0, triEdgep1,
-				new(rectCorner1.x, rectCorner1.y), new(rectCorner1.x, rectCorner2.y)) ||
-				LineSegmentsIntersect(triEdgep0, triEdgep1,
-				new(rectCorner1.x, rectCorner2.y), new(rectCorner2.x, rectCorner2.y)) ||
-				LineSegmentsIntersect(triEdgep0, triEdgep1,
-				new(rectCorner2.x, rectCorner2.y), new(rectCorner2.x, rectCorner1.y)) ||
-				LineSegmentsIntersect(triEdgep0, triEdgep1,
-				new(rectCorner2.x, rectCorner1.y), new(rectCorner1.x, rectCorner1.y)))
-
-				return true;
-		}
-
-		return false;
-	}
-
-	float Sign(Vector3 p1, Vector3 p2, Vector3 p3) {
-		return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-	}
-
-	// modified https://stackoverflow.com/a/1968345
-	bool LineSegmentsIntersect(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3) {
-		Vector2 s1 = p1 - p0;
-		Vector2 s2 = p3 - p2;
-
-		float denom = 1 / (-s2.x * s1.y + s1.x * s2.y);
-		float s = (-s1.y * (p0.x - p2.x) + s1.x * (p0.y - p2.y)) * denom;
-		float t = (s2.x * (p0.y - p2.y) - s2.y * (p0.x - p2.x)) * denom;
-
-		return s >= 0 && s <= 1 && t >= 0 && t <= 1; // actual detection logic
-	}
-
 	void ClickCheck() {
 		selectionChanged = true;
+		overrideGroupSelect = false;
 
 		Transform selected = null;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit)) {
@@ -278,17 +294,24 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		if (selected == null) {
 			if (!Conatrols.IM.Building.Multiselect.IsPressed())
-				selection = new();
+				Selection = new();
 			return;
 		}
 
-		if (Conatrols.IM.Building.Multiselect.IsPressed()) {   // toggle object in selection
-			if (selection.Contains(selected))
-				selection.Remove(selected);
+		if (Conatrols.IM.Building.Multiselect.IsPressed()) { // toggle object in selection
+			if (Selection.Contains(selected))
+				Selection.Remove(selected);
 			else
-				selection.Add(selected);
-		} else
-			selection = new() { selected };
+				Selection.Add(selected);
+		} else {
+			bool partOfGroup = selected.GetComponent<Part>().Group != null;
+			bool alreadySelected = Selection.Contains(selected);
+
+			if (partOfGroup && alreadySelected)
+				overrideGroupSelect = true;
+
+			Selection = new() { selected };
+		}
 	}
 
 	void GetMeshVertices(Transform target, ref List<Vector3> allVertices) {
@@ -310,13 +333,13 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// (this is put before return, in case selection is empty then this will not happen
 		foreach (Part p in BuildingManager.Instance.Parts) {
 			Transform t = p.transform;
-			if (!selection.Contains(t)) {
+			if (!Selection.Contains(t)) {
 				t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
 			}
 		}
 
 		// then break if the selection is empty
-		if (selection.Count == 0) {
+		if (Selection.Count == 0) {
 			BuildingManager.Instance.TransformTools.active = false;
 			selectionContainer.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 			selectionContainer.transform.localScale = Vector3.one;
@@ -328,30 +351,40 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		// handle position
 		Vector3 totalPosition = Vector3.zero;
-		foreach (Transform t in selection) {
+		foreach (Transform t in Selection) {
 			t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
 			totalPosition += t.position;
 		}
 
-		selectionContainer.position = totalPosition / selection.Count;
+		selectionContainer.position = totalPosition / Selection.Count;
 		BuildingManager.Instance.TransformTools.UpdatePosition();
 
 		// handle rotation (local, single selection, otherwise will act globally)
-		if (selection.Count == 1 && BuildingManager.Instance.TransformTools.local)
-			selectionContainer.rotation = selection[0].transform.rotation;
+		if (Selection.Count == 1 && BuildingManager.Instance.TransformTools.local)
+			selectionContainer.rotation = Selection[0].transform.rotation;
 		else
 			selectionContainer.rotation = Quaternion.identity;
 
-		foreach (Transform t in selection) {
+		foreach (Transform t in Selection) {
 			t.SetParent(selectionContainer, true);
 		}
+
+		OnSelectionChanged?.Invoke();
 	}
 
 	void UpdateContext() {
-		ContextObserver.Instance.selectionCount = selection.Count;
+		ContextObserver.Instance.selectionCount = Selection.Count;
 	}
 
 	public void Clear() {
-		selection.Clear();
+		Selection.Clear();
+
+		selectionChanged = true;
+	}
+
+	public void ManuallySelect(params Transform[] transforms) {
+		Selection = transforms.ToList();
+
+		selectionChanged = true;
 	}
 }

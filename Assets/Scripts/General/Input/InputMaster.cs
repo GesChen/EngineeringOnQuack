@@ -49,7 +49,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""Move"",
                     ""type"": ""Button"",
                     ""id"": ""bdb817d0-025f-4a5c-bf63-baf8d69a8e70"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -87,6 +87,17 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""88b00e85-4a89-4624-a4bc-49e76472de0a"",
                     ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PerfOrbit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a12ce647-492b-48d7-91cf-e98412555501"",
+                    ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -433,6 +444,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Delete"",
+                    ""type"": ""Button"",
+                    ""id"": ""19d66a4a-dd90-482f-be32-a7f778b2782f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -477,6 +497,28 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""CancelSelection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""96ffd0f6-6cab-4319-bbff-6be6d3d61c3f"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Delete"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2f1c76b3-bdb5-46ba-a49b-cb43ba47f23c"",
+                    ""path"": ""<Keyboard>/delete"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Delete"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -671,58 +713,49 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ]
         },
         {
-            ""name"": ""TextEditor"",
+            ""name"": ""Editing"",
             ""id"": ""77842c35-44f9-40cb-bdab-f38997357467"",
             ""actions"": [
                 {
-                    ""name"": ""LeftClick"",
+                    ""name"": ""Copy"",
                     ""type"": ""Button"",
-                    ""id"": ""714b66db-8cbe-4453-aabb-51df3a6cf93f"",
+                    ""id"": ""629eaba2-4d42-48ab-a0e9-2ab856f14c14"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""RightClick"",
+                    ""name"": ""Cut"",
                     ""type"": ""Button"",
-                    ""id"": ""20f31ab6-f0b2-4c65-bd32-6d7c7cc85100"",
+                    ""id"": ""feaf2563-b628-47b0-89b2-84bb41dadef3"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""MiddleClick"",
+                    ""name"": ""Paste"",
                     ""type"": ""Button"",
-                    ""id"": ""bf49013c-4df3-4d3a-b250-08b2d4087a1c"",
+                    ""id"": ""755870bc-c402-4d90-8f56-830335afde7d"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Ctrl"",
+                    ""name"": ""Undo"",
                     ""type"": ""Button"",
-                    ""id"": ""b0136dcb-db16-4f52-abe7-cd6c3a7841c5"",
+                    ""id"": ""cf6f3147-0946-433a-81f8-c01a1ab9b985"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Shift"",
+                    ""name"": ""Redo"",
                     ""type"": ""Button"",
-                    ""id"": ""745bbb49-107d-4b43-aa2e-89b8a955f504"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Alt"",
-                    ""type"": ""Button"",
-                    ""id"": ""4efd7639-6cf7-499d-baa4-ff440dff1799"",
+                    ""id"": ""6741cca6-c948-4f1a-92a7-cf97e41a93d3"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -731,70 +764,213 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ],
             ""bindings"": [
                 {
-                    ""name"": """",
-                    ""id"": ""c5976752-0227-4248-a1f2-0fef5beda45d"",
-                    ""path"": ""<Mouse>/leftButton"",
+                    ""name"": ""One Modifier"",
+                    ""id"": ""8cabe193-ef2a-4d31-b260-a5c18208b444"",
+                    ""path"": ""OneModifier"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""LeftClick"",
-                    ""isComposite"": false,
+                    ""action"": ""Copy"",
+                    ""isComposite"": true,
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""21ab7b9c-b62b-4f44-ae20-45ffb5564d48"",
-                    ""path"": ""<Mouse>/rightButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""RightClick"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8c329dbf-6984-4cf2-8d57-60263426c8bc"",
-                    ""path"": ""<Mouse>/middleButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MiddleClick"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b81a180e-27c2-4a8e-8d07-7e1cf7d7d7ca"",
+                    ""name"": ""modifier"",
+                    ""id"": ""452573b7-c64f-454d-8ef1-75d7c3630647"",
                     ""path"": ""<Keyboard>/ctrl"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Ctrl"",
+                    ""action"": ""Copy"",
                     ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""972ded31-b930-4a95-8c50-e2bc53096d24"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Copy"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""8435c87d-a9aa-4513-94db-4bef752778b6"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cut"",
+                    ""isComposite"": true,
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""06c774c8-0fbb-4762-b15d-ded2492a930f"",
+                    ""name"": ""modifier"",
+                    ""id"": ""eecc0a06-dbc1-4a3b-9aef-30d2548f79ca"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cut"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""5e732104-fdcb-4edc-8941-91f0a27b9c42"",
+                    ""path"": ""<Keyboard>/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cut"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""f3ffa939-265b-49f4-b9e9-e1188c0129d1"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Paste"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""91dc0eef-806c-4a84-af56-82319ddb799f"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Paste"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""96aff9b5-bb6d-4f7f-95a9-5a1f3d904a45"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Paste"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""dd2d43f8-bb29-4696-8d33-30c3faa8855b"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""88600de7-62c2-4126-be0e-981adcbc338b"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""4437b5ff-ee3f-488a-bc81-9ac52424b907"",
+                    ""path"": ""<Keyboard>/z"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""8fdc3b62-8f0a-44dd-bdb7-716a6e03db16"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""29a4f4ee-ac89-4cf8-8e98-6bb62bae26c5"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""5619727a-1c26-4021-a3eb-20339e6c2045"",
+                    ""path"": ""<Keyboard>/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""Two Modifiers"",
+                    ""id"": ""2c9c887b-d5c5-4bfc-80b6-f41d64590c99"",
+                    ""path"": ""TwoModifiers"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier1"",
+                    ""id"": ""3c506552-24ad-4963-99cf-e7ac2623346d"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""modifier2"",
+                    ""id"": ""c0ccbf59-0459-4700-8b6b-14e3d354873f"",
                     ""path"": ""<Keyboard>/shift"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Shift"",
+                    ""action"": ""Redo"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": false
+                    ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""b3488399-9a83-4c3a-beaf-99376c3fdbbf"",
-                    ""path"": ""<Keyboard>/alt"",
+                    ""name"": ""binding"",
+                    ""id"": ""a9141fc5-3a65-4276-a2c3-4ac919c6b600"",
+                    ""path"": ""<Keyboard>/z"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Alt"",
+                    ""action"": ""Redo"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": false
+                    ""isPartOfComposite"": true
                 }
             ]
         },
@@ -1398,6 +1574,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Building_Snap = m_Building.FindAction("Snap", throwIfNotFound: true);
         m_Building_Multiselect = m_Building.FindAction("Multiselect", throwIfNotFound: true);
         m_Building_CancelSelection = m_Building.FindAction("CancelSelection", throwIfNotFound: true);
+        m_Building_Delete = m_Building.FindAction("Delete", throwIfNotFound: true);
         // Mouse
         m_Mouse = asset.FindActionMap("Mouse", throwIfNotFound: true);
         m_Mouse_Left = m_Mouse.FindAction("Left", throwIfNotFound: true);
@@ -1409,14 +1586,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Mouse_Position = m_Mouse.FindAction("Position", throwIfNotFound: true);
         m_Mouse_Delta = m_Mouse.FindAction("Delta", throwIfNotFound: true);
         m_Mouse_Scroll = m_Mouse.FindAction("Scroll", throwIfNotFound: true);
-        // TextEditor
-        m_TextEditor = asset.FindActionMap("TextEditor", throwIfNotFound: true);
-        m_TextEditor_LeftClick = m_TextEditor.FindAction("LeftClick", throwIfNotFound: true);
-        m_TextEditor_RightClick = m_TextEditor.FindAction("RightClick", throwIfNotFound: true);
-        m_TextEditor_MiddleClick = m_TextEditor.FindAction("MiddleClick", throwIfNotFound: true);
-        m_TextEditor_Ctrl = m_TextEditor.FindAction("Ctrl", throwIfNotFound: true);
-        m_TextEditor_Shift = m_TextEditor.FindAction("Shift", throwIfNotFound: true);
-        m_TextEditor_Alt = m_TextEditor.FindAction("Alt", throwIfNotFound: true);
+        // Editing
+        m_Editing = asset.FindActionMap("Editing", throwIfNotFound: true);
+        m_Editing_Copy = m_Editing.FindAction("Copy", throwIfNotFound: true);
+        m_Editing_Cut = m_Editing.FindAction("Cut", throwIfNotFound: true);
+        m_Editing_Paste = m_Editing.FindAction("Paste", throwIfNotFound: true);
+        m_Editing_Undo = m_Editing.FindAction("Undo", throwIfNotFound: true);
+        m_Editing_Redo = m_Editing.FindAction("Redo", throwIfNotFound: true);
         // original_UI
         m_original_UI = asset.FindActionMap("original_UI", throwIfNotFound: true);
         m_original_UI_Navigate = m_original_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1438,7 +1614,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, InputMaster.UI.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Building.enabled, "This will cause a leak and performance issues, InputMaster.Building.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Mouse.enabled, "This will cause a leak and performance issues, InputMaster.Mouse.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_TextEditor.enabled, "This will cause a leak and performance issues, InputMaster.TextEditor.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Editing.enabled, "This will cause a leak and performance issues, InputMaster.Editing.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_original_UI.enabled, "This will cause a leak and performance issues, InputMaster.original_UI.Disable() has not been called.");
     }
 
@@ -1683,6 +1859,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Building_Snap;
     private readonly InputAction m_Building_Multiselect;
     private readonly InputAction m_Building_CancelSelection;
+    private readonly InputAction m_Building_Delete;
     public struct BuildingActions
     {
         private @InputMaster m_Wrapper;
@@ -1691,6 +1868,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         public InputAction @Snap => m_Wrapper.m_Building_Snap;
         public InputAction @Multiselect => m_Wrapper.m_Building_Multiselect;
         public InputAction @CancelSelection => m_Wrapper.m_Building_CancelSelection;
+        public InputAction @Delete => m_Wrapper.m_Building_Delete;
         public InputActionMap Get() { return m_Wrapper.m_Building; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1712,6 +1890,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @CancelSelection.started += instance.OnCancelSelection;
             @CancelSelection.performed += instance.OnCancelSelection;
             @CancelSelection.canceled += instance.OnCancelSelection;
+            @Delete.started += instance.OnDelete;
+            @Delete.performed += instance.OnDelete;
+            @Delete.canceled += instance.OnDelete;
         }
 
         private void UnregisterCallbacks(IBuildingActions instance)
@@ -1728,6 +1909,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @CancelSelection.started -= instance.OnCancelSelection;
             @CancelSelection.performed -= instance.OnCancelSelection;
             @CancelSelection.canceled -= instance.OnCancelSelection;
+            @Delete.started -= instance.OnDelete;
+            @Delete.performed -= instance.OnDelete;
+            @Delete.canceled -= instance.OnDelete;
         }
 
         public void RemoveCallbacks(IBuildingActions instance)
@@ -1856,91 +2040,83 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     }
     public MouseActions @Mouse => new MouseActions(this);
 
-    // TextEditor
-    private readonly InputActionMap m_TextEditor;
-    private List<ITextEditorActions> m_TextEditorActionsCallbackInterfaces = new List<ITextEditorActions>();
-    private readonly InputAction m_TextEditor_LeftClick;
-    private readonly InputAction m_TextEditor_RightClick;
-    private readonly InputAction m_TextEditor_MiddleClick;
-    private readonly InputAction m_TextEditor_Ctrl;
-    private readonly InputAction m_TextEditor_Shift;
-    private readonly InputAction m_TextEditor_Alt;
-    public struct TextEditorActions
+    // Editing
+    private readonly InputActionMap m_Editing;
+    private List<IEditingActions> m_EditingActionsCallbackInterfaces = new List<IEditingActions>();
+    private readonly InputAction m_Editing_Copy;
+    private readonly InputAction m_Editing_Cut;
+    private readonly InputAction m_Editing_Paste;
+    private readonly InputAction m_Editing_Undo;
+    private readonly InputAction m_Editing_Redo;
+    public struct EditingActions
     {
         private @InputMaster m_Wrapper;
-        public TextEditorActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @LeftClick => m_Wrapper.m_TextEditor_LeftClick;
-        public InputAction @RightClick => m_Wrapper.m_TextEditor_RightClick;
-        public InputAction @MiddleClick => m_Wrapper.m_TextEditor_MiddleClick;
-        public InputAction @Ctrl => m_Wrapper.m_TextEditor_Ctrl;
-        public InputAction @Shift => m_Wrapper.m_TextEditor_Shift;
-        public InputAction @Alt => m_Wrapper.m_TextEditor_Alt;
-        public InputActionMap Get() { return m_Wrapper.m_TextEditor; }
+        public EditingActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Copy => m_Wrapper.m_Editing_Copy;
+        public InputAction @Cut => m_Wrapper.m_Editing_Cut;
+        public InputAction @Paste => m_Wrapper.m_Editing_Paste;
+        public InputAction @Undo => m_Wrapper.m_Editing_Undo;
+        public InputAction @Redo => m_Wrapper.m_Editing_Redo;
+        public InputActionMap Get() { return m_Wrapper.m_Editing; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
         public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(TextEditorActions set) { return set.Get(); }
-        public void AddCallbacks(ITextEditorActions instance)
+        public static implicit operator InputActionMap(EditingActions set) { return set.Get(); }
+        public void AddCallbacks(IEditingActions instance)
         {
-            if (instance == null || m_Wrapper.m_TextEditorActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_TextEditorActionsCallbackInterfaces.Add(instance);
-            @LeftClick.started += instance.OnLeftClick;
-            @LeftClick.performed += instance.OnLeftClick;
-            @LeftClick.canceled += instance.OnLeftClick;
-            @RightClick.started += instance.OnRightClick;
-            @RightClick.performed += instance.OnRightClick;
-            @RightClick.canceled += instance.OnRightClick;
-            @MiddleClick.started += instance.OnMiddleClick;
-            @MiddleClick.performed += instance.OnMiddleClick;
-            @MiddleClick.canceled += instance.OnMiddleClick;
-            @Ctrl.started += instance.OnCtrl;
-            @Ctrl.performed += instance.OnCtrl;
-            @Ctrl.canceled += instance.OnCtrl;
-            @Shift.started += instance.OnShift;
-            @Shift.performed += instance.OnShift;
-            @Shift.canceled += instance.OnShift;
-            @Alt.started += instance.OnAlt;
-            @Alt.performed += instance.OnAlt;
-            @Alt.canceled += instance.OnAlt;
+            if (instance == null || m_Wrapper.m_EditingActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_EditingActionsCallbackInterfaces.Add(instance);
+            @Copy.started += instance.OnCopy;
+            @Copy.performed += instance.OnCopy;
+            @Copy.canceled += instance.OnCopy;
+            @Cut.started += instance.OnCut;
+            @Cut.performed += instance.OnCut;
+            @Cut.canceled += instance.OnCut;
+            @Paste.started += instance.OnPaste;
+            @Paste.performed += instance.OnPaste;
+            @Paste.canceled += instance.OnPaste;
+            @Undo.started += instance.OnUndo;
+            @Undo.performed += instance.OnUndo;
+            @Undo.canceled += instance.OnUndo;
+            @Redo.started += instance.OnRedo;
+            @Redo.performed += instance.OnRedo;
+            @Redo.canceled += instance.OnRedo;
         }
 
-        private void UnregisterCallbacks(ITextEditorActions instance)
+        private void UnregisterCallbacks(IEditingActions instance)
         {
-            @LeftClick.started -= instance.OnLeftClick;
-            @LeftClick.performed -= instance.OnLeftClick;
-            @LeftClick.canceled -= instance.OnLeftClick;
-            @RightClick.started -= instance.OnRightClick;
-            @RightClick.performed -= instance.OnRightClick;
-            @RightClick.canceled -= instance.OnRightClick;
-            @MiddleClick.started -= instance.OnMiddleClick;
-            @MiddleClick.performed -= instance.OnMiddleClick;
-            @MiddleClick.canceled -= instance.OnMiddleClick;
-            @Ctrl.started -= instance.OnCtrl;
-            @Ctrl.performed -= instance.OnCtrl;
-            @Ctrl.canceled -= instance.OnCtrl;
-            @Shift.started -= instance.OnShift;
-            @Shift.performed -= instance.OnShift;
-            @Shift.canceled -= instance.OnShift;
-            @Alt.started -= instance.OnAlt;
-            @Alt.performed -= instance.OnAlt;
-            @Alt.canceled -= instance.OnAlt;
+            @Copy.started -= instance.OnCopy;
+            @Copy.performed -= instance.OnCopy;
+            @Copy.canceled -= instance.OnCopy;
+            @Cut.started -= instance.OnCut;
+            @Cut.performed -= instance.OnCut;
+            @Cut.canceled -= instance.OnCut;
+            @Paste.started -= instance.OnPaste;
+            @Paste.performed -= instance.OnPaste;
+            @Paste.canceled -= instance.OnPaste;
+            @Undo.started -= instance.OnUndo;
+            @Undo.performed -= instance.OnUndo;
+            @Undo.canceled -= instance.OnUndo;
+            @Redo.started -= instance.OnRedo;
+            @Redo.performed -= instance.OnRedo;
+            @Redo.canceled -= instance.OnRedo;
         }
 
-        public void RemoveCallbacks(ITextEditorActions instance)
+        public void RemoveCallbacks(IEditingActions instance)
         {
-            if (m_Wrapper.m_TextEditorActionsCallbackInterfaces.Remove(instance))
+            if (m_Wrapper.m_EditingActionsCallbackInterfaces.Remove(instance))
                 UnregisterCallbacks(instance);
         }
 
-        public void SetCallbacks(ITextEditorActions instance)
+        public void SetCallbacks(IEditingActions instance)
         {
-            foreach (var item in m_Wrapper.m_TextEditorActionsCallbackInterfaces)
+            foreach (var item in m_Wrapper.m_EditingActionsCallbackInterfaces)
                 UnregisterCallbacks(item);
-            m_Wrapper.m_TextEditorActionsCallbackInterfaces.Clear();
+            m_Wrapper.m_EditingActionsCallbackInterfaces.Clear();
             AddCallbacks(instance);
         }
     }
-    public TextEditorActions @TextEditor => new TextEditorActions(this);
+    public EditingActions @Editing => new EditingActions(this);
 
     // original_UI
     private readonly InputActionMap m_original_UI;
@@ -2127,6 +2303,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnSnap(InputAction.CallbackContext context);
         void OnMultiselect(InputAction.CallbackContext context);
         void OnCancelSelection(InputAction.CallbackContext context);
+        void OnDelete(InputAction.CallbackContext context);
     }
     public interface IMouseActions
     {
@@ -2140,14 +2317,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         void OnDelta(InputAction.CallbackContext context);
         void OnScroll(InputAction.CallbackContext context);
     }
-    public interface ITextEditorActions
+    public interface IEditingActions
     {
-        void OnLeftClick(InputAction.CallbackContext context);
-        void OnRightClick(InputAction.CallbackContext context);
-        void OnMiddleClick(InputAction.CallbackContext context);
-        void OnCtrl(InputAction.CallbackContext context);
-        void OnShift(InputAction.CallbackContext context);
-        void OnAlt(InputAction.CallbackContext context);
+        void OnCopy(InputAction.CallbackContext context);
+        void OnCut(InputAction.CallbackContext context);
+        void OnPaste(InputAction.CallbackContext context);
+        void OnUndo(InputAction.CallbackContext context);
+        void OnRedo(InputAction.CallbackContext context);
     }
     public interface IOriginal_UIActions
     {

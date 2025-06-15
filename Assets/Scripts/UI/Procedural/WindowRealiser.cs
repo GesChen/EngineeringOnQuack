@@ -40,7 +40,6 @@ public class WindowRealiser : MonoBehaviour {
 		// 4 corner nodes
 		List<WindowSizeNode> nodes = MakeCornerNodes(windowRT);
 
-
 		// set up live window component
 		var component = newWindow.AddComponent<LiveWindow>();
 		component.Config = window.Config;
@@ -64,7 +63,8 @@ public class WindowRealiser : MonoBehaviour {
 			contentParent.anchorMax = new(.5f, .5f);
 		}
 
-		window.RealisedWindow = component;
+		window.Realise(component);
+		component.Source = window;
 
 		return component;
 	}
@@ -117,7 +117,7 @@ public class WindowRealiser : MonoBehaviour {
 			// layouts have their own padding
 			// and items have to be directly inside so no padding object
 			bool isLayout = item.Construction.Any(c => c is PComponents.Layout);
-			if (item.Layout.Padding != null && !isLayout) {
+			if (item.Layout.Padding != FourSides.Zero && !isLayout) {
 				var (_, padRT) =
 					MakeNewRT("Contents", rt);
 
@@ -152,7 +152,7 @@ public class WindowRealiser : MonoBehaviour {
 			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
 			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
 
-			if (item.Layout.Margins != null) {
+			if (item.Layout.Margins != FourSides.Zero) {
 				rt.offsetMin = new(item.Layout.Margins.Left, item.Layout.Margins.Down);
 				rt.offsetMax = new(-item.Layout.Margins.Right, -item.Layout.Margins.Up);
 			} else {
@@ -160,6 +160,8 @@ public class WindowRealiser : MonoBehaviour {
 				rt.offsetMax = Vector2.zero;
 			}
 		}
+
+		item.RealObject = rt;
 
 		return rt;
 	}
@@ -185,10 +187,15 @@ public class WindowRealiser : MonoBehaviour {
 				image.color = im.Color;
 				image.preserveAspect = im.PreserveAspect;
 				
-				if (im.SpriteResource != null && im.SpriteResource != "") {
-					Sprite sprite = Resources.Load<Sprite>(im.SpriteResource);
+				if (im.SpriteAsset != null) {
+					image.sprite = im.SpriteAsset;
+				}
+				else if (im.SpriteLocation != null && im.SpriteLocation != "") {
+					Sprite sprite = Resources.Load<Sprite>(im.SpriteLocation);
 					image.sprite = sprite;
 				}
+
+				im.RealComponent = image;
 				break;
 
 			case PComponents.Button bt:
@@ -196,13 +203,13 @@ public class WindowRealiser : MonoBehaviour {
 
 				button.interactable = bt.Enabled;
 				button.colors = new() {
-					normalColor = bt.NormalColor,
-					highlightedColor = bt.HighlightedColor,
-					selectedColor = bt.NormalColor,
-					pressedColor = bt.PressedColor,
-					disabledColor = bt.DisabledColor,
-					colorMultiplier = 1,
-					fadeDuration = Config.UI.Button.FadeDuration
+					normalColor			= bt.Colors.NormalColor,
+					highlightedColor	= bt.Colors.HoverColor,
+					selectedColor		= bt.Colors.NormalColor,
+					pressedColor		= bt.Colors.PressedColor,
+					disabledColor		= bt.Colors.DisabledColor,
+					colorMultiplier		= 1,
+					fadeDuration		= bt.Colors.FadeDuration
 				};
 
 				Navigation navigation = new() {
@@ -212,6 +219,7 @@ public class WindowRealiser : MonoBehaviour {
 
 				button.onClick.AddListener(bt.TriggerClick);
 
+				bt.RealComponent = button;
 				break;
 
 			case PComponents.Text tx:
@@ -227,6 +235,7 @@ public class WindowRealiser : MonoBehaviour {
 				if (!originalItem.Layout.IsFixed)
 					text.margin = originalItem.Layout.Padding.ToTMProType();
 
+				tx.RealComponent = text;
 				break;
 
 			case PComponents.Layout lt:
@@ -290,21 +299,24 @@ public class WindowRealiser : MonoBehaviour {
 					fitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
 					fitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
 				}
+
+				lt.RealComponent = layout;
 				break;
 
 			case PComponents.LayoutElement le:
 				var element = newObj.AddComponent<LayoutElement>();
 				element.flexibleWidth = le.SizeMultiplier;
 				element.flexibleHeight = le.SizeMultiplier;
+
+				le.RealComponent = element;
 				break;
 
 			case PComponents.HoverTarget ht:
 				var htComp = newObj.AddComponent<HoverTarget>();
 
-				htComp.NormalColor = ht.NormalColor;
-				htComp.HoverColor = ht.HoverColor;
-				htComp.FadeDuration = ht.FadeDuration;
+				htComp.Colors = ht.Colors;
 
+				ht.RealComponent = htComp;
 				break;
 
 			case PComponents.FlyoutTrigger ft:
@@ -320,36 +332,44 @@ public class WindowRealiser : MonoBehaviour {
 				ftComp.selfHoverTarget = htInstance;
 				ftComp.targetCWindow = ft.TargetFlyout;
 
-				// check for image component
-				if (!ft.IndicatorImage.Construction.Any(c=>c is PComponents.Image)) {
-					Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
-					break;
+				// allow null, and just dont use it
+				if (ft.IndicatorImage != null) {
+					// check for image component
+					if (!ft.IndicatorImage.Construction.Any(c => c is PComponents.Image)) {
+						Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
+						break;
+					}
+
+					// make and set indicator image
+					var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
+					ftComp.openIndicator = indicatorImage.GetComponent<Image>();
+
+					// get the open and closed sprites
+					if (ft.openSpriteLocation != null && ft.openSpriteLocation != "")
+						ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
+					else
+						Debug.LogError("Flyout trigger missing open sprite location");
+
+					if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "")
+						ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
+					else
+						Debug.LogError("Flyout trigger missing closed sprite location");
 				}
 
-				// make and set indicator image
-				var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
-				ftComp.openIndicator = indicatorImage.GetComponent<Image>();
-
-				// get the open and closed sprites
-				if (ft.openSpriteLocation != null && ft.openSpriteLocation != "") 
-					ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
-				else 
-					Debug.LogError("Flyout trigger missing open sprite location");
-				
-				if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "") 
-					ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
-				else
-					Debug.LogError("Flyout trigger missing closed sprite location");
-
+				ft.RealComponent = ftComp;
 				break;
 
 			case PComponents.Description ds:
 				var dsComp = newObj.AddComponent<Description>();
 				dsComp.Text = ds.Text;
+
+				ds.RealComponent = dsComp;
 				break;
 
-			case PComponents.FlyoutHider:
-				newObj.AddComponent<FlyoutHider>();
+			case PComponents.FlyoutHider fh:
+				var fhComp = newObj.AddComponent<FlyoutHider>();
+
+				fh.RealComponent = fhComp;
 				break;
 		}
 	}

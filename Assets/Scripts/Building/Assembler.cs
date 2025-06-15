@@ -54,7 +54,11 @@ public class Assembler : Singleton<Assembler> {
 		computedSubassemblies = subassemblies;
 	}
 
-
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="bm"></param>
+	/// <returns></returns>
 	public List<Subassembly> ComputeAssemblies(BuildingManager bm) {
 #if DEBUGMODE
 		Debug.Log("assembling");
@@ -128,9 +132,8 @@ public class Assembler : Singleton<Assembler> {
 
 		//Parallel.ForEach(pairsTotest, pair =>
 		foreach (Pair pair in pairsTotest) {
-			if (Intersections.OptimizedMeshesIntersect(
-				pair.Averts, pair.Bverts, pair.Atris, pair.Btris,
-				pair.Amin, pair.Amax, pair.Bmin, pair.Bmax)) {
+			if (Intersections.MeshesIntersectRawMesh(
+				pair.Averts, pair.Bverts, pair.Atris, pair.Btris)) {
 				connections.Add(new() {
 					objA = pair.A.transform,
 					objB = pair.B.transform,
@@ -180,14 +183,21 @@ public class Assembler : Singleton<Assembler> {
 	public List<AssembledSubassembly> CopyToSimulation(List<Subassembly> subs) {
 		List<AssembledSubassembly> assembleds = new();
 		foreach (Subassembly sub in subs) {
+
 			Transform subParent = new GameObject("subassembly").transform;
 			subParent.parent = bm.SimulationContainer;
+			
 			List<Transform> parts = new();
 			Vector3 accumPos = Vector3.zero;
+			
 			foreach (Part part in sub.parts) {
 				Transform newObject = Instantiate(part.gameObject).transform;
+
 				newObject.gameObject.SetActive(true);
-				bm.Parts.Remove(newObject.GetComponent<Part>());
+				var partComp = newObject.GetComponent<Part>();
+				partComp.enabled = false;
+
+				bm.Parts.Remove(partComp);
 
 				parts.Add(newObject);
 

@@ -85,13 +85,37 @@ public class Conatrols : MonoBehaviour {
 			public bool Pressed;
 			public bool PressedThisFrame;
 			public bool ReleasedThisFrame;
+			public bool SingleClicked;
+			public bool DoubleClicked;
 
 			public MouseButton(InputAction binding) { Binding = binding; }
 
+
+			float lastClickTime;
+			Vector2 lastClickPos;
 			public void Update() {
 				Pressed = Binding.IsPressed();
 				PressedThisFrame = Binding.WasPressedThisFrame();
 				ReleasedThisFrame = Binding.WasReleasedThisFrame();
+
+				DoubleClicked = false;
+				SingleClicked = false;
+
+				if (PressedThisFrame) {
+					if (Time.time - lastClickTime < Config.Input.doubleClickMaxTimeMs / 1000f
+						&& (Position - lastClickPos).sqrMagnitude
+							< Config.Input.doubleClickMaxMovement * Config.Input.doubleClickMaxMovement)
+						DoubleClicked = true;
+
+					lastClickTime = Time.time;
+					lastClickPos = Position;
+				} else
+				if (ReleasedThisFrame) {
+					if (Time.time - lastClickTime < Config.Input.clickMaxTimeMs / 1000f
+						&& (Position - lastClickPos).sqrMagnitude
+							< Config.Input.clickMaxMovement * Config.Input.clickMaxMovement)
+						SingleClicked = true;
+				}
 			}
 		}
 	}

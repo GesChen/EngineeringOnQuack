@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using Microsoft.Win32;
 
 public static class HF {
 	#region Base Class Extensions
@@ -15,11 +13,11 @@ public static class HF {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 
-	public static Vector3 MV3(Vector3 a, Vector3 b)
-		=> new(a.x * b.x, a.y * b.y, a.z * b.z);
+	public static Vector3 MV3(Vector3 a, Vector3 b) => 
+		new(a.x * b.x, a.y * b.y, a.z * b.z);
 
-	public static Vector3 Vector3Round(Vector3 v)
-		=> new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
+	public static Vector3 Vector3Round(Vector3 v) => 
+		new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 
 	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t) {
 		return new Vector3(
@@ -28,14 +26,14 @@ public static class HF {
 			Mathf.Lerp(a.z, b.z, t.z));
 	}
 
-	public static Vector2 Vector2Round(Vector2 v)
-		=> new(Mathf.Round(v.x), Mathf.Round(v.y));
+	public static Vector2 Vector2Round(Vector2 v) => 
+		new(Mathf.Round(v.x), Mathf.Round(v.y));
 
-	public static Vector2 Vector2Abs(Vector2 v)
-		=> new(Mathf.Abs(v.x), Mathf.Abs(v.y));
+	public static Vector2 Vector2Abs(Vector2 v) => 
+		new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 
-	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max)
-		=> new(
+	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) => 
+		new(
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
 
@@ -137,11 +135,11 @@ public static class HF {
 		return Vector2InAABB(point, min, max);
 	}
 
-	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction)
-		=> Vector3.Dot(point - reference, direction);
+	public static float DistanceInDirection(Vector3 point, Vector3 reference, Vector3 direction) => 
+		Vector3.Dot(point - reference, direction);
 
-	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir)
-		=> new(Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
+	public static Vector2 CoordinatesOfPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeXDir, Vector3 planeYDir) => 
+		new(Vector3.Dot(point - planeOrig, planeXDir), Vector3.Dot(point - planeOrig, planeYDir));
 
 	public static Vector3 ProjectPointOntoPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal) {
 		float dist = Vector3.Dot(point - planeOrig, planeNormal);
@@ -151,11 +149,11 @@ public static class HF {
 	/// <summary>
 	/// Replaces section of string with another, chars at start and end index are both replaced too
 	/// </summary>
-	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith)
-		=> original[..startIndex] + replaceWith + original[(endIndex + 1)..];
+	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith) => 
+		original[..startIndex] + replaceWith + original[(endIndex + 1)..];
 
-	public static string RemoveSection(string original, int start, int end)
-		=> original.Remove(start, end - start);
+	public static string RemoveSection(string original, int start, int end) => 
+		original.Remove(start, end - start);
 
 	public static void ReplaceRange<T>(List<T> originalList, int startIndexInc, int endIndexInc, List<T> replacementList) {
 		originalList.RemoveRange(startIndexInc, endIndexInc - startIndexInc + 1);
@@ -408,47 +406,6 @@ public static class HF {
 		return (shiftedString, overflows, overRegion);
 	}
 
-
-	// chatgpt cant code for shit
-	static (string moved, bool overflows, string ofString) BSShiftRegion(string orig, int startInc, int endInc, int shift) {
-		if (string.IsNullOrEmpty(orig)) return (orig, false, null);
-		if (startInc < 0 || endInc >= orig.Length || startInc > endInc) return (orig, false, null);
-
-		string region = orig.Substring(startInc, endInc - startInc + 1);
-		string before = orig[..startInc];
-		string after = orig[(endInc + 1)..];
-		string withoutRegion = before + after;
-
-		int insertAt = startInc + shift;
-
-		// Default: no characters fall off
-		string overflowRegion = null;
-		bool overflows = false;
-
-		// Determine which part of the region can actually fit
-		int newStart = insertAt;
-		int newEnd = insertAt + region.Length - 1;
-
-		int truncateLeft = Math.Max(0, -newStart);
-		int truncateRight = Math.Max(0, newEnd - withoutRegion.Length + 1);
-
-		if (truncateLeft > 0 || truncateRight > 0) {
-			overflows = true;
-			overflowRegion = region[..truncateLeft];
-
-			if (truncateRight > 0)
-				overflowRegion += region.Substring(region.Length - truncateRight, truncateRight);
-
-			// Truncate region accordingly
-			region = region.Substring(truncateLeft, region.Length - truncateLeft - truncateRight);
-			newStart = Math.Max(0, newStart);
-		}
-
-		// Insert the truncated region
-		string result = region.Length > 0 ? withoutRegion.Insert(newStart, region) : withoutRegion;
-		return (result, overflows, overflowRegion);
-	}
-
 	// from geeksforgeeks look at it again if no understand lol i dont
 	public static long HashString(string s) {
 		int n = s.Length;
@@ -478,5 +435,18 @@ public static class HF {
 		}
 
 		return hash;
+	}
+
+	/// <summary>
+	/// Loads a resource of type T from Resources at the given path,
+	/// caches it in the provided field, and logs an error if load fails.
+	/// </summary>
+	public static T LoadCached<T>(ref T cacheField, string path) where T : UnityEngine.Object {
+		if (cacheField == null) {
+			cacheField = Resources.Load<T>(path);
+			if (cacheField == null)
+				Debug.LogError($"Failed to load resource at path '{path}' of type {typeof(T)}");
+		}
+		return cacheField;
 	}
 }

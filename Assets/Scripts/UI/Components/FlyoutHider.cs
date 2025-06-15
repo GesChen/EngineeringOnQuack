@@ -4,6 +4,11 @@ using UnityEngine;
 
 // really dumbass niche class that does one thing and that i might get rid of too
 // cuz its so fuckin niche idk
+
+/// <summary>
+/// With HoverTarget, hides all sibling flyouts when this is hovered.
+/// Used for lists of buttons or flyouts that need to disable each other.
+/// </summary>
 [RequireComponent(typeof(HoverTarget))]
 public class FlyoutHider : MonoBehaviour {
 	HoverTarget hoverTarget;
