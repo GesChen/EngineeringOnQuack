@@ -18,6 +18,9 @@ public class Part : MonoBehaviour {
 	MeshRenderer[] renderers;
 	Collider[] colliders;
 
+	[HideInNormalInspector] public Material material;
+	[HideInNormalInspector] public PhysicMaterial physicMaterial;
+
 	void Start() {
 		renderers = GetComponentsInChildren<MeshRenderer>(); // includes self
 		colliders = GetComponentsInChildren<Collider>();
@@ -63,10 +66,12 @@ public class Part : MonoBehaviour {
 			newMat.SetColor("_TransmittanceColor", color);
 		}
 
-			foreach (var renderer in renderers) {
-				renderer.material = newMat;  // sets first one, idk if i should use the method
-			}
+		material = newMat;
+		foreach (var renderer in renderers) {
+			renderer.material = newMat;  // sets first one, idk if i should use the method
+		}
 
+		physicMaterial = composition.PhysicsMaterial;
 		foreach (var collider in colliders) {
 			collider.material = composition.PhysicsMaterial;
 		}

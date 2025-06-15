@@ -192,8 +192,12 @@ public class Assembler : Singleton<Assembler> {
 			
 			foreach (Part part in sub.parts) {
 				Transform newObject = Instantiate(part.gameObject).transform;
+
 				newObject.gameObject.SetActive(true);
-				bm.Parts.Remove(newObject.GetComponent<Part>());
+				var partComp = newObject.GetComponent<Part>();
+				partComp.enabled = false;
+
+				bm.Parts.Remove(partComp);
 
 				parts.Add(newObject);
 

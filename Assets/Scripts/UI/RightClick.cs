@@ -65,6 +65,11 @@ public class RightClick : Singleton<RightClick> {
 				_ => null,
 			};
 
+		if (window == null) {
+			menuMask = null;
+			return null;
+		}
+
 		menuMask = context switch {
 			C.InWorld or C.NoSelection => RCM.UniversalIndices.Default,
 			C.SingleSelection => RCM.UniversalIndices.SingleSelection,
