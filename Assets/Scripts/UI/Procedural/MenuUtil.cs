@@ -24,6 +24,7 @@ public class MenuUtil : MonoBehaviour {
 		public bool Movable = false;
 		public bool IsFlyout = true;
 		public bool Closable = false;
+		public bool HideOnStart = true;
 		public bool Switchable = false;
 
 		private CWindow m_cwindow;
@@ -53,16 +54,18 @@ public class MenuUtil : MonoBehaviour {
 			bool movable = false,
 			bool isFlyout = true,
 			bool closable = false,
+			bool hideOnStart = true,
 			bool switchable = false) {
 
 			Title = title;
 			ShowTitle = showTitle;
 			Width = width;
 			Items = items;
-
+			
 			Movable = movable;
 			IsFlyout = isFlyout;
 			Closable = closable;
+			HideOnStart = hideOnStart;
 			Switchable = switchable;
 		}
 		public Window(float width, List<Item> items) {
@@ -218,6 +221,7 @@ public class MenuUtil : MonoBehaviour {
 				DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding),
 				IsFlyout = rcw.IsFlyout,
 				Closable = rcw.Closable,
+				HideOnStart = rcw.HideOnStart,
 			}
 		};
 

@@ -40,13 +40,14 @@ public static partial class Config {
 		}
 
 		public static class Behaviour {
-			public static readonly int MaxFramesForRealization	= 5;
-			public static readonly float WindowMinDragDist		= 10;
-			public static readonly float FlyoutDistance			= 5;
-			public static readonly float FlyoutHoverMargin		= 50;
-			public static readonly int DescriptionHoverMs		= 500;
-			public static readonly float MaxMouseMovementForClick	= 5;
-			public static readonly int TimeForDescriptionChangeMs    = 100;
+			public static readonly int		MaxFramesForRealization	= 5;
+			public static readonly float	WindowMinDragDist		= 10;
+			public static readonly float	FlyoutDistance			= 5;
+			public static readonly float	FlyoutHoverMargin		= 50;
+			public static readonly int		DescriptionHoverMs		= 500;
+			public static readonly float	MaxMouseMovementForClick	= 5;
+			public static readonly int		TimeForDescriptionChangeMs    = 100;
+			public static readonly int      CanvasInnerWindowsPadding   = 10;
 		}
 
 		// experimental design change

@@ -20,7 +20,6 @@ public class LiveWindow : MonoBehaviour {
 
 	public CWindow Source;
 
-	public bool HideOnStart = true; // might turn into connfig
 
 	void Awake() {
 		Config.CallEvents(CWindow.Configuration.Timings.Awake, Source);
@@ -48,7 +47,7 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	void Update() {
-		if (HideOnStart) {
+		if (Config.HideOnStart) {
 			if (Time.frameCount == global::Config.UI.Behaviour.MaxFramesForRealization)
 				gameObject.SetActive(false);
 			if (Time.frameCount <= global::Config.UI.Behaviour.MaxFramesForRealization) {
@@ -134,6 +133,7 @@ public class LiveWindow : MonoBehaviour {
 			transform.position = Conatrols.Mouse.Position + dragOffset;
 
 			// prevent going off the sides
+			Vector2 padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding * Vector2.one;
 			Vector2 canvasSize = manager.canvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
@@ -141,8 +141,8 @@ public class LiveWindow : MonoBehaviour {
 
 			Vector2 clampedPos = HF.Vector2Clamp(
 				transform.position,
-				new(halfWidth, halfHeight),
-				new(canvasSize.x - halfWidth, canvasSize.y - halfHeight));
+				new Vector2(halfWidth, halfHeight) + padding,
+				new Vector2(canvasSize.x - halfWidth, canvasSize.y - halfHeight) - padding);
 
 			transform.position = clampedPos;
 		}

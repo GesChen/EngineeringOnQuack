@@ -38,7 +38,9 @@ public class WindowSizeNode : MonoBehaviour {
 
 	void Update() {
 		isClose = position == Positions.TopRight;
-		UpdateCloseSprite();
+
+		if (main.Config.Closable)
+			UpdateCloseSprite();
 
 		rt.anchoredPosition = Vector2.zero;
 		if (main.Config.Resizable || main.Config.Closable) {
@@ -130,7 +132,12 @@ public class WindowSizeNode : MonoBehaviour {
 		if (dragging) {
 			GetOtherCorner();
 
-			SetCornerPosition(Conatrols.Mouse.Position);
+			float pad = Config.UI.Behaviour.CanvasInnerWindowsPadding;
+			Vector2 pos = HF.Vector2Clamp(
+				Conatrols.Mouse.Position,
+				pad * Vector2.one,
+				main.manager.canvasRect.sizeDelta - pad * Vector2.one);
+			SetCornerPosition(pos);
 
 			oppositeVert =
 				(position == Positions.TopLeft || position == Positions.TopRight)

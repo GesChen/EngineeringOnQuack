@@ -14,7 +14,9 @@ public class TransformToolsMenu {
 				Movable = true,
 				Resizable = true,
 				Size = CWindow.Configuration.FreeSize(new Vector2(300, 100) * .75f),
-				Position = UIPosition.AnchoredOffset(UIPosition.BottomCenter, new(0, 100))
+				Position = UIPosition.AnchoredOffset(UIPosition.BottomCenter, new(0, 100)),
+				Closable = false,
+				HideOnStart = false
 			},
 			Items = new WindowItem[] {
 				WindowItem.NewLayout(

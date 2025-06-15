@@ -52,6 +52,9 @@ public class CWindow {
 		// also temporary i guess
 		public bool Closable				= true;
 
+		// ok we're just flags at this point
+		public bool HideOnStart				= true; // might turn into connfig
+
 		/*public static Configuration FixedConfig(SizeData Size, UIPosition pos, bool flyout = false)
 			=> new() {
 				Resizable = false,
