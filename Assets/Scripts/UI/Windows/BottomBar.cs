@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using W = MenuUtil.Window;
+using W = PMenu.Window;
 
 public static class BottomBar {
 	static readonly float size = 30;

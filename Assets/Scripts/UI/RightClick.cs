@@ -54,8 +54,8 @@ public class RightClick : Singleton<RightClick> {
 		currentOpen.Hide();
 	}
 
-	MenuUtil.Window WindowLookupFunc(IContext context, out int[] menuMask) { 
-		MenuUtil.Window window =
+	PMenu.Window WindowLookupFunc(IContext context, out int[] menuMask) { 
+		PMenu.Window window =
 			context switch {
 				C.InWorld or 
 				C.NoSelection or 

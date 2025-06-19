@@ -6,7 +6,7 @@ using M = Config.UI.Menu;
 
 // defo will change away from rcw name once i can think of another use and generalization for this
 // yeah its changed to menu now
-public class MenuUtil : MonoBehaviour {
+public class PMenu : MonoBehaviour {
 	// this layout should be used for custom items too !!!!!!!!!!!!!!!!
 	public static WindowItem.LayoutConfig WindowItemLayout(float windowWidth) =>
 		WindowItem.LayoutConfig.FixedLayout(
@@ -207,7 +207,7 @@ public class MenuUtil : MonoBehaviour {
 		return converted;
 	}*/
 
-	public static CWindow ConvertWindow(Window rcw) {
+	private static CWindow ConvertWindow(Window rcw) {
 		if (rcw == null) {
 			Debug.LogError("Window is null!");
 			return null;
