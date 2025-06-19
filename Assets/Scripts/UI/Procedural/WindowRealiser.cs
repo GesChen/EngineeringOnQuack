@@ -10,6 +10,7 @@ public class WindowRealiser : MonoBehaviour {
 
 	public LiveWindow Realise(CWindow window) {
 
+
 		// make new live window
 		var (newWindow, windowRT) =
 			MakeNewRT(window.Name, canvas.transform);
@@ -64,8 +65,14 @@ public class WindowRealiser : MonoBehaviour {
 			contentParent.anchorMax = new(.5f, .5f);
 		}
 
-		window.Realise(component);
+		window.SetRealised(component);
 		component.Source = window;
+
+		// set up timed events once everything has been set up
+		if (window.CustomEvents != null &&  window.CustomEvents.Count > 0) {
+			var invoker = newWindow.AddComponent<TimedEventInvoker>();
+			invoker.CustomEvents = window.CustomEvents; // calls customawake anyway
+		}
 
 		return component;
 	}
@@ -163,6 +170,12 @@ public class WindowRealiser : MonoBehaviour {
 		}
 
 		item.RealObject = rt;
+
+		// set up customevents for items too 
+		if (item.CustomEvents != null && item.CustomEvents.Count > 0) {
+			var invoker = newObj.AddComponent<TimedEventInvoker>();
+			invoker.CustomEvents = item.CustomEvents; // calls customawake anyway
+		}
 
 		return rt;
 	}

@@ -1,6 +1,7 @@
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -35,13 +36,19 @@ public class MaterialEditor : MonoBehaviour {
 			.SubItems[2]
 			.Construction[0].RealComponent;
 
-		// subscribe
+		Subscribe(editor);
+	}
+
+	static void Subscribe(MaterialEditor editor) {
 		RightClickMenus.OnMaterial += MaterialEditingMenu.ShowMenu;
 		RightClickMenus.OnMaterial += (_) => editor.UpdateParts();
 		SelectionManager.Instance.OnSelectionChanged += editor.UpdateParts;
 
 		MaterialEditingMenu.OnColorSelection += editor.SetColor;
 		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
+
+		BottomBar.ClearMaterial();
+		BottomBar.OnMaterialOpened += MaterialEditingMenu.ShowMenu;
 	}
 
 	void Update() {

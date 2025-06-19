@@ -20,13 +20,7 @@ public class LiveWindow : MonoBehaviour {
 
 	public CWindow Source;
 
-
-	void Awake() {
-		Config.CallEvents(CWindow.Configuration.Timings.Awake, Source);
-	}
-
 	void Start() {
-		Config.CallEvents(CWindow.Configuration.Timings.Start, Source);
 		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
@@ -46,6 +40,13 @@ public class LiveWindow : MonoBehaviour {
 		BR.position = WindowSizeNode.Positions.BottomLeft;
 	}
 
+	public void Show() {
+		gameObject.SetActive(true);
+	}
+	public void Hide() {
+		gameObject.SetActive(false);
+	}
+
 	void Update() {
 		if (Config.HideOnStart) {
 			if (Time.frameCount == global::Config.UI.Behaviour.MaxFramesForRealization)
@@ -55,8 +56,6 @@ public class LiveWindow : MonoBehaviour {
 				return;
 			}
 		}
-
-		Config.CallEvents(CWindow.Configuration.Timings.Update, Source);
 
 		SetNodesActive(Config.Resizable, Config.Closable);
 
@@ -152,6 +151,8 @@ public class LiveWindow : MonoBehaviour {
 		anyNodesDragging = cornerNodes.Any(n => n.dragging);
 	}
 
+	#region PlaceAt helpers and variations
+	// only sets the location, show it manually
 	public void PlaceAt(RectTransform target, bool horizontal, bool prioritizeTopRight) {
 		if (horizontal)
 			PlaceAtHorizontal(target, prioritizeTopRight);
@@ -164,6 +165,13 @@ public class LiveWindow : MonoBehaviour {
 			PlaceAtHorizontal(target, prioritizeTopRight);
 		else
 			PlaceAtVertical(target, prioritizeTopRight);
+	}
+
+	public void PlaceAt(Vector3 singlePosition, bool horizontal, bool prioritizeTopRight) {
+		PlaceAt(
+			new[] { singlePosition, singlePosition, singlePosition, singlePosition },
+			horizontal,
+			prioritizeTopRight);
 	}
 
 	private void PlaceAtVertical(RectTransform target, bool prioritizeTop) {
@@ -243,4 +251,5 @@ public class LiveWindow : MonoBehaviour {
 
 		rect.position += offset;
 	}
+	#endregion
 }

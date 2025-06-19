@@ -75,8 +75,8 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		public Window AddEventToCW(
-			CWindow.Configuration.Timings timing, 
-			CWindow.Configuration.TimedEvent action) {
+			TimedEventInvoker.Timing timing, 
+			TimedEventInvoker.TimedEventCall action) {
 
 			CWindow.AddEvent(timing, action);
 			return this;
@@ -142,7 +142,8 @@ public class MenuUtil : MonoBehaviour {
 		public class Button : Item {
 			public PComponents.Button.ClickEvent OnButtonClick;
 
-			public Button(PComponents.Button.ClickEvent onButtonClick,
+			public Button(
+				PComponents.Button.ClickEvent onButtonClick,
 				string label,
 				string description = null,
 				string iconName = null,
@@ -213,7 +214,10 @@ public class MenuUtil : MonoBehaviour {
 		}
 
 		CWindow cw = new() {
-			Name = rcw.ShowTitle ? rcw.Title : "Menu",
+			Name = 
+				rcw.Title != null
+				? $"[M] {rcw.Title}"
+				: "Menu",
 			Config = new() {
 				Resizable = false,
 				Movable = rcw.Movable,
@@ -265,7 +269,7 @@ public class MenuUtil : MonoBehaviour {
 
 		// add dynamic menu and items
 		if (rcw.Switchable) {
-			cw.AddEvent(CWindow.Configuration.Timings.Start, (cw) => {
+			cw.AddEvent(TimedEventInvoker.Timing.Start, (_) => {
 				rcw.SwitchingComponent =
 					cw.RealisedWindow.gameObject.AddComponent<SwitchableMenu>();
 

@@ -74,42 +74,30 @@ public class CWindow {
 				Movable = false,
 			};
 */
-		public List<(TimedEvent action, Timings timing)> CustomEvents;
-		public delegate void TimedEvent(CWindow window);
-		public enum Timings {
-			Awake,
-			Start,
-			Update
-		}
-		public void CallEvents(Timings timing, CWindow window) {
-			if (CustomEvents == null || CustomEvents.Count == 0) return;
-
-			var timedAction = CustomEvents?.Where(ce => ce.timing == timing).Select(ce => ce.action);
-
-			foreach (var a in timedAction) {
-				a?.Invoke(window);
-			}
-		}
 	}
 
 	public Configuration Config = new();
+	public List<TimedEventInvoker.TimedEvent> CustomEvents;
 
 	private LiveWindow m_realisedWindow;
 	public LiveWindow RealisedWindow {
 		get {
 			if (m_realisedWindow == null) {
-				throw new($"{Name} window not realised!"); 
+				throw new($"Window \"{Name}\" not realised!"); 
 			}
 			return m_realisedWindow;
 		}
 	}
-	public void Realise(LiveWindow live) {
+	public void SetRealised(LiveWindow live) {
 		m_realisedWindow = live;
 	}
 
-	public CWindow AddEvent(Configuration.Timings timing, Configuration.TimedEvent action) {
-		Config.CustomEvents ??= new();
-		Config.CustomEvents.Add((action, timing));
+	public CWindow AddEvent(
+		TimedEventInvoker.Timing timing, 
+		TimedEventInvoker.TimedEventCall action) {
+
+		CustomEvents ??= new();
+		CustomEvents.Add(new(action, timing));
 		return this;
 	}
 

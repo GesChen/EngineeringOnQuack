@@ -63,15 +63,18 @@ public class RightClickMenus : MonoBehaviour {
 
 	// TODO: some grouping system to put them all under one parent
 	public static readonly W digital = new(
+		"Digital",
 		200,
 		new(){
 			new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "Parts/cpu"),
 			new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "Parts/ram"),
 			new W.Button(() => MakeNewPart("display"),  "display",  iconName: "Parts/display"),
 			new W.Button(() => MakeNewPart("script"),   "script",   iconName: "Parts/script")
-		});
+		},
+		showTitle: false);
 
 	public static readonly W mechanical = new(
+		"Mechanical",
 		200,
 		new(){
 			new W.Button(() => MakeNewPart("motor 1"),  "motor 1",  iconName: "Parts/motor 1"),
@@ -80,25 +83,30 @@ public class RightClickMenus : MonoBehaviour {
 			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "Parts/piston 2"),
 			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "Parts/servo 1"),
 			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "Parts/servo 2")
-		});
+		},
+		showTitle: false);
 
 	public static readonly W structural = new(
+		"Structural",
 		200,
 		new(){
 			new W.Button(() => MakeNewPart("cube"),     "cube",     iconName: "Parts/cube"),
 			new W.Button(() => MakeNewPart("sphere"),   "sphere",   iconName: "Parts/sphere"),
 			new W.Button(() => MakeNewPart("cylinder"), "cylinder", iconName: "Parts/cylinder"),
 			new W.Button(() => MakeNewPart("wedge"),    "wedge",    iconName: "Parts/wedge")
-		});
+		},
+		showTitle: false);
 
 	public static readonly W newPart = new(
+		"New Part",
 		200,
 		new() {
 			new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
 			new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
 			new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
 			new W.Button(() => MakeNewPart("cable"),"cable",iconName: "Parts/cable")
-		});
+		},
+		showTitle: false);
 
 	// yagni for now we're just doing multiple variations of the same main panel
 	// ¯\_("/)_/¯ if this starts getting excessive, then make a variating panel class

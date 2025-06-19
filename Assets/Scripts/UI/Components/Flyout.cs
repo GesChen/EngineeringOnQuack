@@ -87,9 +87,9 @@ public class Flyout : MonoBehaviour {
 	public void Show(FlyoutTrigger trigger, bool horizontal, bool prioritizeTopRight) {
 		thisTrigger = trigger;
 
-		gameObject.SetActive(true);
-		transform.SetAsLastSibling();
+		transform.SetAsLastSibling(); // might change this idk
 
+		lw.Show();
 		lw.PlaceAt(trigger.rt, horizontal, prioritizeTopRight);
 	}
 
@@ -97,7 +97,7 @@ public class Flyout : MonoBehaviour {
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		lw.PlaceAt(new[] { at, at, at, at }, horizontal, prioritizeTopRight);
+		lw.PlaceAt(at, horizontal, prioritizeTopRight);
 	}
 
 	public void Hide() {

@@ -53,11 +53,7 @@ public class FlyoutTrigger : MonoBehaviour {
 		if (targetFlyout != null) return;
 
 		if (targetCWindow == null) {
-			Debug.LogError("No target CWindow assigned! " + transform.GetPath());
-			return;
-		}
-		if (targetFlyout == null) {
-			Debug.LogError("Target flyout not created/is null! " + transform.GetPath());
+			Debug.LogError("No target CWindow assigned! in " + transform.GetPath());
 			return;
 		}
 
@@ -81,7 +77,7 @@ public class FlyoutTrigger : MonoBehaviour {
 
 	void HoverStateChange(bool state) {
 		if (targetFlyout == null) {
-			Debug.LogError("Flyout window not realised or isn't set");
+			Debug.LogError("Flyout window not realised or isn't set in "+transform.GetPath());
 			return;
 		}
 

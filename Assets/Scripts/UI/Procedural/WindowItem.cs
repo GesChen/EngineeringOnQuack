@@ -62,6 +62,8 @@ public class WindowItem {
 	
 	public RectTransform RealObject;
 
+	public List<TimedEventInvoker.TimedEvent> CustomEvents;
+
 	public WindowItem SetSubItems(params WindowItem[] subs) {
 		SubItems = subs.ToList();
 		return this;
@@ -80,6 +82,15 @@ public class WindowItem {
 	}
 	public WindowItem SetLayoutElement(PComponents.LayoutElement element) {
 		Construction.Add(element);
+		return this;
+	}
+
+	public WindowItem AddEvent(
+		TimedEventInvoker.Timing timing,
+		TimedEventInvoker.TimedEventCall action) {
+
+		CustomEvents ??= new();
+		CustomEvents.Add(new(action, timing));
 		return this;
 	}
 

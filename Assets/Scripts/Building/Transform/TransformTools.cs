@@ -75,7 +75,8 @@ public class TransformTools : Singleton<TransformTools> {
 	public bool scaling;
 
 	void Start() {
-		Controls();
+		SubscribeToControls();
+		SubscribeToBottomBar();
 	}
 
 	void Update() {
@@ -99,16 +100,24 @@ public class TransformTools : Singleton<TransformTools> {
 		transform.position = selectionContainer.position;
 	}
 
-	void Controls() {
-		TransformToolsMenu.onTranslatePressed = null;
+	void SubscribeToControls() {
+		TransformToolsMenu.ClearEvents();
+
 		TransformToolsMenu.onTranslatePressed += ToggleTranslate;
-
-		TransformToolsMenu.onRotatePressed = null;
 		TransformToolsMenu.onRotatePressed += ToggleRotate;
-
-		TransformToolsMenu.onScalePressed = null;
 		TransformToolsMenu.onScalePressed += ToggleScale;
+	}
 
+	void SubscribeToBottomBar() {
+		BottomBar.ClearTransform();
+		BottomBar.OnTransformOpened += () => SetToolsState(true);
+	}
+
+	public void SetToolsState(bool state) {
+		if (state)
+			TransformToolsMenu.MainWindow.RealisedWindow.Show();
+		else
+			TransformToolsMenu.MainWindow.RealisedWindow.Hide();
 	}
 
 	void ToggleTranslate() => translating = !translating;
