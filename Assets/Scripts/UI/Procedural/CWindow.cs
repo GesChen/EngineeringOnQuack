@@ -6,14 +6,27 @@ using UnityEngine;
 
 // window, class form (class window, cwindow)
 /// <summary>
-/// Name, Items, Config
+/// Name, Config, Items
 /// </summary>
 public class CWindow {
 	public string Name;
 	public WindowItem[] Items;
 
+	/// <summary>
+	/// Configuration for CWindows. 
+	/// </summary>
 	[Serializable]
 	public class Configuration {
+
+		/// <summary>
+		/// <para>Resizable, Movable</para>
+		/// <para>Color, Outline (float, color)</para>
+		/// <para>Size, Position</para>
+		/// <para>ContentDynamic, DynamicPadding</para>
+		/// <para>IsFlyout, Closable</para>
+		/// </summary>
+		public Configuration() { }
+
 		public static SizeData FixedSize(Vector2 oneSize) => 
 			new(oneSize, oneSize, oneSize);
 		public static SizeData FreeSize(Vector2 defaultSize) => 

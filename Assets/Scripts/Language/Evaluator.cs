@@ -189,7 +189,7 @@ public class Evaluator {
 			bool leftIsRefAndExists		= leftRef != null && leftRef.Exists;
 
 			Token right					= remaining.ElementAtOrDefault(highestIndex + 1);
-			T_Reference rightRef			= right as T_Reference;
+			T_Reference rightRef		= right as T_Reference;
 			bool rightIsRefAndExists	= rightRef != null && rightRef.Exists;
 
 			ActionContext localActionContext = new(
@@ -1063,19 +1063,19 @@ public class Evaluator {
 		return T_Data.Success;
 	}
 
-	private T_Data HandleKeywords		(ref List<Token> tokens, T_Keyword kw) {
+	private T_Data HandleKeywords	(ref List<Token> tokens, T_Keyword kw) {
 		return kw.Value switch {
-			T_Keyword.Kws.If			=> HandleIf			(ref tokens),
+			T_Keyword.Kws.If		=> HandleIf			(ref tokens),
 			T_Keyword.Kws.Else		=> HandleElse		(ref tokens),
-			T_Keyword.Kws.For			=> HandleFor		(ref tokens),
+			T_Keyword.Kws.For		=> HandleFor		(ref tokens),
 			T_Keyword.Kws.While		=> HandleWhile		(ref tokens),
 			T_Keyword.Kws.Break		=> HandleBreak		(ref tokens),
 			T_Keyword.Kws.Continue	=> HandleContinue	(ref tokens),
 			T_Keyword.Kws.Pass		=> HandlePass		(ref tokens),
-			T_Keyword.Kws.Return		=> HandleReturn		(ref tokens),
-			T_Keyword.Kws.Try			=> HandleTry		(ref tokens),
-			T_Keyword.Kws.Except		=> HandleExcept		(ref tokens),
-			T_Keyword.Kws.Finally		=> HandleFinally	(ref tokens),
+			T_Keyword.Kws.Return	=> HandleReturn		(ref tokens),
+			T_Keyword.Kws.Try		=> HandleTry		(ref tokens),
+			T_Keyword.Kws.Except	=> HandleExcept		(ref tokens),
+			T_Keyword.Kws.Finally	=> HandleFinally	(ref tokens),
 			T_Keyword.Kws.Raise		=> HandleRaise		(ref tokens),
 			_ => T_Data.Success
 		};
@@ -1104,7 +1104,7 @@ public class Evaluator {
 								Flags.Fail
 								);
 	}
-	private T_Data HandleElse			(ref List<Token> tokens) {
+	private T_Data HandleElse		(ref List<Token> tokens) {
 		// check if this is else if
 		if (tokens.Count > 1 &&
 			tokens[1] is T_Keyword kw && kw.Value == T_Keyword.Kws.If)
@@ -1143,7 +1143,7 @@ public class Evaluator {
 								Flags.Fail
 								);
 	}
-	private T_Data HandleFor			(ref List<Token> tokens) {
+	private T_Data HandleFor		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 3 ||
 			!(tokens[1] is T_Reference R &&
@@ -1180,14 +1180,14 @@ public class Evaluator {
 
 		return T_Data.Fail.CopyWithFlags(Flags.Break);
 	}
-	private T_Data HandleContinue		(ref List<Token> tokens) {
+	private T_Data HandleContinue	(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
 			return Errors.BadSyntaxFor("continue statement");
 
 		return T_Data.Success.CopyWithFlags(Flags.Continue);
 	}
-	private T_Data HandlePass			(ref List<Token> tokens) {
+	private T_Data HandlePass		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 1)
 			return Errors.BadSyntaxFor("pass statement");
@@ -1205,7 +1205,7 @@ public class Evaluator {
 
 		return R.ThisReference.CopyWithFlags(Flags.Return);
 	}
-	private T_Data HandleTry			(ref List<Token> tokens) {
+	private T_Data HandleTry		(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is T_Operator o && o.Value == T_Operator.Ops.Colon))
@@ -1221,7 +1221,7 @@ public class Evaluator {
 
 		return T_Data.Success.CopyWithFlags(Flags.Except);
 	}
-	private T_Data HandleFinally		(ref List<Token> tokens) {
+	private T_Data HandleFinally	(ref List<Token> tokens) {
 		// syntax check
 		if (tokens.Count != 2 ||
 			!(tokens[1] is T_Operator o && o.Value == T_Operator.Ops.Colon))

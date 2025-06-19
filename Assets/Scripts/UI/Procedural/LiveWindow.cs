@@ -152,18 +152,39 @@ public class LiveWindow : MonoBehaviour {
 		anyNodesDragging = cornerNodes.Any(n => n.dragging);
 	}
 
-	public void PlaceAt(RectTransform target) {
+	public void PlaceAtHorizontal(RectTransform target) {
 		Vector3[] corners = new Vector3[4];
 		target.GetWorldCorners(corners);
 
-		PlaceAt(corners);
+		PlaceAtHorizontal(corners);
 	}
 
 	/// <summary>
 	/// Try to put this window at some corners
 	/// </summary>
 	/// <param name="corners">4 corner array of the possible positions</param>
-	public void PlaceAt(Vector3[] corners) {
+	public void PlaceAtHorizontal(Vector3[] corners) {
+		// check fits
+		float topY = corners[1].y + global::Config.UI.Behaviour.FlyoutDistance;
+		float bottomY = corners[0].y - global::Config.UI.Behaviour.FlyoutDistance;
+		bool fitsOnTop = topY + rt.rect.height < canvas.renderingDisplaySize.y;
+
+		float xOfLeftLeftwards = corners[2].x - rt.rect.width;
+		//float yOfTopUpwards = corners[4].y + rt.rect.height;
+		bool fitsLeftwards = xOfLeftLeftwards > 0;
+
+		int targetCorner;
+		if (fitsOnTop) targetCorner = fitsLeftwards ? 3 : 0;
+		else targetCorner = fitsLeftwards ? 2 : 1;
+
+		Vector2 pos = new(
+			fitsLeftwards ? corners[2].x : corners[1].x,
+			fitsOnTop ? topY : bottomY);
+
+		SetWorldCorner(rt, pos, targetCorner);
+	}
+
+	public void PlaceAtHorizontalasd(Vector3[] corners) {
 		// check fits
 		float rightX = corners[2].x + global::Config.UI.Behaviour.FlyoutDistance;
 		float leftX = corners[1].x - global::Config.UI.Behaviour.FlyoutDistance;

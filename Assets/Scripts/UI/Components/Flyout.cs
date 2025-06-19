@@ -90,14 +90,14 @@ public class Flyout : MonoBehaviour {
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		lw.PlaceAt(trigger.rt);
+		lw.PlaceAtHorizontal(trigger.rt);
 	}
 
 	public void Show(Vector3 at) {
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		lw.PlaceAt(new[] { at, at, at, at });
+		lw.PlaceAtHorizontal(new[] { at, at, at, at });
 	}
 
 	public void Hide() {
