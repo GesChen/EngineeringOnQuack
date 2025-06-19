@@ -23,7 +23,7 @@ public class CWindow {
 		/// <para>Color, Outline (float, color)</para>
 		/// <para>Size, Position</para>
 		/// <para>ContentDynamic, DynamicPadding</para>
-		/// <para>IsFlyout, Closable</para>
+		/// <para>IsFlyout, Closable, HideOnStart</para>
 		/// </summary>
 		public Configuration() { }
 

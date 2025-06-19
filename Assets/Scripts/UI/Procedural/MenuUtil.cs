@@ -357,7 +357,7 @@ public class MenuUtil : MonoBehaviour {
 					new(subWindow, indicator),
 					new(normalColor: Config.UI.Visual.BackgroundColor),
 					WindowItemLayout(rcw.Width)
-					).WithSubItems(subs)
+					).SetSubItems(subs)
 					.AddComponents(new PComponents.FlyoutHider());
 				break;
 
@@ -369,7 +369,7 @@ public class MenuUtil : MonoBehaviour {
 						normalColor: Config.UI.Visual.BackgroundColor
 						),
 					WindowItemLayout(rcw.Width)
-					).WithSubItems(subs)
+					).SetSubItems(subs)
 					.AddComponents(new PComponents.FlyoutHider());
 				break;
 

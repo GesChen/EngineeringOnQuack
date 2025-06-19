@@ -13,10 +13,11 @@ public class WindowRealiser : MonoBehaviour {
 		// make new live window
 		var (newWindow, windowRT) =
 			MakeNewRT(window.Name, canvas.transform);
-		windowRT.anchorMin = window.Config.Position.AnchorMin;
-		windowRT.anchorMax = window.Config.Position.AnchorMax;
-		windowRT.anchoredPosition = window.Config.Position.Position;
-		windowRT.sizeDelta = window.Config.Size.Default;
+		windowRT.anchorMin			= window.Config.Position.AnchorMin;
+		windowRT.anchorMax			= window.Config.Position.AnchorMax;
+		windowRT.pivot				= window.Config.Position.Pivot;
+		windowRT.anchoredPosition	= window.Config.Position.Position;
+		windowRT.sizeDelta			= window.Config.Size.Default;
 
 		// make background obj
 		var (bgRT, _) = MakeNewImageObj("Background", windowRT, window.Config.Color);
@@ -322,6 +323,9 @@ public class WindowRealiser : MonoBehaviour {
 			case PComponents.FlyoutTrigger ft:
 				var ftComp = newObj.AddComponent<FlyoutTrigger>();
 
+				ftComp.openHorizontally = ft.OpenHorizontally;
+				ftComp.openPrioritizingTopRight = ft.OpenPrioritizingTopRight;
+
 				// find hovertarget component
 				var htInstance = newObj.GetComponent<HoverTarget>();
 				if (htInstance == null) {
@@ -345,13 +349,13 @@ public class WindowRealiser : MonoBehaviour {
 					ftComp.openIndicator = indicatorImage.GetComponent<Image>();
 
 					// get the open and closed sprites
-					if (ft.openSpriteLocation != null && ft.openSpriteLocation != "")
-						ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
+					if (ft.OpenSpriteLocation != null && ft.OpenSpriteLocation != "")
+						ftComp.openSprite = Resources.Load<Sprite>(ft.OpenSpriteLocation);
 					else
 						Debug.LogError("Flyout trigger missing open sprite location");
 
-					if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "")
-						ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
+					if (ft.ClosedSpriteLocation != null && ft.ClosedSpriteLocation != "")
+						ftComp.closedSprite = Resources.Load<Sprite>(ft.ClosedSpriteLocation);
 					else
 						Debug.LogError("Flyout trigger missing closed sprite location");
 				}

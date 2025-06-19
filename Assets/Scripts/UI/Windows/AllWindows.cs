@@ -9,5 +9,6 @@ public static class AllWindows {
 		wm.RealiseWindows(RightClickMenus.Windows);
 		wm.RealiseWindows(TransformToolsMenu.Windows);
 		wm.RealiseWindows(MaterialEditingMenu.Windows);
+		wm.RealiseWindows(BottomBar.Bar);
 	}
 }

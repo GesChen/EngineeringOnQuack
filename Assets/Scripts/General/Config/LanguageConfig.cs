@@ -14,50 +14,50 @@ public static partial class Config {
 
 		public static class Internal {
 			public static readonly HashSet<string> AllMethods = new() {
-			"breakpoint",
-			"print",
-			"num",
-			"bool",
-			"str",
-			"list",
-			"dict",
-			"abs",
-			"sqrt",
-			"round",
-			"sum",
-			"max",
-			"min",
-		};
+				"breakpoint",
+				"print",
+				"num",
+				"bool",
+				"str",
+				"list",
+				"dict",
+				"abs",
+				"sqrt",
+				"round",
+				"sum",
+				"max",
+				"min",
+			};
 
 			public static readonly HashSet<string> AllLiterals = new() {
-			"true",
-			"false"
-		};
+				"true",
+				"false"
+			};
 
 			public static readonly HashSet<string> AllTypes = new() {
-			"Number",
-			"String",
-			"Bool",
-			"List",
-			"Dict",
-			"Function",
-			"Error",
-		};
+				"Number",
+				"String",
+				"Bool",
+				"List",
+				"Dict",
+				"Function",
+				"Error",
+			};
 
 			public static readonly HashSet<string> AllKeywords = new() {
-			"if",
-			"else",
-			"for",
-			"while",
-			"break",
-			"continue",
-			"pass",
-			"return",
-			"try",
-			"except",
-			"finally",
-			"raise"
-		};
+				"if",
+				"else",
+				"for",
+				"while",
+				"break",
+				"continue",
+				"pass",
+				"return",
+				"try",
+				"except",
+				"finally",
+				"raise"
+			};
 		}
 	}
 }

@@ -62,7 +62,7 @@ public class WindowItem {
 	
 	public RectTransform RealObject;
 
-	public WindowItem WithSubItems(params WindowItem[] subs) {
+	public WindowItem SetSubItems(params WindowItem[] subs) {
 		SubItems = subs.ToList();
 		return this;
 	}

@@ -223,7 +223,7 @@ public class RightClickMenus : MonoBehaviour {
 		public static readonly int[] AGPT_APOOGT_AGPSF	= new[]{0, 4, 5, 6, 8, 11};
 	}
 
-	private static readonly W[] windows = new[]{
+	private static readonly W[] windows = {
 		digital,
 		mechanical,
 		structural,

@@ -13,10 +13,10 @@ public static class HF {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 
-	public static Vector3 MV3(Vector3 a, Vector3 b) => 
+	public static Vector3 MV3(Vector3 a, Vector3 b) =>
 		new(a.x * b.x, a.y * b.y, a.z * b.z);
 
-	public static Vector3 Vector3Round(Vector3 v) => 
+	public static Vector3 Vector3Round(Vector3 v) =>
 		new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 
 	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t) {
@@ -26,18 +26,24 @@ public static class HF {
 			Mathf.Lerp(a.z, b.z, t.z));
 	}
 
-	public static Vector2 Vector2Round(Vector2 v) => 
+	public static Vector2 Vector2Round(Vector2 v) =>
 		new(Mathf.Round(v.x), Mathf.Round(v.y));
 
-	public static Vector2 Vector2Abs(Vector2 v) => 
+	public static Vector2 Vector2Abs(Vector2 v) =>
 		new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 
-	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) => 
+	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) =>
 		new(
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
 
 	#endregion
+
+	public static string GetPath(this Transform current) {
+		if (current.parent == null)
+			return "/" + current.name;
+		return current.parent.GetPath() + "/" + current.name;
+	}
 
 	private static void OldLogColor(string str, Color color) {
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));

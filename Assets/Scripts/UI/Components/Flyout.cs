@@ -84,20 +84,20 @@ public class Flyout : MonoBehaviour {
 		return mousePos.x < max.x && mousePos.y < max.y && mousePos.x > min.x && mousePos.y > min.y;
 	}
 
-	public void Show(FlyoutTrigger trigger) {
+	public void Show(FlyoutTrigger trigger, bool horizontal, bool prioritizeTopRight) {
 		thisTrigger = trigger;
 
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		lw.PlaceAtHorizontal(trigger.rt);
+		lw.PlaceAt(trigger.rt, horizontal, prioritizeTopRight);
 	}
 
-	public void Show(Vector3 at) {
+	public void Show(Vector3 at, bool horizontal, bool prioritizeTopRight) {
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		lw.PlaceAtHorizontal(new[] { at, at, at, at });
+		lw.PlaceAt(new[] { at, at, at, at }, horizontal, prioritizeTopRight);
 	}
 
 	public void Hide() {

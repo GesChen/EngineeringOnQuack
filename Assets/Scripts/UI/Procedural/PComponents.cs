@@ -116,23 +116,6 @@ public class PComponents {
 		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.TopLeft;
 
 		public Text(
-				string content,
-				TMP_FontAsset font,
-				FontStyles style,
-				FontWeight weight,
-				float fontSize,
-				Color color,
-				TextAlignmentOptions alignment) {
-			Content = content;
-			Font = font;
-			Style = style;
-			Weight = weight;
-			FontSize = fontSize;
-			Color = color;
-			Alignment = alignment;
-		}
-
-		public Text(
 				string					content,
 				TMP_FontAsset			font		= null,
 				FontStyles?				style		= null,
@@ -148,10 +131,6 @@ public class PComponents {
 			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
 			Color		= color		?? Config.UI.Visual.TextColor;
 			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
-		}
-
-		public Text(string content) {
-			Content = content;
 		}
 	}
 
@@ -289,23 +268,27 @@ public class PComponents {
 	public class FlyoutTrigger : Component {
 		public CWindow TargetFlyout;
 		public WindowItem IndicatorImage;
-		public string openSpriteLocation = Config.UI.Locations.FlyoutTriggerOpenSprite;
-		public string closedSpriteLocation = Config.UI.Locations.FlyoutTriggerClosedSprite;
+		public bool OpenHorizontally;
+		public bool OpenPrioritizingTopRight;
+		public string OpenSpriteLocation = Config.UI.Locations.FlyoutTriggerOpenSprite;
+		public string ClosedSpriteLocation = Config.UI.Locations.FlyoutTriggerClosedSprite;
 
-		public FlyoutTrigger(CWindow targetFlyout, WindowItem indicatorImage, string openSpriteLocation, string closedSpriteLocation) {
+		public FlyoutTrigger(
+			CWindow targetFlyout,
+			WindowItem indicatorImage = null,
+			bool openHorizontally = true,
+			bool openPrioritizingTopRight = true,
+			string openSpriteLocation = null,
+			string closedSpriteLocation = null) {
+
 			TargetFlyout = targetFlyout;
 			IndicatorImage = indicatorImage;
-			this.openSpriteLocation = openSpriteLocation;
-			this.closedSpriteLocation = closedSpriteLocation;
-		}
 
-		public FlyoutTrigger(CWindow targetFlyout) {
-			TargetFlyout = targetFlyout;
-		}
-
-		public FlyoutTrigger(CWindow targetFlyout, WindowItem indicatorImage) {
-			TargetFlyout = targetFlyout;
-			IndicatorImage = indicatorImage;
+			OpenHorizontally = openHorizontally;
+			OpenPrioritizingTopRight = openPrioritizingTopRight;
+			
+			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Locations.FlyoutTriggerOpenSprite;
+			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Locations.FlyoutTriggerClosedSprite;
 		}
 	}
 

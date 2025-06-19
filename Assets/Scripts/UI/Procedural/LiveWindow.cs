@@ -152,54 +152,81 @@ public class LiveWindow : MonoBehaviour {
 		anyNodesDragging = cornerNodes.Any(n => n.dragging);
 	}
 
-	public void PlaceAtHorizontal(RectTransform target) {
+	public void PlaceAt(RectTransform target, bool horizontal, bool prioritizeTopRight) {
+		if (horizontal)
+			PlaceAtHorizontal(target, prioritizeTopRight);
+		else
+			PlaceAtVertical(target, prioritizeTopRight);
+	}
+
+	public void PlaceAt(Vector3[] target, bool horizontal, bool prioritizeTopRight) {
+		if (horizontal)
+			PlaceAtHorizontal(target, prioritizeTopRight);
+		else
+			PlaceAtVertical(target, prioritizeTopRight);
+	}
+
+	private void PlaceAtVertical(RectTransform target, bool prioritizeTop) {
 		Vector3[] corners = new Vector3[4];
 		target.GetWorldCorners(corners);
 
-		PlaceAtHorizontal(corners);
+		PlaceAtVertical(corners, prioritizeTop);
+	}
+
+	private void PlaceAtHorizontal(RectTransform target, bool prioritizeRight) {
+		Vector3[] corners = new Vector3[4];
+		target.GetWorldCorners(corners);
+
+		PlaceAtHorizontal(corners, prioritizeRight);
 	}
 
 	/// <summary>
 	/// Try to put this window at some corners
 	/// </summary>
 	/// <param name="corners">4 corner array of the possible positions</param>
-	public void PlaceAtHorizontal(Vector3[] corners) {
+	private void PlaceAtVertical(Vector3[] corners, bool prioritizeTop) {
 		// check fits
 		float topY = corners[1].y + global::Config.UI.Behaviour.FlyoutDistance;
 		float bottomY = corners[0].y - global::Config.UI.Behaviour.FlyoutDistance;
 		bool fitsOnTop = topY + rt.rect.height < canvas.renderingDisplaySize.y;
+		bool fitsOnBottom = bottomY - rt.rect.height > 0;
+
+		bool putOnTop = prioritizeTop ? fitsOnTop : !fitsOnBottom;
 
 		float xOfLeftLeftwards = corners[2].x - rt.rect.width;
 		//float yOfTopUpwards = corners[4].y + rt.rect.height;
 		bool fitsLeftwards = xOfLeftLeftwards > 0;
 
 		int targetCorner;
-		if (fitsOnTop) targetCorner = fitsLeftwards ? 3 : 0;
+		if (putOnTop) targetCorner = fitsLeftwards ? 3 : 0;
 		else targetCorner = fitsLeftwards ? 2 : 1;
 
 		Vector2 pos = new(
 			fitsLeftwards ? corners[2].x : corners[1].x,
-			fitsOnTop ? topY : bottomY);
+			putOnTop ? topY : bottomY);
 
 		SetWorldCorner(rt, pos, targetCorner);
 	}
 
-	public void PlaceAtHorizontalasd(Vector3[] corners) {
+	private void PlaceAtHorizontal(Vector3[] corners, bool prioritizeRight) {
 		// check fits
 		float rightX = corners[2].x + global::Config.UI.Behaviour.FlyoutDistance;
 		float leftX = corners[1].x - global::Config.UI.Behaviour.FlyoutDistance;
 		bool fitsOnRight = rightX + rt.rect.width < canvas.renderingDisplaySize.x;
+		bool fitsOnLeft = leftX - rt.rect.width > 0;
+
+		bool putOnRight = prioritizeRight ? fitsOnRight : !fitsOnLeft;
 
 		float yOfBottomDownwards = corners[2].y - rt.rect.height;
 		//float yOfTopUpwards = corners[4].y + rt.rect.height;
 		bool fitsDownwards = yOfBottomDownwards > 0;
 
 		int targetCorner;
-		if (fitsOnRight) targetCorner = fitsDownwards ? 1 : 0;
+		if (putOnRight) targetCorner = fitsDownwards ? 1 : 0;
 		else targetCorner = fitsDownwards ? 2 : 3;
 
 		Vector2 pos = new(
-			fitsOnRight ? rightX : leftX,
+			putOnRight ? rightX : leftX,
 			fitsDownwards ? corners[1].y : corners[0].y);
 
 		SetWorldCorner(rt, pos, targetCorner);

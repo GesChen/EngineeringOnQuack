@@ -7,7 +7,7 @@ public class TransformToolsMenu {
 	public static PComponents.Button.ClickEvent onRotatePressed;
 	public static PComponents.Button.ClickEvent onScalePressed;
 
-	public static CWindow[] Windows = new CWindow[] {
+	public static CWindow[] Windows = {
 		new() {
 			Name = "Transform Tools",
 			Config = new() {
