@@ -141,7 +141,7 @@ public class MaterialEditingMenu : MonoBehaviour {
 		RectTransform rt = source.RealObject;
 
 		Editor.CWindow.RealisedWindow.Show();
-		Editor.CWindow.RealisedWindow.PlaceAt(rt, true, true);
+		Editor.CWindow.RealisedWindow.PlaceAt(rt, true, true, false);
 
 		//editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
 	}
@@ -161,11 +161,11 @@ public class MaterialEditingMenu : MonoBehaviour {
 	static RectTransform compositionPickerButton;
 	static void ShowColorPicker() {
 		colorPicker.RealisedWindow.Show();
-		colorPicker.RealisedWindow.PlaceAt(colorPickerButton, true, true);
+		colorPicker.RealisedWindow.PlaceAt(colorPickerButton, true, true, false);
 	}
 	static void ShowCompositionPicker() {
 		CompositionPicker.RealisedWindow.Show();
-		CompositionPicker.RealisedWindow.PlaceAt(compositionPickerButton, true, true);
+		CompositionPicker.RealisedWindow.PlaceAt(compositionPickerButton, true, true, false);
 	}
 
 }

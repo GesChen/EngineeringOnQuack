@@ -41,7 +41,7 @@ public class RightClick : Singleton<RightClick> {
 			// don't optimize this if not needed 
 			currentOpen = window.CWindow.RealisedWindow.GetComponent<Flyout>();
 
-			currentOpen.Show(Conatrols.Mouse.Position, true, true);
+			currentOpen.Show(Conatrols.Mouse.Position, true, true, false);
 
 			if (window.Switchable) {
 				window.SwitchingComponent.UpdateActiveState(indices);

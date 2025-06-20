@@ -34,7 +34,9 @@ public static class BottomBar {
 			label,
 			new PComponents.FlyoutTrigger(
 				target,
-				openHorizontally: false
+				openHorizontally: false,
+				openPrioritizingRight: true,
+				openPrioritizingUp: true
 				),
 			WindowItem.LayoutConfig.LayoutElement(new(width, size))
 			).SetSubItems(

@@ -337,7 +337,8 @@ public class WindowRealiser : MonoBehaviour {
 				var ftComp = newObj.AddComponent<FlyoutTrigger>();
 
 				ftComp.openHorizontally = ft.OpenHorizontally;
-				ftComp.openPrioritizingTopRight = ft.OpenPrioritizingTopRight;
+				ftComp.openPrioritizingUp = ft.OpenPrioritizingUp;
+				ftComp.openPrioritizingRight = ft.OpenPrioritizingRight;
 
 				// find hovertarget component
 				var htInstance = newObj.GetComponent<HoverTarget>();

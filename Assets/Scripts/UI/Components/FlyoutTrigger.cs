@@ -7,7 +7,8 @@ using UnityEngine.UI;
 public class FlyoutTrigger : MonoBehaviour {
 	public Flyout targetFlyout;
 	public bool openHorizontally;
-	public bool openPrioritizingTopRight;
+	public bool openPrioritizingRight;
+	public bool openPrioritizingUp;
 
 	public Image openIndicator;
 	public Sprite openSprite;
@@ -82,7 +83,7 @@ public class FlyoutTrigger : MonoBehaviour {
 		}
 
 		if (state) {			
-			targetFlyout.Show(this, openHorizontally, openPrioritizingTopRight);
+			targetFlyout.Show(this, openHorizontally, openPrioritizingRight, openPrioritizingUp);
 		} else {
 
 			if (!targetFlyout.mouseInRange) // and the mouse isnt hovering on the target flyout now

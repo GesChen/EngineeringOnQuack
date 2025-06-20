@@ -269,7 +269,8 @@ public class PComponents {
 		public CWindow TargetFlyout;
 		public WindowItem IndicatorImage;
 		public bool OpenHorizontally;
-		public bool OpenPrioritizingTopRight;
+		public bool OpenPrioritizingRight;
+		public bool OpenPrioritizingUp;
 		public string OpenSpriteLocation = Config.UI.Locations.FlyoutTriggerOpenSprite;
 		public string ClosedSpriteLocation = Config.UI.Locations.FlyoutTriggerClosedSprite;
 
@@ -277,7 +278,8 @@ public class PComponents {
 			CWindow targetFlyout,
 			WindowItem indicatorImage = null,
 			bool openHorizontally = true,
-			bool openPrioritizingTopRight = true,
+			bool openPrioritizingRight = true,
+			bool openPrioritizingUp = false,
 			string openSpriteLocation = null,
 			string closedSpriteLocation = null) {
 
@@ -285,7 +287,8 @@ public class PComponents {
 			IndicatorImage = indicatorImage;
 
 			OpenHorizontally = openHorizontally;
-			OpenPrioritizingTopRight = openPrioritizingTopRight;
+			OpenPrioritizingUp = openPrioritizingUp;
+			OpenPrioritizingRight = openPrioritizingRight;
 			
 			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Locations.FlyoutTriggerOpenSprite;
 			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Locations.FlyoutTriggerClosedSprite;

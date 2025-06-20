@@ -153,6 +153,8 @@ public class LiveWindow : MonoBehaviour {
 
 	#region PlaceAt helpers and variations
 	// only sets the location, show it manually
+
+	/*
 	public void PlaceAt(RectTransform target, bool horizontal, bool prioritizeTopRight) {
 		if (horizontal)
 			PlaceAtHorizontal(target, prioritizeTopRight);
@@ -236,6 +238,82 @@ public class LiveWindow : MonoBehaviour {
 		Vector2 pos = new(
 			putOnRight ? rightX : leftX,
 			fitsDownwards ? corners[1].y : corners[0].y);
+
+		SetWorldCorner(rt, pos, targetCorner);
+	}*/
+
+
+	public void PlaceAt(Vector3 point, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
+		PlaceAt(
+			new[] { point, point, point, point }, 
+			horizontal, 
+			prioritizeRight, 
+			prioritizeUp);
+	}
+
+	public void PlaceAt(RectTransform target, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
+		Vector3[] corners = new Vector3[4];
+		target.GetWorldCorners(corners);
+
+		PlaceAt(corners, horizontal, prioritizeRight, prioritizeUp);
+	}
+
+	public void PlaceAt(Vector3[] corners, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
+		// check fits
+
+		// which side of the corners array to place on
+		float height = canvas.renderingDisplaySize.y;
+		float width = canvas.renderingDisplaySize.x;
+
+		float topY = corners[1].y + global::Config.UI.Behaviour.FlyoutDistance;
+		float bottomY = corners[0].y - global::Config.UI.Behaviour.FlyoutDistance;
+		bool fitsOnTop = topY + rt.rect.height < height;
+		bool fitsOnBottom = bottomY - rt.rect.height > 0;
+
+		float rightX = corners[2].x + global::Config.UI.Behaviour.FlyoutDistance;
+		float leftX = corners[1].x - global::Config.UI.Behaviour.FlyoutDistance;
+		bool fitsOnRight = rightX + rt.rect.width < width;
+		bool fitsOnLeft = leftX - rt.rect.width > 0;
+
+		bool putOnTop = prioritizeUp ? fitsOnTop : !fitsOnBottom;
+		bool putOnRight = prioritizeRight ? fitsOnRight : !fitsOnLeft;
+
+		// which way to offset the entire thing
+		float xOfRightRightwards = corners[3].y + rt.rect.height;
+		float xOfLeftLeftwards = corners[2].x - rt.rect.width;
+		bool fitsRightwards = xOfRightRightwards < width;
+		bool fitsLeftwards = xOfLeftLeftwards > 0;
+
+		float yOfTopUpwards = corners[3].y + rt.rect.height;
+		float yOfBottomDownwards = corners[2].y - rt.rect.height;
+		bool fitsUpwards = yOfTopUpwards < height;
+		bool fitsDownwards = yOfBottomDownwards > 0;
+
+		bool putRightwards = prioritizeRight ? fitsRightwards : !fitsLeftwards;
+		bool putUpwards = prioritizeUp ? fitsUpwards : !fitsDownwards;
+
+		// determine actual placements
+		Vector2 pos;
+		int targetCorner;
+		if (horizontal) {
+			targetCorner = 
+				putOnRight 
+				? putUpwards ? 0 : 1 
+				: putUpwards ? 3 : 2;
+
+			pos = new(
+				putOnRight ? rightX : leftX,
+				putUpwards ? corners[0].y : corners[1].y);
+		} else {
+			targetCorner = 
+				putOnTop 
+				? putRightwards ? 0 : 3 
+				: putRightwards ? 1 : 2;
+
+			pos = new(
+				putRightwards ? corners[1].x : corners[2].x,
+				putOnTop ? topY : bottomY);
+		}
 
 		SetWorldCorner(rt, pos, targetCorner);
 	}
