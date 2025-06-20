@@ -46,8 +46,8 @@ public static partial class Config {
 			public static readonly float	FlyoutHoverMargin		= 50;
 			public static readonly int		DescriptionHoverMs		= 500;
 			public static readonly float	MaxMouseMovementForClick	= 5;
-			public static readonly int		TimeForDescriptionChangeMs    = 100;
-			public static readonly int      CanvasInnerWindowsPadding   = 10;
+			public static readonly int		TimeForDescriptionChangeMs	= 100;
+			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 40, 10);
 		}
 
 		// experimental design change

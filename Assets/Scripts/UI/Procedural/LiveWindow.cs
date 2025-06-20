@@ -132,7 +132,7 @@ public class LiveWindow : MonoBehaviour {
 			transform.position = Conatrols.Mouse.Position + dragOffset;
 
 			// prevent going off the sides
-			Vector2 padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding * Vector2.one;
+			FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
 			Vector2 canvasSize = manager.canvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
@@ -140,8 +140,11 @@ public class LiveWindow : MonoBehaviour {
 
 			Vector2 clampedPos = HF.Vector2Clamp(
 				transform.position,
-				new Vector2(halfWidth, halfHeight) + padding,
-				new Vector2(canvasSize.x - halfWidth, canvasSize.y - halfHeight) - padding);
+				new Vector2(halfWidth, halfHeight) 
+				+ new Vector2(padding.Left, padding.Down),
+				
+				new Vector2(canvasSize.x - halfWidth, canvasSize.y 
+				- halfHeight) - new Vector2(padding.Right, padding.Up));
 
 			transform.position = clampedPos;
 		}

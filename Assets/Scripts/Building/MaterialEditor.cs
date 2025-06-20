@@ -75,7 +75,7 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	public void UpdateNone() {
-		currentColor = Color.white;
+		currentColor = null;
 		currentComposition = null;
 
 		editingParts = new Part[0];

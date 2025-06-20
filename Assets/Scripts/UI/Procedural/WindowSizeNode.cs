@@ -132,11 +132,11 @@ public class WindowSizeNode : MonoBehaviour {
 		if (dragging) {
 			GetOtherCorner();
 
-			float pad = Config.UI.Behaviour.CanvasInnerWindowsPadding;
+			var pad = Config.UI.Behaviour.CanvasInnerWindowsPadding;
 			Vector2 pos = HF.Vector2Clamp(
 				Conatrols.Mouse.Position,
-				pad * Vector2.one,
-				main.manager.canvasRect.sizeDelta - pad * Vector2.one);
+				new Vector2(pad.Left, pad.Down),
+				main.manager.canvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
 			SetCornerPosition(pos);
 
 			oppositeVert =
