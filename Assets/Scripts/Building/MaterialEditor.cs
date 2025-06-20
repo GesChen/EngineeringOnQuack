@@ -40,19 +40,25 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	static void Subscribe(MaterialEditor editor) {
-		RightClickMenus.OnMaterial += MaterialEditingMenu.ShowMenu;
-		RightClickMenus.OnMaterial += (_) => editor.UpdateParts();
+		RightClickMenus.OnMaterial += (source) => {
+			editor.UpdateParts();
+			MaterialEditingMenu.ShowMenu(source);
+		};
+
 		SelectionManager.Instance.OnSelectionChanged += editor.UpdateParts;
 
 		MaterialEditingMenu.OnColorSelection += editor.SetColor;
 		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
 
 		BottomBar.ClearMaterial();
-		BottomBar.OnMaterialOpened += MaterialEditingMenu.ShowMenu;
-	}
-
-	void Update() {
-
+		// look idk where else to put it and for now im too lazy to add the windowitem callback
+		// thing cuz it has to refernce itself and whatnot
+		var canvas = editor.GetComponentInParent<Canvas>();
+		Vector2 center = canvas.renderingDisplaySize / 2f;
+		BottomBar.OnMaterialOpened += () => {
+			editor.UpdateParts();
+			MaterialEditingMenu.ShowMenu(center);
+		};
 	}
 
 	public void UpdateParts() {
@@ -71,6 +77,8 @@ public class MaterialEditor : MonoBehaviour {
 	public void UpdateNone() {
 		currentColor = Color.white;
 		currentComposition = null;
+
+		editingParts = new Part[0];
 	}
 
 	public void UpdateSingle(Part t) {

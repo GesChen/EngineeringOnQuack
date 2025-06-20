@@ -146,8 +146,9 @@ public class MaterialEditingMenu : MonoBehaviour {
 		//editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
 	}
 
-	public static void ShowMenu() {
+	public static void ShowMenu(Vector2 at) {
 		Editor.CWindow.RealisedWindow.Show();
+		Editor.CWindow.RealisedWindow.PlaceAt(at, true, true, true);
 	}
 
 	// has to be property because it needs to be reevaluated at creationtime

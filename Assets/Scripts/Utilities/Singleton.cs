@@ -10,10 +10,10 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 
 	public static T Instance {
 		get {
-			if (_applicationIsQuitting) {
+			/*if (_applicationIsQuitting) {
 				Debug.LogWarning($"[Singleton] Instance '{typeof(T)}' already destroyed on application quit. Returning null.");
 				return null;
-			}
+			}*/
 
 			lock (_lock) {
 				if (_instance == null) {
@@ -30,7 +30,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 		}
 	}
 
-	private static bool _applicationIsQuitting = false;
+	//private static bool _applicationIsQuitting = false;
 
 	protected virtual void Awake() {
 		lock (_lock) {
@@ -44,7 +44,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 			}
 
 			_instance = this as T;
-			_applicationIsQuitting = false;
+			//_applicationIsQuitting = false;
 
 			// Optional: Persist singleton across scenes
 			if (ShouldPersist()) {
@@ -61,7 +61,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 	protected virtual void OnDestroy() {
 		if (_instance == this) {
 			_instance = null;
-			_applicationIsQuitting = true;
+			//_applicationIsQuitting = true;
 		}
 	}
 	// ask chatgpt again about this idfk

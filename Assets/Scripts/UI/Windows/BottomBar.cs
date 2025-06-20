@@ -21,13 +21,15 @@ public static class BottomBar {
 			new W.Button(null, "Load"),
 			new W.Button(null, "Load Recent"),
 			new W.Button(null, "Insert Save"), // ? might keep 
-		});
+		},
+		showTitle: false);
 
 	static readonly W ToolsMenu = new(
-		"File", 200, new(){
+		"Tools", 200, new(){
 			new W.Button(() => OnTransformOpened?.Invoke(), "Transform"), // todo: descriptions? and icons
 			new W.Button(() => OnMaterialOpened?.Invoke(), "Material"), // todo: descriptions? and icons
-		});
+		},
+		showTitle: false);
 
 	static WindowItem BarItem(string label, float width, CWindow target) =>
 		WindowItem.NewFlyoutTrigger(

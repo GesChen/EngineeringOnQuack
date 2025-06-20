@@ -25,7 +25,7 @@ public class PMenu : MonoBehaviour {
 		public bool IsFlyout = true;
 		public bool Closable = false;
 		public bool HideOnStart = true;
-		public bool Switchable = false;
+
 
 		private CWindow m_cwindow;
 		public CWindow CWindow {
@@ -36,16 +36,48 @@ public class PMenu : MonoBehaviour {
 			// no setter because it is done by the getter
 		}
 
-		private SwitchableMenu m_dynamicComponent;
-		public SwitchableMenu SwitchingComponent {
-			get {
-				if (!Switchable) throw new("Tried getting Dynamic Component of a non dynamic window");
-				if (m_dynamicComponent == null) throw new("Dynamic Component not created!");
-				return m_dynamicComponent;
-			}
-			internal set { m_dynamicComponent = value; }
+		#region Customization
+		// i am rewriting like half of this at 11:58 pm i woke at 3:45 
+		// and maybeslept for like 1-2 hrs on the plane the code is going 
+		// to be bad and i do very much realise it alreeady
+		// the word "customization" has lost all meaning already
+		public bool Customizable = false;
+
+		public CustomizationData Customization; // null
+
+		public void CustomizeIfAble(CustomizationData customization) {
+			if (Customizable)
+				Customize(customization);
 		}
 
+		/// <summary>
+		/// Sets menus customization and updates the component
+		/// </summary>
+		public void Customize(CustomizationData customization) {
+			Customization = customization;
+
+			if (customization.Indices != null)
+				CustomizationComponent.UpdateActiveState(Customization.Indices);
+
+			if (customization.Width.HasValue)
+				CustomizationComponent.UpdateWidth(Customization.Width.Value);
+		}
+		
+		private CustomizableMenu m_customizationComponent;
+		internal CustomizableMenu CustomizationComponent {
+			get {
+				if (!Customizable) throw new("Tried getting Customization Component of a non customizable window");
+				if (m_customizationComponent == null) throw new("Customization Component not created!");
+				return m_customizationComponent;
+			}
+			set { m_customizationComponent = value; }
+		}
+
+		public class CustomizationData {
+			public int[] Indices;
+			public float? Width;
+		}
+		#endregion
 		public Window(
 			string title, 
 			float width, 
@@ -66,7 +98,7 @@ public class PMenu : MonoBehaviour {
 			IsFlyout = isFlyout;
 			Closable = closable;
 			HideOnStart = hideOnStart;
-			Switchable = switchable;
+			Customizable = switchable;
 		}
 		public Window(float width, List<Item> items) {
 			ShowTitle = false;
@@ -232,8 +264,9 @@ public class PMenu : MonoBehaviour {
 		List<WindowItem> items = new();
 
 		// generate title
+		WindowItem title = null;
 		if (rcw.ShowTitle) {
-			var title = WindowItem.NewText(
+			title = WindowItem.NewText(
 				new(
 					rcw.Title,
 					fontSize: M.FontSize,
@@ -268,15 +301,16 @@ public class PMenu : MonoBehaviour {
 		// yeah i changed it
 
 		// add dynamic menu and items
-		if (rcw.Switchable) {
+		if (rcw.Customizable) {
 			cw.AddEvent(TimedEventInvoker.Timing.Start, (_) => {
-				rcw.SwitchingComponent =
-					cw.RealisedWindow.gameObject.AddComponent<SwitchableMenu>();
+				rcw.CustomizationComponent =
+					cw.RealisedWindow.gameObject.AddComponent<CustomizableMenu>();
 
-				rcw.SwitchingComponent.items = new(items);
+				rcw.CustomizationComponent.title = title;
+				rcw.CustomizationComponent.items = new(items);
 
 				if (rcw.ShowTitle) // don't want to include the title
-					rcw.SwitchingComponent.items.RemoveAt(0);
+					rcw.CustomizationComponent.items.RemoveAt(0);
 			});
 		}
 		return cw;

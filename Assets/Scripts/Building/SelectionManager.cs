@@ -329,6 +329,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	public void UpdateContainer() {
+		OnSelectionChanged?.Invoke();
+
 		// remove objects from the container that are no longer in selection 
 		// (this is put before return, in case selection is empty then this will not happen
 		foreach (Part p in BuildingManager.Instance.Parts) {
@@ -369,7 +371,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 			t.SetParent(selectionContainer, true);
 		}
 
-		OnSelectionChanged?.Invoke();
 	}
 
 	void UpdateContext() {

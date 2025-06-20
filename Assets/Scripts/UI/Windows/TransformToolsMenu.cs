@@ -20,7 +20,7 @@ public class TransformToolsMenu {
 			Resizable = true,
 			Size = CWindow.Configuration.FreeSize(new Vector2(300, 100) * .75f),
 			Position = UIPosition.AnchoredOffset(UIPosition.BottomCenter, new(0, 100)),
-			Closable = false,
+			Closable = true,
 			HideOnStart = false
 		},
 		Items = new WindowItem[] {

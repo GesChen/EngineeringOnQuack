@@ -35,17 +35,16 @@ public class RightClick : Singleton<RightClick> {
 
 		downPos = Conatrols.Mouse.Position;
 
-		var window = WindowLookupFunc(ContextManager.Current, out int[] indices);
+		var window = WindowLookupFunc(ContextManager.Current, out var customization);
 
 		if (window != null) {
 			// don't optimize this if not needed 
 			currentOpen = window.CWindow.RealisedWindow.GetComponent<Flyout>();
 
+			window.CustomizeIfAble(customization);
+
 			currentOpen.Show(Conatrols.Mouse.Position, true, true, false);
 
-			if (window.Switchable) {
-				window.SwitchingComponent.UpdateActiveState(indices);
-			}
 		} else {
 			Debug.LogWarning($"No right click defined for {ContextManager.Current.Name}");
 		}
@@ -54,7 +53,9 @@ public class RightClick : Singleton<RightClick> {
 		currentOpen.Hide();
 	}
 
-	PMenu.Window WindowLookupFunc(IContext context, out int[] menuMask) { 
+	PMenu.Window WindowLookupFunc(
+		IContext context,
+		out PMenu.Window.CustomizationData customization) { 
 		PMenu.Window window =
 			context switch {
 				C.InWorld or 
@@ -66,16 +67,29 @@ public class RightClick : Singleton<RightClick> {
 			};
 
 		if (window == null) {
-			menuMask = null;
+			customization = null;
 			return null;
 		}
 
-		menuMask = context switch {
-			C.InWorld or C.NoSelection => RCM.UniversalIndices.Default,
-			C.SingleSelection => RCM.UniversalIndices.SingleSelection,
-			C.MultiSelection => RCM.UniversalIndices.MultiSelection,
-			C.GroupSelection gc => GetGroupIndices(gc),
+		int[] indices = context switch {
+			C.InWorld or C.NoSelection	=> RCM.Customizations.Indices.Default,
+			C.SingleSelection			=> RCM.Customizations.Indices.SingleSelection,
+			C.MultiSelection			=> RCM.Customizations.Indices.MultiSelection,
+			C.GroupSelection gc			=> GetGroupIndices(gc),
 			_ => Enumerable.Range(0, window.Items.Count).ToArray() // default just select everything
+		};
+
+		float? width = context switch {
+			C.InWorld or C.NoSelection	=> RCM.Customizations.Widths.Default,
+			C.SingleSelection			=> RCM.Customizations.Widths.SingleSelection,
+			C.MultiSelection			=> RCM.Customizations.Widths.MultiSelection,
+			C.GroupSelection gc			=> GetGroupWidths(gc),
+			_ => null
+		};
+
+		customization = new() {
+			Indices = indices,
+			Width = width
 		};
 
 		return window;
@@ -87,13 +101,26 @@ public class RightClick : Singleton<RightClick> {
 	/// </summary>
 	int[] GetGroupIndices(C.GroupSelection context) {
 		switch ((context.AllGroupedParts, context.AllPartsOfOneGroup)) {
-			case (false, false):	return RCM.UniversalIndices.AGPF_APOOGF;
-			case (true, false):		return RCM.UniversalIndices.AGPT_APOOGF;
-			case (false, true):		return RCM.UniversalIndices.AGPF_APOOGT;
+			case (false, false):	return RCM.Customizations.Indices.AGPF_APOOGF;
+			case (true, false):		return RCM.Customizations.Indices.AGPT_APOOGF;
+			case (false, true):		return RCM.Customizations.Indices.AGPF_APOOGT;
 			case (true, true):
 				if (context.AllGroupPartsSelected)
-					return RCM.UniversalIndices.AGPT_APOOGT_AGPST;
-				else return RCM.UniversalIndices.AGPT_APOOGT_AGPSF;
+					return RCM.Customizations.Indices.AGPT_APOOGT_AGPST;
+				else return RCM.Customizations.Indices.AGPT_APOOGT_AGPSF;
+		}
+	}
+
+	// we wet cuz i cant be fucked to figure out a dryer solution atm
+	float GetGroupWidths(C.GroupSelection context) {
+		switch ((context.AllGroupedParts, context.AllPartsOfOneGroup)) {
+			case (false, false):	return RCM.Customizations.Widths.AGPF_APOOGF;
+			case (true, false):		return RCM.Customizations.Widths.AGPT_APOOGF;
+			case (false, true):		return RCM.Customizations.Widths.AGPF_APOOGT;
+			case (true, true):
+				if (context.AllGroupPartsSelected)
+					return RCM.Customizations.Widths.AGPT_APOOGT_AGPST;
+				else return RCM.Customizations.Widths.AGPT_APOOGT_AGPSF;
 		}
 	}
 }

@@ -120,7 +120,7 @@ public class RightClickMenus : MonoBehaviour {
 			"material",
 			iconSprite: Config.Building.MaterialIcon);
 
-	static readonly float mainwidth = 220;
+	static readonly float mainwidth = 0; // controlled by the rightclick customization
 
 	// horizontal layout with a bunch of buttons for modifying stuff
 	// undo redo copy paste delete
@@ -133,8 +133,8 @@ public class RightClickMenus : MonoBehaviour {
 				TextAnchor.UpperLeft),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.AnchoredAt(UIPosition.TopLeft),
-				new (mainwidth, 45),
-				new (5)
+				new(mainwidth, 45),
+				new(0)
 			),
 			new (){
 				WindowItem.NewButtonCustomImageOverlay(
@@ -218,17 +218,31 @@ public class RightClickMenus : MonoBehaviour {
 		public static readonly int AGPT_APOOGT_AGPSF	= 0b_100011101001;
 	}*/
 
-	public static class UniversalIndices {
-		public static readonly int[] Default			= new[]{0, 1, 2, 3};
-		public static readonly int[] SingleSelection	= new[]{0, 4, 5, 6};
-		public static readonly int[] MultiSelection		= new[]{0, 4, 5, 6, 7};
+	public static class Customizations {
+		public static class Indices { 
+			public static readonly int[] Default			= new[]{0, 1, 2, 3};
+			public static readonly int[] SingleSelection	= new[]{0, 4, 5, 6};
+			public static readonly int[] MultiSelection		= new[]{0, 4, 5, 6, 7};
 
-		// different multi select groups
-		public static readonly int[] AGPF_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
-		public static readonly int[] AGPT_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
-		public static readonly int[] AGPF_APOOGT		= new[]{0, 4, 5, 6, 8, 10};
-		public static readonly int[] AGPT_APOOGT_AGPST	= new[]{0, 4, 5, 6, 8};
-		public static readonly int[] AGPT_APOOGT_AGPSF	= new[]{0, 4, 5, 6, 8, 11};
+			// different multi select groups
+			public static readonly int[] AGPF_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
+			public static readonly int[] AGPT_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
+			public static readonly int[] AGPF_APOOGT		= new[]{0, 4, 5, 6, 8, 10};
+			public static readonly int[] AGPT_APOOGT_AGPST	= new[]{0, 4, 5, 6, 8};
+			public static readonly int[] AGPT_APOOGT_AGPSF	= new[]{0, 4, 5, 6, 8, 11};
+		}
+		public static class Widths {
+			public static readonly float Default			= 150;
+			public static readonly float SingleSelection	= 150;
+			public static readonly float MultiSelection		= 150;
+
+			// different multi select groups
+			public static readonly float AGPF_APOOGF		= 200;
+			public static readonly float AGPT_APOOGF		= 200;
+			public static readonly float AGPF_APOOGT		= 150;
+			public static readonly float AGPT_APOOGT_AGPST	= 150;
+			public static readonly float AGPT_APOOGT_AGPSF	= 230;
+		}
 	}
 
 	private static readonly W[] windows = {
