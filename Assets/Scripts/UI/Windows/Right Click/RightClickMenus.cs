@@ -77,12 +77,12 @@ public class RightClickMenus : MonoBehaviour {
 		"Mechanical",
 		200,
 		new(){
-			new W.Button(() => MakeNewPart("motor 1"),  "motor 1",  iconName: "Parts/motor 1"),
-			new W.Button(() => MakeNewPart("motor 2"),  "motor 2",  iconName: "Parts/motor 2"),
-			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "Parts/piston 1"),
-			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "Parts/piston 2"),
-			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "Parts/servo 1"),
-			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "Parts/servo 2")
+			new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
+			new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
+			new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
+			new W.Button(() => MakeNewPart("piston ii"),	"piston ii",	iconName: "Parts/piston 2"),
+			new W.Button(() => MakeNewPart("servo i"),		"servo i",		iconName: "Parts/servo 1"),
+			new W.Button(() => MakeNewPart("servo ii"),		"servo ii",		iconName: "Parts/servo 2")
 		},
 		showTitle: false);
 
@@ -90,10 +90,10 @@ public class RightClickMenus : MonoBehaviour {
 		"Structural",
 		200,
 		new(){
-			new W.Button(() => MakeNewPart("cube"),     "cube",     iconName: "Parts/cube"),
-			new W.Button(() => MakeNewPart("sphere"),   "sphere",   iconName: "Parts/sphere"),
-			new W.Button(() => MakeNewPart("cylinder"), "cylinder", iconName: "Parts/cylinder"),
-			new W.Button(() => MakeNewPart("wedge"),    "wedge",    iconName: "Parts/wedge")
+			new W.Button(() => MakeNewPart("cube"),		"cube",		iconName: "Parts/cube"),
+			new W.Button(() => MakeNewPart("sphere"),	"sphere",	iconName: "Parts/sphere"),
+			new W.Button(() => MakeNewPart("cylinder"),	"cylinder",	iconName: "Parts/cylinder"),
+			new W.Button(() => MakeNewPart("wedge"),	"wedge",	iconName: "Parts/wedge")
 		},
 		showTitle: false);
 
@@ -104,7 +104,7 @@ public class RightClickMenus : MonoBehaviour {
 			new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
 			new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
 			new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
-			new W.Button(() => MakeNewPart("cable"),"cable",iconName: "Parts/cable")
+			new W.Button(()=>MakeNewPart("cable"), "cable",	iconName: "Parts/cable")
 		},
 		showTitle: false);
 

@@ -54,11 +54,6 @@ public class Assembler : Singleton<Assembler> {
 		computedSubassemblies = subassemblies;
 	}
 
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="bm"></param>
-	/// <returns></returns>
 	public List<Subassembly> ComputeAssemblies(BuildingManager bm) {
 #if DEBUGMODE
 		Debug.Log("assembling");
@@ -92,12 +87,9 @@ public class Assembler : Singleton<Assembler> {
 		PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
 		for (int i = 0; i < bm.Parts.Count; i++) {
 			Part part = bm.Parts[i];
-			Transform obj = part.transform;
-			Mesh mesh = part.basePart.processingMesh;
-			Vector3[] verts = mesh.vertices;
-			for (int v = 0; v < verts.Length; v++)
-				verts[v] = obj.TransformPoint(verts[v]);
-			int[] tris = mesh.triangles;
+
+			Vector3[] verts = PartUtil.WorldSpaceVertsOfPart(part);
+			int[] tris = part.basePart.allTris;
 
 			Vector3 min = Vector3.positiveInfinity;
 			Vector3 max = Vector3.negativeInfinity;
@@ -106,7 +98,12 @@ public class Assembler : Singleton<Assembler> {
 				max = Vector3.Max(max, v);
 			}
 
-			precomputed[i] = new() { tris = tris, verts = verts, min = min, max = max };
+			precomputed[i] = new() {
+				tris = tris,
+				verts = verts,
+				min = min,
+				max = max
+			};
 		}
 
 		// create tests

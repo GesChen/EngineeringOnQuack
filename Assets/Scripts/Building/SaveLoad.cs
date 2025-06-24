@@ -1,34 +1,39 @@
-using System.Collections;
-using System;
-using System.IO;
 using System.Collections.Generic;
-using UnityEngine;
-using Newtonsoft.Json;
+using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
+using UnityEngine;
 
-struct PureVector3 {
-	public float x, y, z;
-}
-struct PureQuaternion {
-	public float x, y, z, w;
-}
-struct PartInfo {
-	public string basePartName;
-	public int id;
-	public PureVector3 position;
-	public PureQuaternion rotation;
-	public PureVector3 scale;
-}
-struct SerializableSubassembly {
-	public List<int> partIds;
-}
+public class SaveLoad : MonoBehaviour {
+	struct Assembly {
+		public string Name;
+		public List<PartInfo> Parts;
+		public bool DidPrecomputations;
+		public List<SerializableSubassembly> PrecomputedSubassemblies;
+		// to add onto
+	}
 
-public class SaveLoad : MonoBehaviour
-{
+	struct PureVector3 {
+		public float x, y, z;
+	}
+	struct PureQuaternion {
+		public float x, y, z, w;
+	}
+	struct PartInfo {
+		public string basePartName;
+		public int id;
+		public PureVector3 position;
+		public PureQuaternion rotation;
+		public PureVector3 scale;
+	}
+	struct SerializableSubassembly {
+		public List<int> partIds;
+	}
+
+
 	public BuildingManager BuildingManager;
 
-	public void SaveCurrentBuild(string name, bool precompute)
-	{
+	public void SaveCurrentBuild(string name, bool precompute) {
 		string serializedObject = Serializer(name, BuildingManager, precompute);
 
 		string assembliesDir = Path.Combine(Config.tempfilesaveloc, "Assemblies");
@@ -38,8 +43,7 @@ public class SaveLoad : MonoBehaviour
 		File.WriteAllText(Path.Combine(assembliesDir, $"{name}.assembly"), serializedObject);
 	}
 
-	public void LoadFromFile(string filename)
-	{
+	public void LoadFromFile(string filename) {
 		string filePath = Path.Combine(Config.tempfilesaveloc, "Assemblies", $"{filename}.assembly");
 
 		if (!File.Exists(filePath))
@@ -47,10 +51,9 @@ public class SaveLoad : MonoBehaviour
 
 		string json = File.ReadAllText(filePath);
 		Assembly assembly = JsonConvert.DeserializeObject<Assembly>(json);
-		assembly.parts = assembly.parts.OrderByDescending(part => part.id).ToList();
+		assembly.Parts = assembly.Parts.OrderByDescending(part => part.id).ToList();
 
-		foreach (PartInfo part in assembly.parts)
-		{
+		foreach (PartInfo part in assembly.Parts) {
 			Part newPart = BuildingManager.GeneratePart(part.basePartName);
 			newPart.transform.localPosition = new(part.position.x, part.position.y, part.position.z);
 			newPart.transform.rotation = new(part.rotation.x, part.rotation.y, part.rotation.z, part.rotation.w);
@@ -58,33 +61,27 @@ public class SaveLoad : MonoBehaviour
 		}
 	}
 
-	public string Serializer(string name, BuildingManager bm, bool precompute)
-	{
+	public string Serializer(string name, BuildingManager bm, bool precompute) {
 		List<Part> parts = bm.Parts;
 
 		List<PartInfo> infos = new();
-		for (int i = 0; i < parts.Count; i++)
-		{
+		for (int i = 0; i < parts.Count; i++) {
 			Part part = parts[i];
-			infos.Add(new()
-			{
+			infos.Add(new() {
 				basePartName = part.basePart.partName,
 				id = part.ID,
-				position = new()
-				{
+				position = new() {
 					x = part.transform.localPosition.x,
 					y = part.transform.localPosition.y,
 					z = part.transform.localPosition.z
 				},
-				rotation = new()
-				{
+				rotation = new() {
 					x = part.transform.rotation.x,
 					y = part.transform.rotation.y,
 					z = part.transform.rotation.z,
 					w = part.transform.rotation.w
 				},
-				scale = new()
-				{
+				scale = new() {
 					x = part.transform.localScale.x,
 					y = part.transform.localScale.y,
 					z = part.transform.localScale.z
@@ -95,10 +92,9 @@ public class SaveLoad : MonoBehaviour
 		List<Assembler.Subassembly> precomputedSubassemblies = new();
 		if (precompute)
 			precomputedSubassemblies = Assembler.Instance.ComputeAssemblies(bm);
-		
+
 		List<SerializableSubassembly> serializableSubassemblies = new();
-		foreach (Assembler.Subassembly subassembly in precomputedSubassemblies)
-		{
+		foreach (Assembler.Subassembly subassembly in precomputedSubassemblies) {
 			List<int> partids = new();
 			foreach (Part part in subassembly.parts)
 				partids.Add(part.ID);
@@ -108,10 +104,10 @@ public class SaveLoad : MonoBehaviour
 
 		Assembly assembly = new()
 		{
-			name = name,
-			parts = infos,
-			didPrecomputations = precompute,
-			precomputedSubassemblies = serializableSubassemblies 
+			Name = name,
+			Parts = infos,
+			DidPrecomputations = precompute,
+			PrecomputedSubassemblies = serializableSubassemblies
 		};
 
 		return JsonConvert.SerializeObject(assembly);
