@@ -2,6 +2,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Geometry;
 
 public static class AxleCalculationHelper {
 	public static bool AxleIntersectionText(
@@ -9,27 +10,37 @@ public static class AxleCalculationHelper {
 		Vector3 axleEndA,
 		Vector3 axleEndB) {
 
-		// ray tri intersect both ways and count?
+		// get all intersections between both ends
 
+
+		// if either end is inside a part then count it too
+		return false;
 	}
 
-	static int IntersectionsInDirection(
+	static List<Vector3> IntersectionsInDirection(
 		Assembler.Subassembly subassembly, 
 		Vector3 origin,
 		Vector3 target) {
 
 		Vector3 direction = (target - origin).normalized;
-		
+		List<float> points = new();
+
+		foreach (var part in subassembly.parts) {
+			points.AddRange(PartIntersectionsWithRay(part, origin, direction));
+		}
+
+		List<Vector3> intersectionPoints = points.Select(t => origin + direction * t).ToList();
+		return intersectionPoints;
 	}
 
-	static int PartIntersectionsWithRay(
+	static List<float> PartIntersectionsWithRay(
 		Part part,
 		Vector3 origin,
 		Vector3 direction) {
 
-		PartUtil.Triangle[] wsTris = PartUtil.PartToWSTriList(part);
+		Triangle[] wsTris = PartUtil.PartToWSTriList(part);
 
-		int count = 0;
+		List<float> dists = new();
 		foreach (var tri in wsTris) {
 			float intersect = Intersections.RayTriIntersectDist(
 				origin,
@@ -37,6 +48,11 @@ public static class AxleCalculationHelper {
 				tri.p1,
 				tri.p2,
 				tri.p3);
+
+			if (intersect != -1)
+				dists.Add(intersect);
 		}
+
+		return dists;
 	}
 }
