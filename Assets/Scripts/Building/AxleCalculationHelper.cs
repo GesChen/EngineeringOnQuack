@@ -1,36 +1,63 @@
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 using Geometry;
+using UnityEngine;
 
 public static class AxleCalculationHelper {
-	public static bool AxleIntersectionText(
+	public static bool AxleIntersectionTest(
 		Assembler.Subassembly subassembly, 
 		Vector3 axleEndA,
-		Vector3 axleEndB) {
+		Vector3 axleEndB,
+		out bool freeSpinning,
+		out Vector3 jointPos) {
+
+		// check all parts for being inside either end
+		foreach (var part in subassembly.parts) {
+			Triangle[] triangles = Triangle.FromVertexArray(part.basePart.allTriPositions);
+
+			jointPos = axleEndA;
+			bool intersectsEnd = Intersections.PointInMesh(axleEndA, triangles, part.transform);
+
+			if (!intersectsEnd) {
+				intersectsEnd = Intersections.PointInMesh(axleEndB, triangles, part.transform);
+				jointPos = axleEndB;
+			}
+
+			if (intersectsEnd) {
+				freeSpinning = false;
+				return true;
+			}
+		}
+		freeSpinning = true;
 
 		// get all intersections between both ends
-
-
-		// if either end is inside a part then count it too
-		return false;
-	}
-
-	static List<Vector3> IntersectionsInDirection(
-		Assembler.Subassembly subassembly, 
-		Vector3 origin,
-		Vector3 target) {
-
-		Vector3 direction = (target - origin).normalized;
+		Vector3 direction = (axleEndB - axleEndA).normalized;
 		List<float> points = new();
 
 		foreach (var part in subassembly.parts) {
-			points.AddRange(PartIntersectionsWithRay(part, origin, direction));
+			points.AddRange(PartIntersectionsWithRay(part, axleEndA, direction));
 		}
 
-		List<Vector3> intersectionPoints = points.Select(t => origin + direction * t).ToList();
-		return intersectionPoints;
+		// dont include intersections that extend outside the range
+		float maxDistSquared = (axleEndA - axleEndB).sqrMagnitude;
+
+		var intersectionPoints =
+			points
+			.Where(t => t * t < maxDistSquared)
+			.Select(t => axleEndA + direction * t);
+
+		// lots of debugging potential and probably need here :}
+		var average = Vector3.zero;
+		int count = 0;
+		foreach (var point in intersectionPoints) {
+			average += point;
+			count++;
+		}
+		average /= count;
+		jointPos = average;
+
+		return false;
 	}
 
 	static List<float> PartIntersectionsWithRay(
