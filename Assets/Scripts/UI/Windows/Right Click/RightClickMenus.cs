@@ -104,6 +104,7 @@ public class RightClickMenus : MonoBehaviour {
 			new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
 			new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
 			new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
+			new W.Button(()=>MakeNewPart("axle"), "axle",	iconName: ""), // TODO
 			new W.Button(()=>MakeNewPart("cable"), "cable",	iconName: "Parts/cable")
 		},
 		showTitle: false);

@@ -86,9 +86,14 @@ public class TransformTools : Singleton<TransformTools> {
 
 		currentSize = (active && !selectionDragging) ? size : 0;
 
-		if (!dragging)
-			transform.localScale = Vector3.Distance(Camera.main.transform.position, selectionContainer.position) * currentSize * Vector3.one;
+		if (!dragging) {
+			float dist = HF.DistanceInDirection(
+				Camera.main.transform.position,
+				selectionContainer.position,
+				-Camera.main.transform.forward);
 
+			transform.localScale = dist * currentSize * Vector3.one;
+		}
 		if (local && !dragging)
 			transform.rotation = selectionContainer.rotation;
 		else if (!local)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Geometry;
 
 public class DebugExtra {
 	public static void DrawEmpty(Vector3 pos, float size, Color color) {
@@ -234,6 +235,17 @@ public class DebugExtra {
 
 		foreach (var (a, b) in edges) {
 			Debug.DrawLine(verts[a], verts[b], color ?? Color.white);
+		}
+	}
+
+	public static void DrawMesh(Triangle[] tris, Color? color = null) {
+		// i cant figure out how to do the edge duplication removal this time
+		// so this is just naive :( sorry performance 2x lines ig
+
+		foreach (var tri in tris) {
+			Debug.DrawLine(tri.p1, tri.p2, color ?? Color.white);
+			Debug.DrawLine(tri.p2, tri.p3, color ?? Color.white);
+			Debug.DrawLine(tri.p3, tri.p1, color ?? Color.white);
 		}
 	}
 }

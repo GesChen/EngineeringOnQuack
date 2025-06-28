@@ -8,6 +8,7 @@ public static class AllParts {
 	// fuckin "cube cube cube cube" lmao
 	public static List<BasePart> BaseParts = new() {
 		new("cube", "Cube", "Cube", "Cube"),
-		new("sphere", "Sphere", "Sphere", "Sphere")
+		new("sphere", "Sphere", "Sphere", "Sphere"),
+		new("axle", "Axle", "Axle", "Axle")
 	};
 }

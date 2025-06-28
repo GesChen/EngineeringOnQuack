@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a7ff42a8c5be6646ad3975f3a54c1eb, type: 3}
   m_Name: DiffusionProfileList
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   diffusionProfiles:
     m_OverrideState: 1
     m_Value:
