@@ -109,7 +109,7 @@ public static partial class Config {
 
 				private static Sprite m_closeSprite;
 				public static Sprite CloseSprite => 
-					HF.LoadCached(ref m_closeSprite, Locations.CloseIcon);
+					HF.LoadResource(ref m_closeSprite, Locations.CloseIcon);
 
 				public static float EasingFunction(float x) {
 					if (x <= 0) return 0;

@@ -11,13 +11,13 @@ public class Composition {
 	private readonly string PhysicsLocation;
 
 	protected Sprite m_Icon;
-	public Sprite Icon => HF.LoadCached(ref m_Icon, IconLocation);
+	public Sprite Icon => HF.LoadResource(ref m_Icon, IconLocation);
 
 	protected Material m_Material;
-	public Material Material => HF.LoadCached(ref m_Material, MaterialLocation);
+	public Material Material => HF.LoadResource(ref m_Material, MaterialLocation);
 
 	protected PhysicMaterial m_PhysicsMaterial;
-	public PhysicMaterial PhysicsMaterial => HF.LoadCached(ref m_PhysicsMaterial, PhysicsLocation);
+	public PhysicMaterial PhysicsMaterial => HF.LoadResource(ref m_PhysicsMaterial, PhysicsLocation);
 
 	public Composition(
 		string name,

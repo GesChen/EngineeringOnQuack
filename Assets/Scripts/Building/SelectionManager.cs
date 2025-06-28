@@ -206,7 +206,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		if (!PartWorldBoundsRectangleIntersect(part, corner1, corner2, maincamera))
 			return false;
 
-		Vector3[] tris = (Vector3[])part.basePart.allTriPositions.Clone();
+		Vector3[] tris = part.basePart.AllTriPositions.ToArray();
 
 		part.transform.TransformPoints(tris);
 

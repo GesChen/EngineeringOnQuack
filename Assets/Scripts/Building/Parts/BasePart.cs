@@ -1,77 +1,50 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BasePart : MonoBehaviour {
-	public string partName;
-	public Mesh basemesh;
-	public Mesh processingMesh;
-	public GameObject prefab;
-	public Collider processingCollider;
-	public Vector3[] allVerts;
-	public int[] allTris;
-	public Vector3[] allTriPositions;
+public class BasePart {
+	public string Name;
 
-	void Awake() {
-		List<Vector3> all = new();
-		GetAllTriPositions(transform, ref all);
-		allTriPositions = all.ToArray();
+	private readonly string BaseMeshPath;
+	private Mesh m_baseMesh;
+	public Mesh BaseMesh => HF.LoadResource(ref m_baseMesh, BaseMeshPath);
 
-		List<int> allIndexes = new();
-		GetAllTris(transform, ref allIndexes);
-		allTris = allIndexes.ToArray();
+	private readonly string ProcessingMeshPath;
+	private Mesh m_processingMesh;
+	public Mesh ProcessingMesh => HF.LoadResource(ref m_processingMesh, ProcessingMeshPath);
 
-		all = new();
-		GetMeshVertices(transform, ref all);
-		allVerts = all.ToArray();
+	private readonly string PrefabPath;
+	private GameObject m_prefab;
+	public GameObject Prefab => HF.LoadResource(ref m_prefab, PrefabPath);
 
-		BuildingManager.AllParts[partName] = this;
-	}
+	private Vector3[] m_allVerts;
+	public Vector3[] AllVerts => // copy
+		HF.LoadCached(ref m_allVerts, () => ProcessingMesh.vertices.ToArray());
 
-	void GetAllTriPositions(Transform target, ref List<Vector3> allTriPoses) {
-		if (target.TryGetComponent(out BasePart part)) {
-			Mesh mesh = part.processingMesh;
-			if (mesh != null) {
-				Vector3[] verts = mesh.vertices;
-				foreach (int i in mesh.triangles)
-					allTriPoses.Add(verts[i]); // Add vertices to the combined list
-			}
-		}
+	private int[] m_allTris; 
+	public int[] AllTris => // copy
+		HF.LoadCached(ref m_allTris, () => ProcessingMesh.triangles.ToArray());
 
-		// Recursively iterate through children
-		foreach (Transform child in target.transform) {
-			GetAllTriPositions(child, ref allTriPoses);
-		}
-	}
+	private Vector3[] m_allTriPositions;
+	public Vector3[] AllTriPositions => //copy
+		HF.LoadCached(ref m_allTriPositions, () => {
+			Vector3[] verts = AllVerts;
+			return AllTris.Select(i => verts[i]).ToArray();
+		});
 
-	void GetAllTris(Transform target, ref List<int> allTris) {
-		if (target.TryGetComponent(out BasePart part)) {
-			Mesh mesh = part.processingMesh;
-			if (mesh != null) {
-				Vector3[] verts = mesh.vertices;
-				foreach (int i in mesh.triangles)
-					allTris.Add(i); // Add vertices to the combined list
-			}
-		}
+	/// <summary>
+	/// Only give names, paths are resolved automatically. 
+	/// </summary>
+	public BasePart(
+		string name,
+		string baseMeshPath,
+		string processingMeshPath,
+		string prefabPath) {
 
-		// Recursively iterate through children
-		foreach (Transform child in target.transform) {
-			GetAllTris(child, ref allTris);
-		}
-	}
-
-
-	void GetMeshVertices(Transform target, ref List<Vector3> allVertices) {
-		if (target.TryGetComponent(out BasePart part)) {
-			Mesh mesh = part.processingMesh;
-			if (mesh != null) {
-				allVertices.AddRange(mesh.vertices); // Add vertices to the combined list
-			}
-		}
-
-		// Recursively iterate through children
-		foreach (Transform child in target.transform) {
-			GetMeshVertices(child, ref allVertices);
-		}
+		Name = name;
+		BaseMeshPath =			Config.Locations.BasePartsFolder		+ baseMeshPath;
+		ProcessingMeshPath =	Config.Locations.ProcessingPartsFolder	+ processingMeshPath;
+		PrefabPath =			Config.Locations.TemplatePartsFolder	+ prefabPath;
 	}
 }

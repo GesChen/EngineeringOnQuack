@@ -14,7 +14,7 @@ public static class AxleCalculationHelper {
 
 		// check all parts for being inside either end
 		foreach (var part in subassembly.parts) {
-			Triangle[] triangles = Triangle.FromVertexArray(part.basePart.allTriPositions);
+			Triangle[] triangles = Triangle.FromVertexArray(part.basePart.AllTriPositions);
 
 			jointPos = axleEndA;
 			bool intersectsEnd = Intersections.PointInMesh(axleEndA, triangles, part.transform);

@@ -89,7 +89,7 @@ public class Assembler : Singleton<Assembler> {
 			Part part = bm.Parts[i];
 
 			Vector3[] verts = PartUtil.WorldSpaceVertsOfPart(part);
-			int[] tris = part.basePart.allTris;
+			int[] tris = part.basePart.AllTris;
 
 			Vector3 min = Vector3.positiveInfinity;
 			Vector3 max = Vector3.negativeInfinity;

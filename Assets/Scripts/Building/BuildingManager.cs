@@ -4,12 +4,9 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Transform mainPartsContainer;
-	public List<BasePart> BaseParts;
 	public List<Part> Parts;
 	public TransformTools TransformTools;
 	public Transform SimulationContainer;
-	public static Dictionary<string, BasePart> AllParts = new();
-	public GameObject templatePart;
 
 	BuildingClipboard clipboard;
 
@@ -58,7 +55,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void Update() {
 		HandleInput();
-
+		
 		// set selection state of parts
 		foreach (Part part in Parts) {
 			part.Selected = SelectionManager.Instance.PartSelection.Contains(part);
@@ -119,12 +116,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	public Part GeneratePart(string basePartName) {
-		int bpIndex = BaseParts.FindIndex(bp => bp.partName == basePartName);
+		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.Name == basePartName);
 		if (bpIndex == -1)
-			throw new($"basepart \"{basePartName}\" doesn't exist");
+			throw new($"[INTERNAL] basepart \"{basePartName}\" doesn't exist");
 
-		BasePart bp = BaseParts[bpIndex];
-		GameObject newPart = Instantiate(bp.prefab, mainPartsContainer);
+		BasePart bp = AllParts.BaseParts[bpIndex];
+		GameObject newPart = Instantiate(bp.Prefab, mainPartsContainer);
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 

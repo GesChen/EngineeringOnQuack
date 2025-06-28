@@ -68,7 +68,7 @@ public class SaveLoad : MonoBehaviour {
 		for (int i = 0; i < parts.Count; i++) {
 			Part part = parts[i];
 			infos.Add(new() {
-				basePartName = part.basePart.partName,
+				basePartName = part.basePart.Name,
 				id = part.ID,
 				position = new() {
 					x = part.transform.localPosition.x,

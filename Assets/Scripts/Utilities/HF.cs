@@ -447,11 +447,20 @@ public static class HF {
 	/// Loads a resource of type T from Resources at the given path,
 	/// caches it in the provided field, and logs an error if load fails.
 	/// </summary>
-	public static T LoadCached<T>(ref T cacheField, string path) where T : UnityEngine.Object {
+	public static T LoadResource<T>(ref T cacheField, string path) where T : UnityEngine.Object {
 		if (cacheField == null) {
 			cacheField = Resources.Load<T>(path);
 			if (cacheField == null)
 				Debug.LogError($"Failed to load resource at path '{path}' of type {typeof(T)}");
+		}
+		return cacheField;
+	}
+
+	public static T LoadCached<T>(ref T cacheField, Func<T> processor) {
+		try { // introduces a sub ns overhead so dw
+			cacheField ??= processor();
+		} catch (Exception e) {
+			throw new("Encountered error while attempting to processes cacheField: " + e.Message);
 		}
 		return cacheField;
 	}

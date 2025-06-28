@@ -11,7 +11,7 @@ public static class PartUtil {
 	public static Vector3[] WorldSpaceVertsOfPart(Part part) {
 		Transform obj = part.transform;
 
-		Vector3[] rawVerts = part.basePart.allVerts;
+		Vector3[] rawVerts = part.basePart.AllVerts;
 		Vector3[] transformed = new Vector3[rawVerts.Length];
 /*
 		for (int v = 0; v < rawVerts.Length; v++)
@@ -23,7 +23,7 @@ public static class PartUtil {
 	}
 
 	public static Triangle[] PartToWSTriList(Part part) {
-		int[] triIndices = part.basePart.allTris;
+		int[] triIndices = part.basePart.AllTris;
 
 		Vector3[] WSVerts = WorldSpaceVertsOfPart(part);
 		Vector3[] WStriposes = new Vector3[triIndices.Length];

@@ -90,7 +90,7 @@ public class BuildingClipboard {
 
 		for (int i = 0; i < Clipboard.parts.Length; i++) {
 			var origPart = Clipboard.parts[i];
-			var newPart = BuildingManager.Instance.GeneratePart(origPart.bp.partName);
+			var newPart = BuildingManager.Instance.GeneratePart(origPart.bp.Name);
 			newParts[i] = newPart;
 
 			var transform = newPart.transform;

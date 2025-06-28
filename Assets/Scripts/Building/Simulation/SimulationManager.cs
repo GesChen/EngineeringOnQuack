@@ -47,11 +47,11 @@ public class SimulationManager : Singleton<SimulationManager>
 	{
 		float total = 0;
 		// iterate through tris
-		for (int i = 0; i < part.basePart.allTriPositions.Length; i += 3)
+		for (int i = 0; i < part.basePart.AllTriPositions.Length; i += 3)
 		{
-			Vector3 p1 = part.transform.TransformPoint(part.basePart.allTriPositions[i + 0]);
-			Vector3 p2 = part.transform.TransformPoint(part.basePart.allTriPositions[i + 1]);
-			Vector3 p3 = part.transform.TransformPoint(part.basePart.allTriPositions[i + 2]);
+			Vector3 p1 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 0]);
+			Vector3 p2 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 1]);
+			Vector3 p3 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 2]);
 
 			total += Vector3.Dot(p1, Vector3.Cross(p2, p3)) / 6f;
 		}
