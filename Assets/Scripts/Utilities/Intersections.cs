@@ -32,6 +32,33 @@ public static class Intersections {
 	/// Determines if two meshes given the raw verts and tris intersect
 	/// </summary>
 	public static bool MeshesIntersectRawMesh(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
+		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
+
+		int numtris1 = mesh1tris.Length / 3;
+		int numtris2 = mesh2tris.Length / 3;
+		
+		for (int i = 0; i < numtris1; i++) {
+			for (int j = 0; j < numtris2; j++) {
+				Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
+				Vector3 p2 = mesh1verts[mesh1tris[i * 3 + 1]];
+				Vector3 p3 = mesh1verts[mesh1tris[i * 3 + 2]];
+				Vector3 q1 = mesh2verts[mesh2tris[j * 3]];
+				Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
+				Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
+
+#if DEBUGMODE
+				DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
+				DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
+#endif
+
+				if (TrianglesIntersect(p1, p2, p3, q1, q2, q3))
+					return true;
+			}
+		}
+
+		return false;
+	}
+	public static bool MeshesIntersectRawMesh_OldWithOptimizations(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
 		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
 		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
 
@@ -40,7 +67,7 @@ public static class Intersections {
 		int combinations = numtris1 * numtris2;
 
 		int[] indices = new int[combinations];
-		float[] distances = new float[combinations];
+		//float[] distances = new float[combinations];
 		int[] triindex1 = new int[combinations];
 		int[] triindex2 = new int[combinations];
 		int count = 0;
@@ -49,7 +76,7 @@ public static class Intersections {
 				indices[count] = count;
 				triindex1[count] = i;
 				triindex2[count] = j;
-
+/*
 				Vector3 avg1 =(
 					mesh1verts[mesh1tris[i * 3]] +
 					mesh1verts[mesh1tris[i * 3 + 1]] +
@@ -61,7 +88,7 @@ public static class Intersections {
 					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
 
 				float dist = (avg1 - avg2).sqrMagnitude;
-				distances[count] = dist;
+				distances[count] = dist;*/
 
 				count++;
 			}
