@@ -11,15 +11,14 @@ public static class PartUtil {
 	public static Vector3[] WorldSpaceVertsOfPart(Part part) {
 		Transform obj = part.transform;
 
-		Vector3[] rawVerts = part.basePart.AllVerts;
-		Vector3[] transformed = new Vector3[rawVerts.Length];
+		Vector3[] verts = part.basePart.AllVerts.ToArray();
 /*
 		for (int v = 0; v < rawVerts.Length; v++)
 			transformed[v] = obj.TransformPoint(rawVerts[v]);*/
 
-		obj.TransformPoints(rawVerts, transformed);
+		obj.TransformPoints(verts);
 
-		return rawVerts;
+		return verts;
 	}
 
 	public static Triangle[] PartToWSTriList(Part part) {

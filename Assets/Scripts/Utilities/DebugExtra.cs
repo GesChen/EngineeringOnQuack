@@ -1,28 +1,24 @@
-using JetBrains.Annotations;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class DebugExtra
-{
-	public static void DrawEmpty(Vector3 pos, float size, Color color)
-	{
+public class DebugExtra {
+	public static void DrawEmpty(Vector3 pos, float size, Color color) {
 		Debug.DrawLine(pos - size * Vector3.up, pos + size * Vector3.up, color);
 		Debug.DrawLine(pos - size * Vector3.right, pos + size * Vector3.right, color);
 		Debug.DrawLine(pos - size * Vector3.forward, pos + size * Vector3.forward, color);
 	}
-	public static void DrawEmpty(Vector3 pos, float size)
-	{
+	public static void DrawEmpty(Vector3 pos, float size) {
 		DrawEmpty(pos, size, Color.white);
 	}
 
-	public static void DrawSphere(Vector3 pos, float radius, int resolution, Color color)
-	{
+	public static void DrawSphere(Vector3 pos, float radius, int resolution, Color color) {
 		float sin0 = Mathf.Sin(0);
 		float cos0 = Mathf.Cos(0);
 		Vector3 lastX = new Vector3(0, sin0, cos0) * radius + pos;
-		Vector3 lastY =	new Vector3(sin0, 0, cos0) * radius + pos;
+		Vector3 lastY = new Vector3(sin0, 0, cos0) * radius + pos;
 		Vector3 lastZ = new Vector3(sin0, cos0, 0) * radius + pos;
-		for (int i = 0; i < resolution + 1; i++)
-		{
+		for (int i = 0; i < resolution + 1; i++) {
 			float j = i / (float) resolution * 2 * Mathf.PI;
 			float sin = Mathf.Sin(j);
 			float cos = Mathf.Cos(j);
@@ -39,21 +35,17 @@ public class DebugExtra
 			lastZ = zPoint;
 		}
 	}
-	public static void DrawSphere(Vector3 pos, float radius, int resolution)
-	{
+	public static void DrawSphere(Vector3 pos, float radius, int resolution) {
 		DrawSphere(pos, radius, resolution, Color.white);
 	}
-	public static void DrawSphere(Vector3 pos, float radius, Color color)
-	{
+	public static void DrawSphere(Vector3 pos, float radius, Color color) {
 		DrawSphere(pos, radius, 40, color);
 	}
-	public static void DrawSphere(Vector3 pos, float radius)
-	{
+	public static void DrawSphere(Vector3 pos, float radius) {
 		DrawSphere(pos, radius, 40, Color.white);
 	}
 
-	public static void DrawPoint(Vector3 pos, float size, Color color)
-	{
+	public static void DrawPoint(Vector3 pos, float size, Color color) {
 		Vector3 px = pos + size * Vector3.right;
 		Vector3 nx = pos + size * Vector3.left;
 		Vector3 py = pos + size * Vector3.up;
@@ -70,7 +62,7 @@ public class DebugExtra
 		Debug.DrawLine(nx, ny, color);
 		Debug.DrawLine(nx, pz, color);
 		Debug.DrawLine(nx, nz, color);
-		
+
 		//Debug.DrawLine(px, nx, color);
 		//Debug.DrawLine(py, ny, color);
 		//Debug.DrawLine(pz, nz, color);
@@ -80,26 +72,21 @@ public class DebugExtra
 		Debug.DrawLine(ny, pz, color);
 		Debug.DrawLine(ny, nz, color);
 	}
-	public static void DrawPoint(Vector3 pos, float size)
-	{
+	public static void DrawPoint(Vector3 pos, float size) {
 		DrawPoint(pos, size, Color.white);
 	}
-	public static void DrawPoint(Vector3 pos, Color color)
-	{
+	public static void DrawPoint(Vector3 pos, Color color) {
 		DrawPoint(pos, .1f, color);
 	}
-	public static void DrawPoint(Vector3 pos)
-	{
+	public static void DrawPoint(Vector3 pos) {
 		DrawPoint(pos, .1f);
 	}
-	public static void DrawPoint(Vector3 pos, Color color, float size)
-	{
+	public static void DrawPoint(Vector3 pos, Color color, float size) {
 		DrawPoint(pos, size, color);
 	}
 
 
-	public static void DrawGrid(Vector3 pos, Vector3 normal, int gridSize, int cellSize)
-	{
+	public static void DrawGrid(Vector3 pos, Vector3 normal, int gridSize, int cellSize) {
 		// Calculate the right and forward vectors based on the normal
 		Vector3 right = Vector3.Cross(normal, Vector3.up).normalized;
 		Vector3 forward = Vector3.Cross(normal, right).normalized;
@@ -109,78 +96,64 @@ public class DebugExtra
 		float gridSizeY = gridSize * cellSize;
 
 		// Draw horizontal lines
-		for (int i = 0; i <= gridSize; i++)
-		{
+		for (int i = 0; i <= gridSize; i++) {
 			Vector3 start = pos + i * cellSize * forward - 0.5f * gridSizeX * forward;
 			Vector3 end = start + gridSizeX * right;
 			Debug.DrawLine(start, end, Color.white);
 		}
 
 		// Draw vertical lines
-		for (int i = 0; i <= gridSize; i++)
-		{
+		for (int i = 0; i <= gridSize; i++) {
 			Vector3 start = pos + i * cellSize * right - 0.5f * gridSizeY * right;
 			Vector3 end = start + gridSizeY * forward;
 			Debug.DrawLine(start, end, Color.white);
 		}
 	}
-	public static void DrawPlane(Vector3 pos, Vector3 normal, float size, int resolution, Color color)
-	{
+	public static void DrawPlane(Vector3 pos, Vector3 normal, float size, int resolution, Color color) {
 		Vector3 right = Vector3.Cross(normal, Vector3.up).normalized;
 		Vector3 up = Vector3.Cross(normal, right).normalized;
 
-		for (int i = 0; i < resolution; i++)
-		{
+		for (int i = 0; i < resolution; i++) {
 			float d = (i - (resolution - 1) / 2f) / resolution * 2f * size;
 			Debug.DrawLine(pos + right * d - up * size, pos + right * d + up * size, color);
 			Debug.DrawLine(pos + up * d - right * size, pos + up * d + right * size, color);
 		}
 	}
 
-	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, Color color, float duration)
-	{
+	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, Color color, float duration) {
 		Debug.DrawLine(a, b, color, duration);
 		Debug.DrawLine(b, c, color, duration);
 		Debug.DrawLine(c, a, color, duration);
 	}
-	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c)
-	{
+	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c) {
 		DrawTriangle(a, b, c, Color.white, 0);
 	}
-	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, float duration)
-	{
+	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, float duration) {
 		DrawTriangle(a, b, c, Color.white, duration);
 	}
-	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, Color color)
-	{
+	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 		DrawTriangle(a, b, c, color, 0);
 	}
-	
-	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density, Color color, float duration)
-	{
-		for (int i = 0; i < density; i++)
-		{
+
+	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density, Color color, float duration) {
+		for (int i = 0; i < density; i++) {
 			float t = (float)i / density;
 			Debug.DrawLine(a, Vector3.Lerp(b, c, t), color, duration);
 			Debug.DrawLine(b, Vector3.Lerp(a, c, t), color, duration);
 			Debug.DrawLine(c, Vector3.Lerp(a, b, t), color, duration);
 		}
 	}
-	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density = 10)
-	{
+	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density = 10) {
 		DrawTriangleFilled(a, b, c, density, Color.white, 0);
 	}
-	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, Color color)
-	{
+	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, Color color) {
 		DrawTriangleFilled(a, b, c, 10, color, 0);
 	}
-	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, Color color, float duration)
-	{
+	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, Color color, float duration) {
 		DrawTriangleFilled(a, b, c, 10, color, duration);
 	}
 
-	public static void DrawCube(Vector3 a, Vector3 b, Color color)
-	{
+	public static void DrawCube(Vector3 a, Vector3 b, Color color) {
 		Vector3 A = new(a.x, a.y, a.z);
 		Vector3 B = new(a.x, a.y, b.z);
 		Vector3 C = new(b.x, a.y, a.z);
@@ -203,20 +176,17 @@ public class DebugExtra
 		Debug.DrawLine(F, E, color);
 		Debug.DrawLine(F, B, color);
 	}
-	public static void DrawCube(Vector3 a, Vector3 b)
-	{
+	public static void DrawCube(Vector3 a, Vector3 b) {
 		DrawCube(a, b, Color.white);
 	}
 
-	public static void DrawCone(Vector3 p, Vector3 d, float radius, float height, Color color, int resolution)
-	{
+	public static void DrawCone(Vector3 p, Vector3 d, float radius, float height, Color color, int resolution) {
 		Vector3 tip = p + d * height;
 		Debug.DrawLine(p, tip, color);
 		Quaternion r = Quaternion.LookRotation(d);
 
 		Vector3 lastPoint = r * Vector3.forward * radius;
-		for (int i = 0; i < resolution; i++)
-		{
+		for (int i = 0; i < resolution; i++) {
 			float t = (i + 1) / resolution * 2f * Mathf.PI;
 			Vector3 point = r * new Vector3(Mathf.Sin(t), 0, Mathf.Cos(t)) * radius;
 			Debug.DrawLine(point, lastPoint, color);
@@ -224,34 +194,46 @@ public class DebugExtra
 		}
 	}
 
-	public static void DrawArrow(Vector3 pos, Vector3 dir, float length, float tipLength, Color color)
-	{
+	public static void DrawArrow(Vector3 pos, Vector3 dir, float length, float tipLength, Color color) {
 		dir.Normalize();
 		Vector3 tip = pos + dir * length;
 		Debug.DrawLine(pos, tip, color);
 
 		Quaternion r = Quaternion.LookRotation(dir);
-		Debug.DrawLine(tip, tip + (r * new Vector3(0,  .4472135955f, -.894427191f) * tipLength), color);
+		Debug.DrawLine(tip, tip + (r * new Vector3(0, .4472135955f, -.894427191f) * tipLength), color);
 		Debug.DrawLine(tip, tip + (r * new Vector3(0, -.4472135955f, -.894427191f) * tipLength), color);
-		Debug.DrawLine(tip, tip + (r * new Vector3( .4472135955f, 0, -.894427191f) * tipLength), color);
+		Debug.DrawLine(tip, tip + (r * new Vector3(.4472135955f, 0, -.894427191f) * tipLength), color);
 		Debug.DrawLine(tip, tip + (r * new Vector3(-.4472135955f, 0, -.894427191f) * tipLength), color);
 	}
-	public static void DrawArrow(Vector3 pos, Vector3 dir, float length, Color color)
-	{
+	public static void DrawArrow(Vector3 pos, Vector3 dir, float length, Color color) {
 		DrawArrow(pos, dir, length, .1f, color);
 	}
-	public static void DrawArrow(Vector3 pos, Vector3 dir, float length)
-	{
+	public static void DrawArrow(Vector3 pos, Vector3 dir, float length) {
 		DrawArrow(pos, dir, length, Color.white);
 	}
-	public static void DrawArrow(Vector3 pos, Vector3 dir, Color color)
-	{
+	public static void DrawArrow(Vector3 pos, Vector3 dir, Color color) {
 		DrawArrow(pos, dir, 1, color);
 	}
-	public static void DrawArrow(Vector3 pos, Vector3 dir)
-	{
+	public static void DrawArrow(Vector3 pos, Vector3 dir) {
 		DrawArrow(pos, dir, Color.white);
 	}
 
+	public static void DrawMesh(Vector3[] verts, int[] tris, Color? color = null) {
+		var edges = new HashSet<(int a, int b)>();
 
+		for (int i = 0; i < tris.Length; i += 3) {
+			int a = tris[i];
+			int b = tris[i + 1];
+			int c = tris[i + 2];
+
+			// Normalize the edge to avoid duplicates like (1, 2) and (2, 1)
+			edges.Add((Math.Min(a, b), Math.Max(a, b)));
+			edges.Add((Math.Min(b, c), Math.Max(b, c)));
+			edges.Add((Math.Min(c, a), Math.Max(c, a)));
+		}
+
+		foreach (var (a, b) in edges) {
+			Debug.DrawLine(verts[a], verts[b], color ?? Color.white);
+		}
+	}
 }

@@ -1,6 +1,225 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Geometry;
 using UnityEngine;
 
-public class AssemblerRewritten : MonoBehaviour {
+public class AssemblerRewritten : Singleton<AssemblerRewritten> {
+	// rewritten assembler with basically the same methods as before but
+	// just better because the old code sucks so much wtf
+	List<Part> Parts;
+
+	public struct Connection {
+		public int A;
+		public int B;
+	}
+	public struct SubAssembly {
+		public List<int> Parts;
+	}
+	public struct Assembled {
+		public Transform Parent;
+		public Rigidbody RB;
+		public SubAssembly Source;
+	}
+
+	public void Assemble(out List<Assembled> assembleds) {
+		Parts = BuildingManager.Instance.Parts;
+
+		// lmao WTF
+		//SetupPhysics(CopyToSimulation(ConnectionsToSubAssemblies(FindAllConnections())));
+
+		var connections = FindAllConnections();
+		var subassemblies = ConnectionsToSubAssemblies(connections);
+		var assembled = CopyToSimulation(subassemblies);
+		SetupPhysics(assembled);
+
+		assembleds = assembled;
+	}
+
+	// wrote this way if perhaps in the future cables or other
+	// needs special checking, been abstracted so can modify this
+	// method to account for that
+	bool PartIsAxle(Part part) {
+		return part.GetComponent<Axle>() != null; // also this check will be changed later 
+	}
+
+	List<Connection> FindAllConnections() {
+		List<Connection> connections = new();
+
+		for (int a = 0; a < Parts.Count; a++) {
+			for (int b = a + 1; b < Parts.Count; b++) {
+				if (TestTwoPartConnection(
+					Parts[a],
+					Parts[b]
+					))
+					connections.Add(
+						new() {
+							A = a,
+							B = b,
+						});
+			}
+		}
+
+		return connections;
+	}
+
+	// method does extra check for axles in the following manner: ---------
+	// if both parts are normal, just check for intersect
+	// if one is axle, perform normal axle check
+	// if both are axles, do intersection check i guess? like normal both parts
+	bool TestTwoPartConnection(Part A, Part B) {
+		bool aIsAxle = PartIsAxle(A);
+		bool bIsAxle = PartIsAxle(B);
+
+		if (aIsAxle == bIsAxle) { // both are either part or axle
+								  // so do normal meshes
+
+			Vector3[] AWSVerts = PartUtil.WorldSpaceVertsOfPart(A);
+			Vector3[] BWSVerts = PartUtil.WorldSpaceVertsOfPart(B);
+			int[] Atris = A.basePart.AllTris;
+			int[] Btris = B.basePart.AllTris;
+
+			return Intersections.MeshesIntersectRawMesh(AWSVerts, BWSVerts, Atris, Btris);
+
+		} else { // one is axle 
+			Part axlePart = aIsAxle ? A : B;
+			Part normPart = aIsAxle ? B : A;
+
+			// only connect if either end of axle is inside the normal
+			Axle axle = axlePart.GetComponent<Axle>();
+			Triangle[] partTris = PartUtil.PartToWSTriList(normPart);
+
+			Vector3 pointA = axle.endA.position;
+			Vector3 pointB = axle.endB.position;
+
+			if (Intersections.PointInMesh(pointA, partTris)) return true;
+			if (Intersections.PointInMesh(pointB, partTris)) return true;
+			return false;
+		}
+	}
+
+	List<SubAssembly> ConnectionsToSubAssemblies(List<Connection> connections) {
+		// i COULD use the old method
+		// i was gonna rewrite this but actually fuck nah im lazy
+		// we porting bruh fts
+
+		Dictionary<int, bool> partsInAssemblies = 
+			Enumerable.Range(0, Parts.Count).ToDictionary(part => part, value => false);
+		List<SubAssembly> assemblies = new();
+
+		foreach (var connection in connections) {
+			int A = connection.A;
+			int B = connection.B;
+
+			partsInAssemblies[A] = true;
+			partsInAssemblies[B] = true;
+
+			// if no assembly contains part a or b
+			bool containsA = assemblies.Any(a => a.Parts.Contains(A));
+			bool containsB = assemblies.Any(a => a.Parts.Contains(B));
+			if (!(containsA || containsB)) {
+				SubAssembly newAssembly = new() { Parts = new() { A, B } };
+				assemblies.Add(newAssembly);
+			} else {
+				int assemblyIndex = -1;
+				if (containsA) assemblyIndex = assemblies.FindIndex(a => a.Parts.Contains(A));
+				if (containsB) assemblyIndex = assemblies.FindIndex(a => a.Parts.Contains(B)); // could be optimized but im lazy + it looks better
+
+				if (!containsA) assemblies[assemblyIndex].Parts.Add(A);
+				if (!containsB) assemblies[assemblyIndex].Parts.Add(B);
+			}
+		}
+
+		List<int> partsLeft = partsInAssemblies.Where(kvp => kvp.Value == false).Select(kvp => kvp.Key).ToList();
+		foreach (int part in partsLeft) {
+			SubAssembly sub = new() { Parts = new() { part } };
+
+			assemblies.Add(sub); // solo parts become own assembly
+		}
+
+		return assemblies;
+	}
+
+	List<Assembled> CopyToSimulation(List<SubAssembly> subassemblies) {
+		// also a straight port
+
+		List<Assembled> assembleds = new();
+		foreach (SubAssembly sub in subassemblies) {
+
+			Transform subParent = new GameObject($"SubAssembly ({sub.Parts.Count})").transform;
+			subParent.parent = BuildingManager.Instance.SimulationContainer;
+
+			List<Transform> parts = new();
+			Vector3 accumPos = Vector3.zero;
+
+			foreach (int partIndex in sub.Parts) {
+				Part part = Parts[partIndex];
+
+				Transform newObject = Instantiate(part.gameObject).transform;
+
+				newObject.gameObject.SetActive(true);
+				var partComp = newObject.GetComponent<Part>();
+				partComp.enabled = false;
+
+				BuildingManager.Instance.Parts.Remove(partComp);
+
+				parts.Add(newObject);
+
+				accumPos += newObject.transform.position;
+			}
+			subParent.position = accumPos / sub.Parts.Count;
+			foreach (Transform part in parts)
+				part.parent = subParent;
+
+			assembleds.Add(new() {
+				Parent = subParent,
+				Source = sub
+			});
+		}
+
+		return assembleds;
+	}
+
+	void SetupPhysics(List<Assembled> assembleds) {
+		for (int i = 0; i < assembleds.Count; i++) {
+			Assembled assembled = assembleds[i];
+			assembled.RB = assembled.Parent.gameObject.AddComponent<Rigidbody>();
+		}
+
+		SetAssemblyMasses(assembleds);
+
+
+	}
+
+	void SetAssemblyMasses(List<Assembled> assembleds) {
+		for (int i = 0; i < assembleds.Count; i++) {
+			var parentrb = assembleds[i].Parent.GetComponent<Rigidbody>();
+
+			parentrb.mass = SubassemblyTotalMass(assembleds[i].Source);
+		}
+	}
+
+	float SubassemblyTotalMass(SubAssembly asm) {
+		float total = 0;
+		foreach (var pi in asm.Parts) {
+			var part = Parts[pi];
+
+			total += CalculatePartMass(part);
+		}
+		return total;
+	}
+
+	float CalculatePartMass(Part part) {
+		float total = 0;
+		// iterate through tris
+		for (int i = 0; i < part.basePart.AllTriPositions.Length; i += 3) {
+			Vector3 p1 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 0]);
+			Vector3 p2 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 1]);
+			Vector3 p3 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 2]);
+
+			total += Vector3.Dot(p1, Vector3.Cross(p2, p3)) / 6f;
+		}
+
+		return total;
+	}
 }

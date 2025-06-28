@@ -44,7 +44,7 @@ public class Assembler : Singleton<Assembler> {
 		List<AssembledSubassembly> assembledSubs = CopyToSimulation(subassemblies);
 		ReleaseRigidbodies(assembledSubs);
 
-		SimulationManager.Instance.assembledSubassemblies = assembledSubs;
+		//SimulationManager.Instance.assembledSubassemblies = assembledSubs;
 
 		computedSubassemblies = subassemblies;
 	}

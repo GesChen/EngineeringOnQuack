@@ -28,6 +28,9 @@ public static class Intersections {
 		return MeshesIntersectRawMesh(m1v, m2v, m1t, m2t);
 	}
 	
+	// should port to use the geometry classes but if theres no GOOD reason to
+	// for now we will keep using these as they are because well im lazy
+
 	/// <summary>
 	/// Determines if two meshes given the raw verts and tris intersect
 	/// </summary>

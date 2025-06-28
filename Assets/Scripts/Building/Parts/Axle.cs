@@ -8,4 +8,6 @@ using UnityEngine;
 /// and can just set them as strings idk
 /// </summary>
 public class Axle : MonoBehaviour {
+	public Transform endA; // scales well i guess? fast way to keep track of this stuff i guess
+	public Transform endB;
 }
