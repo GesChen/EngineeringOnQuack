@@ -369,7 +369,11 @@ public static class Intersections {
 		Vector3 edge2 = c - a;
 		Vector3 ray_cross_e2 = Vector3.Cross(dir, edge2);
 
-		float inv_det = 1f / Vector3.Dot(edge1, ray_cross_e2);
+		float det = Vector3.Dot(edge1, ray_cross_e2);
+		if (Mathf.Abs(det) < 1e-8)
+			return -1;
+
+		float inv_det = 1f / det;
 		Vector3 s = orig - a;
 		float u = inv_det * Vector3.Dot(s, ray_cross_e2);
 

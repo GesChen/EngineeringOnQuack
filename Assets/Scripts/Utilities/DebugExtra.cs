@@ -69,7 +69,6 @@ public class DebugExtra {
 		Debug.DrawLine(ny, nz, col);
 	}
 
-
 	public static void DrawGrid(Vector3 pos, Vector3 normal, int gridSize, int cellSize) {
 		// Calculate the right and forward vectors based on the normal
 		Vector3 right = Vector3.Cross(normal, Vector3.up).normalized;
@@ -93,14 +92,16 @@ public class DebugExtra {
 			Debug.DrawLine(start, end, Color.white);
 		}
 	}
-	public static void DrawPlane(Vector3 pos, Vector3 normal, float size, int resolution, Color color) {
+
+	public static void DrawPlane(Vector3 pos, Vector3 normal, float size, int resolution = 10, Color? color = null) {
 		Vector3 right = Vector3.Cross(normal, Vector3.up).normalized;
 		Vector3 up = Vector3.Cross(normal, right).normalized;
 
+		Color col = color ?? Color.white;
 		for (int i = 0; i < resolution; i++) {
 			float d = (i - (resolution - 1) / 2f) / resolution * 2f * size;
-			Debug.DrawLine(pos + right * d - up * size, pos + right * d + up * size, color);
-			Debug.DrawLine(pos + up * d - right * size, pos + up * d + right * size, color);
+			Debug.DrawLine(pos + right * d - up * size, pos + right * d + up * size, col);
+			Debug.DrawLine(pos + up * d - right * size, pos + up * d + right * size, col);
 		}
 	}
 
@@ -182,6 +183,7 @@ public class DebugExtra {
 		Debug.DrawLine(tip, tip + (r * new Vector3(.4472135955f, 0, -.894427191f) * tipLength), col);
 		Debug.DrawLine(tip, tip + (r * new Vector3(-.4472135955f, 0, -.894427191f) * tipLength), col);
 	}
+	
 	public static void DrawMesh(Vector3[] verts, int[] tris, Color? color = null) {
 		var edges = new HashSet<(int a, int b)>();
 

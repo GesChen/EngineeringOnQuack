@@ -6,38 +6,25 @@ using UnityEngine;
 
 public static class AxleCalculationHelper {
 	public static bool AxleIntersectionTest(
-		Assembler.Subassembly subassembly, 
+		AssemblerRewritten.SubAssembly subassembly, 
 		Vector3 axleEndA,
 		Vector3 axleEndB,
-		out bool freeSpinning,
 		out Vector3 jointPos) {
 
-		// check all parts for being inside either end
-		foreach (var part in subassembly.parts) {
-			Triangle[] triangles = Triangle.FromVertexArray(part.basePart.AllTriPositions);
-
-			jointPos = axleEndA;
-			bool intersectsEnd = Intersections.PointInMesh(axleEndA, triangles, part.transform);
-
-			if (!intersectsEnd) {
-				intersectsEnd = Intersections.PointInMesh(axleEndB, triangles, part.transform);
-				jointPos = axleEndB;
-			}
-
-			if (intersectsEnd) {
-				freeSpinning = false;
-				return true;
-			}
-		}
-		freeSpinning = true;
+		var parts = BuildingManager.Instance.Parts;
 
 		// get all intersections between both ends
 		Vector3 direction = (axleEndB - axleEndA).normalized;
 		List<float> points = new();
 
-		foreach (var part in subassembly.parts) {
+		foreach (int pi in subassembly.Parts) {
+			var part = parts[pi];
+
 			points.AddRange(PartIntersectionsWithRay(part, axleEndA, direction));
 		}
+
+		jointPos = Vector3.zero;
+		if (points.Count == 0) return false;	
 
 		// dont include intersections that extend outside the range
 		float maxDistSquared = (axleEndA - axleEndB).sqrMagnitude;
@@ -57,7 +44,7 @@ public static class AxleCalculationHelper {
 		average /= count;
 		jointPos = average;
 
-		return false;
+		return true;
 	}
 
 	static List<float> PartIntersectionsWithRay(

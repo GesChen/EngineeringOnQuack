@@ -14,10 +14,12 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		public int B;
 	}
 	public struct SubAssembly {
+		public int ID;
 		public List<int> Parts;
 	}
 	public struct Assembled {
 		public Transform Parent;
+		public List<(int pi, Transform Part)> Parts;
 		public Rigidbody RB;
 		public SubAssembly Source;
 	}
@@ -103,6 +105,8 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		// i was gonna rewrite this but actually fuck nah im lazy
 		// we porting bruh fts
 
+		int subI = 0;
+
 		Dictionary<int, bool> partsInAssemblies = 
 			Enumerable.Range(0, Parts.Count).ToDictionary(part => part, value => false);
 		List<SubAssembly> assemblies = new();
@@ -118,7 +122,11 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 			bool containsA = assemblies.Any(a => a.Parts.Contains(A));
 			bool containsB = assemblies.Any(a => a.Parts.Contains(B));
 			if (!(containsA || containsB)) {
-				SubAssembly newAssembly = new() { Parts = new() { A, B } };
+				SubAssembly newAssembly = new() {
+					Parts = new() { A, B },
+					ID = subI++
+				};
+
 				assemblies.Add(newAssembly);
 			} else {
 				int assemblyIndex = -1;
@@ -132,10 +140,15 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 
 		List<int> partsLeft = partsInAssemblies.Where(kvp => kvp.Value == false).Select(kvp => kvp.Key).ToList();
 		foreach (int part in partsLeft) {
-			SubAssembly sub = new() { Parts = new() { part } };
+			SubAssembly sub = new() {
+				Parts = new() { part },
+				ID = subI++
+			};
 
 			assemblies.Add(sub); // solo parts become own assembly
 		}
+
+		// number subassemblies
 
 		return assemblies;
 	}
@@ -173,6 +186,7 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 
 			assembleds.Add(new() {
 				Parent = subParent,
+				Parts = sub.Parts.Zip(parts, (pi, part) => (pi, part)).ToList(),
 				Source = sub
 			});
 		}
@@ -184,11 +198,12 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		for (int i = 0; i < assembleds.Count; i++) {
 			Assembled assembled = assembleds[i];
 			assembled.RB = assembled.Parent.gameObject.AddComponent<Rigidbody>();
+			assembleds[i] = assembled;
 		}
 
 		SetAssemblyMasses(assembleds);
 
-
+		CalculateAxleJoints(assembleds);
 	}
 
 	void SetAssemblyMasses(List<Assembled> assembleds) {
@@ -221,5 +236,42 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		}
 
 		return total;
+	}
+
+	void CalculateAxleJoints(List<Assembled> assembleds) {
+		List<int> axleParts = new();
+		foreach (var assembly in assembleds)
+			axleParts.AddRange(
+				assembly.Source.Parts.Where(pi => PartIsAxle(Parts[pi])));
+
+		foreach (int api in axleParts) {
+			int assemblyofpart = assembleds
+				.First(a => a.Source.Parts.Contains(api)).Source.ID;
+
+			Axle axle = Parts[api].GetComponent<Axle>();
+
+			foreach (var assembled in assembleds) {
+				var subAssembly = assembled.Source;
+
+				if (subAssembly.ID == assemblyofpart) continue; // dont check itself
+
+				if (AxleCalculationHelper.AxleIntersectionTest(
+					subAssembly,
+					axle.endA.position,
+					axle.endB.position,
+					out Vector3 jointPos
+					)) {
+					// add joint on axle connecting it to the sub's parent
+
+					var parentsub = assembleds[assemblyofpart].Parent;
+					var joint = parentsub.gameObject.AddComponent<HingeJoint>();
+					
+					joint.connectedBody = assembled.RB;
+					joint.anchor = parentsub.InverseTransformPoint(jointPos);
+
+					joint.axis = (axle.endB.position - axle.endA.position).normalized;
+				}
+			}
+		}
 	}
 }
