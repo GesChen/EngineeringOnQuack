@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class BasePart {
+	public int ID;
 	public string Name;
 
 	private readonly string BaseMeshPath;
@@ -37,11 +38,13 @@ public class BasePart {
 	/// Only give names, paths are resolved automatically. 
 	/// </summary>
 	public BasePart(
+		int id,
 		string name,
 		string baseMeshPath,
 		string processingMeshPath,
 		string prefabPath) {
 
+		ID = id;
 		Name = name;
 		BaseMeshPath =			Config.Locations.BasePartsFolder		+ baseMeshPath;
 		ProcessingMeshPath =	Config.Locations.ProcessingPartsFolder	+ processingMeshPath;

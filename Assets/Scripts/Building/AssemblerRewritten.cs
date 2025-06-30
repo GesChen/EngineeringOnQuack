@@ -21,7 +21,14 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		public Transform Parent;
 		public List<(int pi, Transform Part)> Parts;
 		public Rigidbody RB;
+		public float Mass;
 		public SubAssembly Source;
+	}
+	public struct AxleConnection {
+		public int AxleAssembly;
+		public int ConnectedAssemblyIndex;
+		public Vector3 JointPos;
+		public Vector3 axis;
 	}
 
 	public void Assemble(out List<Assembled> assembleds) {
@@ -45,7 +52,7 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		return part.GetComponent<Axle>() != null; // also this check will be changed later 
 	}
 
-	List<Connection> FindAllConnections() {
+	public List<Connection> FindAllConnections() {
 		List<Connection> connections = new();
 
 		for (int a = 0; a < Parts.Count; a++) {
@@ -100,7 +107,7 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		}
 	}
 
-	List<SubAssembly> ConnectionsToSubAssemblies(List<Connection> connections) {
+	public List<SubAssembly> ConnectionsToSubAssemblies(List<Connection> connections) {
 		// i COULD use the old method
 		// i was gonna rewrite this but actually fuck nah im lazy
 		// we porting bruh fts
@@ -195,22 +202,32 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 	}
 
 	void SetupPhysics(List<Assembled> assembleds) {
-		for (int i = 0; i < assembleds.Count; i++) {
-			Assembled assembled = assembleds[i];
-			assembled.RB = assembled.Parent.gameObject.AddComponent<Rigidbody>();
-			assembleds[i] = assembled;
-		}
+		AddRBs(assembleds);
 
-		SetAssemblyMasses(assembleds);
+		CalculateAssemblyMasses(assembleds);
 
 		CalculateAxleJoints(assembleds);
 	}
 
-	void SetAssemblyMasses(List<Assembled> assembleds) {
+	void CalculateAssemblyMasses(List<Assembled> assembleds) {
 		for (int i = 0; i < assembleds.Count; i++) {
-			var parentrb = assembleds[i].Parent.GetComponent<Rigidbody>();
+			Assembled assembled = assembleds[i];
 
-			parentrb.mass = SubassemblyTotalMass(assembleds[i].Source);
+			assembled.Mass = SubassemblyTotalMass(assembleds[i].Source);
+
+			assembleds[i] = assembled;
+		}
+	}
+
+	void AddRBs(List<Assembled> assembleds) {
+		for (int i = 0; i < assembleds.Count; i++) {
+			Assembled assembled = assembleds[i];
+
+			var rb = assembled.Parent.gameObject.AddComponent<Rigidbody>();
+			assembled.RB = rb;
+			rb.mass = assembled.Mass;
+			
+			assembleds[i] = assembled;
 		}
 	}
 
@@ -238,11 +255,13 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 		return total;
 	}
 
-	void CalculateAxleJoints(List<Assembled> assembleds) {
+	public List<AxleConnection> CalculateAxleJoints(List<Assembled> assembleds) {
 		List<int> axleParts = new();
 		foreach (var assembly in assembleds)
 			axleParts.AddRange(
 				assembly.Source.Parts.Where(pi => PartIsAxle(Parts[pi])));
+
+		List<AxleConnection> connections = new();
 
 		foreach (int api in axleParts) {
 			int assemblyofpart = assembleds
@@ -250,7 +269,8 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 
 			Axle axle = Parts[api].GetComponent<Axle>();
 
-			foreach (var assembled in assembleds) {
+			for (int connectionI = 0; connectionI < assembleds.Count; connectionI++) {
+				Assembled assembled = assembleds[connectionI];
 				var subAssembly = assembled.Source;
 
 				if (subAssembly.ID == assemblyofpart) continue; // dont check itself
@@ -263,15 +283,31 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 					)) {
 					// add joint on axle connecting it to the sub's parent
 
-					var parentsub = assembleds[assemblyofpart].Parent;
-					var joint = parentsub.gameObject.AddComponent<HingeJoint>();
-					
-					joint.connectedBody = assembled.RB;
-					joint.anchor = parentsub.InverseTransformPoint(jointPos);
-
-					joint.axis = (axle.endB.position - axle.endA.position).normalized;
+					connections.Add(new() {
+						AxleAssembly = assemblyofpart,
+						ConnectedAssemblyIndex = connectionI,
+						JointPos = jointPos,
+						axis = (axle.endB.position - axle.endA.position).normalized
+					});
 				}
 			}
+		}
+
+		return connections;
+	}
+
+	void ApplyAxleConnections(List<AxleConnection> axleConnections, List<Assembled> assembleds) {
+		foreach (var ac in axleConnections) {
+			int assembly = ac.AxleAssembly;
+			var parentsub = assembleds[assembly].Parent;
+			var joint = parentsub.gameObject.AddComponent<HingeJoint>();
+
+			int connectedIndex = ac.ConnectedAssemblyIndex;
+			joint.connectedBody = assembleds[connectedIndex].RB;
+
+			joint.anchor = parentsub.InverseTransformPoint(ac.JointPos);
+
+			joint.axis = ac.axis;
 		}
 	}
 }

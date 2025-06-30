@@ -14,13 +14,31 @@ public static class BottomBar {
 	public static void ClearTransform() { OnTransformOpened = null; }
 	public static void ClearMaterial() { OnMaterialOpened = null; }
 
+	public static event Action OnSave;
+	public static void ClearSave() { OnSave = null; }
+	public static void SaveAsEvent() {
+
+	}
+
+	public static void ShowNamePrompt(Action<string> nameCallback) {
+
+	}
+
+	static readonly W NamePrompt = new(
+		"Name Prompt", 300, new(){
+			new W.Text("Name Your Creation!"),
+
+		})
+
+
 	static readonly W FileMenu = new(
 		"File", 200, new(){
-			new W.Button(null, "Save"), // todo: descriptions? and icons
-			new W.Button(null, "Save As"),
+			new W.Button(() => OnSave?.Invoke(),	"Save"), // todo: descriptions? and icons
+			new W.Button(SaveAsEvent,				"Save As"),
 			new W.Button(null, "Load"),
 			new W.Button(null, "Load Recent"),
-			new W.Button(null, "Insert Save"), // ? might keep 
+			new W.Button(null, "Insert Assembly"), // ? might keep 
+			new W.Button(null, "Reset")
 		},
 		showTitle: false);
 

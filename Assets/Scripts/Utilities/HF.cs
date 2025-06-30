@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -463,5 +464,18 @@ public static class HF {
 			throw new("Encountered error while attempting to processes cacheField: " + e.Message);
 		}
 		return cacheField;
+	}
+
+	public static string GuaranteePath(string path) {
+		if (!Directory.Exists(path)) {
+			try {
+				Debug.LogWarning($"Directory does not exist, creating: {path}");
+				Directory.CreateDirectory(path);
+			} catch {
+				Debug.LogError("Unable to create directory");
+				return null;
+			}
+		}
+		return path;
 	}
 }

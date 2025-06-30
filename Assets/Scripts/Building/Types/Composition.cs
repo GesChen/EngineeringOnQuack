@@ -4,6 +4,7 @@
 using UnityEngine;
 
 public class Composition {
+	public int ID;
 	public string Name;
 
 	public readonly string IconLocation;
@@ -20,11 +21,13 @@ public class Composition {
 	public PhysicMaterial PhysicsMaterial => HF.LoadResource(ref m_PhysicsMaterial, PhysicsLocation);
 
 	public Composition(
+		int id,
 		string name,
 		string iconLocation,
 		string materialLocation,
 		string physicsLocation) {
 
+		ID = id;
 		Name = name;
 		IconLocation = iconLocation;
 		MaterialLocation = materialLocation;
@@ -37,7 +40,8 @@ public class Composition {
 //glass
 
 public static class Compositions {
-		public static readonly Composition Wood = new(
+	public static readonly Composition Wood = new(
+		0,
 		"Wood",
 		Config.Locations.IconsFolder + "Composition/wood1",
 		Config.Locations.MaterialsFolder + "Wood",
@@ -45,6 +49,7 @@ public static class Compositions {
 	);
 
 	public static readonly Composition Concrete = new(
+		1,
 		"Concrete",
 		Config.Locations.IconsFolder + "Composition/concrete1",
 		Config.Locations.MaterialsFolder + "Concrete",
@@ -52,6 +57,7 @@ public static class Compositions {
 	);
 
 	public static readonly Composition Metal = new(
+		2,
 		"Metal",
 		Config.Locations.IconsFolder + "Composition/metal4",
 		Config.Locations.MaterialsFolder + "Metal",
@@ -59,6 +65,7 @@ public static class Compositions {
 	);
 
 	public static readonly Composition Glass = new(
+		3,
 		"Glass",
 		Config.Locations.IconsFolder + "Composition/glass1",
 		Config.Locations.MaterialsFolder + "Glass",
