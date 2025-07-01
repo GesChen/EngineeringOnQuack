@@ -15,6 +15,8 @@ public class GameManager : Singleton<GameManager> {
 		OnStartSimulating = null;
 		OnStopSimulating = null;
 		OnPlayModeChange = null;
+
+		Config.Fonts.Reset();
 	}
 	void Start() {
 		UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;

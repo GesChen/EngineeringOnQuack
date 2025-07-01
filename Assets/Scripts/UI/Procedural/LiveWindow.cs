@@ -16,7 +16,7 @@ public class LiveWindow : MonoBehaviour {
 	WindowSizeNode TR;
 	WindowSizeNode BL;
 	WindowSizeNode BR;
-	Canvas canvas;
+	[HideInInspector] public Canvas canvas;
 
 	public CWindow Source;
 
@@ -143,8 +143,8 @@ public class LiveWindow : MonoBehaviour {
 				new Vector2(halfWidth, halfHeight) 
 				+ new Vector2(padding.Left, padding.Down),
 				
-				new Vector2(canvasSize.x - halfWidth, canvasSize.y 
-				- halfHeight) - new Vector2(padding.Right, padding.Up));
+				new Vector2(canvasSize.x - halfWidth, canvasSize.y - halfHeight) 
+				- new Vector2(padding.Right, padding.Up));
 
 			transform.position = clampedPos;
 		}
@@ -318,19 +318,30 @@ public class LiveWindow : MonoBehaviour {
 				putOnTop ? topY : bottomY);
 		}
 
-		SetWorldCorner(rt, pos, targetCorner);
+		SetWorldCorner(pos, targetCorner);
 	}
 
 	// 0-BL 1-TL 2-TR 3-BR
-	public void SetWorldCorner(RectTransform rect, Vector3 targetWorldPosition, int corner) {
-		Vector3[] worldCorners = new Vector3[4];
-		rect.GetWorldCorners(worldCorners);
+	// this is kinda dumb but im lazy
+	// so 4 is now center
+	public void SetWorldCorner(Vector3 targetWorldPosition, int corner) {
 
-		Vector3 currentCornerPos = worldCorners[corner];
+		Vector3[] worldCorners = new Vector3[4];
+		rt.GetWorldCorners(worldCorners);
+
+		Vector3 currentCornerPos;
+		if (corner < 4) {
+			currentCornerPos = worldCorners[corner];
+		} else if (corner == 4) {
+			// center cuz yeah
+			currentCornerPos = (worldCorners[0] + worldCorners[2]) / 2;
+		} else {
+			throw new("whoops.. bad corner!");
+		}
 
 		Vector3 offset = targetWorldPosition - currentCornerPos;
 
-		rect.position += offset;
+		rt.position += offset;
 	}
 	#endregion
 }

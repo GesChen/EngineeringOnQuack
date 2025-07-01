@@ -6,7 +6,7 @@ using M = Config.UI.Menu;
 
 // defo will change away from rcw name once i can think of another use and generalization for this
 // yeah its changed to menu now
-public class PMenu : MonoBehaviour {
+public class PMenu {
 	// this layout should be used for custom items too !!!!!!!!!!!!!!!!
 	public static WindowItem.LayoutConfig WindowItemLayout(float windowWidth) =>
 		WindowItem.LayoutConfig.FixedLayout(
@@ -187,6 +187,23 @@ public class PMenu : MonoBehaviour {
 			}
 		}
 
+		public class InputField : Item {
+			public event Action<string> OnValueChanged;
+			public InputField(
+				Action<string> onValueChanged,
+				string label,
+				string description = null,
+				string iconName = null,
+				string iconPath = null,
+				Sprite iconSprite = null)
+				: base(label, description, iconName, iconPath, iconSprite) {
+				OnValueChanged = onValueChanged;
+			}
+			public void InputFieldChanged(string newValue) {
+				OnValueChanged?.Invoke(newValue);
+			}
+		}
+
 		public class Flyout : Item {
 			public CWindow SubWindow;
 			public bool AddIndicator;
@@ -319,8 +336,8 @@ public class PMenu : MonoBehaviour {
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {
 		List<WindowItem> subList = new();
 
-		// add label if its not empty or null
-		if (item.Label != null && item.Label != "") {
+		// add label if its not empty or null or input field
+		if (!(item.Label == null || item.Label == "" || item is Window.InputField)) {
 			var label = WindowItem.NewText(
 				"Label",
 				new(
@@ -409,6 +426,17 @@ public class PMenu : MonoBehaviour {
 					WindowItemLayout(rcw.Width)
 					).SetSubItems(subs)
 					.AddComponents(new PComponents.FlyoutHider());
+				break;
+
+			case Window.InputField field:
+				newItem = WindowItem.NewInputField(
+					item.Label,
+					new PComponents.InputField(
+						field.InputFieldChanged,
+						item.Label,
+						fontSize: M.FontSize),
+					WindowItemLayout(rcw.Width)
+					).SetSubItems(subs);
 				break;
 
 			case Window.Text:

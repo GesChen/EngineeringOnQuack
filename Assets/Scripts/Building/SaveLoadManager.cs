@@ -9,6 +9,9 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 		BottomBar.ClearSave();
 		BottomBar.OnSave += Save;
+
+		BottomBar.ClearSaveAs();
+		BottomBar.OnSaveAs += SaveAs;
 	}
 
 	void Save() {
@@ -22,5 +25,13 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		} else {
 			saveLoad.SaveCurrentBuild(name);
 		}
+	}
+
+	void SaveAs() {
+		SaveLoadHelper saveLoad = new();
+
+		BottomBar.ShowNamePrompt((newName) =>
+			saveLoad.SaveCurrentBuild(newName)
+			);
 	}
 }

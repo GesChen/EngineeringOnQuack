@@ -131,8 +131,7 @@ public class WindowRealiser : MonoBehaviour {
 
 				padRT.anchorMin = Vector2.zero;
 				padRT.anchorMax = Vector2.one;
-				padRT.offsetMin = new(item.Layout.Padding.Left, item.Layout.Padding.Down);
-				padRT.offsetMax = new(-item.Layout.Padding.Right, -item.Layout.Padding.Up);
+				item.Layout.Padding.SetTransformOffsets(padRT);
 
 				contentsRT = padRT;
 			}
@@ -160,13 +159,7 @@ public class WindowRealiser : MonoBehaviour {
 			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
 			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
 
-			if (item.Layout.Margins != FourSides.Zero) {
-				rt.offsetMin = new(item.Layout.Margins.Left, item.Layout.Margins.Down);
-				rt.offsetMax = new(-item.Layout.Margins.Right, -item.Layout.Margins.Up);
-			} else {
-				rt.offsetMin = Vector2.zero;
-				rt.offsetMax = Vector2.zero;
-			}
+			item.Layout.Margins.SetTransformOffsets(rt);
 		}
 
 		item.RealObject = rt;
@@ -216,20 +209,10 @@ public class WindowRealiser : MonoBehaviour {
 				Button button = newObj.AddComponent<Button>();
 
 				button.interactable = bt.Enabled;
-				button.colors = new() {
-					normalColor			= bt.Colors.NormalColor,
-					highlightedColor	= bt.Colors.HoverColor,
-					selectedColor		= bt.Colors.NormalColor,
-					pressedColor		= bt.Colors.PressedColor,
-					disabledColor		= bt.Colors.DisabledColor,
-					colorMultiplier		= 1,
-					fadeDuration		= bt.Colors.FadeDuration
-				};
+				button.colors = (ColorBlock)bt.Colors;
 
-				Navigation navigation = new() {
-					mode = Navigation.Mode.None
-				};
-				button.navigation = navigation;
+				var bnav = button.navigation;
+				bnav.mode = Navigation.Mode.None;
 
 				button.onClick.AddListener(bt.TriggerClick);
 
@@ -252,6 +235,70 @@ public class WindowRealiser : MonoBehaviour {
 				tx.RealComponent = text;
 				break;
 
+			case PComponents.InputField fe:
+				var field = newObj.AddComponent<TMP_InputField>();
+				field.colors = (ColorBlock)fe.Colors;
+
+				var fnav = field.navigation;
+				fnav.mode = Navigation.Mode.None;
+
+				// all this can be dryed but iiabdfi
+				// make and setup text area
+				GameObject textArea = new("Text Area");
+				var taRT = textArea.AddComponent<RectTransform>();
+				taRT.SetParent(newObj.transform);
+
+				taRT.anchorMin = Vector2.zero;
+				taRT.anchorMax = Vector2.one;
+				taRT.anchoredPosition = Vector2.zero;
+				fe.ContentPadding.SetTransformOffsets(taRT);
+
+				var mask = taRT.gameObject.AddComponent<RectMask2D>();
+				mask.padding = (fe.MaskPadding - fe.ContentPadding).ToRectMask2DType();
+
+				// set up texts
+				GameObject pho = new("Placeholder");
+				var phrt = pho.AddComponent<RectTransform>();
+				phrt.SetParent(taRT.transform);
+				phrt.anchorMin = Vector2.zero;
+				phrt.anchorMax = Vector2.one;
+				phrt.offsetMin = Vector2.zero;
+				phrt.offsetMax = Vector2.zero;
+
+				phrt.anchoredPosition = Vector2.zero;
+				var phtext = pho.AddComponent<TextMeshProUGUI>();
+				phtext.fontStyle = fe.Style | FontStyles.Italic;
+				phtext.color = fe.PlaceholderColor;
+				phtext.fontWeight = fe.Weight;
+				phtext.alignment = fe.Alignment;
+
+				phtext.text = fe.PlaceholderText;
+
+				GameObject to = new("Text");
+				var trt = to.AddComponent<RectTransform>();
+				trt.SetParent(taRT.transform);
+				trt.anchorMin = Vector2.zero;
+				trt.anchorMax = Vector2.one;
+				trt.offsetMin = Vector2.zero;
+				trt.offsetMax = Vector2.zero;
+
+				var ttext = to.AddComponent<TextMeshProUGUI>();
+				ttext.fontStyle = fe.Style;
+				ttext.color = fe.TextColor;
+				ttext.fontWeight = fe.Weight;
+				ttext.alignment = fe.Alignment;
+
+				field.textViewport = taRT;
+				field.textComponent = ttext;
+				field.placeholder = phtext;
+
+				field.fontAsset = fe.Font;
+				field.pointSize = fe.FontSize;
+				field.onValueChanged.AddListener(fe.ValueChanged);
+
+				fe.RealComponent = field;
+				break;
+
 			case PComponents.Layout lt:
 				HorizontalOrVerticalLayoutGroup layout = null;
 
@@ -271,7 +318,7 @@ public class WindowRealiser : MonoBehaviour {
 				// basic settings
 				layout.spacing = lt.Spacing;
 				layout.childAlignment = lt.ItemAlignment;
-				layout.padding = originalItem.Layout.Padding.ToUnityType();
+				layout.padding = (RectOffset)originalItem.Layout.Padding;
 
 				// reset in case it initialized with any trues
 				layout.childControlWidth = false;

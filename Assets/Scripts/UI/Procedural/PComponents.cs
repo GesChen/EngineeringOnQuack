@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -132,6 +133,70 @@ public class PComponents {
 			Color		= color		?? Config.UI.Visual.TextColor;
 			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
 		}
+	}
+
+	public class InputField : Component {
+		public Config.UI.ColorBlock Colors		= Config.UI.Visual.DefaultColorBlock;
+
+		public string			PlaceholderText	= Config.UI.InputField.PlaceholderDefaultText;
+
+		public TMP_FontAsset		Font		= Config.UI.Visual.DefaultFont;
+		public FontStyles			Style		= FontStyles.Normal;
+		public FontWeight			Weight		= Config.UI.Visual.DefaultWeight;
+		public float				FontSize	= Config.UI.Visual.FontSize;
+		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.TopLeft;
+
+		public Color TextColor					= Config.UI.Visual.TextColor;
+		public Color PlaceholderColor			= Config.UI.Visual.PlaceholderColor;
+
+		public FourSides ContentPadding			= new(10, 5);
+		// value independent from content dont worry about their relation
+		public FourSides MaskPadding			= new(2);
+
+		public event Action<string> OnValueChanged;
+
+		/// <summary>
+		/// its probably best you just look at the source for 
+		/// this constructor tbh.
+		/// </summary>
+		public InputField(
+			Action<string>			onValueChanged,
+			string					placeholderText = null,
+			Color?					textColor = null,
+			Color?					placeholderColor = null,
+			FourSides?				contentPadding = null,
+			FourSides?				maskPadding = null,
+			Config.UI.ColorBlock?	colors = null,
+			TMP_FontAsset			font = null,
+			FontStyles?				style = null,
+			FontWeight?				weight = null,
+			float?					fontSize = null,
+			TextAlignmentOptions?	alignment = null
+			) {
+
+			OnValueChanged = onValueChanged;
+
+			PlaceholderText = placeholderText ?? Config.UI.InputField.PlaceholderDefaultText;
+
+			Font				= font != null ? font : Config.UI.Visual.DefaultFont;
+			Style				= style				?? FontStyles.Normal;
+			Weight				= weight			?? Config.UI.Visual.DefaultWeight;
+			FontSize			= fontSize			?? Config.UI.Visual.FontSize;
+			Alignment			= alignment			?? TextAlignmentOptions.TopLeft;
+
+			Colors				= colors			?? Config.UI.Visual.DefaultColorBlock;
+
+			TextColor			= textColor			?? Config.UI.Visual.TextColor;
+			PlaceholderColor	= placeholderColor	?? Config.UI.Visual.PlaceholderColor;
+
+			ContentPadding = contentPadding ?? new(10, 5);
+			MaskPadding = maskPadding ?? new(2);
+		}
+
+		public void ValueChanged(string newValue) {
+			OnValueChanged?.Invoke(newValue);
+		}
+
 	}
 
 	public class Layout : Component {

@@ -199,6 +199,19 @@ public class WindowItem {
 	public static WindowItem NewButtonCustomImageComponent(PComponents.Button button, PComponents.Image image, LayoutConfig layout) =>
 		NewButtonCustomImageComponent("Button", button, image, layout);
 
+	public static WindowItem NewInputField(string name, PComponents.InputField inputField, LayoutConfig layout) =>
+		new(
+			name,
+			layout,
+			new() {
+				new PComponents.Image(),
+				inputField
+			},
+			null
+			);
+	public static WindowItem NewInputField(PComponents.InputField inputField, LayoutConfig layout) =>
+		NewInputField("InputField", inputField, layout);
+
 	public static WindowItem NewLayout(string name, PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items) => 
 		new(
 			name,

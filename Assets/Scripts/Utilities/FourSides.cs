@@ -17,12 +17,16 @@ public struct FourSides { // changed to struct but might break shit so might tur
 		Left = left;
 	}
 	public FourSides(float x) : this(x, x, x, x) { }
+	public FourSides(float horizontal, float vertical) : 
+		this(vertical, horizontal, vertical, horizontal) { }
 
-	public readonly RectOffset ToUnityType() => // for padding and large number typed. 
-		new((int)Left, (int)Right, (int)Up, (int)Down);
+	public static explicit operator RectOffset(FourSides fs)=> // for padding and large number typed. 
+		new((int)fs.Left, (int)fs.Right, (int)fs.Up, (int)fs.Down);
 
 	public readonly Vector4 ToTMProType() => 
 		new(Left, Up, Right, Down);
+	public readonly Vector4 ToRectMask2DType() => 
+		new(Left, Down, Right, Up);
 
 	public static FourSides Zero => new(0, 0, 0, 0);
 	public static FourSides Even(float v) => new(v, v, v, v);
@@ -42,10 +46,25 @@ public struct FourSides { // changed to struct but might break shit so might tur
 			&& fs.Left == Left;
 	}
 
+	public readonly void SetTransformOffsets(RectTransform rectTransform) {
+		rectTransform.offsetMin = new(Left, Down);
+		rectTransform.offsetMax = new(-Right, -Up);
+	}
+
 	public static bool operator ==(FourSides a, FourSides b) => 
 		a.Equals(b);
 	public static bool operator !=(FourSides a, FourSides b) => 
 		!a.Equals(b);
+	public static FourSides operator +(FourSides a, FourSides b) =>
+		new(a.Up + b.Up,
+			a.Right + b.Right,
+			a.Down + b.Down,
+			a.Left + b.Left);
+	public static FourSides operator -(FourSides a, FourSides b) =>
+		new(a.Up - b.Up,
+			a.Right - b.Right,
+			a.Down - b.Down,
+			a.Left - b.Left);
 	public override readonly string ToString() => 
 		$"FourSides(Up: {Up}, Right: {Right}, Down: {Down}, Left: {Left})";
 }
