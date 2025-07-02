@@ -295,8 +295,7 @@ public class PComponents {
 
 		public static Layout DynamicAll(
 			float spacing) => 
-			new(
-				Type.Dynamic,
+			new(Type.Dynamic,
 				spacing,
 				TextAnchor.MiddleCenter, // this makes no sense either, no differences
 				true, // always fill all dimensions, this is really not compatible with dynamic

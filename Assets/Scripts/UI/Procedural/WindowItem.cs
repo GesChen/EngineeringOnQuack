@@ -94,6 +94,16 @@ public class WindowItem {
 		return this;
 	}
 
+	public event Action<RectTransform> RealizationEvent;
+	public WindowItem OnRealized(Action<RectTransform> action) {
+		RealizationEvent += action;
+		return this;
+	}
+	public void BecomeRealised(RectTransform rt) {
+		RealObject = rt;
+		RealizationEvent?.Invoke(rt);
+	}
+
 	public PComponents.Component GetComponent<T>() where T : PComponents.Component {
 		var tryFind = Construction.FirstOrDefault(c => c is T);
 		

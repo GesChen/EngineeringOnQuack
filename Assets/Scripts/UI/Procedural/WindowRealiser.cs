@@ -162,7 +162,7 @@ public class WindowRealiser : MonoBehaviour {
 			item.Layout.Margins.SetTransformOffsets(rt);
 		}
 
-		item.RealObject = rt;
+		item.BecomeRealised(rt);
 
 		// set up customevents for items too 
 		if (item.CustomEvents != null && item.CustomEvents.Count > 0) {

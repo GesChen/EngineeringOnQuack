@@ -26,6 +26,7 @@ public class PMenu {
 		public bool Closable = false;
 		public bool HideOnStart = true;
 
+		public float ExtraSpacing = 0;
 
 		private CWindow m_cwindow;
 		public CWindow CWindow {
@@ -87,7 +88,8 @@ public class PMenu {
 			bool isFlyout = true,
 			bool closable = false,
 			bool hideOnStart = true,
-			bool switchable = false) {
+			bool switchable = false,
+			float extraSpacing = 0) {
 
 			Title = title;
 			ShowTitle = showTitle;
@@ -99,11 +101,8 @@ public class PMenu {
 			Closable = closable;
 			HideOnStart = hideOnStart;
 			Customizable = switchable;
-		}
-		public Window(float width, List<Item> items) {
-			ShowTitle = false;
-			Width = width;
-			Items = items;
+
+			ExtraSpacing = extraSpacing;
 		}
 
 		public Window AddEventToCW(
@@ -158,6 +157,16 @@ public class PMenu {
 
 				ExtraSubItems.AddRange(subs);
 				return this;
+			}
+
+			public event Action<WindowItem> RealItemMadeEvent;
+			public Item OnRealItemMade(Action<WindowItem> action) {
+				RealItemMadeEvent += action;
+				return this;
+			}
+			public void RealItemMade(WindowItem item) {
+				RealItem = item;
+				RealItemMadeEvent?.Invoke(item);
 			}
 		}
 
@@ -305,7 +314,7 @@ public class PMenu {
 		var finalLayoutItem =
 			WindowItem.NewLayout(
 				PComponents.Layout.Vertical.Dynamic(
-					M.ItemSpacing,
+					M.ItemSpacing + rcw.ExtraSpacing,
 					TextAnchor.UpperLeft
 				),
 				WindowItem.LayoutConfig.FillLayout,
@@ -457,7 +466,7 @@ public class PMenu {
 		if (item.HasDescription)
 			newItem.AddDescription(item.Description);
 
-		item.RealItem = newItem;
+		item.RealItemMade(newItem);
 
 		return newItem;
 	}

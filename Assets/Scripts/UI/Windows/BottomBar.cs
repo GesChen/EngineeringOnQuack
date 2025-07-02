@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 using W = PMenu.Window;
 
 public static class BottomBar {
@@ -27,11 +28,19 @@ public static class BottomBar {
 		Vector2 center = canvas.renderingDisplaySize / 2;
 		NamePrompt.CWindow.RealisedWindow.SetWorldCorner(center, 4);
 
+		SaveStatusText.text = "";
+
+		OnNameEnterPressed = null;	
 		OnNameEnterPressed += () => nameCallback?.Invoke(PromptedName);
+	}
+	public static void HideNamePrompt() {
+		NamePrompt.CWindow.RealisedWindow.Hide();
 	}
 
 	public static string PromptedName;
+	public static TextMeshProUGUI SaveStatusText;
 	public static event Action OnNameEnterPressed;
+
 	static readonly W NamePrompt = new(
 		"Name Your Creation!", 220, new(){
 			new W.InputField(
@@ -46,16 +55,29 @@ public static class BottomBar {
 						new PComponents.Text(
 							"Save!",
 							fontSize: Config.UI.Menu.FontSize,
-							alignment: TMPro.TextAlignmentOptions.Center
+							alignment: TextAlignmentOptions.Center
 							),
 						WindowItem.LayoutConfig.FillLayout)
 					)
-				)
+				),
+			new W.CustomItem(
+				WindowItem.NewText(
+					"Status text",
+					new PComponents.Text(
+						"",
+						alignment: TextAlignmentOptions.Center),
+					PMenu.WindowItemLayout(220))
+				).OnRealItemMade(
+					(item) => { item.OnRealized(
+						(rt) => {
+							SaveStatusText = rt.GetComponent<TextMeshProUGUI>();
+						});
+					})
 		},
 		showTitle: true,
-		isFlyout: false
+		isFlyout: false,
+		extraSpacing: 5
 		);
-
 
 	static readonly W FileMenu = new(
 		"File", 200, new(){

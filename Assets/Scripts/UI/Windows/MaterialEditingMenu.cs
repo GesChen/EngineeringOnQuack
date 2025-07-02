@@ -148,7 +148,7 @@ public class MaterialEditingMenu : MonoBehaviour {
 
 	public static void ShowMenu(Vector2 at) {
 		Editor.CWindow.RealisedWindow.Show();
-		Editor.CWindow.RealisedWindow.PlaceAt(at, true, true, true);
+		Editor.CWindow.RealisedWindow.SetWorldCorner(at, 4);
 	}
 
 	// has to be property because it needs to be reevaluated at creationtime

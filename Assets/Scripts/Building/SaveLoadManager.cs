@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class SaveLoadManager : Singleton<SaveLoadManager> {
 
+	static readonly float SaveTextHideDelay = 1.5f;
 	protected override void Awake() {
 		base.Awake();
 
@@ -15,23 +16,38 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	}
 
 	void Save() {
-		SaveLoadHelper saveLoad = new();
-
 		string name = BuildingManager.Instance.CurrentAssemblyName;
 		if (string.IsNullOrWhiteSpace(name)) {
-			BottomBar.ShowNamePrompt((newName) => 
-				saveLoad.SaveCurrentBuild(newName)
-				);
+			BottomBar.ShowNamePrompt((newName) => {
+				BuildingManager.Instance.CurrentAssemblyName = newName;
+				SaveFile(newName);
+				}
+			);
 		} else {
-			saveLoad.SaveCurrentBuild(name);
+			SaveFile(name);
 		}
 	}
 
 	void SaveAs() {
-		SaveLoadHelper saveLoad = new();
+		BottomBar.ShowNamePrompt((newName) => {
+			BuildingManager.Instance.CurrentAssemblyName = newName;
+			SaveFile(newName);
+			}
+		);
+	}
 
-		BottomBar.ShowNamePrompt((newName) =>
-			saveLoad.SaveCurrentBuild(newName)
-			);
+	void SaveFile(string name) {
+		BottomBar.SaveStatusText.text = "Saving...";
+
+		SaveLoadHelper saveLoad = new();
+		saveLoad.SaveCurrentBuild(name);
+
+		BottomBar.SaveStatusText.text = "Saved!";
+		StartCoroutine(SaveTextDelay());
+	}
+
+	IEnumerator SaveTextDelay() {
+		yield return new WaitForSeconds(SaveTextHideDelay);
+		BottomBar.HideNamePrompt();
 	}
 }
