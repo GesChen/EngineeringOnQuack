@@ -48,6 +48,8 @@ public class ScaleToContents : MonoBehaviour {
 		ref Vector2 min,
 		ref Vector2 max) {
 		foreach (Transform child in parent) {
+			bool active = child.gameObject.activeInHierarchy;
+			if (!active) continue;
 			if (child == parent) continue;
 
 			var crt = child.GetComponent<RectTransform>();

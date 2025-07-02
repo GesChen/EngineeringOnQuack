@@ -75,7 +75,7 @@ public class ScriptSaveLoad : MonoBehaviour
 	#region Serialize
 	public static string ConvertScriptToString(Script script) {
 		string json = ConvertScriptToJson(script, false);
-		string zipped = CompressionUtil.GetGzippedBase64(json);
+		string zipped = CompressionUtil.EncodeGzipBase64(json);
 		return zipped;
 	}
 
