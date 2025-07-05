@@ -124,7 +124,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		rt.offsetMax = Vector2.zero;
 	}
 
-	RectTransform RealiseItem(WindowItem item, RectTransform container) {
+	internal RectTransform RealiseItem(WindowItem item, RectTransform container) {
 		var (newObj, rt) =
 			MakeNewRT(item.Name, container);
 
@@ -149,6 +149,15 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 
 				contentsRT = padRT;
 			}
+
+			// give flyout triggers their own indicator as the last subitem
+			if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
+
+				// allow null, and just dont add one
+				if (trigger.IndicatorImage != null)
+					item.SubItems.Add(trigger.IndicatorImage);
+			}
+
 			foreach (var subItem in item.SubItems) {
 				RealiseItem(subItem, contentsRT);
 			}
@@ -157,7 +166,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		// add components
 		if (item.Construction != null)
 			foreach (var comp in item.Construction)
-				AddComponent(comp, newObj, item, contentsRT);
+				comp.RealiseComponent(newObj, item);
 
 		// position properly
 		if (item.Layout.IsFixed) {
@@ -194,265 +203,6 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 				components.RemoveAt(i);
 				components.Insert(0, ht);
 			}
-		}
-	}
-
-	void AddComponent(
-		PComponents.Component comp, 
-		GameObject newObj, 
-		WindowItem originalItem, 
-		RectTransform contentsRT) {
-		switch (comp) {
-			case PComponents.Image im:
-				Image image = newObj.AddComponent<Image>();
-				image.color = im.Color;
-				image.preserveAspect = im.PreserveAspect;
-				
-				if (im.SpriteAsset != null) {
-					image.sprite = im.SpriteAsset;
-				}
-				else if (im.SpriteLocation != null && im.SpriteLocation != "") {
-					Sprite sprite = Resources.Load<Sprite>(im.SpriteLocation);
-					image.sprite = sprite;
-
-					if (sprite == null)
-						Debug.LogAssertion($"Sprite \"{im.SpriteLocation}\" was not loaded/found! Image will be null. On Item \"{originalItem.Name}\" RT {contentsRT.GetPath()}"); 
-				}
-
-				im.RealComponent = image;
-				break;
-
-			case PComponents.Button bt:
-				Button button = newObj.AddComponent<Button>();
-
-				button.interactable = bt.Enabled;
-				button.colors = (ColorBlock)bt.Colors;
-
-				var bnav = button.navigation;
-				bnav.mode = Navigation.Mode.None;
-
-				button.onClick.AddListener(bt.TriggerClick);
-
-				bt.RealComponent = button;
-				break;
-
-			case PComponents.Text tx:
-				var text = newObj.AddComponent<TextMeshProUGUI>();
-				text.text		= tx.Content;
-				text.font		= tx.Font;
-				text.fontStyle	= tx.Style;
-				text.fontWeight	= tx.Weight;
-				text.fontSize	= tx.FontSize;
-				text.color		= tx.Color;
-				text.alignment	= tx.Alignment;
-
-				if (!originalItem.Layout.IsFixed)
-					text.margin = originalItem.Layout.Padding.ToTMProType();
-
-				tx.RealComponent = text;
-				break;
-
-			case PComponents.InputField fe:
-				var field = newObj.AddComponent<TMP_InputField>();
-				field.colors = (ColorBlock)fe.Colors;
-
-				var fnav = field.navigation;
-				fnav.mode = Navigation.Mode.None;
-
-				// all this can be dryed but iiabdfi
-				// make and setup text area
-				GameObject textArea = new("Text Area");
-				var taRT = textArea.AddComponent<RectTransform>();
-				taRT.SetParent(newObj.transform);
-
-				taRT.anchorMin = Vector2.zero;
-				taRT.anchorMax = Vector2.one;
-				taRT.anchoredPosition = Vector2.zero;
-				fe.ContentPadding.SetTransformOffsets(taRT);
-
-				var mask = taRT.gameObject.AddComponent<RectMask2D>();
-				mask.padding = (fe.MaskPadding - fe.ContentPadding).ToRectMask2DType();
-
-				// set up texts
-				GameObject pho = new("Placeholder");
-				var phrt = pho.AddComponent<RectTransform>();
-				phrt.SetParent(taRT.transform);
-				phrt.anchorMin = Vector2.zero;
-				phrt.anchorMax = Vector2.one;
-				phrt.offsetMin = Vector2.zero;
-				phrt.offsetMax = Vector2.zero;
-
-				phrt.anchoredPosition = Vector2.zero;
-				var phtext = pho.AddComponent<TextMeshProUGUI>();
-				phtext.fontStyle = fe.Style | FontStyles.Italic;
-				phtext.color = fe.PlaceholderColor;
-				phtext.fontWeight = fe.Weight;
-				phtext.alignment = fe.Alignment;
-
-				phtext.text = fe.PlaceholderText;
-
-				GameObject to = new("Text");
-				var trt = to.AddComponent<RectTransform>();
-				trt.SetParent(taRT.transform);
-				trt.anchorMin = Vector2.zero;
-				trt.anchorMax = Vector2.one;
-				trt.offsetMin = Vector2.zero;
-				trt.offsetMax = Vector2.zero;
-
-				var ttext = to.AddComponent<TextMeshProUGUI>();
-				ttext.fontStyle = fe.Style;
-				ttext.color = fe.TextColor;
-				ttext.fontWeight = fe.Weight;
-				ttext.alignment = fe.Alignment;
-
-				field.textViewport = taRT;
-				field.textComponent = ttext;
-				field.placeholder = phtext;
-
-				field.fontAsset = fe.Font;
-				field.pointSize = fe.FontSize;
-				field.onValueChanged.AddListener(fe.ValueChanged);
-
-				fe.RealComponent = field;
-				break;
-
-			case PComponents.Layout lt:
-				HorizontalOrVerticalLayoutGroup layout = null;
-
-				int type = lt.LayoutType switch {
-					PComponents.Layout.Type.Horizontal => 0,
-					PComponents.Layout.Type.Vertical => 1,
-					PComponents.Layout.Type.Dynamic => 2,
-					_ => 0
-				};
-
-				switch (type) {
-					case 0: layout = newObj.AddComponent<HorizontalLayoutGroup>(); break;
-					case 1: layout = newObj.AddComponent<VerticalLayoutGroup>(); break;
-					case 2: layout = newObj.AddComponent<DynamicLayoutGroup>(); break;
-				}
-
-				// basic settings
-				layout.spacing = lt.Spacing;
-				layout.childAlignment = lt.ItemAlignment;
-				layout.padding = (RectOffset)originalItem.Layout.Padding;
-
-				// reset in case it initialized with any trues
-				layout.childControlWidth = false;
-				layout.childControlHeight = false;
-				layout.childScaleWidth = false;
-				layout.childScaleHeight = false;
-				layout.childForceExpandWidth = false;
-				layout.childForceExpandHeight = false;
-
-				// fixed vs dynamic sizing
-				if (lt.FixedSize) { // fixed
-					
-					// match dimension
-					if (lt.MatchOtherDimension) {
-						if (type == 0 || type == 2) {
-							layout.childControlHeight = true;
-							layout.childForceExpandHeight = true;
-						} else
-						if (type == 1) {
-							layout.childControlWidth = true;
-							layout.childForceExpandWidth = true;
-						}
-					}
-
-					if (lt.FillDimension) {
-						if (type == 0 || type == 2) {
-							layout.childControlWidth = true;
-							layout.childForceExpandWidth = true;
-						} else
-						if (type == 1) {
-							layout.childControlHeight = true;
-							layout.childForceExpandHeight = true;
-						}
-					}
-				} else { // dynamic
-
-					// keep everything false
-					var fitter = newObj.AddComponent<ContentSizeFitter>();
-					fitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
-					fitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
-				}
-
-				lt.RealComponent = layout;
-				break;
-
-			case PComponents.LayoutElement le:
-				var element = newObj.AddComponent<LayoutElement>();
-				element.flexibleWidth = le.SizeMultiplier;
-				element.flexibleHeight = le.SizeMultiplier;
-
-				le.RealComponent = element;
-				break;
-
-			case PComponents.HoverTarget ht:
-				var htComp = newObj.AddComponent<HoverTarget>();
-
-				htComp.Colors = ht.Colors;
-
-				ht.RealComponent = htComp;
-				break;
-
-			case PComponents.FlyoutTrigger ft:
-				var ftComp = newObj.AddComponent<FlyoutTrigger>();
-
-				ftComp.openHorizontally = ft.OpenHorizontally;
-				ftComp.openPrioritizingUp = ft.OpenPrioritizingUp;
-				ftComp.openPrioritizingRight = ft.OpenPrioritizingRight;
-
-				// find hovertarget component
-				var htInstance = newObj.GetComponent<HoverTarget>();
-				if (htInstance == null) {
-					Debug.LogError("Missing HoverTarget Component on FlyoutTrigger");
-					return;
-				}
-
-				ftComp.selfHoverTarget = htInstance;
-				ftComp.targetCWindow = ft.TargetFlyout;
-
-				// allow null, and just dont use it
-				if (ft.IndicatorImage != null) {
-					// check for image component
-					if (!ft.IndicatorImage.Construction.Any(c => c is PComponents.Image)) {
-						Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
-						break;
-					}
-
-					// make and set indicator image
-					var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
-					ftComp.openIndicator = indicatorImage.GetComponent<Image>();
-
-					// get the open and closed sprites
-					if (ft.OpenSpriteLocation != null && ft.OpenSpriteLocation != "")
-						ftComp.openSprite = Resources.Load<Sprite>(ft.OpenSpriteLocation);
-					else
-						Debug.LogError("Flyout trigger missing open sprite location");
-
-					if (ft.ClosedSpriteLocation != null && ft.ClosedSpriteLocation != "")
-						ftComp.closedSprite = Resources.Load<Sprite>(ft.ClosedSpriteLocation);
-					else
-						Debug.LogError("Flyout trigger missing closed sprite location");
-				}
-
-				ft.RealComponent = ftComp;
-				break;
-
-			case PComponents.Description ds:
-				var dsComp = newObj.AddComponent<Description>();
-				dsComp.Text = ds.Text;
-
-				ds.RealComponent = dsComp;
-				break;
-
-			case PComponents.FlyoutHider fh:
-				var fhComp = newObj.AddComponent<FlyoutHider>();
-
-				fh.RealComponent = fhComp;
-				break;
 		}
 	}
 

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -6,8 +7,16 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class PComponents {
-	public class Component {
+	public abstract class Component {
 		public UnityEngine.Component RealComponent;
+
+		/// <summary>
+		/// Generalized method for how components add themselves to the
+		/// new gameobject upon realization
+		/// </summary>
+		public abstract void RealiseComponent(
+			GameObject newObj,
+			WindowItem originalItem);
 	}
 
 	public class Image : Component {
@@ -53,6 +62,24 @@ public class PComponents {
 			null,
 			null,
 			true) { }
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var image = newObj.AddComponent<UnityEngine.UI.Image>();
+			image.color = Color;
+			image.preserveAspect = PreserveAspect;
+
+			if (SpriteAsset != null) {
+				image.sprite = SpriteAsset;
+			} else if (SpriteLocation != null && SpriteLocation != "") {
+				Sprite sprite = Resources.Load<Sprite>(SpriteLocation);
+				image.sprite = sprite;
+
+				if (sprite == null)
+					Debug.LogWarning($"Sprite \"{SpriteLocation}\" was not loaded/found! Image will be null. On Item \"{originalItem.Name}\" RT {newObj.transform.GetPath()}");
+			}
+
+			RealComponent = image;
+		}
 	}
 
 	public class Button : Component {
@@ -108,6 +135,20 @@ public class PComponents {
 		public void TriggerClick() {
 			OnClick?.Invoke();
 		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var button = newObj.AddComponent<UnityEngine.UI.Button>();
+
+			button.interactable = Enabled;
+			button.colors = (ColorBlock)Colors;
+
+			var bnav = button.navigation;
+			bnav.mode = Navigation.Mode.None;
+
+			button.onClick.AddListener(TriggerClick);
+
+			RealComponent = button;
+		}
 	}
 
 	public class Text : Component {
@@ -135,6 +176,23 @@ public class PComponents {
 			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
 			Color		= color		?? Config.UI.Visual.TextColor;
 			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var text = newObj.AddComponent<TextMeshProUGUI>();
+
+			text.text		= Content;
+			text.font		= Font;
+			text.fontStyle	= Style;
+			text.fontWeight	= Weight;
+			text.fontSize	= FontSize;
+			text.color		= Color;
+			text.alignment	= Alignment;
+
+			if (!originalItem.Layout.IsFixed)
+				text.margin = originalItem.Layout.Padding.ToTMProType();
+
+			RealComponent = text;
 		}
 	}
 
@@ -200,6 +258,69 @@ public class PComponents {
 			OnValueChanged?.Invoke(newValue);
 		}
 
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var field = newObj.AddComponent<TMP_InputField>();
+			field.colors = (ColorBlock)Colors;
+
+			var fnav = field.navigation;
+			fnav.mode = Navigation.Mode.None;
+
+			// all this can be dryed but iiabdfi
+			// make and setup text area
+			GameObject textArea = new("Text Area");
+			var taRT = textArea.AddComponent<RectTransform>();
+			taRT.SetParent(newObj.transform);
+
+			taRT.anchorMin = Vector2.zero;
+			taRT.anchorMax = Vector2.one;
+			taRT.anchoredPosition = Vector2.zero;
+			ContentPadding.SetTransformOffsets(taRT);
+
+			var mask = taRT.gameObject.AddComponent<RectMask2D>();
+			mask.padding = (MaskPadding - ContentPadding).ToRectMask2DType();
+
+			// set up texts
+			GameObject pho = new("Placeholder");
+			var phrt = pho.AddComponent<RectTransform>();
+			phrt.SetParent(taRT.transform);
+			phrt.anchorMin = Vector2.zero;
+			phrt.anchorMax = Vector2.one;
+			phrt.offsetMin = Vector2.zero;
+			phrt.offsetMax = Vector2.zero;
+
+			phrt.anchoredPosition = Vector2.zero;
+			var phtext = pho.AddComponent<TextMeshProUGUI>();
+			phtext.fontStyle = Style | FontStyles.Italic;
+			phtext.color = PlaceholderColor;
+			phtext.fontWeight = Weight;
+			phtext.alignment = Alignment;
+
+			phtext.text = PlaceholderText;
+
+			GameObject to = new("Text");
+			var trt = to.AddComponent<RectTransform>();
+			trt.SetParent(taRT.transform);
+			trt.anchorMin = Vector2.zero;
+			trt.anchorMax = Vector2.one;
+			trt.offsetMin = Vector2.zero;
+			trt.offsetMax = Vector2.zero;
+
+			var ttext = to.AddComponent<TextMeshProUGUI>();
+			ttext.fontStyle = Style;
+			ttext.color = TextColor;
+			ttext.fontWeight = Weight;
+			ttext.alignment = Alignment;
+
+			field.textViewport = taRT;
+			field.textComponent = ttext;
+			field.placeholder = phtext;
+
+			field.fontAsset = Font;
+			field.pointSize = FontSize;
+			field.onValueChanged.AddListener(ValueChanged);
+
+			RealComponent = field;
+		}
 	}
 
 	public class Layout : Component {
@@ -304,10 +425,83 @@ public class PComponents {
 				true, // always fill all dimensions, this is really not compatible with dynamic
 				true,
 				true);
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			HorizontalOrVerticalLayoutGroup layout = null;
+
+			int type = LayoutType switch {
+				Type.Horizontal => 0,
+				Type.Vertical => 1,
+				Type.Dynamic => 2,
+				_ => 0
+			};
+
+			switch (type) {
+				case 0: layout = newObj.AddComponent<HorizontalLayoutGroup>(); break;
+				case 1: layout = newObj.AddComponent<VerticalLayoutGroup>(); break;
+				case 2: layout = newObj.AddComponent<DynamicLayoutGroup>(); break;
+			}
+
+			// basic settings
+			layout.spacing = Spacing;
+			layout.childAlignment = ItemAlignment;
+			layout.padding = (RectOffset)originalItem.Layout.Padding;
+
+			// reset in case it initialized with any trues
+			layout.childControlWidth = false;
+			layout.childControlHeight = false;
+			layout.childScaleWidth = false;
+			layout.childScaleHeight = false;
+			layout.childForceExpandWidth = false;
+			layout.childForceExpandHeight = false;
+
+			// fixed vs dynamic sizing
+			if (FixedSize) { // fixed
+					
+				// match dimension
+				if (MatchOtherDimension) {
+					if (type == 0 || type == 2) {
+						layout.childControlHeight = true;
+						layout.childForceExpandHeight = true;
+					} else
+					if (type == 1) {
+						layout.childControlWidth = true;
+						layout.childForceExpandWidth = true;
+					}
+				}
+
+				if (FillDimension) {
+					if (type == 0 || type == 2) {
+						layout.childControlWidth = true;
+						layout.childForceExpandWidth = true;
+					} else
+					if (type == 1) {
+						layout.childControlHeight = true;
+						layout.childForceExpandHeight = true;
+					}
+				}
+			} else { // dynamic
+
+				// keep everything false
+				var fitter = newObj.AddComponent<ContentSizeFitter>();
+				fitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
+				fitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
+			}
+
+			RealComponent = layout;
+		}
 	}
 
 	public class LayoutElement : Component {
 		public float SizeMultiplier;
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var element = newObj.AddComponent<UnityEngine.UI.LayoutElement>();
+			element.flexibleWidth = SizeMultiplier;
+			element.flexibleHeight = SizeMultiplier;
+
+			RealComponent = element;
+		}
 	}
 
 	public class HoverTarget : Component {
@@ -330,6 +524,14 @@ public class PComponents {
 		}
 
 		public HoverTarget() { }
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var htComp = newObj.AddComponent<global::HoverTarget>();
+
+			htComp.Colors = Colors;
+
+			RealComponent = htComp;
+		}
 	}
 
 	public class FlyoutTrigger : Component {
@@ -360,6 +562,49 @@ public class PComponents {
 			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Locations.FlyoutTriggerOpenSprite;
 			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Locations.FlyoutTriggerClosedSprite;
 		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var ftComp = newObj.AddComponent<global::FlyoutTrigger>();
+
+			ftComp.openHorizontally			= OpenHorizontally;
+			ftComp.openPrioritizingUp		= OpenPrioritizingUp;
+			ftComp.openPrioritizingRight	= OpenPrioritizingRight;
+
+			// find hovertarget component
+			if (!newObj.TryGetComponent<global::HoverTarget>(out var htInstance)) {
+				Debug.LogError("Missing HoverTarget Component on FlyoutTrigger");
+				return;
+			}
+
+			ftComp.selfHoverTarget = htInstance;
+			ftComp.targetCWindow = TargetFlyout;
+
+			// allow null, and just dont use it
+			if (IndicatorImage != null) {
+				// check for image component
+				if (!IndicatorImage.Construction.Any(c => c is Image)) {
+					Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
+					return;
+				}
+
+				// make and set indicator image <- changed
+				var indicatorImage = IndicatorImage.RealObject();
+				ftComp.openIndicator = indicatorImage.GetComponent<UnityEngine.UI.Image>();
+
+				// get the open and closed sprites
+				if (OpenSpriteLocation != null && OpenSpriteLocation != "")
+					ftComp.openSprite = Resources.Load<Sprite>(OpenSpriteLocation);
+				else
+					Debug.LogError("Flyout trigger missing open sprite location");
+
+				if (ClosedSpriteLocation != null && ClosedSpriteLocation != "")
+					ftComp.closedSprite = Resources.Load<Sprite>(ClosedSpriteLocation);
+				else
+					Debug.LogError("Flyout trigger missing closed sprite location");
+			}
+
+			RealComponent = ftComp;
+		}
 	}
 
 	public class Description : Component {
@@ -367,6 +612,13 @@ public class PComponents {
 
 		public Description(string text) {
 			Text = text;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var dsComp = newObj.AddComponent<global::Description>();
+			dsComp.Text = Text;
+
+			RealComponent = dsComp;
 		}
 	}
 
@@ -377,6 +629,26 @@ public class PComponents {
 		// this literally just exists to exist
 		public FlyoutHider() {
 
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem _) {
+			var fhComp = newObj.AddComponent<global::FlyoutHider>();
+
+			RealComponent = fhComp;
+		}
+	}
+
+	public class ScaleToContents : Component {
+		public FourSides Padding;
+
+		public ScaleToContents(FourSides padding) {
+			Padding = padding;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var comp = newObj.AddComponent<global::ScaleToContents>();
+			comp.padding = Padding;
+			RealComponent = comp;
 		}
 	}
 }

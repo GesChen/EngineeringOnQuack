@@ -237,35 +237,20 @@ public class WindowItem {
 	public static WindowItem NewLayout(PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items) => 
 		NewLayout("Layout", layoutComponent, layout, items);
 
-	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, LayoutConfig layout) => 
+	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, LayoutConfig layout, PComponents.HoverTarget hover = null) => 
 		new(
 			name,
 			layout,
 			new() {
 				new PComponents.Image(),
-				new PComponents.HoverTarget(),
+				hover ?? new PComponents.HoverTarget(),
 				new PComponents.FlyoutHider(),
 				trigger
 			},
 			null
 			);
-	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout) => 
-		NewFlyoutTrigger("Flyout Trigger", trigger, layout);
-
-	public static WindowItem NewFlyoutTrigger(string name, PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout) => 
-		new(
-			name,
-			layout,
-			new() {
-				new PComponents.Image(),
-				hover,
-				new PComponents.FlyoutHider(),
-				trigger
-			},
-			null
-			);
-	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, PComponents.HoverTarget hover, LayoutConfig layout) => 
-		NewFlyoutTrigger("Flyout Trigger", trigger, hover, layout);
+	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout, PComponents.HoverTarget hover = null) => 
+		NewFlyoutTrigger("Flyout Trigger", trigger, layout, hover);
 
 	#endregion
 

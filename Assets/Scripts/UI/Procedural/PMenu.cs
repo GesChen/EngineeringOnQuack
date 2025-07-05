@@ -416,9 +416,9 @@ public class PMenu {
 
 				newItem = WindowItem.NewFlyoutTrigger(
 					item.Label,
-					new(subWindow, indicator),
-					new(normalColor: Config.UI.Visual.BackgroundColor),
-					WindowItemLayout(rcw.Width)
+					new PComponents.FlyoutTrigger(subWindow, indicator),
+					WindowItemLayout(rcw.Width),
+					new PComponents.HoverTarget(normalColor: Config.UI.Visual.BackgroundColor)
 					).SetSubItems(subs)
 					.AddComponents(new PComponents.FlyoutHider());
 				break;

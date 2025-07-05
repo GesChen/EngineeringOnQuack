@@ -125,8 +125,17 @@ public class SaveLoadMenus {
 		}
 	};
 
+	static readonly W LoadOptionsMenu = new(
+		"Load Options Menu",
+		500,
+		new(){
+
+		}
+		);
+
 	public static CWindow[] Windows => new[] {
 		NamePrompt.CWindow,
-		SaveStatus
+		SaveStatus,
+		LoadOptionsMenu.CWindow
 	};
 }

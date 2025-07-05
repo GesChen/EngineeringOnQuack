@@ -115,11 +115,11 @@ public class MaterialEditingMenu : MonoBehaviour {
 					new W.CustomItem(
 						WindowItem.NewFlyoutTrigger(
 							new PComponents.FlyoutTrigger(CompositionPicker),
-							new PComponents.HoverTarget(Config.UI.Visual.WhiteColorBlock), // make it white
 							WindowItem.LayoutConfig.FixedLayout(
 								UIPosition.AnchoredAt(UIPosition.TopLeft),
 								new (size, size)
-								)
+								),
+							new PComponents.HoverTarget(Config.UI.Visual.WhiteColorBlock) // make it white
 							)
 						)
 				},
