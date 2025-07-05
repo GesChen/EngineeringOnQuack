@@ -138,7 +138,7 @@ public class MaterialEditingMenu : MonoBehaviour {
 	}
 
 	public static void ShowMenu(WindowItem source) {
-		RectTransform rt = source.RealObject;
+		RectTransform rt = source.RealObject();
 
 		Editor.CWindow.RealisedWindow.Show();
 		Editor.CWindow.RealisedWindow.PlaceAt(rt, true, true, false);

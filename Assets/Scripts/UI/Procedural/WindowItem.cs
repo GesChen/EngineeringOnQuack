@@ -28,13 +28,17 @@ public class WindowItem {
 			Position = new(0)
 		};
 
-		public static LayoutConfig DynamicLayout(FourSides margin, FourSides padding, FourSides position) => new() {
-			IsFixed = false,
-			Padding = padding,
+		public static LayoutConfig DynamicLayout(
+			FourSides? margin = null,
+			FourSides? padding = null,
+			FourSides? position = null) => new() {
 
-			Margins = margin,
-			Position = position
-		};
+			IsFixed = false,
+			Padding = padding ?? FourSides.Zero,
+
+			Margins = margin ?? FourSides.Zero,
+			Position = position ?? FourSides.Zero
+			};
 
 		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size, FourSides? padding = null) => new() {
 			IsFixed = true,
@@ -60,7 +64,8 @@ public class WindowItem {
 
 	public List<WindowItem> SubItems = new();
 	
-	public RectTransform RealObject;
+	private RectTransform m_realObject;
+	public Func<RectTransform> RealObject => () => m_realObject;
 
 	public List<TimedEventInvoker.TimedEvent> CustomEvents;
 
@@ -100,7 +105,7 @@ public class WindowItem {
 		return this;
 	}
 	public void BecomeRealised(RectTransform rt) {
-		RealObject = rt;
+		m_realObject = rt;
 		RealizationEvent?.Invoke(rt);
 	}
 

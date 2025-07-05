@@ -5,9 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // window, class form (class window, cwindow)
-/// <summary>
-/// Name, Config, Items
-/// </summary>
 public class CWindow {
 	public string Name;
 	public WindowItem[] Items;
@@ -76,6 +73,11 @@ public class CWindow {
 */
 	}
 
+	/// <summary>
+	/// Name, Config, Items
+	/// </summary>
+	public CWindow() { }
+
 	public Configuration Config = new();
 	public List<TimedEventInvoker.TimedEvent> CustomEvents;
 
@@ -129,14 +131,11 @@ public class UIPosition {
 		Position = position;
 	}
 
-	public UIPosition(Vector2 anchorMin, Vector2 anchorMax, Vector2 position)
-		: this(anchorMin, anchorMax, position, new(.5f,.5f)) { }
-
 	public static UIPosition AnchoredAt(Vector2 pos) => 
 		new(pos, pos, pos, Vector2.zero);
 
 	public static UIPosition AnchoredOffset(Vector2 pos, Vector2 offset) => 
-		new(pos, pos, new(.5f,.5f), offset);
+		new(pos, pos, pos, offset);
 
 	public static UIPosition CenterAnchoredAt(Vector2 pos, Vector2 offset) =>
 		new(pos, pos, new(.5f, .5f), offset);

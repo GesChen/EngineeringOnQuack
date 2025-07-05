@@ -5,11 +5,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class WindowRealiser : MonoBehaviour {
+public class WindowRealiser : Singleton<WindowRealiser> {
 	public Canvas canvas;
 
 	public LiveWindow Realise(CWindow window) {
-
 
 		// make new live window
 		var (newWindow, windowRT) =
@@ -75,6 +74,21 @@ public class WindowRealiser : MonoBehaviour {
 		}
 
 		return component;
+	}
+
+	public void UpdateWindow(CWindow window) {
+		var oldRT = window.RealisedWindow.rt;
+
+		var newWindow = Realise(window);
+
+		var newRT = newWindow.rt;
+
+		newRT.position = oldRT.position;
+		newRT.rotation = oldRT.rotation;
+		newRT.localScale = oldRT.localScale;
+		// any other properties to copy 
+
+		Destroy(oldRT.gameObject);
 	}
 
 	private List<WindowSizeNode> MakeCornerNodes(RectTransform windowRT) {
@@ -200,6 +214,9 @@ public class WindowRealiser : MonoBehaviour {
 				else if (im.SpriteLocation != null && im.SpriteLocation != "") {
 					Sprite sprite = Resources.Load<Sprite>(im.SpriteLocation);
 					image.sprite = sprite;
+
+					if (sprite == null)
+						Debug.LogAssertion($"Sprite \"{im.SpriteLocation}\" was not loaded/found! Image will be null. On Item \"{originalItem.Name}\" RT {contentsRT.GetPath()}"); 
 				}
 
 				im.RealComponent = image;

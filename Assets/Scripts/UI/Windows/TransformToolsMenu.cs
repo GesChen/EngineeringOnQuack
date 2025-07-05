@@ -28,9 +28,7 @@ public class TransformToolsMenu {
 				"Transform controls",
 				PComponents.Layout.DynamicAll(5f),
 				WindowItem.LayoutConfig.DynamicLayout(
-					FourSides.Zero,
-					FourSides.Even(5),
-					FourSides.Zero
+					padding: FourSides.Even(5)
 				),
 				new() {
 					WindowItem.NewButtonCustomImageOverlay(

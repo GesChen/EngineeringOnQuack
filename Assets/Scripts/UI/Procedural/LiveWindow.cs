@@ -52,7 +52,7 @@ public class LiveWindow : MonoBehaviour {
 			if (Time.frameCount == global::Config.UI.Behaviour.MaxFramesForRealization)
 				gameObject.SetActive(false);
 			if (Time.frameCount <= global::Config.UI.Behaviour.MaxFramesForRealization) {
-				transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
+				//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
 				return;
 			}
 		}

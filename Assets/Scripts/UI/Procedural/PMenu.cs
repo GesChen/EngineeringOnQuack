@@ -355,9 +355,7 @@ public class PMenu {
 					alignment : TextAlignmentOptions.Left
 				),
 				WindowItem.LayoutConfig.DynamicLayout(
-					new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing),
-					FourSides.Zero,
-					FourSides.Zero
+					margin: new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing)
 				)
 			);
 			subList.Add(label);

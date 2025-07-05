@@ -19,7 +19,7 @@ public static partial class Config {
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
 			public static readonly float OutlineThickness		= 2;
 
-			public static readonly float DefaultLayoutSpacing   = 5; // might delete
+			public static readonly float DefaultLayoutSpacing	= 5; // might delete
 
 			public static readonly ColorBlock DefaultColorBlock = new(){
 				NormalColor		= new(.27f, .27f, .27f),

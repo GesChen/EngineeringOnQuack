@@ -8,17 +8,17 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	protected override void Awake() {
 		base.Awake();
 
-		BottomBar.ClearSave();
-		BottomBar.OnSave += Save;
+		SaveLoadMenus.ClearSave();
+		SaveLoadMenus.OnSave += Save;
 
-		BottomBar.ClearSaveAs();
-		BottomBar.OnSaveAs += SaveAs;
+		SaveLoadMenus.ClearSaveAs();
+		SaveLoadMenus.OnSaveAs += SaveAs;
 	}
 
 	void Save() {
 		string name = BuildingManager.Instance.CurrentAssemblyName;
 		if (string.IsNullOrWhiteSpace(name)) {
-			BottomBar.ShowNamePrompt((newName) => {
+			SaveLoadMenus.ShowNamePrompt((newName) => {
 				BuildingManager.Instance.CurrentAssemblyName = newName;
 				SaveFile(newName);
 				}
@@ -29,7 +29,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	}
 
 	void SaveAs() {
-		BottomBar.ShowNamePrompt((newName) => {
+		SaveLoadMenus.ShowNamePrompt((newName) => {
 			BuildingManager.Instance.CurrentAssemblyName = newName;
 			SaveFile(newName);
 			}
@@ -37,17 +37,19 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	}
 
 	void SaveFile(string name) {
-		BottomBar.SaveStatusText.text = "Saving...";
+		SaveLoadMenus.HideNamePrompt();
+		SaveLoadMenus.ShowSaveIcon();
+		SaveLoadMenus.SetSaveText("Saving...");
 
 		SaveLoadHelper saveLoad = new();
 		saveLoad.SaveCurrentBuild(name);
 
-		BottomBar.SaveStatusText.text = "Saved!";
+		SaveLoadMenus.SetSaveText("Saved!");
 		StartCoroutine(SaveTextDelay());
 	}
 
 	IEnumerator SaveTextDelay() {
 		yield return new WaitForSeconds(SaveTextHideDelay);
-		BottomBar.HideNamePrompt();
+		SaveLoadMenus.HideSaveIcon(); 
 	}
 }

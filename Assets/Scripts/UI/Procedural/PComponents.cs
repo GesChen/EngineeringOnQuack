@@ -45,6 +45,9 @@ public class PComponents {
 			spriteAsset,
 			true) { }
 
+		/// <summary>
+		/// blank white image constructor
+		/// </summary>
 		public Image() : this(
 			Color.white,
 			null,

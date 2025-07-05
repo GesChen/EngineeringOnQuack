@@ -18,8 +18,8 @@ public class MaterialEditor : MonoBehaviour {
 		CWindow cw, 
 		ref RectTransform colorPickerButton, 
 		ref RectTransform materialPickerButton) {
-		colorPickerButton = cw.Items[0].SubItems[1].RealObject;
-		materialPickerButton = cw.Items[0].SubItems[2].RealObject;
+		colorPickerButton = cw.Items[0].SubItems[1].RealObject();
+		materialPickerButton = cw.Items[0].SubItems[2].RealObject();
 
 		// add materialeditor and set up 
 		var editor = cw.RealisedWindow.gameObject.AddComponent<MaterialEditor>();

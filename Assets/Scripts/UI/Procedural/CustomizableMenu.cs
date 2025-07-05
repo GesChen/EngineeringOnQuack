@@ -17,7 +17,7 @@ public class CustomizableMenu : MonoBehaviour {
 
 		for (int i = 0; i < items.Count; i++) {
 			WindowItem item = items[i];
-			item.RealObject.gameObject.SetActive(indices.Contains(i));
+			item.RealObject().gameObject.SetActive(indices.Contains(i));
 		}
 	}
 
@@ -25,10 +25,10 @@ public class CustomizableMenu : MonoBehaviour {
 		float height = Config.UI.Menu.ItemHeight;
 		Vector2 size = new(width, height);
 
-		if (title != null) title.RealObject.sizeDelta = size;
+		if (title != null) title.RealObject().sizeDelta = size;
 
 		foreach (var item in items) {
-			item.RealObject.sizeDelta = size;
+			item.RealObject().sizeDelta = size;
 		}
 	}
 /*
