@@ -651,4 +651,152 @@ public class PComponents {
 			RealComponent = comp;
 		}
 	}
+
+	public class ScrollView : Component {
+		// might change
+		public Color Background = Config.UI.Visual.BackgroundColor;
+		public float BarSize = 20;
+		public Color BarBackgroundColor = Config.UI.Visual.SecondaryBackgroundColor;
+		public Config.UI.ColorBlock BarHandleColorBlock = Config.UI.Visual.DefaultColorBlock;
+
+		public ScrollView(
+			Color? background = null,
+			float? barSize = null,
+			Color? barBackgroundColor = null,
+			Config.UI.ColorBlock? barHandleColorBlock = null) {
+
+			// new method prolly better than the ??s
+			if (background.HasValue)
+				Background = background.Value;
+			if (barSize.HasValue)
+				BarSize = barSize.Value;
+			if (barBackgroundColor.HasValue)
+				BarBackgroundColor = barBackgroundColor.Value;
+			if (barHandleColorBlock.HasValue)
+				BarHandleColorBlock = barHandleColorBlock.Value;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var comp = newObj.AddComponent<ScrollRect>();
+			var rt = newObj.GetComponent<RectTransform>();
+
+			// this is gonna be a little fuckin complicated :(
+			// "little" is an understatement too :(
+			// prolly gonna have to redo how the container works entirely too
+			// deal with the contents container last i guess
+
+			// make both scrollbars
+			var vertScrollbar = CreateScrollbar(
+				rt,
+				true,
+				1,
+				BarSize,
+				Vector2.one,
+				BarBackgroundColor,
+				BarHandleColorBlock);
+
+			var horiScrollbar = CreateScrollbar(
+				rt,
+				false,
+				0,
+				BarSize,
+				Vector2.zero,
+				BarBackgroundColor,
+				BarHandleColorBlock);
+
+			comp.horizontal = true;
+			comp.vertical = true;
+			comp.movementType = ScrollRect.MovementType.Clamped;
+			comp.inertia = true;
+			comp.decelerationRate = .135f; // defaults
+			comp.scrollSensitivity = Config.Input.ScrollSensitivity;
+
+			comp.horizontalScrollbar = horiScrollbar;
+			comp.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+			comp.horizontalScrollbarSpacing = 0; // may chnage later but best 0
+
+			comp.verticalScrollbar = vertScrollbar;
+			comp.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+			comp.verticalScrollbarSpacing = 0; // may chnage later but best 0
+
+			// yeah idk how we're gonna do this ikiab
+			// probably just parent the container to a new viewport object i guess 
+			GameObject viewportObj = new("Viewport");
+			var viewportRT = viewportObj.AddComponent<RectTransform>();
+			// most values are set automatically
+			viewportRT.pivot = new(0, 1);
+			viewportObj.AddComponent<RectMask2D>(); // no setup needed
+
+			// best solution i could come up with, hope children follow 
+			originalItem.ContentsObject.SetParent(viewportRT);
+
+			RealComponent = comp;
+		}
+
+		// unity's scrollbar
+		// fucking hell that took a while to write
+		private Scrollbar CreateScrollbar(
+			RectTransform parent,
+			bool vertical,
+			float otherAxisAnchor,
+			float size,
+			Vector2 pivot,
+			Color mainColor,
+			Config.UI.ColorBlock colors) {
+
+			// make the main object
+			GameObject mainObj = new($"Scrollbar {(vertical ? "Vertical" : "Horizontal")}");
+			var mainRT = mainObj.AddComponent<RectTransform>();
+			mainRT.SetParent(parent);
+
+			// the component will figure out the other axis so just set both
+			mainRT.anchorMin = otherAxisAnchor * Vector2.one;
+			mainRT.anchorMax = otherAxisAnchor * Vector2.one;
+
+			mainRT.sizeDelta = size * Vector2.one;
+			mainRT.pivot = pivot;
+
+			mainRT.anchoredPosition = Vector2.zero; // for good measure
+
+			var mainImage = mainObj.AddComponent<UnityEngine.UI.Image>();
+			mainImage.color = mainColor;
+
+			// make the sliding area
+			GameObject slidingAreaObj = new("Sliding Area");
+			var slidingRT = slidingAreaObj.AddComponent<RectTransform>();
+			slidingRT.SetParent(mainRT);
+			slidingRT.anchorMin = Vector2.zero;
+			slidingRT.anchorMax = Vector2.one;
+			slidingRT.offsetMin = Vector2.zero;
+			slidingRT.offsetMax = Vector2.zero;
+
+			// make the handle
+			GameObject handleObj = new("Handle");
+			var handleRT = handleObj.AddComponent<RectTransform>();
+			handleRT.SetParent(slidingRT);
+			// anchors are set by the component
+			// lets set them to be safe and offsets
+			handleRT.anchorMin = Vector2.zero;
+			handleRT.anchorMax = Vector2.one;
+			handleRT.offsetMin = Vector2.zero;
+			handleRT.offsetMax = Vector2.zero;
+
+			var handleImage = handleObj.AddComponent<UnityEngine.UI.Image>();
+			handleImage.color = Color.white; // controlled by the colorblock so no need
+
+			// set up the component
+			var comp = mainObj.AddComponent<Scrollbar>();
+			comp.targetGraphic = handleImage;
+			comp.colors = (ColorBlock)colors;
+			comp.handleRect = handleRT;
+			comp.direction =
+				vertical
+				? Scrollbar.Direction.BottomToTop
+				: Scrollbar.Direction.LeftToRight;
+			// rest of the values should be set by the scrollrect
+
+			// return
+			return comp;
+		}
+	}
 }

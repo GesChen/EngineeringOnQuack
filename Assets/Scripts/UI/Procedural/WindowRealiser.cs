@@ -162,6 +162,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 				RealiseItem(subItem, contentsRT);
 			}
 		}
+		item.ContentsObject = contentsRT;
 
 		// add components
 		if (item.Construction != null)

@@ -67,6 +67,10 @@ public class WindowItem {
 	private RectTransform m_realObject;
 	public Func<RectTransform> RealObject => () => m_realObject;
 
+	// we can store the container in here i guess? like 
+	// i really cant think of a better way to do this tbh
+	public RectTransform ContentsObject;
+
 	public List<TimedEventInvoker.TimedEvent> CustomEvents;
 
 	public WindowItem SetSubItems(params WindowItem[] subs) {

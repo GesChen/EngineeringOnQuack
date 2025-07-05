@@ -9,6 +9,7 @@ public static partial class Config {
 			public static readonly float Smoothness = 20;
 			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
+			public static readonly Color SecondaryBackgroundColor = new(.15f, .15f, .15f);
 
 			public static TMP_FontAsset DefaultFont				=> Fonts.Roboto;
 			public static readonly FontWeight DefaultWeight		= FontWeight.Light;
