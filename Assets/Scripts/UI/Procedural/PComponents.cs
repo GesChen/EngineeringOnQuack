@@ -85,13 +85,12 @@ public class PComponents {
 	public class Button : Component {
 		public bool Enabled = true;
 		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
-		public delegate void ClickEvent();
-		public event ClickEvent OnClick;
+		public event Action OnClick;
 
 		public Button(
 			bool enabled,
 			Config.UI.ColorBlock colors,
-			ClickEvent onClick) {
+			Action onClick) {
 			Enabled = enabled;
 			Colors = colors;
 			OnClick = onClick;
@@ -99,7 +98,7 @@ public class PComponents {
 
 		// less efficient full customization
 		public Button(
-			ClickEvent onClick,
+			Action onClick,
 			bool enabled = true,
 			Color? normalColor = null,
 			Color? highlightedColor = null,
@@ -117,20 +116,15 @@ public class PComponents {
 		}
 
 		public Button(
-			ClickEvent onClick,
+			Action onClick,
 			Config.UI.ColorBlock colors) {
 			OnClick = onClick;
 			Colors = colors;
 		}
 
-		public Button(ClickEvent onClick) {
+		public Button(Action onClick) {
 			OnClick = onClick;
 		}
-
-		public Button() : this(
-			true,
-			Config.UI.Visual.DefaultColorBlock,
-			null) { }
 
 		public void TriggerClick() {
 			OnClick?.Invoke();
@@ -348,6 +342,10 @@ public class PComponents {
 		// in vert, this would force width to match parent
 		public bool MatchOtherDimension;
 
+		/// <summary>
+		/// You probably shouldn't be using this constructor if you want 
+		/// to make a layout. Use Pcomp.layout.[direction].whatever
+		/// </summary>
 		public Layout(
 			Type layoutType,
 			float? spacing,
@@ -724,11 +722,16 @@ public class PComponents {
 			GameObject viewportObj = new("Viewport");
 			var viewportRT = viewportObj.AddComponent<RectTransform>();
 			// most values are set automatically
+			viewportRT.SetParent(rt);
 			viewportRT.pivot = new(0, 1);
+			viewportRT.SetAsFirstSibling();
 			viewportObj.AddComponent<RectMask2D>(); // no setup needed
 
 			// best solution i could come up with, hope children follow 
 			originalItem.ContentsObject.SetParent(viewportRT);
+
+			comp.viewport = viewportRT;
+			comp.content = originalItem.ContentsObject;
 
 			RealComponent = comp;
 		}

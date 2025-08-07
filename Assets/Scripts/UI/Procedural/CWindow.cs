@@ -16,11 +16,11 @@ public class CWindow {
 	public class Configuration {
 
 		/// <summary>
-		/// <para>Resizable, Movable</para>
+		/// <para>Resizable (T), Movable (T)</para>
 		/// <para>Color, Outline (float, color)</para>
-		/// <para>Size, Position</para>
-		/// <para>ContentDynamic, DynamicPadding</para>
-		/// <para>IsFlyout, Closable, HideOnStart</para>
+		/// <para>Size (free 100x100), Position (anchored center)</para>
+		/// <para>ContentDynamic (F), DynamicPadding (0)</para>
+		/// <para>IsFlyout (F), Closable (T), HideOnStart (T)</para>
 		/// </summary>
 		public Configuration() { }
 
@@ -124,12 +124,15 @@ public class UIPosition {
 	public static readonly Vector2 BottomCenter	= new(.5f, 0);
 	public static readonly Vector2 BottomRight	= new(1, 0);
 
+
 	public UIPosition(Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 position) {
 		AnchorMin = anchorMin;
 		AnchorMax = anchorMax;
 		Pivot = pivot;
 		Position = position;
 	}
+
+	public UIPosition() { }
 
 	public static UIPosition AnchoredAt(Vector2 pos) => 
 		new(pos, pos, pos, Vector2.zero);

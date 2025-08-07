@@ -43,6 +43,14 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 
 		// set up live window component
 		var component = newWindow.AddComponent<LiveWindow>();
+
+		// have to manually set the awake variables bc the new item is
+		// not active so awake will not be called
+		//component.rt = windowRT;
+		//component.manager = newWindow.GetComponentInParent<WindowManager>();
+		//component.canvas = canvas;
+		// nevermind i just forgot to save when i changed to awake lmao
+
 		component.Config = window.Config;
 		component.backgroundImage = bgRT;
 		component.cornerNodes = nodes;
@@ -133,13 +141,33 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		PutTypeFirst<PComponents.Image>(ref item.Construction);
 
 		RectTransform contentsRT = rt;
+
+		// give flyout triggers their own indicator as the last subitem
+		if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
+			// allow null, and just dont add one
+			if (trigger.IndicatorImage != null) {
+				item.SubItems ??= new();
+				item.SubItems.Add(trigger.IndicatorImage);
+			}
+		}
+
+		// make sure scrollviews dont parent themselves
+		bool isScrollView = item.Construction.Any(c => c is PComponents.ScrollView);
+		if (isScrollView) {
+			if (item.SubItems.Count == 0) {
+				item.SubItems.Add(WindowItem.NewEmpty(WindowItem.LayoutConfig.FillLayout));
+
+				Debug.LogWarning($"No SubItems in ScrollView {item.Name}. A temporary empty has been made in its place, but subitems must be added.");
+			}
+		}
+
 		if (item.SubItems != null && item.SubItems.Count > 0) {
 			// padding
 
 			// layouts have their own padding
 			// and items have to be directly inside so no padding object
 			bool isLayout = item.Construction.Any(c => c is PComponents.Layout);
-			if (item.Layout.Padding != FourSides.Zero && !isLayout) {
+			if (isScrollView || item.Layout.Padding != FourSides.Zero && !isLayout) {
 				var (_, padRT) =
 					MakeNewRT("Contents", rt);
 
@@ -150,17 +178,9 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 				contentsRT = padRT;
 			}
 
-			// give flyout triggers their own indicator as the last subitem
-			if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
-
-				// allow null, and just dont add one
-				if (trigger.IndicatorImage != null)
-					item.SubItems.Add(trigger.IndicatorImage);
-			}
-
 			foreach (var subItem in item.SubItems) {
 				RealiseItem(subItem, contentsRT);
-			}
+			}	
 		}
 		item.ContentsObject = contentsRT;
 
@@ -178,6 +198,21 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 			rt.anchoredPosition		= item.Layout.FixedPosition.Position;
 			rt.sizeDelta			= item.Layout.SizeDelta;
 
+		} else if (item.Layout.Custom) { // do everything that isnt zero
+			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
+			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
+
+			item.Layout.Margins.SetTransformOffsets(rt);
+
+			if (item.Layout.FixedPosition != null) {
+				if (item.Layout.FixedPosition.Pivot != Vector2.zero)
+					rt.pivot = item.Layout.FixedPosition.Pivot;
+				if (item.Layout.FixedPosition.Position != Vector2.zero)
+					rt.anchoredPosition = item.Layout.FixedPosition.Position;
+			}
+
+			if (item.Layout.SizeDelta != Vector2.zero)
+				rt.sizeDelta = item.Layout.SizeDelta;
 		} else {
 			// dynamic positioning
 			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
@@ -186,7 +221,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 			item.Layout.Margins.SetTransformOffsets(rt);
 		}
 
-		item.BecomeRealised(rt);
+		item.BecomeRealised(rt, item);
 
 		// set up customevents for items too 
 		if (item.CustomEvents != null && item.CustomEvents.Count > 0) {

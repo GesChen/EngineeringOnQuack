@@ -5,17 +5,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using W = PMenu.Window;
- 
+
 public class SaveLoadMenus {
 
 	public static event Action OnSave;
-	public static void Save() { OnSave?.Invoke(); }
 	public static void ClearSave() { OnSave = null; }
+	public static void Save() { OnSave?.Invoke(); }
 
 	public static event Action OnSaveAs;
-	public static void SaveAs() { OnSaveAs?.Invoke(); }
 	public static void ClearSaveAs() { OnSaveAs = null; }
-
+	public static void SaveAs() { OnSaveAs?.Invoke(); }
 
 	public static void ShowNamePrompt(Action<string> nameCallback) {
 		NamePrompt.CWindow.RealisedWindow.Show();
@@ -31,6 +30,20 @@ public class SaveLoadMenus {
 	}
 	public static void HideNamePrompt() {
 		NamePrompt.CWindow.RealisedWindow.Hide();
+	}
+
+	public static event Action OnLoadRequested;
+	public static void ClearLoadRequested() { OnLoadRequested = null; }
+	public static void ShowLoadMenu() {
+		OnLoadRequested?.Invoke();
+
+		Vector2 center = LoadOptionsMenu.RealisedWindow.canvas
+			.renderingDisplaySize / 2f;
+		LoadOptionsMenu.RealisedWindow.SetWorldCorner(center, 4);
+		LoadOptionsMenu.RealisedWindow.Show();
+	}
+	public static void HideLoadMenu() {
+
 	}
 
 	public static void ShowSaveIcon() {
@@ -98,13 +111,13 @@ public class SaveLoadMenus {
 				),
 				WindowItem.LayoutConfig.FixedLayout(
 					UIPosition.AnchoredOffset(
-						UIPosition.TopLeft, 
+						UIPosition.TopLeft,
 						new(margin, -margin)),
 					new(imageSize, imageSize)
 					)
 			)
-			.OnRealized((rt) => {
-				
+			.OnRealized((rt, _) => {
+
 			}),
 			WindowItem.NewText(
 					"Status text",
@@ -119,23 +132,160 @@ public class SaveLoadMenus {
 						new(imageSize, textHeight)
 						)
 				)
-			.OnRealized((rt) => {
+			.OnRealized((rt, _) => {
 				SaveStatusText = rt.GetComponent<TextMeshProUGUI>();
 			})
 		}
 	};
 
-	static readonly W LoadOptionsMenu = new(
-		"Load Options Menu",
-		500,
-		new(){
+	static void Cancel() {
 
+	}
+
+	static void Load() {
+
+	}
+
+	// i dont know what to call this its for the left and right positions
+	// idfk bruh
+	/* | -- | -- | -- |
+	 * 0   .3   .6    1
+	 * l0r6 l3r3 l6r0
+	 * | -- | ---- | -- |
+	 * 0   .2     .5    1
+	 * l0r8    l2r5  l5r0
+	 */
+	static (float left, float right)[] LeftAndRights(float[] spacings) {
+		int count = spacings.Length + 1;
+
+		(float, float)[] leftrights = new (float, float)[count];
+		for (int i = 0; i < count ; i++) {
+			float left =
+				i == 0
+				? 0
+				: spacings[i - 1];
+
+			float right =
+				i == count - 1
+				? 0
+				: 1 - spacings[i];
+
+			leftrights[i] = (left, right);
 		}
-		);
+		return leftrights;
+	}
+
+	static readonly FourSides EntryTextMargin = new(20, 5);
+	static readonly float[] Spacings = { .6f } ;
+	static readonly (float left, float right)[] LeftRights = // look idk. 
+		LeftAndRights(Spacings);
+	static readonly float FileEntryHeight = 40;
+
+	public static event Action<string> OnLoadEntryChosen;
+
+	// add other details later like part count or whatever
+	// like idk if i want filesize but i gotta add more than just name for now
+	public static WindowItem FileEntry(string name, int parts) =>
+		WindowItem.NewButton(
+			$"File Entry \"{name}\"",
+			new PComponents.Button(() => OnLoadEntryChosen?.Invoke(name)),
+			WindowItem.LayoutConfig.LayoutElement(
+				FileEntryHeight * Vector2.one,
+				new(Config.UI.Menu.ItemPadding)
+				)
+			).SetSubItems(
+				WindowItem.NewText( // name text
+					new PComponents.Text(
+						name,
+						alignment: TextAlignmentOptions.Left),
+					WindowItem.LayoutConfig.DynamicLayout(
+						margin: EntryTextMargin,
+						position: new(0, LeftRights[0].right, 0, LeftRights[0].left))),
+				WindowItem.NewText( // more stuff idk 
+					new PComponents.Text(
+						$"{parts} Parts",
+						alignment: TextAlignmentOptions.Left),
+					WindowItem.LayoutConfig.DynamicLayout(
+						margin: EntryTextMargin,
+						position: new(0, LeftRights[1].right, 0, LeftRights[1].left)))
+				);
+
+
+	public static WindowItem LoadOptionsLayout;
+	static readonly float BottomOptionsHeight = 50;
+	public static readonly CWindow LoadOptionsMenu = new(){
+		Name = "Load Options Menu",
+		Config = new(){
+			Size = CWindow.Configuration.FreeSize(new(500, 500))
+		},
+		Items = new WindowItem[]{
+			WindowItem.NewScrollView(
+				"Files Scroll View",
+				new PComponents.ScrollView(),
+				WindowItem.LayoutConfig.DynamicLayout(
+					margin: BottomOptionsHeight * FourSides.DownConst),
+				new() { // file entries, probably make this procedural and update
+					WindowItem.NewLayout(
+						PComponents.Layout.Vertical.Fixed(
+							false,
+							true),
+						WindowItem.LayoutConfig.FillLayout,
+						new(){
+						}).OnRealized((_, item) => {
+							LoadOptionsLayout = item;
+						})
+				}
+			),
+			WindowItem.NewLayout(
+				"Button Container",
+				PComponents.Layout.Horizontal.Fixed(
+					true,
+					true,
+					5
+					),
+				new WindowItem.LayoutConfig() {
+					Custom = true,
+					Position = new(0, 0, 1, 0),
+					SizeDelta = new(0, BottomOptionsHeight),
+					FixedPosition = new() {
+						Pivot = UIPosition.BottomCenter
+					}
+				},
+				new() {
+					WindowItem.NewButton(
+						"Cancel",
+						new PComponents.Button(Cancel),
+						WindowItem.LayoutConfig.LayoutElement(
+							position: new(0, .5f, 0, 0))
+						).SetSubItems(
+							WindowItem.NewText(
+								new PComponents.Text(
+									"Cancel",
+									alignment: TextAlignmentOptions.Center
+									),
+								WindowItem.LayoutConfig.FillLayout)
+						),
+					WindowItem.NewButton(
+						"Load",
+						new PComponents.Button(Load),
+						WindowItem.LayoutConfig.DynamicLayout(
+							margin: new(
+							position: new(0, 0, 0, .5f))
+						).SetSubItems(
+							WindowItem.NewText(
+								new PComponents.Text(
+									"Load",
+									alignment: TextAlignmentOptions.Center
+									),
+								WindowItem.LayoutConfig.FillLayout)
+						)
+				})
+		}
+	};
 
 	public static CWindow[] Windows => new[] {
 		NamePrompt.CWindow,
 		SaveStatus,
-		LoadOptionsMenu.CWindow
+		LoadOptionsMenu
 	};
 }

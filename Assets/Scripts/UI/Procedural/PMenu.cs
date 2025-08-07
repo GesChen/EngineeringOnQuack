@@ -181,10 +181,10 @@ public class PMenu {
 		}
 
 		public class Button : Item {
-			public PComponents.Button.ClickEvent OnButtonClick;
+			public event Action OnButtonClick;
 
 			public Button(
-				PComponents.Button.ClickEvent onButtonClick,
+				Action onButtonClick,
 				string label,
 				string description = null,
 				string iconName = null,
@@ -193,6 +193,10 @@ public class PMenu {
 				: base(label, description, iconName, iconPath, iconSprite) {
 
 				OnButtonClick = onButtonClick;
+			}
+
+			public void ButtonClicked() {
+				OnButtonClick?.Invoke();
 			}
 		}
 
@@ -427,7 +431,7 @@ public class PMenu {
 				newItem = WindowItem.NewButton(
 					item.Label,
 					new(
-						button.OnButtonClick,
+						button.ButtonClicked,
 						normalColor: Config.UI.Visual.BackgroundColor
 						),
 					WindowItemLayout(rcw.Width)

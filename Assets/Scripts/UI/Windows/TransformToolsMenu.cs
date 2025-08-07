@@ -1,11 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TransformToolsMenu {
-	public static event PComponents.Button.ClickEvent onTranslatePressed;
-	public static event PComponents.Button.ClickEvent onRotatePressed;
-	public static event PComponents.Button.ClickEvent onScalePressed;
+	public static event Action onTranslatePressed;
+	public static event Action onRotatePressed;
+	public static event Action onScalePressed;
 
 	public static void ClearEvents() {
 		onTranslatePressed	= null;

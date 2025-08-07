@@ -9,12 +9,20 @@ public class WindowItem {
 	public string Name;
 
 	public struct LayoutConfig {
+		public bool Custom;
+
 		public bool IsFixed;
+
+		// applies for both
 		public FourSides Padding;
 
 		// dynamic values
-		public FourSides Margins;
-		public FourSides Position; // anchor min max, side offset 
+		public FourSides Margins; // offset min 
+		// anchor min max away from the respective side
+		// min = left, up
+		// max = 1-right, 1-down
+		public FourSides Position; // 0 is fill
+
 
 		// fixed values
 		public Vector2 SizeDelta;
@@ -28,6 +36,13 @@ public class WindowItem {
 			Position = new(0)
 		};
 
+		/// <summary>
+		/// <para>Constructor for a layout that changes with the parent</para> 
+		/// <para>Default full fill anchors with 0 margin 0 padding</para>
+		/// </summary>
+		/// <param name="margin">Offsets</param>
+		/// <param name="padding">Inner container padding</param>
+		/// <param name="position">Anchors</param>
 		public static LayoutConfig DynamicLayout(
 			FourSides? margin = null,
 			FourSides? padding = null,
@@ -36,8 +51,8 @@ public class WindowItem {
 			IsFixed = false,
 			Padding = padding ?? FourSides.Zero,
 
+			Position = position ?? FourSides.Zero,
 			Margins = margin ?? FourSides.Zero,
-			Position = position ?? FourSides.Zero
 			};
 
 		public static LayoutConfig FixedLayout(UIPosition position, Vector2 size, FourSides? padding = null) => new() {
@@ -78,6 +93,11 @@ public class WindowItem {
 		return this;
 	}
 	public WindowItem AddSubItems(params WindowItem[] subs) {
+		if (SubItems == null) {
+			SubItems = new();
+			Debug.LogWarning("Subitems was null with AddSubItems usage. Perhaps Set should have been used instead?");
+		}
+
 		SubItems.AddRange(subs.ToList());
 		return this;
 	}
@@ -103,14 +123,15 @@ public class WindowItem {
 		return this;
 	}
 
-	public event Action<RectTransform> RealizationEvent;
-	public WindowItem OnRealized(Action<RectTransform> action) {
+	public delegate void Realization(RectTransform rt, WindowItem self);
+	public event Realization RealizationEvent;
+	public WindowItem OnRealized(Realization action) {
 		RealizationEvent += action;
 		return this;
 	}
-	public void BecomeRealised(RectTransform rt) {
+	public void BecomeRealised(RectTransform rt, WindowItem self) {
 		m_realObject = rt;
-		RealizationEvent?.Invoke(rt);
+		RealizationEvent?.Invoke(rt, self);
 	}
 
 	public PComponents.Component GetComponent<T>() where T : PComponents.Component {
@@ -134,6 +155,16 @@ public class WindowItem {
 	}
 
 	#region Custom Constructors
+	public static WindowItem NewEmpty(string name, LayoutConfig layout, List<WindowItem> subitems = null) =>
+		new(
+			name,
+			layout,
+			new() { },
+			subitems
+			);
+	public static WindowItem NewEmpty(LayoutConfig layout, List<WindowItem> subitems = null) =>
+		NewEmpty("Empty Object", layout, subitems);
+
 	public static WindowItem NewImage(string name, PComponents.Image image, LayoutConfig layout) => 
 		new(
 			name,
@@ -214,7 +245,6 @@ public class WindowItem {
 			},
 			null
 			);
-
 	public static WindowItem NewButtonCustomImageComponent(PComponents.Button button, PComponents.Image image, LayoutConfig layout) =>
 		NewButtonCustomImageComponent("Button", button, image, layout);
 
@@ -256,6 +286,17 @@ public class WindowItem {
 	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout, PComponents.HoverTarget hover = null) => 
 		NewFlyoutTrigger("Flyout Trigger", trigger, layout, hover);
 
+	public static WindowItem NewScrollView(string name, PComponents.ScrollView scroll, LayoutConfig layout, List<WindowItem> items) => 
+		new(
+			name,
+			layout,
+			new() {
+				scroll
+			},
+			items
+		);
+	public static WindowItem NewScrollView(PComponents.ScrollView scroll, LayoutConfig layout, List<WindowItem> items) =>
+		NewScrollView("Scroll View", scroll, layout, items);
 	#endregion
 
 	public override string ToString() {

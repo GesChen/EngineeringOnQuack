@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,6 +14,9 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 		SaveLoadMenus.ClearSaveAs();
 		SaveLoadMenus.OnSaveAs += SaveAs;
+
+		SaveLoadMenus.ClearLoadRequested();
+		SaveLoadMenus.OnLoadRequested += UpdateLoadMenu;
 	}
 
 	void Save() {
@@ -41,8 +45,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.ShowSaveIcon();
 		SaveLoadMenus.SetSaveText("Saving...");
 
-		SaveLoadHelper saveLoad = new();
-		saveLoad.SaveCurrentBuild(name);
+		SaveLoadHelper.SaveCurrentBuild(name);
 
 		SaveLoadMenus.SetSaveText("Saved!");
 		StartCoroutine(SaveTextDelay());
@@ -51,5 +54,15 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	IEnumerator SaveTextDelay() {
 		yield return new WaitForSeconds(SaveTextHideDelay);
 		SaveLoadMenus.HideSaveIcon(); 
+	}
+
+	void UpdateLoadMenu() {
+		List<WindowItem> items =
+			SaveLoadHelper.GetSortedAssemblyInfos().
+			Select(info => SaveLoadMenus.FileEntry(info.Name, info.Parts))
+			.ToList();
+
+		SaveLoadMenus.LoadOptionsLayout.SubItems = items;
+		WindowManager.Instance.realiser.UpdateWindow(SaveLoadMenus.LoadOptionsMenu);
 	}
 }

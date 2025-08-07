@@ -28,7 +28,11 @@ public struct FourSides { // changed to struct but might break shit so might tur
 	public readonly Vector4 ToRectMask2DType() => 
 		new(Left, Down, Right, Up);
 
-	public static FourSides Zero => new(0, 0, 0, 0);
+	public static FourSides Zero		=> new(0, 0, 0, 0);
+	public static FourSides UpConst		=> new(1, 0, 0, 0);
+	public static FourSides RightConst	=> new(0, 1, 0, 0);
+	public static FourSides DownConst	=> new(0, 0, 1, 0);
+	public static FourSides LeftConst	=> new(0, 0, 0, 1);
 	public static FourSides Even(float v) => new(v, v, v, v);
 
 	public override readonly int GetHashCode() {
@@ -65,6 +69,18 @@ public struct FourSides { // changed to struct but might break shit so might tur
 			a.Right - b.Right,
 			a.Down - b.Down,
 			a.Left - b.Left);
+
+	public static FourSides operator *(FourSides a, float b) =>
+		new(a.Up * b,
+			a.Right * b,
+			a.Down * b,
+			a.Left * b);
+	public static FourSides operator *(float a, FourSides b) =>
+		new(a * b.Up,
+			a * b.Right,
+			a * b.Down,
+			a * b.Left);
+
 	public override readonly string ToString() => 
 		$"FourSides(Up: {Up}, Right: {Right}, Down: {Down}, Left: {Left})";
 }

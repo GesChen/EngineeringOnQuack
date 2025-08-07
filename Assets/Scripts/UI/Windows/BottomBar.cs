@@ -21,7 +21,7 @@ public static class BottomBar {
 		"File", 200, new(){
 			new W.Button(SaveLoadMenus.Save,	"Save"), // todo: descriptions? and icons
 			new W.Button(SaveLoadMenus.SaveAs,	"Save As"),
-			new W.Button(null, "Load"),
+			new W.Button(SaveLoadMenus.ShowLoadMenu, "Load"),
 			new W.Button(null, "Load Recent"),
 			new W.Button(null, "Insert Assembly"), // ? might keep 
 			new W.Button(null, "Reset")

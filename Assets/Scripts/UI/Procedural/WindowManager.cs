@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 // this file will probably not be used in final but here for temporary 
 // this is being used alot more than im expecting man im ngl
-public class WindowManager : MonoBehaviour {
+public class WindowManager : Singleton<WindowManager> {
 	public List<LiveWindow> windows;
 	public WindowRealiser realiser;
 	[HideInInspector] public Canvas canvas;
