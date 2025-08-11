@@ -112,9 +112,10 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		};
 
 		List<WindowSizeNode> nodes = new();
+		int i = 0;
 		foreach (var pos in positions) {
 			var (nodeRT, _) =
-				MakeNewImageObj("node", cornerParent, Config.UI.Window.CornerNode.Color);
+				MakeNewImageObj($"node {i++}", cornerParent, Config.UI.Window.CornerNode.Color);
 
 			var nodeComp = nodeRT.gameObject.AddComponent<WindowSizeNode>();
 			nodeComp.position = pos;
@@ -143,13 +144,19 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		RectTransform contentsRT = rt;
 
 		// give flyout triggers their own indicator as the last subitem
+		/*
 		if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
 			// allow null, and just dont add one
 			if (trigger.IndicatorImage != null) {
 				item.SubItems ??= new();
 				item.SubItems.Add(trigger.IndicatorImage);
 			}
-		}
+		}*/ // warning for future: 
+		// dont do this adding to the lists shit because
+		// the item might be static and thus subitems list persists and 
+		// end up adding a whole buncha shit over multiple 
+		// iterations to the same static list
+		// codes fixed now
 
 		// make sure scrollviews dont parent themselves
 		bool isScrollView = item.Construction.Any(c => c is PComponents.ScrollView);
@@ -180,7 +187,14 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 
 			foreach (var subItem in item.SubItems) {
 				RealiseItem(subItem, contentsRT);
-			}	
+			}
+
+			// goddamn waste of time of a bug
+			if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
+				if (trigger.IndicatorImage != null) {
+					RealiseItem(trigger.IndicatorImage, contentsRT);
+				}
+			}
 		}
 		item.ContentsObject = contentsRT;
 

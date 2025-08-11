@@ -24,7 +24,9 @@ public class WindowManager : Singleton<WindowManager> {
 	// other awakes are called before init is to just delay this script's 
 	// execution order cuz every other method doesn't make sense or this class
 	// cant access it
-	void Awake() {
+	protected override void Awake() {
+		base.Awake();
+		
 		AllWindows.Init(this);
 	}
 

@@ -38,6 +38,9 @@ public static class HF {
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
 
+	public static Vector2 Multiply(this Vector2 a, Vector2 b) =>
+		new(a.x * b.x, a.y * b.y);
+
 	#endregion
 
 	public static string GetPath(this Transform current) {
@@ -477,5 +480,24 @@ public static class HF {
 			}
 		}
 		return path;
+	}
+
+	/// <summary>
+	/// Sets center of RT ignoring the pivot offsets
+	/// </summary>
+	public static void SetCenter(this RectTransform rt, Vector3 pos) {
+		// .5 .5 is ideal for 0 offset
+		// 1 1 is add .5w .5h
+		Vector3 offset = (new Vector2(.5f, .5f) - rt.pivot).Multiply(new Vector2(rt.sizeDelta.x, -rt.sizeDelta.y));
+		rt.position = pos + offset;
+	}
+
+	/// <summary>
+	/// Gets center of RT ignoring the pivot offsets
+	/// </summary>
+	public static Vector2 GetCenter(this RectTransform rt) {
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+		return (corners[0] + corners[2]) / 2;
 	}
 }

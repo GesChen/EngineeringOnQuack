@@ -255,7 +255,8 @@ public class SaveLoadMenus {
 					WindowItem.NewButton(
 						"Cancel",
 						new PComponents.Button(Cancel),
-						WindowItem.LayoutConfig.LayoutElement(
+						WindowItem.LayoutConfig.DynamicLayout(
+							margin: new(10),
 							position: new(0, .5f, 0, 0))
 						).SetSubItems(
 							WindowItem.NewText(
@@ -269,7 +270,7 @@ public class SaveLoadMenus {
 						"Load",
 						new PComponents.Button(Load),
 						WindowItem.LayoutConfig.DynamicLayout(
-							margin: new(
+							margin: new(10),
 							position: new(0, 0, 0, .5f))
 						).SetSubItems(
 							WindowItem.NewText(
@@ -279,7 +280,8 @@ public class SaveLoadMenus {
 									),
 								WindowItem.LayoutConfig.FillLayout)
 						)
-				})
+					}
+				)
 		}
 	};
 

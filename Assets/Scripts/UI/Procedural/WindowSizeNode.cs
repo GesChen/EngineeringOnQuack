@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using cfg = Config.UI.Window.CornerNode;
@@ -130,7 +128,7 @@ public class WindowSizeNode : MonoBehaviour {
 		}
 
 		if (dragging) {
-			GetOtherCorner();
+			//GetOtherCorner();
 
 			var pad = Config.UI.Behaviour.CanvasInnerWindowsPadding;
 			Vector2 pos = HF.Vector2Clamp(
@@ -179,7 +177,7 @@ public class WindowSizeNode : MonoBehaviour {
 		Vector2 newCenter = (otherCornerPos + pos) / 2;
 		Vector2 newSize = HF.Vector2Abs(otherCornerPos - pos);
 
-		main.rt.position = newCenter;
+		main.rt.SetCenter(newCenter);
 		main.rt.sizeDelta = newSize;
 	}
 }

@@ -182,12 +182,12 @@ public class RightClickMenus : MonoBehaviour {
 				m_inWorldUniversalMenu = new(
 					"Editing", mainwidth, new() { // deindented for readability
 // ---------------------------- Universal Menu Items ------------------------------------
-/* 0*/	new W.Flyout(newPart,					"new part",		iconName: "plus"),
-/* 1*/	new W.Button(() => Call(OnUndo),		"undo",			iconName: "undo"),
-/* 2*/	new W.Button(() => Call(OnRedo),		"redo",			iconName: "redo"),
-/* 3*/	new W.Button(() => Call(OnPaste),		"paste",		iconName: "paste"),
+/* 0*/	new W.Flyout(newPart,						"new part",		iconName: "plus"),
+/* 1*/	new W.Button(() => Call(OnUndo),			"undo",			iconName: "undo"),
+/* 2*/	new W.Button(() => Call(OnRedo),			"redo",			iconName: "redo"),
+/* 3*/	new W.Button(() => Call(OnPaste),			"paste",		iconName: "paste"),
 /* 4*/	new W.CustomItem(modifierList),
-/* 5*/	new W.Button(() => Call(OnDuplicate),	"duplicate",	iconName: "duplicate"),
+/* 5*/	new W.Button(() => Call(OnDuplicate),		"duplicate",	iconName: "duplicate"),
 /* 6*/	null, // gets replaced with materialitem 
 /* 7*/	new W.Button(() => Call(OnGroup),			"group",				iconName: "group"),
 /* 8*/	new W.Button(() => Call(OnUnGroup),			"ungroup",				iconName: "ungroup"),

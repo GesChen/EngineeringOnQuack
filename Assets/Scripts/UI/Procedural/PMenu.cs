@@ -405,14 +405,17 @@ public class PMenu {
 
 			case Window.Flyout flyout:
 				WindowItem indicator = null;
-				
-				if (flyout.AddIndicator)
-					indicator = WindowItem.NewImage(new(),
+
+				if (flyout.AddIndicator) {
+					indicator = WindowItem.NewImage(
+						$"Flyout Indicator {DateTime.Now.Second}",
+						new(),
 						WindowItem.LayoutConfig.FixedLayout(
 							UIPosition.AnchoredAt(UIPosition.MiddleRight),
 							new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
 						)
 					);
+				}
 
 				CWindow subWindow = flyout.SubWindow;
 				if (subWindow == null) 
