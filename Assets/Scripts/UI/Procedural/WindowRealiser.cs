@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class WindowRealiser : MonoBehaviour {
+public class WindowRealiser : Singleton<WindowRealiser> {
 	public Canvas canvas;
 
 	public LiveWindow Realise(CWindow window) {
@@ -13,10 +13,11 @@ public class WindowRealiser : MonoBehaviour {
 		// make new live window
 		var (newWindow, windowRT) =
 			MakeNewRT(window.Name, canvas.transform);
-		windowRT.anchorMin = window.Config.Position.AnchorMin;
-		windowRT.anchorMax = window.Config.Position.AnchorMax;
-		windowRT.anchoredPosition = window.Config.Position.Position;
-		windowRT.sizeDelta = window.Config.Size.Default;
+		windowRT.anchorMin			= window.Config.Position.AnchorMin;
+		windowRT.anchorMax			= window.Config.Position.AnchorMax;
+		windowRT.pivot				= window.Config.Position.Pivot;
+		windowRT.anchoredPosition	= window.Config.Position.Position;
+		windowRT.sizeDelta			= window.Config.Size.Default;
 
 		// make background obj
 		var (bgRT, _) = MakeNewImageObj("Background", windowRT, window.Config.Color);
@@ -42,6 +43,14 @@ public class WindowRealiser : MonoBehaviour {
 
 		// set up live window component
 		var component = newWindow.AddComponent<LiveWindow>();
+
+		// have to manually set the awake variables bc the new item is
+		// not active so awake will not be called
+		//component.rt = windowRT;
+		//component.manager = newWindow.GetComponentInParent<WindowManager>();
+		//component.canvas = canvas;
+		// nevermind i just forgot to save when i changed to awake lmao
+
 		component.Config = window.Config;
 		component.backgroundImage = bgRT;
 		component.cornerNodes = nodes;
@@ -63,10 +72,31 @@ public class WindowRealiser : MonoBehaviour {
 			contentParent.anchorMax = new(.5f, .5f);
 		}
 
-		window.Realise(component);
+		window.SetRealised(component);
 		component.Source = window;
 
+		// set up timed events once everything has been set up
+		if (window.CustomEvents != null &&  window.CustomEvents.Count > 0) {
+			var invoker = newWindow.AddComponent<TimedEventInvoker>();
+			invoker.CustomEvents = window.CustomEvents; // calls customawake anyway
+		}
+
 		return component;
+	}
+
+	public void UpdateWindow(CWindow window) {
+		var oldRT = window.RealisedWindow.rt;
+
+		var newWindow = Realise(window);
+
+		var newRT = newWindow.rt;
+
+		newRT.position = oldRT.position;
+		newRT.rotation = oldRT.rotation;
+		newRT.localScale = oldRT.localScale;
+		// any other properties to copy 
+
+		Destroy(oldRT.gameObject);
 	}
 
 	private List<WindowSizeNode> MakeCornerNodes(RectTransform windowRT) {
@@ -82,9 +112,10 @@ public class WindowRealiser : MonoBehaviour {
 		};
 
 		List<WindowSizeNode> nodes = new();
+		int i = 0;
 		foreach (var pos in positions) {
 			var (nodeRT, _) =
-				MakeNewImageObj("node", cornerParent, Config.UI.Window.CornerNode.Color);
+				MakeNewImageObj($"node {i++}", cornerParent, Config.UI.Window.CornerNode.Color);
 
 			var nodeComp = nodeRT.gameObject.AddComponent<WindowSizeNode>();
 			nodeComp.position = pos;
@@ -102,7 +133,7 @@ public class WindowRealiser : MonoBehaviour {
 		rt.offsetMax = Vector2.zero;
 	}
 
-	RectTransform RealiseItem(WindowItem item, RectTransform container) {
+	internal RectTransform RealiseItem(WindowItem item, RectTransform container) {
 		var (newObj, rt) =
 			MakeNewRT(item.Name, container);
 
@@ -111,32 +142,66 @@ public class WindowRealiser : MonoBehaviour {
 		PutTypeFirst<PComponents.Image>(ref item.Construction);
 
 		RectTransform contentsRT = rt;
+
+		// give flyout triggers their own indicator as the last subitem
+		/*
+		if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
+			// allow null, and just dont add one
+			if (trigger.IndicatorImage != null) {
+				item.SubItems ??= new();
+				item.SubItems.Add(trigger.IndicatorImage);
+			}
+		}*/ // warning for future: 
+		// dont do this adding to the lists shit because
+		// the item might be static and thus subitems list persists and 
+		// end up adding a whole buncha shit over multiple 
+		// iterations to the same static list
+		// codes fixed now
+
+		// make sure scrollviews dont parent themselves
+		bool isScrollView = item.Construction.Any(c => c is PComponents.ScrollView);
+		if (isScrollView) {
+			if (item.SubItems.Count == 0) {
+				item.SubItems.Add(WindowItem.NewEmpty(WindowItem.LayoutConfig.FillLayout));
+
+				Debug.LogWarning($"No SubItems in ScrollView {item.Name}. A temporary empty has been made in its place, but subitems must be added.");
+			}
+		}
+
 		if (item.SubItems != null && item.SubItems.Count > 0) {
 			// padding
 
 			// layouts have their own padding
 			// and items have to be directly inside so no padding object
 			bool isLayout = item.Construction.Any(c => c is PComponents.Layout);
-			if (item.Layout.Padding != FourSides.Zero && !isLayout) {
+			if (isScrollView || item.Layout.Padding != FourSides.Zero && !isLayout) {
 				var (_, padRT) =
 					MakeNewRT("Contents", rt);
 
 				padRT.anchorMin = Vector2.zero;
 				padRT.anchorMax = Vector2.one;
-				padRT.offsetMin = new(item.Layout.Padding.Left, item.Layout.Padding.Down);
-				padRT.offsetMax = new(-item.Layout.Padding.Right, -item.Layout.Padding.Up);
+				item.Layout.Padding.SetTransformOffsets(padRT);
 
 				contentsRT = padRT;
 			}
+
 			foreach (var subItem in item.SubItems) {
 				RealiseItem(subItem, contentsRT);
 			}
+
+			// goddamn waste of time of a bug
+			if (item.Construction.Find(c => c is PComponents.FlyoutTrigger) is PComponents.FlyoutTrigger trigger) {
+				if (trigger.IndicatorImage != null) {
+					RealiseItem(trigger.IndicatorImage, contentsRT);
+				}
+			}
 		}
+		item.ContentsObject = contentsRT;
 
 		// add components
 		if (item.Construction != null)
 			foreach (var comp in item.Construction)
-				AddComponent(comp, newObj, item, contentsRT);
+				comp.RealiseComponent(newObj, item);
 
 		// position properly
 		if (item.Layout.IsFixed) {
@@ -147,21 +212,36 @@ public class WindowRealiser : MonoBehaviour {
 			rt.anchoredPosition		= item.Layout.FixedPosition.Position;
 			rt.sizeDelta			= item.Layout.SizeDelta;
 
+		} else if (item.Layout.Custom) { // do everything that isnt zero
+			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
+			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
+
+			item.Layout.Margins.SetTransformOffsets(rt);
+
+			if (item.Layout.FixedPosition != null) {
+				if (item.Layout.FixedPosition.Pivot != Vector2.zero)
+					rt.pivot = item.Layout.FixedPosition.Pivot;
+				if (item.Layout.FixedPosition.Position != Vector2.zero)
+					rt.anchoredPosition = item.Layout.FixedPosition.Position;
+			}
+
+			if (item.Layout.SizeDelta != Vector2.zero)
+				rt.sizeDelta = item.Layout.SizeDelta;
 		} else {
 			// dynamic positioning
 			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
 			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
 
-			if (item.Layout.Margins != FourSides.Zero) {
-				rt.offsetMin = new(item.Layout.Margins.Left, item.Layout.Margins.Down);
-				rt.offsetMax = new(-item.Layout.Margins.Right, -item.Layout.Margins.Up);
-			} else {
-				rt.offsetMin = Vector2.zero;
-				rt.offsetMax = Vector2.zero;
-			}
+			item.Layout.Margins.SetTransformOffsets(rt);
 		}
 
-		item.RealObject = rt;
+		item.BecomeRealised(rt, item);
+
+		// set up customevents for items too 
+		if (item.CustomEvents != null && item.CustomEvents.Count > 0) {
+			var invoker = newObj.AddComponent<TimedEventInvoker>();
+			invoker.CustomEvents = item.CustomEvents; // calls customawake anyway
+		}
 
 		return rt;
 	}
@@ -173,204 +253,6 @@ public class WindowRealiser : MonoBehaviour {
 				components.RemoveAt(i);
 				components.Insert(0, ht);
 			}
-		}
-	}
-
-	void AddComponent(
-		PComponents.Component comp, 
-		GameObject newObj, 
-		WindowItem originalItem, 
-		RectTransform contentsRT) {
-		switch (comp) {
-			case PComponents.Image im:
-				Image image = newObj.AddComponent<Image>();
-				image.color = im.Color;
-				image.preserveAspect = im.PreserveAspect;
-				
-				if (im.SpriteAsset != null) {
-					image.sprite = im.SpriteAsset;
-				}
-				else if (im.SpriteLocation != null && im.SpriteLocation != "") {
-					Sprite sprite = Resources.Load<Sprite>(im.SpriteLocation);
-					image.sprite = sprite;
-				}
-
-				im.RealComponent = image;
-				break;
-
-			case PComponents.Button bt:
-				Button button = newObj.AddComponent<Button>();
-
-				button.interactable = bt.Enabled;
-				button.colors = new() {
-					normalColor			= bt.Colors.NormalColor,
-					highlightedColor	= bt.Colors.HoverColor,
-					selectedColor		= bt.Colors.NormalColor,
-					pressedColor		= bt.Colors.PressedColor,
-					disabledColor		= bt.Colors.DisabledColor,
-					colorMultiplier		= 1,
-					fadeDuration		= bt.Colors.FadeDuration
-				};
-
-				Navigation navigation = new() {
-					mode = Navigation.Mode.None
-				};
-				button.navigation = navigation;
-
-				button.onClick.AddListener(bt.TriggerClick);
-
-				bt.RealComponent = button;
-				break;
-
-			case PComponents.Text tx:
-				var text = newObj.AddComponent<TextMeshProUGUI>();
-				text.text		= tx.Content;
-				text.font		= tx.Font;
-				text.fontStyle	= tx.Style;
-				text.fontWeight	= tx.Weight;
-				text.fontSize	= tx.FontSize;
-				text.color		= tx.Color;
-				text.alignment	= tx.Alignment;
-
-				if (!originalItem.Layout.IsFixed)
-					text.margin = originalItem.Layout.Padding.ToTMProType();
-
-				tx.RealComponent = text;
-				break;
-
-			case PComponents.Layout lt:
-				HorizontalOrVerticalLayoutGroup layout = null;
-
-				int type = lt.LayoutType switch {
-					PComponents.Layout.Type.Horizontal => 0,
-					PComponents.Layout.Type.Vertical => 1,
-					PComponents.Layout.Type.Dynamic => 2,
-					_ => 0
-				};
-
-				switch (type) {
-					case 0: layout = newObj.AddComponent<HorizontalLayoutGroup>(); break;
-					case 1: layout = newObj.AddComponent<VerticalLayoutGroup>(); break;
-					case 2: layout = newObj.AddComponent<DynamicLayoutGroup>(); break;
-				}
-
-				// basic settings
-				layout.spacing = lt.Spacing;
-				layout.childAlignment = lt.ItemAlignment;
-				layout.padding = originalItem.Layout.Padding.ToUnityType();
-
-				// reset in case it initialized with any trues
-				layout.childControlWidth = false;
-				layout.childControlHeight = false;
-				layout.childScaleWidth = false;
-				layout.childScaleHeight = false;
-				layout.childForceExpandWidth = false;
-				layout.childForceExpandHeight = false;
-
-				// fixed vs dynamic sizing
-				if (lt.FixedSize) { // fixed
-					
-					// match dimension
-					if (lt.MatchOtherDimension) {
-						if (type == 0 || type == 2) {
-							layout.childControlHeight = true;
-							layout.childForceExpandHeight = true;
-						} else
-						if (type == 1) {
-							layout.childControlWidth = true;
-							layout.childForceExpandWidth = true;
-						}
-					}
-
-					if (lt.FillDimension) {
-						if (type == 0 || type == 2) {
-							layout.childControlWidth = true;
-							layout.childForceExpandWidth = true;
-						} else
-						if (type == 1) {
-							layout.childControlHeight = true;
-							layout.childForceExpandHeight = true;
-						}
-					}
-				} else { // dynamic
-
-					// keep everything false
-					var fitter = newObj.AddComponent<ContentSizeFitter>();
-					fitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
-					fitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
-				}
-
-				lt.RealComponent = layout;
-				break;
-
-			case PComponents.LayoutElement le:
-				var element = newObj.AddComponent<LayoutElement>();
-				element.flexibleWidth = le.SizeMultiplier;
-				element.flexibleHeight = le.SizeMultiplier;
-
-				le.RealComponent = element;
-				break;
-
-			case PComponents.HoverTarget ht:
-				var htComp = newObj.AddComponent<HoverTarget>();
-
-				htComp.Colors = ht.Colors;
-
-				ht.RealComponent = htComp;
-				break;
-
-			case PComponents.FlyoutTrigger ft:
-				var ftComp = newObj.AddComponent<FlyoutTrigger>();
-
-				// find hovertarget component
-				var htInstance = newObj.GetComponent<HoverTarget>();
-				if (htInstance == null) {
-					Debug.LogError("Missing HoverTarget Component on FlyoutTrigger");
-					return;
-				}
-
-				ftComp.selfHoverTarget = htInstance;
-				ftComp.targetCWindow = ft.TargetFlyout;
-
-				// allow null, and just dont use it
-				if (ft.IndicatorImage != null) {
-					// check for image component
-					if (!ft.IndicatorImage.Construction.Any(c => c is PComponents.Image)) {
-						Debug.LogError("Flyout trigger Indicator image subitem has no image component!");
-						break;
-					}
-
-					// make and set indicator image
-					var indicatorImage = RealiseItem(ft.IndicatorImage, contentsRT);
-					ftComp.openIndicator = indicatorImage.GetComponent<Image>();
-
-					// get the open and closed sprites
-					if (ft.openSpriteLocation != null && ft.openSpriteLocation != "")
-						ftComp.openSprite = Resources.Load<Sprite>(ft.openSpriteLocation);
-					else
-						Debug.LogError("Flyout trigger missing open sprite location");
-
-					if (ft.closedSpriteLocation != null && ft.closedSpriteLocation != "")
-						ftComp.closedSprite = Resources.Load<Sprite>(ft.closedSpriteLocation);
-					else
-						Debug.LogError("Flyout trigger missing closed sprite location");
-				}
-
-				ft.RealComponent = ftComp;
-				break;
-
-			case PComponents.Description ds:
-				var dsComp = newObj.AddComponent<Description>();
-				dsComp.Text = ds.Text;
-
-				ds.RealComponent = dsComp;
-				break;
-
-			case PComponents.FlyoutHider fh:
-				var fhComp = newObj.AddComponent<FlyoutHider>();
-
-				fh.RealComponent = fhComp;
-				break;
 		}
 	}
 

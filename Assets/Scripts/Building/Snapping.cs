@@ -5,19 +5,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public class Snapping
-{
-	public static void Snap(Transform obj)
-	{
-		Snap(obj, Camera.main, 15);
+public class Snapping {
+	public static int DefaultPrecision = 20; // for the 24 bits in a float, lower if it is impacting performance
+	public static int MaxSteps = 20;
+
+	public static void Snap(Transform obj) {
+		Snap(obj, Camera.main, DefaultPrecision);
 	}
 
-	public static void Snap(Transform obj, Camera cam, int precision)
-	{
+	public static void Snap(Transform obj, Camera cam, int precision) {
 		Vector3 origPos = obj.position;
 		// make sure camera can see object, otherwise it wont work anyway
-		if (!GeometryUtility.TestPlanesAABB(GeometryUtility.CalculateFrustumPlanes(cam), obj.GetComponent<Renderer>().bounds))
-		{
+		if (!GeometryUtility.TestPlanesAABB(GeometryUtility.CalculateFrustumPlanes(cam), obj.GetComponent<Renderer>().bounds)) {
 			Debug.LogWarning("not in bounds");
 			return;
 		}
@@ -28,12 +27,11 @@ public class Snapping
 			collider.enabled = false;
 
 		// transforms the object could possibly hit while snapping
-		List<Transform> possibleCollisions = ObjectsBehindSSBounds(obj, cam, 15, out float closest);
+		List<Transform> possibleCollisions = ObjectsBehindSSBounds(obj, cam, DefaultPrecision, out float closest);
 #if DEBUGMODE
 		Debug.Log(possibleCollisions.Count);
 #endif
-		if (possibleCollisions.Count == 0)
-		{
+		if (possibleCollisions.Count == 0) {
 #if DEBUGMODE
 			Debug.LogWarning("no possible collisions");
 #endif
@@ -46,18 +44,15 @@ public class Snapping
 		//step *= 5f / 6f; // make step smaller to avoid skipping over small objects
 
 		//obj.position += direction * closest;
-		
-		
+
+
 		// part 1: find closest collision
 		int stepsTaken = 0;
 		bool didCollide = false;
-		while (stepsTaken < 20 && !didCollide)
-		{
+		while (stepsTaken < MaxSteps && !didCollide) {
 			obj.position += direction * step; // take a step
-			foreach (Transform t in possibleCollisions)
-			{
-				if (Intersections.MeshesIntersect(obj, t))
-				{
+			foreach (Transform t in possibleCollisions) {
+				if (Intersections.MeshesIntersect(obj, t)) {
 					didCollide = true;
 					break;
 				}
@@ -65,8 +60,7 @@ public class Snapping
 			stepsTaken++;
 		}
 
-		if (!didCollide)
-		{
+		if (!didCollide) {
 			obj.position = origPos;
 			return; // didn't collide, don't continue
 		}
@@ -74,42 +68,34 @@ public class Snapping
 		// part 2: refine 
 		bool isColliding;
 		bool everCollided = false;
-		for (int i = 0; i < precision; i++)
-		{
+		for (int i = 0; i < precision; i++) {
 			step /= 2;
 			isColliding = false;
-			foreach (Transform t in possibleCollisions)
-			{
-				if (Intersections.MeshesIntersect(obj, t))
-				{
+			foreach (Transform t in possibleCollisions) {
+				if (Intersections.MeshesIntersect(obj, t)) {
 					isColliding = true;
 					everCollided = true;
 					break;
 				}
 			}
-			if (isColliding)
-			{ // step back
+			if (isColliding) { // step back
 				obj.position -= direction * step;
-			}
-			else
-			{ // step forward
+			} else { // step forward
 				obj.position += direction * step;
 			}
 		}
 
-		if (!everCollided)
-		{
+		if (!everCollided) {
 			obj.position = origPos;
 		}
 
 		foreach (Collider collider in obj.GetComponents<Collider>())
 			collider.enabled = true;
 	}
-	public static IEnumerator SnapCo(Transform obj, Camera cam, int precision)
-	{
+
+	public static IEnumerator SnapCo(Transform obj, Camera cam, int precision) {
 		// make sure camera can see object, otherwise it wont work anyway
-		if (!GeometryUtility.TestPlanesAABB(GeometryUtility.CalculateFrustumPlanes(cam), obj.GetComponent<Renderer>().bounds))
-		{
+		if (!GeometryUtility.TestPlanesAABB(GeometryUtility.CalculateFrustumPlanes(cam), obj.GetComponent<Renderer>().bounds)) {
 			Debug.LogWarning("not in bounds");
 			yield break;
 		}
@@ -120,7 +106,7 @@ public class Snapping
 			collider.enabled = false;
 
 		// transforms the object could possibly hit while snapping
-		List<Transform> possibleCollisions = ObjectsBehindSSBounds(obj, cam, 15, out float closest);
+		List<Transform> possibleCollisions = ObjectsBehindSSBounds(obj, cam, DefaultPrecision, out float closest);
 		Debug.Log($"closest {closest}");
 
 		// inital step definition, how much the obj will move each step
@@ -155,26 +141,20 @@ public class Snapping
 		Debug.Break();
 		// part 2: refine 
 		bool isColliding;
-		for (int i = 0; i < precision; i++)
-		{
+		for (int i = 0; i < precision; i++) {
 			yield return null;
 			step /= 2;
 			isColliding = false;
-			foreach (Transform t in possibleCollisions)
-			{
-				if (Intersections.MeshesIntersect(obj, t))
-				{
+			foreach (Transform t in possibleCollisions) {
+				if (Intersections.MeshesIntersect(obj, t)) {
 					isColliding = true;
 					break;
 				}
 			}
 			Debug.Log(isColliding);
-			if (isColliding)
-			{ // step back
+			if (isColliding) { // step back
 				obj.position -= direction * step;
-			}
-			else
-			{ // step forward
+			} else { // step forward
 				obj.position += direction * step;
 			}
 		}
@@ -184,8 +164,7 @@ public class Snapping
 	}
 
 	// returns all objects that are behind the SS bounds of `obj` from `cam` perspective
-	private static List<Transform> ObjectsBehindSSBounds(Transform obj, Camera cam, int gridDensity, out float closestDist)
-	{
+	private static List<Transform> ObjectsBehindSSBounds(Transform obj, Camera cam, int gridDensity, out float closestDist) {
 		// find screen space bounds of object
 
 		Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
@@ -194,8 +173,7 @@ public class Snapping
 		Vector2 min = Vector2.positiveInfinity;
 		Vector2 max = Vector2.negativeInfinity;
 
-		foreach (Vector3 pos in vertPositions)
-		{
+		foreach (Vector3 pos in vertPositions) {
 			Vector3 p = obj.TransformPoint(pos); // world space
 			Vector2 SS = cam.WorldToScreenPoint(p); // screen space
 
@@ -223,14 +201,13 @@ public class Snapping
 		// cast a grid of rays from that distance
 		List<Transform> uniqueHits = new();
 		closestDist = Mathf.Infinity;
-		for (int i = 0; i < pointGrid.Count; i++)
-		{
+		for (int i = 0; i < pointGrid.Count; i++) {
 			// center points by subtracting 1/2 of center
 			Vector3 withdistance = new(
 				pointGrid[i].x,
 				pointGrid[i].y,
 				farthestDist);
-			
+
 			Vector3 origin = cam.ScreenToWorldPoint(withdistance);
 
 			// use the camera's projection to calculate direction
@@ -244,20 +221,17 @@ public class Snapping
 			// handle hits
 			bool didhit = Physics.Raycast(ray, out RaycastHit hit);
 
-			if (didhit)
-			{
+			if (didhit) {
 				if (hit.distance < closestDist)
 					closestDist = hit.distance;
 
-				if (!uniqueHits.Contains(hit.transform) && hit.transform != obj)
-				{
+				if (!uniqueHits.Contains(hit.transform) && hit.transform != obj) {
 					uniqueHits.Add(hit.transform);
 				}
 			}
 		}
 
-		if (uniqueHits.Count == 0)
-		{
+		if (uniqueHits.Count == 0) {
 #if DEBUGMODE
 			Debug.LogWarning("no hits");
 #endif
@@ -268,16 +242,13 @@ public class Snapping
 	}
 
 	// gets the distance of the farthest vert from the camera in the camera's forward direction
-	private static float FarthestVertDistFromCamera(Mesh mesh, Transform transform, Camera cam)
-	{
+	private static float FarthestVertDistFromCamera(Mesh mesh, Transform transform, Camera cam) {
 		float farthestDist = Mathf.NegativeInfinity;
 		Vector3[] verts = mesh.vertices;
-		foreach (Vector3 vert in verts)
-		{
+		foreach (Vector3 vert in verts) {
 
 			float dist = HF.DistanceInDirection(transform.TransformPoint(vert), cam.transform.position, cam.transform.forward);// (transform.position - cam.transform.position).normalized);
-			if (dist > farthestDist)
-			{
+			if (dist > farthestDist) {
 				farthestDist = dist;
 			}
 		}
@@ -285,14 +256,11 @@ public class Snapping
 	}
 
 	// same as farthest, but closest
-	private static float ClosestVertDistFromCamera(Mesh mesh, Transform transform, Camera cam)
-	{
+	private static float ClosestVertDistFromCamera(Mesh mesh, Transform transform, Camera cam) {
 		float closestDist = Mathf.Infinity;
-		foreach (Vector3 vert in mesh.vertices)
-		{
+		foreach (Vector3 vert in mesh.vertices) {
 			float dist = HF.DistanceInDirection(transform.TransformPoint(vert), cam.transform.position, cam.transform.forward); // (transform.position - cam.transform.position).normalized);
-			if (dist < closestDist)
-			{
+			if (dist < closestDist) {
 				closestDist = dist;
 			}
 		}

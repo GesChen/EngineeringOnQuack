@@ -245,7 +245,7 @@ public class RotateAxis : MonoBehaviour
 			}*/
 
 #if DEBUGMODE
-		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue); 
+		DebugExtra.DrawPoint(planeHitPos - planePos, color: Color.blue); 
 #endif
 
 		transform.localRotation = Quaternion.AngleAxis(angleDelta, axis);

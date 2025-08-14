@@ -5,6 +5,7 @@ using UnityEngine;
 
 public static partial class Config {
 	public static class Fonts {
+		public static void Reset() { Fetched = false; }
 		static bool Fetched = false;
 
 		
@@ -14,7 +15,8 @@ public static partial class Config {
 		public static void Fetch() {
 			if (Fetched) return;
 
-			I_Roboto = Resources.Load("Fonts/Roboto") as TMP_FontAsset;
+			I_Roboto = Resources.Load<TMP_FontAsset>("Fonts/Roboto");
+			if (I_Roboto == null) throw new("Unable to load Roboto!");
 
 			Fetched = true;
 		}

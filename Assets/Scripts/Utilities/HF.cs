@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -13,10 +14,10 @@ public static class HF {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
 
-	public static Vector3 MV3(Vector3 a, Vector3 b) => 
+	public static Vector3 MV3(Vector3 a, Vector3 b) =>
 		new(a.x * b.x, a.y * b.y, a.z * b.z);
 
-	public static Vector3 Vector3Round(Vector3 v) => 
+	public static Vector3 Vector3Round(Vector3 v) =>
 		new(Mathf.Round(v.x), Mathf.Round(v.y), Mathf.Round(v.z));
 
 	public static Vector3 LerpByVector3(Vector3 a, Vector3 b, Vector3 t) {
@@ -26,18 +27,27 @@ public static class HF {
 			Mathf.Lerp(a.z, b.z, t.z));
 	}
 
-	public static Vector2 Vector2Round(Vector2 v) => 
+	public static Vector2 Vector2Round(Vector2 v) =>
 		new(Mathf.Round(v.x), Mathf.Round(v.y));
 
-	public static Vector2 Vector2Abs(Vector2 v) => 
+	public static Vector2 Vector2Abs(Vector2 v) =>
 		new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 
-	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) => 
+	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) =>
 		new(
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
 
+	public static Vector2 Multiply(this Vector2 a, Vector2 b) =>
+		new(a.x * b.x, a.y * b.y);
+
 	#endregion
+
+	public static string GetPath(this Transform current) {
+		if (current.parent == null)
+			return "/" + current.name;
+		return current.parent.GetPath() + "/" + current.name;
+	}
 
 	private static void OldLogColor(string str, Color color) {
 		Debug.Log(string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), str));
@@ -441,12 +451,53 @@ public static class HF {
 	/// Loads a resource of type T from Resources at the given path,
 	/// caches it in the provided field, and logs an error if load fails.
 	/// </summary>
-	public static T LoadCached<T>(ref T cacheField, string path) where T : UnityEngine.Object {
+	public static T LoadResource<T>(ref T cacheField, string path) where T : UnityEngine.Object {
 		if (cacheField == null) {
 			cacheField = Resources.Load<T>(path);
 			if (cacheField == null)
 				Debug.LogError($"Failed to load resource at path '{path}' of type {typeof(T)}");
 		}
 		return cacheField;
+	}
+
+	public static T LoadCached<T>(ref T cacheField, Func<T> processor) {
+		try { // introduces a sub ns overhead so dw
+			cacheField ??= processor();
+		} catch (Exception e) {
+			throw new("Encountered error while attempting to processes cacheField: " + e.Message);
+		}
+		return cacheField;
+	}
+
+	public static string GuaranteePath(string path) {
+		if (!Directory.Exists(path)) {
+			try {
+				Debug.LogWarning($"Directory does not exist, creating: {path}");
+				Directory.CreateDirectory(path);
+			} catch {
+				Debug.LogError("Unable to create directory");
+				return null;
+			}
+		}
+		return path;
+	}
+
+	/// <summary>
+	/// Sets center of RT ignoring the pivot offsets
+	/// </summary>
+	public static void SetCenter(this RectTransform rt, Vector3 pos) {
+		// .5 .5 is ideal for 0 offset
+		// 1 1 is add .5w .5h
+		Vector3 offset = (new Vector2(.5f, .5f) - rt.pivot).Multiply(new Vector2(rt.sizeDelta.x, -rt.sizeDelta.y));
+		rt.position = pos + offset;
+	}
+
+	/// <summary>
+	/// Gets center of RT ignoring the pivot offsets
+	/// </summary>
+	public static Vector2 GetCenter(this RectTransform rt) {
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+		return (corners[0] + corners[2]) / 2;
 	}
 }

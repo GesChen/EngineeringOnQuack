@@ -27,7 +27,10 @@ public class FlyoutHider : MonoBehaviour {
 			foreach (Transform child in transform.parent) {
 				if (child != transform) {
 					if (child.TryGetComponent<FlyoutTrigger>(out var trigger)) {
-						trigger.targetFlyout.Hide();
+						if (trigger.targetFlyout == null)
+							Debug.LogWarning($"Target flyout not created on {trigger.transform.GetPath()}");
+						else
+							trigger.targetFlyout.Hide();
 					}
 				}
 			}

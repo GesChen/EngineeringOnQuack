@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using W = MenuUtil.Window;
+using W = PMenu.Window;
 
 public class RightClickMenus : MonoBehaviour {
 
@@ -63,42 +63,51 @@ public class RightClickMenus : MonoBehaviour {
 
 	// TODO: some grouping system to put them all under one parent
 	public static readonly W digital = new(
-		200,
+		"Digital",
+		120,
 		new(){
 			new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "Parts/cpu"),
 			new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "Parts/ram"),
 			new W.Button(() => MakeNewPart("display"),  "display",  iconName: "Parts/display"),
 			new W.Button(() => MakeNewPart("script"),   "script",   iconName: "Parts/script")
-		});
+		},
+		showTitle: false);
 
 	public static readonly W mechanical = new(
-		200,
+		"Mechanical",
+		120,
 		new(){
-			new W.Button(() => MakeNewPart("motor 1"),  "motor 1",  iconName: "Parts/motor 1"),
-			new W.Button(() => MakeNewPart("motor 2"),  "motor 2",  iconName: "Parts/motor 2"),
-			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "Parts/piston 1"),
-			new W.Button(() => MakeNewPart("piston 1"), "piston 1", iconName: "Parts/piston 2"),
-			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "Parts/servo 1"),
-			new W.Button(() => MakeNewPart("servo 1"),  "servo 1",  iconName: "Parts/servo 2")
-		});
+			new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
+			new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
+			new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
+			new W.Button(() => MakeNewPart("piston ii"),	"piston ii",	iconName: "Parts/piston 2"),
+			new W.Button(() => MakeNewPart("servo i"),		"servo i",		iconName: "Parts/servo 1"),
+			new W.Button(() => MakeNewPart("servo ii"),		"servo ii",		iconName: "Parts/servo 2")
+		},
+		showTitle: false);
 
 	public static readonly W structural = new(
-		200,
+		"Structural",
+		120,
 		new(){
-			new W.Button(() => MakeNewPart("cube"),     "cube",     iconName: "Parts/cube"),
-			new W.Button(() => MakeNewPart("sphere"),   "sphere",   iconName: "Parts/sphere"),
-			new W.Button(() => MakeNewPart("cylinder"), "cylinder", iconName: "Parts/cylinder"),
-			new W.Button(() => MakeNewPart("wedge"),    "wedge",    iconName: "Parts/wedge")
-		});
+			new W.Button(() => MakeNewPart("cube"),		"cube",		iconName: "Parts/cube"),
+			new W.Button(() => MakeNewPart("sphere"),	"sphere",	iconName: "Parts/sphere"),
+			new W.Button(() => MakeNewPart("cylinder"),	"cylinder",	iconName: "Parts/cylinder"),
+			new W.Button(() => MakeNewPart("wedge"),	"wedge",	iconName: "Parts/wedge")
+		},
+		showTitle: false);
 
 	public static readonly W newPart = new(
-		200,
+		"New Part",
+		160,
 		new() {
 			new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
 			new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
 			new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
-			new W.Button(() => MakeNewPart("cable"),"cable",iconName: "Parts/cable")
-		});
+			new W.Button(()=>MakeNewPart("axle"), "axle",	iconName: ""), // TODO
+			new W.Button(()=>MakeNewPart("cable"), "cable",	iconName: "Parts/cable")
+		},
+		showTitle: false);
 
 	// yagni for now we're just doing multiple variations of the same main panel
 	// ¯\_("/)_/¯ if this starts getting excessive, then make a variating panel class
@@ -112,7 +121,7 @@ public class RightClickMenus : MonoBehaviour {
 			"material",
 			iconSprite: Config.Building.MaterialIcon);
 
-	static readonly float mainwidth = 220;
+	static readonly float mainwidth = 0; // controlled by the rightclick customization
 
 	// horizontal layout with a bunch of buttons for modifying stuff
 	// undo redo copy paste delete
@@ -125,8 +134,8 @@ public class RightClickMenus : MonoBehaviour {
 				TextAnchor.UpperLeft),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.AnchoredAt(UIPosition.TopLeft),
-				new (mainwidth, 45),
-				new (5)
+				new(mainwidth, 45),
+				new(0)
 			),
 			new (){
 				WindowItem.NewButtonCustomImageOverlay(
@@ -173,12 +182,12 @@ public class RightClickMenus : MonoBehaviour {
 				m_inWorldUniversalMenu = new(
 					"Editing", mainwidth, new() { // deindented for readability
 // ---------------------------- Universal Menu Items ------------------------------------
-/* 0*/	new W.Flyout(newPart,					"new part",		iconName: "plus"),
-/* 1*/	new W.Button(() => Call(OnUndo),		"undo",			iconName: "undo"),
-/* 2*/	new W.Button(() => Call(OnRedo),		"redo",			iconName: "redo"),
-/* 3*/	new W.Button(() => Call(OnPaste),		"paste",		iconName: "paste"),
+/* 0*/	new W.Flyout(newPart,						"new part",		iconName: "plus"),
+/* 1*/	new W.Button(() => Call(OnUndo),			"undo",			iconName: "undo"),
+/* 2*/	new W.Button(() => Call(OnRedo),			"redo",			iconName: "redo"),
+/* 3*/	new W.Button(() => Call(OnPaste),			"paste",		iconName: "paste"),
 /* 4*/	new W.CustomItem(modifierList),
-/* 5*/	new W.Button(() => Call(OnDuplicate),	"duplicate",	iconName: "duplicate"),
+/* 5*/	new W.Button(() => Call(OnDuplicate),		"duplicate",	iconName: "duplicate"),
 /* 6*/	null, // gets replaced with materialitem 
 /* 7*/	new W.Button(() => Call(OnGroup),			"group",				iconName: "group"),
 /* 8*/	new W.Button(() => Call(OnUnGroup),			"ungroup",				iconName: "ungroup"),
@@ -210,20 +219,34 @@ public class RightClickMenus : MonoBehaviour {
 		public static readonly int AGPT_APOOGT_AGPSF	= 0b_100011101001;
 	}*/
 
-	public static class UniversalIndices {
-		public static readonly int[] Default			= new[]{0, 1, 2, 3};
-		public static readonly int[] SingleSelection	= new[]{0, 4, 5, 6};
-		public static readonly int[] MultiSelection		= new[]{0, 4, 5, 6, 7};
+	public static class Customizations {
+		public static class Indices { 
+			public static readonly int[] Default			= new[]{0, 1, 2, 3};
+			public static readonly int[] SingleSelection	= new[]{0, 4, 5, 6};
+			public static readonly int[] MultiSelection		= new[]{0, 4, 5, 6, 7};
 
-		// different multi select groups
-		public static readonly int[] AGPF_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
-		public static readonly int[] AGPT_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
-		public static readonly int[] AGPF_APOOGT		= new[]{0, 4, 5, 6, 8, 10};
-		public static readonly int[] AGPT_APOOGT_AGPST	= new[]{0, 4, 5, 6, 8};
-		public static readonly int[] AGPT_APOOGT_AGPSF	= new[]{0, 4, 5, 6, 8, 11};
+			// different multi select groups
+			public static readonly int[] AGPF_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
+			public static readonly int[] AGPT_APOOGF		= new[]{0, 4, 5, 6, 8, 9};
+			public static readonly int[] AGPF_APOOGT		= new[]{0, 4, 5, 6, 8, 10};
+			public static readonly int[] AGPT_APOOGT_AGPST	= new[]{0, 4, 5, 6, 8};
+			public static readonly int[] AGPT_APOOGT_AGPSF	= new[]{0, 4, 5, 6, 8, 11};
+		}
+		public static class Widths {
+			public static readonly float Default			= 150;
+			public static readonly float SingleSelection	= 150;
+			public static readonly float MultiSelection		= 150;
+
+			// different multi select groups
+			public static readonly float AGPF_APOOGF		= 200;
+			public static readonly float AGPT_APOOGF		= 200;
+			public static readonly float AGPF_APOOGT		= 150;
+			public static readonly float AGPT_APOOGT_AGPST	= 150;
+			public static readonly float AGPT_APOOGT_AGPSF	= 230;
+		}
 	}
 
-	private static readonly W[] windows = new[]{
+	private static readonly W[] windows = {
 		digital,
 		mechanical,
 		structural,

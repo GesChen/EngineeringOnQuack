@@ -1,15 +1,15 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Transform mainPartsContainer;
-	public List<BasePart> BaseParts;
 	public List<Part> Parts;
 	public TransformTools TransformTools;
 	public Transform SimulationContainer;
-	public static Dictionary<string, BasePart> AllParts = new();
-	public GameObject templatePart;
+
+	public string CurrentAssemblyName;
 
 	BuildingClipboard clipboard;
 
@@ -58,7 +58,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void Update() {
 		HandleInput();
-
+		
 		// set selection state of parts
 		foreach (Part part in Parts) {
 			part.Selected = SelectionManager.Instance.PartSelection.Contains(part);
@@ -74,8 +74,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	#region Part Functions
-	public void UpdateParts() {
-		UpdateIds();
+	void UpdateParts() {
+		// used to update ids but now just a placeholder
 	}
 
 	void MakeNewPart(string name, bool select) {
@@ -97,18 +97,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// function for getting a position for placing parts based on selection and mouse position
 	Vector3 PlacePos() {
 		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
-		Vector3 planeDir = (Camera.main.transform.position - planeOrigin).normalized;
+		Vector3 planeDir = -Camera.main.transform.forward;
 		Ray ray = Camera.main.ScreenPointToRay(RightClick.Instance.downPos); // use right click pos not current
 
 		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
-		return pos;
-	}
 
-	void UpdateIds() {
-		int id = 0;
-		foreach (Part part in Parts) {
-			part.ID = id++;
-		}
+		return pos;
 	}
 
 	public void ResetParts() {
@@ -118,15 +112,32 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Parts.Clear();
 	}
 
-	public Part GeneratePart(string basePartName) {
-		int bpIndex = BaseParts.FindIndex(bp => bp.partName == basePartName);
+	public Part GeneratePart(int basePartID) {
+		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.ID == basePartID);
 		if (bpIndex == -1)
-			throw new($"basepart \"{basePartName}\" doesn't exist");
+			throw new($"[INTERNAL] basepart #\"{basePartID}\" doesn't exist");
 
-		BasePart bp = BaseParts[bpIndex];
-		GameObject newPart = Instantiate(bp.prefab, mainPartsContainer);
+		BasePart bp = AllParts.BaseParts[bpIndex];
+
+		return GeneratePart(bp);
+	}
+
+	public Part GeneratePart(string basePartName) {
+		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.Name == basePartName);
+		if (bpIndex == -1)
+			throw new($"[INTERNAL] basepart \"{basePartName}\" doesn't exist");
+
+		BasePart bp = AllParts.BaseParts[bpIndex];
+
+		return GeneratePart(bp);
+	}
+
+	private Part GeneratePart(BasePart bp) {
+		GameObject newPart = Instantiate(bp.Prefab, mainPartsContainer);
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
+
+		part.ID = DateTime.UtcNow.GetHashCode(); // may change this
 
 		return part;
 	}

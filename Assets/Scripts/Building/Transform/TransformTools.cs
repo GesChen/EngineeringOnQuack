@@ -75,7 +75,8 @@ public class TransformTools : Singleton<TransformTools> {
 	public bool scaling;
 
 	void Start() {
-		Controls();
+		SubscribeToControls();
+		SubscribeToBottomBar();
 	}
 
 	void Update() {
@@ -85,9 +86,14 @@ public class TransformTools : Singleton<TransformTools> {
 
 		currentSize = (active && !selectionDragging) ? size : 0;
 
-		if (!dragging)
-			transform.localScale = Vector3.Distance(Camera.main.transform.position, selectionContainer.position) * currentSize * Vector3.one;
+		if (!dragging) {
+			float dist = HF.DistanceInDirection(
+				Camera.main.transform.position,
+				selectionContainer.position,
+				-Camera.main.transform.forward);
 
+			transform.localScale = dist * currentSize * Vector3.one;
+		}
 		if (local && !dragging)
 			transform.rotation = selectionContainer.rotation;
 		else if (!local)
@@ -99,16 +105,24 @@ public class TransformTools : Singleton<TransformTools> {
 		transform.position = selectionContainer.position;
 	}
 
-	void Controls() {
-		TransformToolsMenu.onTranslatePressed = null;
+	void SubscribeToControls() {
+		TransformToolsMenu.ClearEvents();
+
 		TransformToolsMenu.onTranslatePressed += ToggleTranslate;
-
-		TransformToolsMenu.onRotatePressed = null;
 		TransformToolsMenu.onRotatePressed += ToggleRotate;
-
-		TransformToolsMenu.onScalePressed = null;
 		TransformToolsMenu.onScalePressed += ToggleScale;
+	}
 
+	void SubscribeToBottomBar() {
+		BottomBar.ClearTransform();
+		BottomBar.OnTransformOpened += () => SetToolsState(true);
+	}
+
+	public void SetToolsState(bool state) {
+		if (state)
+			TransformToolsMenu.MainWindow.RealisedWindow.Show();
+		else
+			TransformToolsMenu.MainWindow.RealisedWindow.Hide();
 	}
 
 	void ToggleTranslate() => translating = !translating;

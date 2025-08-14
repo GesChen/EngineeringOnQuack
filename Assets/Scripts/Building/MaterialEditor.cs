@@ -1,6 +1,7 @@
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,8 +18,8 @@ public class MaterialEditor : MonoBehaviour {
 		CWindow cw, 
 		ref RectTransform colorPickerButton, 
 		ref RectTransform materialPickerButton) {
-		colorPickerButton = cw.Items[0].SubItems[1].RealObject;
-		materialPickerButton = cw.Items[0].SubItems[2].RealObject;
+		colorPickerButton = cw.Items[0].SubItems[1].RealObject();
+		materialPickerButton = cw.Items[0].SubItems[2].RealObject();
 
 		// add materialeditor and set up 
 		var editor = cw.RealisedWindow.gameObject.AddComponent<MaterialEditor>();
@@ -35,17 +36,29 @@ public class MaterialEditor : MonoBehaviour {
 			.SubItems[2]
 			.Construction[0].RealComponent;
 
-		// subscribe
-		RightClickMenus.OnMaterial += MaterialEditingMenu.ShowMenu;
-		RightClickMenus.OnMaterial += (_) => editor.UpdateParts();
+		Subscribe(editor);
+	}
+
+	static void Subscribe(MaterialEditor editor) {
+		RightClickMenus.OnMaterial += (source) => {
+			editor.UpdateParts();
+			MaterialEditingMenu.ShowMenu(source);
+		};
+
 		SelectionManager.Instance.OnSelectionChanged += editor.UpdateParts;
 
 		MaterialEditingMenu.OnColorSelection += editor.SetColor;
 		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
-	}
 
-	void Update() {
-
+		BottomBar.ClearMaterial();
+		// look idk where else to put it and for now im too lazy to add the windowitem callback
+		// thing cuz it has to refernce itself and whatnot
+		var canvas = editor.GetComponentInParent<Canvas>();
+		Vector2 center = canvas.renderingDisplaySize / 2f;
+		BottomBar.OnMaterialOpened += () => {
+			editor.UpdateParts();
+			MaterialEditingMenu.ShowMenu(center);
+		};
 	}
 
 	public void UpdateParts() {
@@ -62,8 +75,10 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	public void UpdateNone() {
-		currentColor = Color.white;
+		currentColor = null;
 		currentComposition = null;
+
+		editingParts = new Part[0];
 	}
 
 	public void UpdateSingle(Part t) {

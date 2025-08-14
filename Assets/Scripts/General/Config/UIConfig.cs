@@ -9,19 +9,21 @@ public static partial class Config {
 			public static readonly float Smoothness = 20;
 			public static readonly Color BackgroundColor		= new(.21f, .21f, .21f);
 			public static readonly Color PreviewWindowColor		= new(.53f, .84f, 1.0f, .20f);
+			public static readonly Color SecondaryBackgroundColor = new(.15f, .15f, .15f);
 
 			public static TMP_FontAsset DefaultFont				=> Fonts.Roboto;
 			public static readonly FontWeight DefaultWeight		= FontWeight.Light;
 			public static readonly Color TextColor				= new(1.0f, 1.0f, 1.0f);
+			public static readonly Color PlaceholderColor		= new(.60f, .60f, .60f);
 			public static readonly float FontSize				= 22;
 
 			public static readonly Color OutlineColor			= new(.40f, .40f, .40f);
 			public static readonly float OutlineThickness		= 2;
 
-			public static readonly float DefaultLayoutSpacing   = 5; // might delete
+			public static readonly float DefaultLayoutSpacing	= 5; // might delete
 
 			public static readonly ColorBlock DefaultColorBlock = new(){
-				NormalColor	= new(.27f, .27f, .27f),
+				NormalColor		= new(.27f, .27f, .27f),
 				HoverColor		= new(.39f, .39f, .39f),
 				PressedColor	= new(.45f, .45f, .45f),
 				DisabledColor	= new(.16f, .16f, .16f),
@@ -30,7 +32,7 @@ public static partial class Config {
 			};
 
 			public static readonly ColorBlock WhiteColorBlock = new(){
-				NormalColor	= new(1f, 1f, 1f),
+				NormalColor		= new(1f, 1f, 1f),
 				HoverColor		= new(0.88f, 0.88f, 0.88f),
 				PressedColor	= new(0.82f, 0.82f, 0.82f),
 				DisabledColor	= new(0.70f, 0.70f, 0.70f),
@@ -46,8 +48,8 @@ public static partial class Config {
 			public static readonly float	FlyoutHoverMargin		= 50;
 			public static readonly int		DescriptionHoverMs		= 500;
 			public static readonly float	MaxMouseMovementForClick	= 5;
-			public static readonly int		TimeForDescriptionChangeMs    = 100;
-			public static readonly int      CanvasInnerWindowsPadding   = 10;
+			public static readonly int		TimeForDescriptionChangeMs	= 100;
+			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 40, 10);
 		}
 
 		// experimental design change
@@ -59,9 +61,23 @@ public static partial class Config {
 			public Color DisabledColor;
 			public Color ToggledColor;
 			public float FadeDuration;
+
+			public static explicit operator UnityEngine.UI.ColorBlock(ColorBlock other) => new() {
+				normalColor = other.NormalColor,
+				highlightedColor = other.HoverColor,
+				selectedColor = other.NormalColor,
+				pressedColor = other.PressedColor,
+				disabledColor = other.DisabledColor,
+				colorMultiplier = 1,
+				fadeDuration = other.FadeDuration
+			};
 		}
 
 		public static class Button {
+		}
+
+		public static class InputField {
+			public static readonly string PlaceholderDefaultText = "Enter Text...";
 		}
 
 		public static class RightClick {
@@ -109,9 +125,10 @@ public static partial class Config {
 
 				private static Sprite m_closeSprite;
 				public static Sprite CloseSprite => 
-					HF.LoadCached(ref m_closeSprite, Locations.CloseIcon);
+					HF.LoadResource(ref m_closeSprite, Locations.CloseIcon);
 
 				public static float EasingFunction(float x) {
+					return x;
 					if (x <= 0) return 0;
 					if (x >= 1) return 1;
 

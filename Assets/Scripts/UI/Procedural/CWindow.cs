@@ -5,15 +5,25 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // window, class form (class window, cwindow)
-/// <summary>
-/// Name, Items, Config
-/// </summary>
 public class CWindow {
 	public string Name;
 	public WindowItem[] Items;
 
+	/// <summary>
+	/// Configuration for CWindows. 
+	/// </summary>
 	[Serializable]
 	public class Configuration {
+
+		/// <summary>
+		/// <para>Resizable (T), Movable (T)</para>
+		/// <para>Color, Outline (float, color)</para>
+		/// <para>Size (free 100x100), Position (anchored center)</para>
+		/// <para>ContentDynamic (F), DynamicPadding (0)</para>
+		/// <para>IsFlyout (F), Closable (T), HideOnStart (T)</para>
+		/// </summary>
+		public Configuration() { }
+
 		public static SizeData FixedSize(Vector2 oneSize) => 
 			new(oneSize, oneSize, oneSize);
 		public static SizeData FreeSize(Vector2 defaultSize) => 
@@ -61,42 +71,35 @@ public class CWindow {
 				Movable = false,
 			};
 */
-		public List<(TimedEvent action, Timings timing)> CustomEvents;
-		public delegate void TimedEvent(CWindow window);
-		public enum Timings {
-			Awake,
-			Start,
-			Update
-		}
-		public void CallEvents(Timings timing, CWindow window) {
-			if (CustomEvents == null || CustomEvents.Count == 0) return;
-
-			var timedAction = CustomEvents?.Where(ce => ce.timing == timing).Select(ce => ce.action);
-
-			foreach (var a in timedAction) {
-				a?.Invoke(window);
-			}
-		}
 	}
 
+	/// <summary>
+	/// Name, Config, Items
+	/// </summary>
+	public CWindow() { }
+
 	public Configuration Config = new();
+	public List<TimedEventInvoker.TimedEvent> CustomEvents;
 
 	private LiveWindow m_realisedWindow;
 	public LiveWindow RealisedWindow {
 		get {
 			if (m_realisedWindow == null) {
-				throw new($"{Name} window not realised!"); 
+				throw new($"Window \"{Name}\" not realised!"); 
 			}
 			return m_realisedWindow;
 		}
 	}
-	public void Realise(LiveWindow live) {
+	public void SetRealised(LiveWindow live) {
 		m_realisedWindow = live;
 	}
 
-	public CWindow AddEvent(Configuration.Timings timing, Configuration.TimedEvent action) {
-		Config.CustomEvents ??= new();
-		Config.CustomEvents.Add((action, timing));
+	public CWindow AddEvent(
+		TimedEventInvoker.Timing timing, 
+		TimedEventInvoker.TimedEventCall action) {
+
+		CustomEvents ??= new();
+		CustomEvents.Add(new(action, timing));
 		return this;
 	}
 
@@ -121,6 +124,7 @@ public class UIPosition {
 	public static readonly Vector2 BottomCenter	= new(.5f, 0);
 	public static readonly Vector2 BottomRight	= new(1, 0);
 
+
 	public UIPosition(Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 position) {
 		AnchorMin = anchorMin;
 		AnchorMax = anchorMax;
@@ -128,8 +132,7 @@ public class UIPosition {
 		Position = position;
 	}
 
-	public UIPosition(Vector2 anchorMin, Vector2 anchorMax, Vector2 position)
-		: this(anchorMin, anchorMax, position, new(.5f,.5f)) { }
+	public UIPosition() { }
 
 	public static UIPosition AnchoredAt(Vector2 pos) => 
 		new(pos, pos, pos, Vector2.zero);

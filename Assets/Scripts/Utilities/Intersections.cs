@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Geometry;
 
 public static class Intersections {
 	#region Meshes
@@ -27,10 +28,40 @@ public static class Intersections {
 		return MeshesIntersectRawMesh(m1v, m2v, m1t, m2t);
 	}
 	
+	// should port to use the geometry classes but if theres no GOOD reason to
+	// for now we will keep using these as they are because well im lazy
+
 	/// <summary>
 	/// Determines if two meshes given the raw verts and tris intersect
 	/// </summary>
 	public static bool MeshesIntersectRawMesh(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
+		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
+
+		int numtris1 = mesh1tris.Length / 3;
+		int numtris2 = mesh2tris.Length / 3;
+		
+		for (int i = 0; i < numtris1; i++) {
+			for (int j = 0; j < numtris2; j++) {
+				Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
+				Vector3 p2 = mesh1verts[mesh1tris[i * 3 + 1]];
+				Vector3 p3 = mesh1verts[mesh1tris[i * 3 + 2]];
+				Vector3 q1 = mesh2verts[mesh2tris[j * 3]];
+				Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
+				Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
+
+#if DEBUGMODE
+				DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
+				DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
+#endif
+
+				if (TrianglesIntersect(p1, p2, p3, q1, q2, q3))
+					return true;
+			}
+		}
+
+		return false;
+	}
+	public static bool MeshesIntersectRawMesh_OldWithOptimizations(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
 		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
 		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
 
@@ -39,7 +70,7 @@ public static class Intersections {
 		int combinations = numtris1 * numtris2;
 
 		int[] indices = new int[combinations];
-		float[] distances = new float[combinations];
+		//float[] distances = new float[combinations];
 		int[] triindex1 = new int[combinations];
 		int[] triindex2 = new int[combinations];
 		int count = 0;
@@ -48,7 +79,7 @@ public static class Intersections {
 				indices[count] = count;
 				triindex1[count] = i;
 				triindex2[count] = j;
-
+/*
 				Vector3 avg1 =(
 					mesh1verts[mesh1tris[i * 3]] +
 					mesh1verts[mesh1tris[i * 3 + 1]] +
@@ -60,7 +91,7 @@ public static class Intersections {
 					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
 
 				float dist = (avg1 - avg2).sqrMagnitude;
-				distances[count] = dist;
+				distances[count] = dist;*/
 
 				count++;
 			}
@@ -338,7 +369,11 @@ public static class Intersections {
 		Vector3 edge2 = c - a;
 		Vector3 ray_cross_e2 = Vector3.Cross(dir, edge2);
 
-		float inv_det = 1f / Vector3.Dot(edge1, ray_cross_e2);
+		float det = Vector3.Dot(edge1, ray_cross_e2);
+		if (Mathf.Abs(det) < 1e-8)
+			return -1;
+
+		float inv_det = 1f / det;
 		Vector3 s = orig - a;
 		float u = inv_det * Vector3.Dot(s, ray_cross_e2);
 
@@ -460,6 +495,83 @@ public static class Intersections {
 		return false;
 	}
 
+	// attempt at a freaky method for point in mesh testing
+	// from what i can remember from some stackoverflow post
+	// but i cant find it now so im going off of what i remember lol
+	public static bool PointInMesh(
+		Vector3 point,
+		Vector3[] tris,
+		Transform relativeTo = null) {
+		return PointInMesh(point, Triangle.FromVertexArray(tris), relativeTo);
+	}
+	public static bool PointInMesh(
+		Vector3 point,
+		Triangle[] triangles,
+		Transform relativeTo = null) {
+
+		// cut time from like 400 ms -> 200 ms ish -> 77 -> 56 
+		Triangle[] tris = new Triangle[triangles.Length];
+		
+		// transform points if relative to 
+		if (relativeTo != null) {
+			/*for (int i = 0; i < tris.Length; i++) {
+				var tri = tris[i];
+				tris[i].p1 = relativeTo.TransformPoint(tri.p1);
+				tris[i].p2 = relativeTo.TransformPoint(tri.p2);
+				tris[i].p3 = relativeTo.TransformPoint(tri.p3);
+			}*/
+
+			// fast transformpoints and put everything into one big array for SPEED
+			Vector3[] points = new Vector3[triangles.Length * 3];
+			for (int i = 0; i < triangles.Length; i++) {
+				points[i * 3 + 0] = triangles[i].p1;
+				points[i * 3 + 1] = triangles[i].p2;
+				points[i * 3 + 2] = triangles[i].p3;
+			}
+
+			relativeTo.TransformPoints(points); // fast?
+
+			// reassign
+			for (int i = 0; i < tris.Length; i++) {
+				tris[i].p1 = points[i * 3 + 0];
+				tris[i].p2 = points[i * 3 + 1];
+				tris[i].p3 = points[i * 3 + 2];
+			}
+		} else {
+			System.Array.Copy(triangles, tris, tris.Length); // copy.. 
+		}
+
+		// flatten mesh and point along one axis
+		// for this i'm gonna use the z axis cuz it allows easy flattening by conversion to v2
+		// actualy we dont have to do this as long as we just use v2s in the code
+		// nevermind i just made a triangle2d class so im gonna use it lmao
+		Vector2 p = point;
+
+		// check for 2d triangle aabb intersects with point
+		// store indexes of tris that passed
+		List<int> flatIntersects = new();
+		for (int i = 0; i < tris.Length; i++) {
+			Triangle2D tri = (Triangle2D)tris[i]; // flatten here
+
+			if (tri.Bounds.Test(p))
+				flatIntersects.Add(i);
+		}
+
+		// perform 3d ray intersection along flattened axis and count intersections
+		// in the positive direction
+		// check all triangles that passed aabb and have any verts' z component greater than point
+		// greater bc we go positive
+		int count = 0;
+		foreach (int index in flatIntersects) {
+			Triangle tri = tris[index];
+
+			float d = RayTriIntersectDist(point, Vector3.forward, tri.p1, tri.p2, tri.p3);
+			if (d > 0) count++;
+		}
+
+		// odd = inside, even = outside
+		return count % 2 == 1;
+	}
 }
 // tomas mullers, i doubt it would be any bit faster, probably slower even
 /*

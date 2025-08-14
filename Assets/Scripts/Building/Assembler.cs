@@ -21,14 +21,8 @@ public class Assembler : Singleton<Assembler> {
 	}
 
 	struct Pair {
-		public Vector3[] Averts;
-		public Vector3[] Bverts;
-		public int[] Atris;
-		public int[] Btris;
-		public Vector3 Amin;
-		public Vector3 Bmin;
-		public Vector3 Amax;
-		public Vector3 Bmax;
+		public PrecomputeMeshData DataA;
+		public PrecomputeMeshData DataB;
 		public Part A;
 		public Part B;
 		public int index;
@@ -41,6 +35,7 @@ public class Assembler : Singleton<Assembler> {
 	public struct AssembledSubassembly {
 		public Transform parentContainer;
 		public List<Transform> parts;
+		public Rigidbody rb;
 	}
 
 	public void Assemble(out List<Subassembly> computedSubassemblies) {
@@ -49,16 +44,11 @@ public class Assembler : Singleton<Assembler> {
 		List<AssembledSubassembly> assembledSubs = CopyToSimulation(subassemblies);
 		ReleaseRigidbodies(assembledSubs);
 
-		SimulationManager.Instance.assembledSubassemblies = assembledSubs;
+		//SimulationManager.Instance.assembledSubassemblies = assembledSubs;
 
 		computedSubassemblies = subassemblies;
 	}
 
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="bm"></param>
-	/// <returns></returns>
 	public List<Subassembly> ComputeAssemblies(BuildingManager bm) {
 #if DEBUGMODE
 		Debug.Log("assembling");
@@ -89,15 +79,13 @@ public class Assembler : Singleton<Assembler> {
 		Pair[] pairsTotest = new Pair[numToTest];
 
 		// precompute tri and vert lists
+		// while skipping axles
 		PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
 		for (int i = 0; i < bm.Parts.Count; i++) {
 			Part part = bm.Parts[i];
-			Transform obj = part.transform;
-			Mesh mesh = part.basePart.processingMesh;
-			Vector3[] verts = mesh.vertices;
-			for (int v = 0; v < verts.Length; v++)
-				verts[v] = obj.TransformPoint(verts[v]);
-			int[] tris = mesh.triangles;
+
+			Vector3[] verts = PartUtil.WorldSpaceVertsOfPart(part);
+			int[] tris = part.basePart.AllTris;
 
 			Vector3 min = Vector3.positiveInfinity;
 			Vector3 max = Vector3.negativeInfinity;
@@ -106,7 +94,12 @@ public class Assembler : Singleton<Assembler> {
 				max = Vector3.Max(max, v);
 			}
 
-			precomputed[i] = new() { tris = tris, verts = verts, min = min, max = max };
+			precomputed[i] = new() {
+				tris = tris,
+				verts = verts,
+				min = min,
+				max = max
+			};
 		}
 
 		// create tests
@@ -114,16 +107,10 @@ public class Assembler : Singleton<Assembler> {
 		for (int i = 0; i < parts; i++) {
 			for (int j = i + 1; j < parts; j++) {
 				pairsTotest[total] = new() {
-					Averts = precomputed[i].verts,
-					Atris = precomputed[i].tris,
-					Bverts = precomputed[j].verts,
-					Btris = precomputed[j].tris,
+					DataA = precomputed[i],
+					DataB = precomputed[j],
 					A = bm.Parts[i],
 					B = bm.Parts[j],
-					Amax = precomputed[i].max,
-					Bmax = precomputed[j].max,
-					Amin = precomputed[i].min,
-					Bmin = precomputed[j].min,
 					index = total
 				};
 				total++;
@@ -133,7 +120,7 @@ public class Assembler : Singleton<Assembler> {
 		//Parallel.ForEach(pairsTotest, pair =>
 		foreach (Pair pair in pairsTotest) {
 			if (Intersections.MeshesIntersectRawMesh(
-				pair.Averts, pair.Bverts, pair.Atris, pair.Btris)) {
+				pair.DataA.verts, pair.DataB.verts, pair.DataA.tris, pair.DataB.tris)) {
 				connections.Add(new() {
 					objA = pair.A.transform,
 					objB = pair.B.transform,
@@ -174,7 +161,9 @@ public class Assembler : Singleton<Assembler> {
 
 		List<Part> partsLeft = allParts.Where(part => partsInAssemblies[part] == false).ToList();
 		foreach (Part part in partsLeft) {
-			assemblies.Add(new() { parts = new() { part } }); // solo parts become own assembly
+			Subassembly sub = new() { parts = new() { part } };
+
+			assemblies.Add(sub); // solo parts become own assembly
 		}
 
 		return assemblies;
@@ -207,7 +196,6 @@ public class Assembler : Singleton<Assembler> {
 			foreach (Transform part in parts)
 				part.parent = subParent;
 
-
 			assembleds.Add(new() {
 				parentContainer = subParent,
 				parts = parts
@@ -218,10 +206,17 @@ public class Assembler : Singleton<Assembler> {
 	}
 
 	public void ReleaseRigidbodies(List<AssembledSubassembly> assembledSubs) {
-		foreach (AssembledSubassembly sub in assembledSubs) {
+		for (int i = 0; i < assembledSubs.Count; i++) {
+			AssembledSubassembly sub = assembledSubs[i];
+
 			Rigidbody rb = sub.parentContainer.gameObject.AddComponent<Rigidbody>();
 			rb.velocity = Vector3.zero;
+			sub.rb = rb;
 		}
+	}
+
+	public void ComputeAxles(List<AssembledSubassembly> assembledSubs) {
+		
 	}
 }
 /* old inefficient attempts, might delete

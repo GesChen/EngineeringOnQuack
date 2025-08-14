@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using W = MenuUtil.Window;
+using W = PMenu.Window;
 
 public class MaterialEditingMenu : MonoBehaviour {
 	public static void ClearEvents() {
@@ -115,11 +115,11 @@ public class MaterialEditingMenu : MonoBehaviour {
 					new W.CustomItem(
 						WindowItem.NewFlyoutTrigger(
 							new PComponents.FlyoutTrigger(CompositionPicker),
-							new PComponents.HoverTarget(Config.UI.Visual.WhiteColorBlock), // make it white
 							WindowItem.LayoutConfig.FixedLayout(
 								UIPosition.AnchoredAt(UIPosition.TopLeft),
 								new (size, size)
-								)
+								),
+							new PComponents.HoverTarget(Config.UI.Visual.WhiteColorBlock) // make it white
 							)
 						)
 				},
@@ -127,9 +127,9 @@ public class MaterialEditingMenu : MonoBehaviour {
 				isFlyout: false,
 				closable: true
 				).AddEventToCW(
-					CWindow.Configuration.Timings.Start,
-					(cw) => {
-						OnStart?.Invoke(cw, ref colorPickerButton, ref compositionPickerButton);
+					TimedEventInvoker.Timing.Start,
+					(_) => {
+						OnStart?.Invoke(m_editor.CWindow, ref colorPickerButton, ref compositionPickerButton);
 					}
 				);
 			
@@ -138,14 +138,20 @@ public class MaterialEditingMenu : MonoBehaviour {
 	}
 
 	public static void ShowMenu(WindowItem source) {
-		RectTransform rt = source.RealObject;
+		RectTransform rt = source.RealObject();
 
-		Editor.CWindow.RealisedWindow.PlaceAt(rt);
-		Editor.CWindow.RealisedWindow.gameObject.SetActive(true);
+		Editor.CWindow.RealisedWindow.Show();
+		Editor.CWindow.RealisedWindow.PlaceAt(rt, true, true, false);
 
 		//editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
 	}
 
+	public static void ShowMenu(Vector2 at) {
+		Editor.CWindow.RealisedWindow.Show();
+		Editor.CWindow.RealisedWindow.SetWorldCorner(at, 4);
+	}
+
+	// has to be property because it needs to be reevaluated at creationtime
 	public static CWindow[] Windows => new[] {
 		colorPicker,
 		CompositionPicker,
@@ -155,12 +161,12 @@ public class MaterialEditingMenu : MonoBehaviour {
 	static RectTransform colorPickerButton;
 	static RectTransform compositionPickerButton;
 	static void ShowColorPicker() {
-		colorPicker.RealisedWindow.PlaceAt(colorPickerButton);
-		colorPicker.RealisedWindow.gameObject.SetActive(true);
+		colorPicker.RealisedWindow.Show();
+		colorPicker.RealisedWindow.PlaceAt(colorPickerButton, true, true, false);
 	}
 	static void ShowCompositionPicker() {
-		CompositionPicker.RealisedWindow.PlaceAt(compositionPickerButton);
-		CompositionPicker.RealisedWindow.gameObject.SetActive(true);
+		CompositionPicker.RealisedWindow.Show();
+		CompositionPicker.RealisedWindow.PlaceAt(compositionPickerButton, true, true, false);
 	}
 
 }

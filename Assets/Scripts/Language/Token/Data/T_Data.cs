@@ -4,9 +4,7 @@ using UnityEngine;
 using static Primitive;
 
 public class T_Data : Token {
-#pragma warning disable CS0108
 	public string Name;
-#pragma warning restore CS0108
 	public Type Type;
 	public Memory Memory;
 	public Flags Flags = Flags.None;
@@ -74,6 +72,8 @@ public class T_Data : Token {
 	}
 
 	#region Casting
+#pragma warning disable IDE0066 // Convert switch statement to expression
+
 		// self cast
 	public T_Data Cast(Type toType) {
 		return CastFromTo(this, toType);
@@ -155,6 +155,8 @@ public class T_Data : Token {
 		}
 		return Errors.InvalidCast("Dict", to);
 	}
+
+#pragma warning restore IDE0066 // Convert switch statement to expression
 	#endregion
 
 	public override string ToString() {

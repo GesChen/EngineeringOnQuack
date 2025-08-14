@@ -6,6 +6,9 @@ using UnityEngine.UI;
 [RequireComponent(typeof(HoverTarget))]
 public class FlyoutTrigger : MonoBehaviour {
 	public Flyout targetFlyout;
+	public bool openHorizontally;
+	public bool openPrioritizingRight;
+	public bool openPrioritizingUp;
 
 	public Image openIndicator;
 	public Sprite openSprite;
@@ -50,8 +53,8 @@ public class FlyoutTrigger : MonoBehaviour {
 	void CheckRealization() {
 		if (targetFlyout != null) return;
 
-		if (targetCWindow == null && targetFlyout == null) {
-			Debug.LogError("Missing target CWindow or Flyout");
+		if (targetCWindow == null) {
+			Debug.LogError("No target CWindow assigned! in " + transform.GetPath());
 			return;
 		}
 
@@ -75,12 +78,12 @@ public class FlyoutTrigger : MonoBehaviour {
 
 	void HoverStateChange(bool state) {
 		if (targetFlyout == null) {
-			Debug.LogError("Flyout window not realised or isn't set");
+			Debug.LogError("Flyout window not realised or isn't set in "+transform.GetPath());
 			return;
 		}
 
 		if (state) {			
-			targetFlyout.Show(this);
+			targetFlyout.Show(this, openHorizontally, openPrioritizingRight, openPrioritizingUp);
 		} else {
 
 			if (!targetFlyout.mouseInRange) // and the mouse isnt hovering on the target flyout now
