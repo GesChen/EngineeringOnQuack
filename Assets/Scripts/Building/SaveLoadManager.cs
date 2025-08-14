@@ -92,10 +92,10 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 			var button = item.GetComponent<PComponents.Button>().RealComponent as UnityEngine.UI.Button;
 			if (button == null) throw new("bad casting to image, check this line");
 			
-			button.colors = (UnityEngine.UI.ColorBlock)Config.UI.Visual.DefaultColorBlock;
+			button.colors = (UnityEngine.UI.ColorBlock)Config.UI.ColorBlock.DefaultBlock;
 		}
 
-		var block = Config.UI.Visual.DefaultColorBlock;
+		var block = Config.UI.ColorBlock.DefaultBlock;
 		block.NormalColor = block.ToggledColor;
 
 		var selbutton = items[id].GetComponent<PComponents.Button>().RealComponent as UnityEngine.UI.Button;

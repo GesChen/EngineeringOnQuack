@@ -44,7 +44,7 @@ public class MaterialEditingMenu : MonoBehaviour {
 						"Color option",
 						new (
 							() => OnColorSelection?.Invoke(c),
-							Config.UI.Visual.WhiteColorBlock),
+							Config.UI.ColorBlock.WhiteBlock),
 						new (c), // might make the color part an inner element
 						WindowItem.LayoutConfig.LayoutElement(
 							Config.Building.ColorPickerItemSize,
@@ -119,7 +119,7 @@ public class MaterialEditingMenu : MonoBehaviour {
 								UIPosition.AnchoredAt(UIPosition.TopLeft),
 								new (size, size)
 								),
-							new PComponents.HoverTarget(Config.UI.Visual.WhiteColorBlock) // make it white
+							new PComponents.HoverTarget(Config.UI.ColorBlock.WhiteBlock) // make it white
 							)
 						)
 				},

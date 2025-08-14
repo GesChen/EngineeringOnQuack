@@ -21,24 +21,6 @@ public static partial class Config {
 			public static readonly float OutlineThickness		= 2;
 
 			public static readonly float DefaultLayoutSpacing	= 5; // might delete
-
-			public static readonly ColorBlock DefaultColorBlock = new(){
-				NormalColor		= new(.27f, .27f, .27f),
-				HoverColor		= new(.39f, .39f, .39f),
-				PressedColor	= new(.45f, .45f, .45f),
-				DisabledColor	= new(.16f, .16f, .16f),
-				ToggledColor	= new(.33f, .33f, .33f),
-				FadeDuration	= .01f
-			};
-
-			public static readonly ColorBlock WhiteColorBlock = new(){
-				NormalColor		= new(1f, 1f, 1f),
-				HoverColor		= new(0.88f, 0.88f, 0.88f),
-				PressedColor	= new(0.82f, 0.82f, 0.82f),
-				DisabledColor	= new(0.70f, 0.70f, 0.70f),
-				ToggledColor	= new(0.94f, 0.94f, 0.94f),
-				FadeDuration	= .01f
-			};
 		}
 
 		public static class Behaviour {
@@ -70,6 +52,24 @@ public static partial class Config {
 				disabledColor = other.DisabledColor,
 				colorMultiplier = 1,
 				fadeDuration = other.FadeDuration
+			};
+
+			public static readonly ColorBlock DefaultBlock = new(){
+				NormalColor		= new(.27f, .27f, .27f),
+				HoverColor		= new(.39f, .39f, .39f),
+				PressedColor	= new(.45f, .45f, .45f),
+				DisabledColor	= new(.16f, .16f, .16f),
+				ToggledColor	= new(.33f, .33f, .33f),
+				FadeDuration	= .01f
+			};
+
+			public static readonly ColorBlock WhiteBlock = new(){
+				NormalColor		= new(1f, 1f, 1f),
+				HoverColor		= new(0.88f, 0.88f, 0.88f),
+				PressedColor	= new(0.82f, 0.82f, 0.82f),
+				DisabledColor	= new(0.70f, 0.70f, 0.70f),
+				ToggledColor	= new(0.94f, 0.94f, 0.94f),
+				FadeDuration	= .01f
 			};
 		}
 

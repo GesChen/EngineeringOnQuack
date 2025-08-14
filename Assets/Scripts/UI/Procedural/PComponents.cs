@@ -84,7 +84,7 @@ public class PComponents {
 
 	public class Button : Component {
 		public bool Enabled = true;
-		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock Colors = Config.UI.ColorBlock.DefaultBlock;
 		public event Action OnClick;
 
 		public Button(
@@ -108,10 +108,10 @@ public class PComponents {
 			OnClick = onClick;
 			Enabled = enabled;
 			Colors = new() {
-				NormalColor		= normalColor		?? Config.UI.Visual.DefaultColorBlock.NormalColor,
-				HoverColor		= highlightedColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
-				PressedColor	= pressedColor		?? Config.UI.Visual.DefaultColorBlock.PressedColor,
-				DisabledColor	= disabledColor		?? Config.UI.Visual.DefaultColorBlock.DisabledColor
+				NormalColor		= normalColor		?? Config.UI.ColorBlock.DefaultBlock.NormalColor,
+				HoverColor		= highlightedColor	?? Config.UI.ColorBlock.DefaultBlock.HoverColor,
+				PressedColor	= pressedColor		?? Config.UI.ColorBlock.DefaultBlock.PressedColor,
+				DisabledColor	= disabledColor		?? Config.UI.ColorBlock.DefaultBlock.DisabledColor
 			};
 		}
 
@@ -191,7 +191,7 @@ public class PComponents {
 	}
 
 	public class InputField : Component {
-		public Config.UI.ColorBlock Colors		= Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock Colors		= Config.UI.ColorBlock.DefaultBlock;
 
 		public string			PlaceholderText	= Config.UI.InputField.PlaceholderDefaultText;
 
@@ -239,7 +239,7 @@ public class PComponents {
 			FontSize			= fontSize			?? Config.UI.Visual.FontSize;
 			Alignment			= alignment			?? TextAlignmentOptions.TopLeft;
 
-			Colors				= colors			?? Config.UI.Visual.DefaultColorBlock;
+			Colors				= colors			?? Config.UI.ColorBlock.DefaultBlock;
 
 			TextColor			= textColor			?? Config.UI.Visual.TextColor;
 			PlaceholderColor	= placeholderColor	?? Config.UI.Visual.PlaceholderColor;
@@ -503,7 +503,7 @@ public class PComponents {
 	}
 
 	public class HoverTarget : Component {
-		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock Colors = Config.UI.ColorBlock.DefaultBlock;
 
 		public HoverTarget(
 			Color? normalColor	= null, 
@@ -511,9 +511,9 @@ public class PComponents {
 			float? fadeDuration	= null) {
 			
 			Colors = new() { 
-				NormalColor		= normalColor	?? Config.UI.Visual.DefaultColorBlock.NormalColor,
-				HoverColor		= hoverColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
-				FadeDuration	= fadeDuration	?? Config.UI.Visual.DefaultColorBlock.FadeDuration,
+				NormalColor		= normalColor	?? Config.UI.ColorBlock.DefaultBlock.NormalColor,
+				HoverColor		= hoverColor	?? Config.UI.ColorBlock.DefaultBlock.HoverColor,
+				FadeDuration	= fadeDuration	?? Config.UI.ColorBlock.DefaultBlock.FadeDuration,
 			};
 		}
 
@@ -655,7 +655,7 @@ public class PComponents {
 		public Color Background = Config.UI.Visual.BackgroundColor;
 		public float BarSize = 20;
 		public Color BarBackgroundColor = Config.UI.Visual.SecondaryBackgroundColor;
-		public Config.UI.ColorBlock BarHandleColorBlock = Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock BarHandleColorBlock = Config.UI.ColorBlock.DefaultBlock;
 
 		public ScrollView(
 			Color? background = null,
