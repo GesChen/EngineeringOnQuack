@@ -246,7 +246,9 @@ public static class SaveLoadHelper {
 
 			json = CompressionUtil.DecodeGzipBytes(bytes);
 		}
-		
+
+		BuildingManager.Instance.ResetParts();
+
 		Assembly assembly = JsonConvert.DeserializeObject<Assembly>(json);
 
 		foreach (PartInfo part in assembly.Parts) {
@@ -259,6 +261,8 @@ public static class SaveLoadHelper {
 			newPart.ID = part.id;
 			newPart.color = part.color;
 
+			BuildingManager.Instance.Parts.Add(newPart);
+
 			var composition = Compositions.All.FirstOrDefault(c => c.ID == newPart.ID);
 			if (composition != null) {
 				newPart.composition = composition;
@@ -267,20 +271,23 @@ public static class SaveLoadHelper {
 				// somehow tell the player that there was an invalid composition
 			}
 		}
+
+		BuildingManager.Instance.CurrentAssemblyName = name;
 	}
 
 	static string Serialize(string name) {
 		Assembly assembly = new(){ Name = name };
 
-		List<Part> baseParts = BuildingManager.Instance.Parts;
+		List<Part> workingParts = BuildingManager.Instance.Parts;
+		Vector3 localOrigin = BuildingManager.Instance.mainPartsContainer.transform.position;
 
 		List<PartInfo> parts = new();
-		for (int i = 0; i < baseParts.Count; i++) {
-			Part part = baseParts[i];
+		for (int i = 0; i < workingParts.Count; i++) {
+			Part part = workingParts[i];
 			parts.Add(new() {
 				basePartID = part.basePart.ID,
 				id = part.ID,
-				position = part.transform.localPosition,
+				position = part.transform.position - localOrigin,
 				rotation = part.transform.rotation,
 				scale = part.transform.localScale,
 

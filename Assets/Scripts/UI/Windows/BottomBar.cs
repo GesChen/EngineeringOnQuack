@@ -15,8 +15,6 @@ public static class BottomBar {
 	public static void ClearTransform() { OnTransformOpened = null; }
 	public static void ClearMaterial() { OnMaterialOpened = null; }
 
-	
-
 	static readonly W FileMenu = new(
 		"File", 200, new(){
 			new W.Button(SaveLoadMenus.Save,	"Save"), // todo: descriptions? and icons

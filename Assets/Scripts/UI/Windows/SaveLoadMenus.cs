@@ -83,6 +83,7 @@ public class SaveLoadMenus {
 		},
 		showTitle: true,
 		isFlyout: false,
+		closable: true,
 		extraSpacing: 5
 		);
 
@@ -139,13 +140,18 @@ public class SaveLoadMenus {
 	};
 
 	static void Cancel() {
-
+		LoadOptionsMenu.RealisedWindow.Hide();
 	}
 
+	public static void ClearOnLoad() { OnLoad = null; }
+	public static event Action OnLoad;
 	static void Load() {
+		OnLoad?.Invoke();
 
+		LoadOptionsMenu.RealisedWindow.Hide();
 	}
 
+	// really should be using a horizontal layout with layoutelements to set the sizes of each bro
 	// i dont know what to call this its for the left and right positions
 	// idfk bruh
 	/* | -- | -- | -- |
@@ -181,14 +187,15 @@ public class SaveLoadMenus {
 		LeftAndRights(Spacings);
 	static readonly float FileEntryHeight = 40;
 
-	public static event Action<string> OnLoadEntryChosen;
+	public static void ClearLoadEntryChosen() { OnLoadEntryChosen = null; }
+	public static event Action<int> OnLoadEntryChosen;
 
 	// add other details later like part count or whatever
 	// like idk if i want filesize but i gotta add more than just name for now
-	public static WindowItem FileEntry(string name, int parts) =>
+	public static WindowItem FileEntry(int id, string name, int parts) =>
 		WindowItem.NewButton(
 			$"File Entry \"{name}\"",
-			new PComponents.Button(() => OnLoadEntryChosen?.Invoke(name)),
+			new PComponents.Button(() => OnLoadEntryChosen?.Invoke(id)),
 			WindowItem.LayoutConfig.LayoutElement(
 				FileEntryHeight * Vector2.one,
 				new(Config.UI.Menu.ItemPadding)
