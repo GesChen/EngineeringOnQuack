@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -70,17 +71,27 @@ public static class SaveLoadHelper {
 
 		}
 
-		public List<HeaderItem> Items;
+		public HeaderHelper(params HeaderItem[] items) {
+			Items = items;
+		}
+
+		public HeaderItem[] Items;
 		
 		public int TotalBytes => Items.Sum(x => x.Bytes);
 		public int TotalChars => Items.Sum(x => x.Chars);
 
 		public void AddStringHeader(ref string original, params object[] data) {
+			if (data.Length != Items.Length)
+				throw new ArgumentException("Data params must be the same length as items definition");
+			
 			string header = "";
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem item = Items[i];
 				object o = data[i];
+			
+				if (o.GetType() != item.Type)
+					throw new InvalidDataException($"Object at index {i} of header data must be a {item.Type.Name}, got {o.GetType().Name}");
 
 				try {
 					header += item.ToCharsFunction(o);
@@ -95,9 +106,9 @@ public static class SaveLoadHelper {
 		public void GetStringHeader(ref string chars, out object[] data) {
 			string header = chars[..TotalChars];
 
-			data = new object[Items.Count];
+			data = new object[Items.Length];
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem h = Items[i];
 
 				int count = h.Chars;
@@ -116,12 +127,18 @@ public static class SaveLoadHelper {
 		}
 
 		public void AddByteHeader(ref byte[] original, params object[] data) {
+			if (data.Length != Items.Length)
+				throw new ArgumentException("Data params must be the same length as items definition");
+
 			List<byte> header = new(); // list of bytes feels cursed but 
 									   // im too lazy to use a byte array :P
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem item = Items[i];
 				object o = data[i];
+
+				if (o.GetType() != item.Type)
+					throw new InvalidDataException($"Object at index {i} of header data must be a {item.Type.Name}, got {o.GetType().Name}");
 
 				try {
 					header.AddRange(item.ToBytesFunction(o));
@@ -136,9 +153,9 @@ public static class SaveLoadHelper {
 		public void GetByteHeader(ref byte[] bytes, out object[] data) {
 			byte[] header = bytes[..TotalBytes];
 
-			data = new object[Items.Count];
+			data = new object[Items.Length];
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem h = Items[i];
 
 				int count = h.Bytes;
@@ -152,13 +169,52 @@ public static class SaveLoadHelper {
 
 			bytes = bytes[TotalBytes..];
 		}
+	
+		public static void AddVersionHeader(ref byte[] original, in bool isText, in ushort version) {
+			byte[] vh = new byte[2];
+
+			// set the version bits first
+
+			// keep only lower 14 bits
+			ushort value = version;
+			value &= 0x3FFF; // 0011_1111_1111_1111
+
+			// byte 0: bits 13..8 (shift down 8) into lower 6 bits
+			vh[0] = (byte)((value >> 8) & 0x3F);
+
+			// byte 1: bits 7..0
+			vh[1] = (byte)(value & 0xFF);
+			
+			// then set the type
+			vh[0] |= 1 << 6; // always set the 1 bit to prevent a 0 byte
+
+			if (isText) vh[0] |= 1 << 7;
+
+			original = vh.Concat(original).ToArray(); // linq is just less buggy
+		}
+
+		public static void GetVersionHeader(ref byte[] original, out bool isText, out ushort version) {
+			ushort high = (ushort)(original[0] & 0x3F); // mask 6 bits
+			ushort low  = original[1];
+
+			ushort value = (ushort)((high << 8) | low);
+			version = value;
+
+			isText = (original[0] & (1 << 7)) != 0; // check first bit
+
+			original = original.Skip(2).ToArray(); // same reason its not that laggy
+		}
 	}
 
-	public static HeaderHelper Header = new(){
-		Items = new(){
-			HeaderHelper.HeaderItem.Int // parts
-		}
+	/// <summary>
+	/// Dict containing all of the header definitions based on version
+	/// </summary>
+	public static Dictionary<ushort, HeaderHelper> HeaderVersions = new(){
+		{ 1, new(
+			HeaderHelper.HeaderItem.Int // parts count
+		)}
 	};
+	static HeaderHelper Header => HeaderVersions[Config.Building.Saving.VERSION];
 
 	public static void SaveCurrentBuild() {
 		var assem = BuildingManager.Instance.Assembly;
@@ -169,6 +225,8 @@ public static class SaveLoadHelper {
 		string name = assem.Name;
 		int parts = assem.Parts.Count;
 
+		byte[] bytes;
+
 		if (Config.Building.Saving.SaveAsText) {
 			serializedObject = CompressionUtil.EncodeGzipBase64(serializedObject);
 
@@ -176,16 +234,18 @@ public static class SaveLoadHelper {
 				parts
 				);
 
-			File.WriteAllText(Pathify(name), serializedObject);
+			bytes = Encoding.UTF8.GetBytes(serializedObject);
 		} else {
-			byte[] bytes = CompressionUtil.EncodeGzipBytes(serializedObject);
+			bytes = CompressionUtil.EncodeGzipBytes(serializedObject);
 
 			Header.AddByteHeader(ref bytes,
 				parts
 				);
-
-			File.WriteAllBytes(Pathify(name), bytes);
 		}
+
+		HeaderHelper.AddVersionHeader(ref bytes, Config.Building.Saving.SaveAsText, Config.Building.Saving.VERSION);
+
+		File.WriteAllBytes(Pathify(name), bytes);
 	}
 
 	public static void LoadFromFile(string name) {
@@ -194,18 +254,20 @@ public static class SaveLoadHelper {
 		if (!File.Exists(path))
 			throw new($"Couldn't load {name} as it doesn't exist in the assemblies folder!");
 
-		string json;
-		if (Config.Building.Saving.SaveAsText) {
-			json = File.ReadAllText(path);
+		byte[] bytes = File.ReadAllBytes(path);
+		HeaderHelper.GetVersionHeader(ref bytes, out bool isText, out ushort version);
+		var versionCorrectHeader = HeaderVersions[version];
 
-			Header.GetStringHeader(ref json, out _);
+		string json;
+		if (isText) {
+			json = Encoding.UTF8.GetString(bytes);
+
+			versionCorrectHeader.GetStringHeader(ref json, out _);
 			// do something with this metadata? idk. 
 
 			json = CompressionUtil.DecodeGzippedBase64(json);
 		} else {
-			byte[] bytes = File.ReadAllBytes(path);
-
-			Header.GetByteHeader(ref bytes, out _);
+			versionCorrectHeader.GetByteHeader(ref bytes, out _);
 
 			json = CompressionUtil.DecodeGzipBytes(bytes);
 		}

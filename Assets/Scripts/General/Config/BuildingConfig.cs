@@ -42,7 +42,7 @@ public static partial class Config {
 			HF.LoadResource(ref m_ColorIcon, Locations.IconsFolder + "Composition/color1");
 
 		public static class Saving {
-			public static readonly string VERSION = "0";
+			public static readonly ushort VERSION = 1;
 
 			public static readonly bool SaveAsText = true;
 			public static readonly string SaveExtension = ".assembly";
