@@ -2934,7 +2934,6 @@ GameObject:
   m_Component:
   - component: {fileID: 825630084}
   - component: {fileID: 825630085}
-  - component: {fileID: 825630086}
   - component: {fileID: 825630088}
   - component: {fileID: 825630089}
   m_Layer: 0
@@ -2979,19 +2978,6 @@ MonoBehaviour:
   TransformTools: {fileID: 578040684}
   SimulationContainer: {fileID: 1062049965}
   CurrentAssemblyName: 
---- !u!114 &825630086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 825630083}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d684b9134a6785c449b8fd8b505887e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bm: {fileID: 825630085}
 --- !u!114 &825630088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3013,7 +2999,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 825630083}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d78907f48652fa44cb23ee0d5b06080b, type: 3}
+  m_Script: {fileID: 11500000, guid: 355ed34b74817c447810960e25350b90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &828502815
