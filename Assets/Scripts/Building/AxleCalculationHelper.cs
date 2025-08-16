@@ -6,7 +6,7 @@ using UnityEngine;
 
 public static class AxleCalculationHelper {
 	public static bool AxleIntersectionTest(
-		AssemblerRewritten.SubAssembly subassembly, 
+		Assembler.SubAssembly subassembly, 
 		Vector3 axleEndA,
 		Vector3 axleEndB,
 		out Vector3 jointPos) {

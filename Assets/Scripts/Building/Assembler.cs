@@ -1,342 +1,315 @@
-//#define DEBUGMODE
-
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Geometry;
 using UnityEngine;
 
 public class Assembler : Singleton<Assembler> {
-	public BuildingManager bm;
+	// rewritten assembler with basically the same methods as before but
+	// just better because the old code sucks so much wtf
+	List<Part> Parts;
 
-	struct Connection {
-		public Transform objA;
-		public Transform objB;
-		public Part partA;
-		public Part partB;
+	public struct Connection {
+		public int A;
+		public int B;
 	}
-	struct PrecomputeMeshData {
-		public Vector3[] verts;
-		public int[] tris;
-		public Vector3 min;
-		public Vector3 max;
+	public struct SubAssembly {
+		public int ID;
+		public List<int> Parts;
 	}
-
-	struct Pair {
-		public PrecomputeMeshData DataA;
-		public PrecomputeMeshData DataB;
-		public Part A;
-		public Part B;
-		public int index;
+	public struct Assembled {
+		public Transform Parent;
+		public List<(int pi, Transform Part)> Parts;
+		public Rigidbody RB;
+		public float Mass;
+		public SubAssembly Source;
 	}
-
-	public struct Subassembly {
-		public List<Part> parts;
-	}
-	[System.Serializable]
-	public struct AssembledSubassembly {
-		public Transform parentContainer;
-		public List<Transform> parts;
-		public Rigidbody rb;
+	public struct AxleConnection {
+		public int AxleAssembly;
+		public int ConnectedAssemblyIndex;
+		public Vector3 JointPos;
+		public Vector3 axis;
 	}
 
-	public void Assemble(out List<Subassembly> computedSubassemblies) {
-		bm.ReturnAllPartsToMain();
-		List<Subassembly> subassemblies = ComputeAssemblies(bm);
-		List<AssembledSubassembly> assembledSubs = CopyToSimulation(subassemblies);
-		ReleaseRigidbodies(assembledSubs);
+	public void Assemble(out List<Assembled> assembleds) {
+		Parts = BuildingManager.Instance.Parts;
 
-		//SimulationManager.Instance.assembledSubassemblies = assembledSubs;
+		// lmao WTF
+		//SetupPhysics(CopyToSimulation(ConnectionsToSubAssemblies(FindAllConnections())));
 
-		computedSubassemblies = subassemblies;
+		var connections = FindAllConnections();
+		var subassemblies = ConnectionsToSubAssemblies(connections);
+		var assembled = CopyToSimulation(subassemblies);
+		SetupPhysics(assembled);
+
+		assembleds = assembled;
 	}
 
-	public List<Subassembly> ComputeAssemblies(BuildingManager bm) {
-#if DEBUGMODE
-		Debug.Log("assembling");
-#endif
-		List<Connection> allConnections = FindConnections(bm);
-		List<Subassembly> assemblies = ConnectionsToAssemblies(allConnections, bm.Parts);
-
-#if DEBUGMODE
-		foreach (Subassembly a in assemblies)
-		{
-			Debug.Log("assembly: ");
-			foreach (Part p in a.parts)
-			{
-				Debug.Log(p);
-			}
-		}
-#endif
-
-		return assemblies;
+	// wrote this way if perhaps in the future cables or other
+	// needs special checking, been abstracted so can modify this
+	// method to account for that
+	bool PartIsAxle(Part part) {
+		return part.GetComponent<Axle>() != null; // also this check will be changed later 
 	}
 
-	List<Connection> FindConnections(BuildingManager bm) {
-		if (bm == null) return new();
-
-		int parts = bm.Parts.Count;
-		int numToTest = parts * (parts - 1) / 2;
+	public List<Connection> FindAllConnections() {
 		List<Connection> connections = new();
-		Pair[] pairsTotest = new Pair[numToTest];
 
-		// precompute tri and vert lists
-		// while skipping axles
-		PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
-		for (int i = 0; i < bm.Parts.Count; i++) {
-			Part part = bm.Parts[i];
-
-			Vector3[] verts = PartUtil.WorldSpaceVertsOfPart(part);
-			int[] tris = part.basePart.AllTris;
-
-			Vector3 min = Vector3.positiveInfinity;
-			Vector3 max = Vector3.negativeInfinity;
-			foreach (Vector3 v in verts) {
-				min = Vector3.Min(min, v);
-				max = Vector3.Max(max, v);
-			}
-
-			precomputed[i] = new() {
-				tris = tris,
-				verts = verts,
-				min = min,
-				max = max
-			};
-		}
-
-		// create tests
-		int total = 0;
-		for (int i = 0; i < parts; i++) {
-			for (int j = i + 1; j < parts; j++) {
-				pairsTotest[total] = new() {
-					DataA = precomputed[i],
-					DataB = precomputed[j],
-					A = bm.Parts[i],
-					B = bm.Parts[j],
-					index = total
-				};
-				total++;
+		for (int a = 0; a < Parts.Count; a++) {
+			for (int b = a + 1; b < Parts.Count; b++) {
+				if (TestTwoPartConnection(
+					Parts[a],
+					Parts[b]
+					))
+					connections.Add(
+						new() {
+							A = a,
+							B = b,
+						});
 			}
 		}
 
-		//Parallel.ForEach(pairsTotest, pair =>
-		foreach (Pair pair in pairsTotest) {
-			if (Intersections.MeshesIntersectRawMesh(
-				pair.DataA.verts, pair.DataB.verts, pair.DataA.tris, pair.DataB.tris)) {
-				connections.Add(new() {
-					objA = pair.A.transform,
-					objB = pair.B.transform,
-					partA = pair.A,
-					partB = pair.B,
-				});
-			}
-		}
 		return connections;
 	}
 
-	List<Subassembly> ConnectionsToAssemblies(List<Connection> connections, List<Part> allParts) {
-		Dictionary<Part, bool> partsInAssemblies = allParts.ToDictionary(part => part, value => false);
-		List<Subassembly> assemblies = new();
+	// method does extra check for axles in the following manner: ---------
+	// if both parts are normal, just check for intersect
+	// if one is axle, perform normal axle check
+	// if both are axles, do intersection check i guess? like normal both parts
+	bool TestTwoPartConnection(Part A, Part B) {
+		bool aIsAxle = PartIsAxle(A);
+		bool bIsAxle = PartIsAxle(B);
 
-		foreach (Connection connection in connections) {
-			Part A = connection.partA;
-			Part B = connection.partB;
+		if (aIsAxle == bIsAxle) { // both are either part or axle
+								  // so do normal meshes
+
+			Vector3[] AWSVerts = PartUtil.WorldSpaceVertsOfPart(A);
+			Vector3[] BWSVerts = PartUtil.WorldSpaceVertsOfPart(B);
+			int[] Atris = A.basePart.AllTris;
+			int[] Btris = B.basePart.AllTris;
+
+			return Intersections.MeshesIntersectRawMesh(AWSVerts, BWSVerts, Atris, Btris);
+
+		} else { // one is axle 
+			Part axlePart = aIsAxle ? A : B;
+			Part normPart = aIsAxle ? B : A;
+
+			// only connect if either end of axle is inside the normal
+			Axle axle = axlePart.GetComponent<Axle>();
+			Triangle[] partTris = PartUtil.PartToWSTriList(normPart);
+
+			Vector3 pointA = axle.endA.position;
+			Vector3 pointB = axle.endB.position;
+
+			if (Intersections.PointInMesh(pointA, partTris)) return true;
+			if (Intersections.PointInMesh(pointB, partTris)) return true;
+			return false;
+		}
+	}
+
+	public List<SubAssembly> ConnectionsToSubAssemblies(List<Connection> connections) {
+		// i COULD use the old method
+		// i was gonna rewrite this but actually fuck nah im lazy
+		// we porting bruh fts
+
+		int subI = 0;
+
+		Dictionary<int, bool> partsInAssemblies = 
+			Enumerable.Range(0, Parts.Count).ToDictionary(part => part, value => false);
+		List<SubAssembly> assemblies = new();
+
+		foreach (var connection in connections) {
+			int A = connection.A;
+			int B = connection.B;
 
 			partsInAssemblies[A] = true;
 			partsInAssemblies[B] = true;
 
 			// if no assembly contains part a or b
-			bool containsA = assemblies.Any(a => a.parts.Contains(A));
-			bool containsB = assemblies.Any(a => a.parts.Contains(B));
+			bool containsA = assemblies.Any(a => a.Parts.Contains(A));
+			bool containsB = assemblies.Any(a => a.Parts.Contains(B));
 			if (!(containsA || containsB)) {
-				Subassembly newAssembly = new() { parts = new() { A, B } };
+				SubAssembly newAssembly = new() {
+					Parts = new() { A, B },
+					ID = subI++
+				};
+
 				assemblies.Add(newAssembly);
 			} else {
 				int assemblyIndex = -1;
-				if (containsA) assemblyIndex = assemblies.FindIndex(a => a.parts.Contains(A));
-				if (containsB) assemblyIndex = assemblies.FindIndex(a => a.parts.Contains(B)); // could be optimized but im lazy + it looks better
+				if (containsA) assemblyIndex = assemblies.FindIndex(a => a.Parts.Contains(A));
+				if (containsB) assemblyIndex = assemblies.FindIndex(a => a.Parts.Contains(B)); // could be optimized but im lazy + it looks better
 
-				if (!containsA) assemblies[assemblyIndex].parts.Add(A);
-				if (!containsB) assemblies[assemblyIndex].parts.Add(B);
+				if (!containsA) assemblies[assemblyIndex].Parts.Add(A);
+				if (!containsB) assemblies[assemblyIndex].Parts.Add(B);
 			}
 		}
 
-		List<Part> partsLeft = allParts.Where(part => partsInAssemblies[part] == false).ToList();
-		foreach (Part part in partsLeft) {
-			Subassembly sub = new() { parts = new() { part } };
+		List<int> partsLeft = partsInAssemblies.Where(kvp => kvp.Value == false).Select(kvp => kvp.Key).ToList();
+		foreach (int part in partsLeft) {
+			SubAssembly sub = new() {
+				Parts = new() { part },
+				ID = subI++
+			};
 
 			assemblies.Add(sub); // solo parts become own assembly
 		}
 
+		// number subassemblies
+
 		return assemblies;
 	}
 
-	public List<AssembledSubassembly> CopyToSimulation(List<Subassembly> subs) {
-		List<AssembledSubassembly> assembleds = new();
-		foreach (Subassembly sub in subs) {
+	List<Assembled> CopyToSimulation(List<SubAssembly> subassemblies) {
+		// also a straight port
 
-			Transform subParent = new GameObject("subassembly").transform;
-			subParent.parent = bm.SimulationContainer;
-			
+		List<Assembled> assembleds = new();
+		foreach (SubAssembly sub in subassemblies) {
+
+			Transform subParent = new GameObject($"SubAssembly ({sub.Parts.Count})").transform;
+			subParent.parent = BuildingManager.Instance.SimulationContainer;
+
 			List<Transform> parts = new();
 			Vector3 accumPos = Vector3.zero;
-			
-			foreach (Part part in sub.parts) {
+
+			foreach (int partIndex in sub.Parts) {
+				Part part = Parts[partIndex];
+
 				Transform newObject = Instantiate(part.gameObject).transform;
 
 				newObject.gameObject.SetActive(true);
 				var partComp = newObject.GetComponent<Part>();
 				partComp.enabled = false;
 
-				bm.Parts.Remove(partComp);
+				BuildingManager.Instance.Parts.Remove(partComp);
 
 				parts.Add(newObject);
 
 				accumPos += newObject.transform.position;
 			}
-			subParent.position = accumPos / sub.parts.Count;
+			subParent.position = accumPos / sub.Parts.Count;
 			foreach (Transform part in parts)
 				part.parent = subParent;
 
 			assembleds.Add(new() {
-				parentContainer = subParent,
-				parts = parts
+				Parent = subParent,
+				Parts = sub.Parts.Zip(parts, (pi, part) => (pi, part)).ToList(),
+				Source = sub
 			});
 		}
 
 		return assembleds;
 	}
 
-	public void ReleaseRigidbodies(List<AssembledSubassembly> assembledSubs) {
-		for (int i = 0; i < assembledSubs.Count; i++) {
-			AssembledSubassembly sub = assembledSubs[i];
+	void SetupPhysics(List<Assembled> assembleds) {
+		AddRBs(assembleds);
 
-			Rigidbody rb = sub.parentContainer.gameObject.AddComponent<Rigidbody>();
-			rb.velocity = Vector3.zero;
-			sub.rb = rb;
+		CalculateAssemblyMasses(assembleds);
+
+		var joints = CalculateAxleJoints(assembleds);
+
+		ApplyAxleConnections(joints, assembleds);
+	}
+
+	void CalculateAssemblyMasses(List<Assembled> assembleds) {
+		for (int i = 0; i < assembleds.Count; i++) {
+			Assembled assembled = assembleds[i];
+
+			assembled.Mass = SubassemblyTotalMass(assembleds[i].Source);
+
+			assembleds[i] = assembled;
 		}
 	}
 
-	public void ComputeAxles(List<AssembledSubassembly> assembledSubs) {
-		
+	void AddRBs(List<Assembled> assembleds) {
+		for (int i = 0; i < assembleds.Count; i++) {
+			Assembled assembled = assembleds[i];
+
+			var rb = assembled.Parent.gameObject.AddComponent<Rigidbody>();
+			assembled.RB = rb;
+			rb.mass = assembled.Mass;
+			
+			assembleds[i] = assembled;
+		}
 	}
-}
-/* old inefficient attempts, might delete
-IEnumerator AssembleCoroutine(BuildingManager bm)
-{
-	UnityEngine.Debug.Log("coroutine assembling");
-	if (bm == null) yield break;
 
-	List<Connection> connections = new();
+	float SubassemblyTotalMass(SubAssembly asm) {
+		float total = 0;
+		foreach (var pi in asm.Parts) {
+			var part = Parts[pi];
 
-	int parts = bm.Parts.Count;
-	int toTest = bm.Parts.Count * (bm.Parts.Count - 1) / 2;
-	int tested = 0;
+			total += CalculatePartMass(part);
+		}
+		return total;
+	}
 
-	float start = Time.time;
-	for (int i = 0; i < parts; i++)
-	{
-		for (int j = i + 1; j < parts; j++)
-		{
-			Part partA = bm.Parts[i];
-			Part partB = bm.Parts[j];
+	float CalculatePartMass(Part part) {
+		float total = 0;
+		// iterate through tris
+		for (int i = 0; i < part.basePart.AllTriPositions.Length; i += 3) {
+			Vector3 p1 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 0]);
+			Vector3 p2 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 1]);
+			Vector3 p3 = part.transform.TransformPoint(part.basePart.AllTriPositions[i + 2]);
 
-			if (partA == partB) continue;
+			total += Vector3.Dot(p1, Vector3.Cross(p2, p3)) / 6f;
+		}
 
-			bool anyConnection = connections.Any(c =>
-				(c.objA == partA.transform && c.objB == partB.transform) ||
-				(c.objA == partB.transform && c.objB == partA.transform));
-			if (anyConnection) continue;
+		return total;
+	}
 
-			if (partA.transform.position == partB.transform.position || // extremely strange edge case that causes 700 ms spikes
-				Intersections.MeshesIntersect(partA.transform, partB.transform))
-				connections.Add(new() { objA = partA.transform, objB = partB.transform });
+	public List<AxleConnection> CalculateAxleJoints(List<Assembled> assembleds) {
+		List<int> axleParts = new();
+		foreach (var assembly in assembleds)
+			axleParts.AddRange(
+				assembly.Source.Parts.Where(pi => PartIsAxle(Parts[pi])));
 
-			tested++;
-			//UnityEngine.Debug.Log($"Progress: {(float)tested / toTest * 100}% dt {Time.deltaTime} fps {1/Time.deltaTime}");
+		List<AxleConnection> connections = new();
 
-			if (1 / Time.deltaTime < Config.FpsLimit - 10) // arbitrary slowdown limit
-			{
-				//UnityEngine.Debug.Log("too slow, waiting a frame");
-				yield return null;
+		foreach (int api in axleParts) {
+			int assemblyofpart = assembleds
+				.First(a => a.Source.Parts.Contains(api)).Source.ID;
+
+			Axle axle = Parts[api].GetComponent<Axle>();
+
+			for (int connectionI = 0; connectionI < assembleds.Count; connectionI++) {
+				Assembled assembled = assembleds[connectionI];
+				var subAssembly = assembled.Source;
+
+				if (subAssembly.ID == assemblyofpart) continue; // dont check itself
+
+				if (AxleCalculationHelper.AxleIntersectionTest(
+					subAssembly,
+					axle.endA.position,
+					axle.endB.position,
+					out Vector3 jointPos
+					)) {
+					// add joint on axle connecting it to the sub's parent
+
+					connections.Add(new() {
+						AxleAssembly = assemblyofpart,
+						ConnectedAssemblyIndex = connectionI,
+						JointPos = jointPos,
+						axis = (axle.endB.position - axle.endA.position).normalized
+					});
+				}
 			}
 		}
-		yield return null;
+
+		return connections;
 	}
 
-	UnityEngine.Debug.Log($"coroutine took {Time.time - start} seconds");
+	void ApplyAxleConnections(List<AxleConnection> axleConnections, List<Assembled> assembleds) {
+		foreach (var ac in axleConnections) {
+			int assembly = ac.AxleAssembly;
+			var parentsub = assembleds[assembly].Parent;
+			var joint = parentsub.gameObject.AddComponent<HingeJoint>();
 
-	foreach (Connection connection in connections)
-	{
-		UnityEngine.Debug.Log($"connection between {connection.objA.name} and {connection.objB.name} ");
+			int connectedIndex = ac.ConnectedAssemblyIndex;
+			joint.connectedBody = assembleds[connectedIndex].RB;
 
+			joint.anchor = parentsub.InverseTransformPoint(ac.JointPos);
 
-	}
-}
-IEnumerator AssembleCoroutineParallel(BuildingManager bm)
-{
-	UnityEngine.Debug.Log("coroutine parallel assembling");
-	if (bm == null) yield break;
-	Stopwatch sw = Stopwatch.StartNew();
-
-	int parts = bm.Parts.Count;
-	int numToTest = parts * (parts - 1) / 2;
-	ConcurrentBag<Connection> connections = new();
-	Pair[] pairsTotest = new Pair[numToTest];
-
-	// precompute tri and vert lists
-	PrecomputeMeshData[] precomputed = new PrecomputeMeshData[bm.Parts.Count];
-	for (int i = 0; i < bm.Parts.Count; i++)
-	{
-		Transform obj = bm.Parts[i].transform;
-		Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
-		Vector3[] verts = mesh.vertices;
-		for (int v = 0; v < verts.Length; v++)
-			verts[v] = obj.TransformPoint(verts[v]);
-		int[] tris = mesh.triangles;
-
-		precomputed[i] = new() { tris = tris, verts = verts };
-	}
-
-	// create tests
-	int total = 0;
-	for (int i = 0; i < parts; i++)
-	{
-		Pair[] localLoopPairsToTest = new Pair[parts - i - 1];
-		int localLoopIndex = 0;
-		for (int j = i + 1; j < parts; j++)
-		{
-			localLoopPairsToTest[localLoopIndex] = new()
-			{
-				Averts = precomputed[i].verts,
-				Atris = precomputed[i].tris,
-				Bverts = precomputed[j].verts,
-				Btris = precomputed[j].tris,
-				A = bm.Parts[i].transform,
-				B = bm.Parts[j].transform,
-				index = total
-			};
-			total++;
-			localLoopIndex++;
+			joint.axis = ac.axis;
 		}
-
-		Parallel.ForEach(localLoopPairsToTest, pair =>
-		{
-			if (Intersections.MeshesIntersect(pair.Averts, pair.Bverts, pair.Atris, pair.Btris))
-			{
-				connections.Add(new() { objA = pair.A, objB = pair.B });
-			}
-		});
-		yield return null;
-	}
-
-	sw.Stop();
-	UnityEngine.Debug.Log($"coroutine parallel took {sw.ElapsedMilliseconds} ms");
-
-	foreach (Connection connection in connections)
-	{
-		UnityEngine.Debug.Log($"connection between {connection.objA.name} and {connection.objB.name} ");
-
-
 	}
 }
-}
-*/
