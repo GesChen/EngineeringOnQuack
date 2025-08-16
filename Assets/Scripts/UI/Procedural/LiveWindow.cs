@@ -1,11 +1,17 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityEngine;
 
+/// <remarks>
+/// Don't store references to LiveWindows themselves
+/// if they are not temporary as windowrealiser.updatewindow
+/// will destroy old references and you'll get null errors
+/// </remarks>
 public class LiveWindow : MonoBehaviour {
 	public List<WindowSizeNode> cornerNodes = new();
-	public Transform backgroundImage;
+	public Image backgroundImage;
 	public Transform contentsContainer;
 	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
@@ -107,7 +113,7 @@ public class LiveWindow : MonoBehaviour {
 	Vector2 dragStartPos;
 	bool goodToStartDragging = false;
 	void HandleDrag() {
-		bool hovered = UIHovers.CheckFirstIgnoringChildrenOfOther(backgroundImage, contentsContainer);
+		bool hovered = UIHovers.CheckFirstIgnoringChildrenOfOther(backgroundImage.transform, contentsContainer);
 		if (!hovered && !dragging) return;
 
 		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame) {
@@ -133,7 +139,7 @@ public class LiveWindow : MonoBehaviour {
 
 			// prevent going off the sides
 			FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
-			Vector2 canvasSize = manager.canvasRect.sizeDelta;
+			Vector2 canvasSize = manager.CanvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
 			float halfHeight = rt.sizeDelta.y / 2;

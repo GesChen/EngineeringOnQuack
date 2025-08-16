@@ -41,6 +41,25 @@ public static class HF {
 	public static Vector2 Multiply(this Vector2 a, Vector2 b) =>
 		new(a.x * b.x, a.y * b.y);
 
+	/// <summary>
+	/// Sets center of RT ignoring the pivot offsets
+	/// </summary>
+	public static void SetCenter(this RectTransform rt, Vector3 pos) {
+		// .5 .5 is ideal for 0 offset
+		// 1 1 is add .5w .5h
+		Vector3 offset = (new Vector2(.5f, .5f) - rt.pivot).Multiply(new Vector2(rt.sizeDelta.x, -rt.sizeDelta.y));
+		rt.position = pos + offset;
+	}
+
+	/// <summary>
+	/// Gets center of RT ignoring the pivot offsets
+	/// </summary>
+	public static Vector2 GetCenter(this RectTransform rt) {
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+		return (corners[0] + corners[2]) / 2;
+
+	}
 	#endregion
 
 	public static string GetPath(this Transform current) {
@@ -469,6 +488,9 @@ public static class HF {
 		return cacheField;
 	}
 
+	/// <summary>
+	/// Ensures a path exists, if not, attempts to create it
+	/// </summary>
 	public static string GuaranteePath(string path) {
 		if (!Directory.Exists(path)) {
 			try {
@@ -482,22 +504,11 @@ public static class HF {
 		return path;
 	}
 
-	/// <summary>
-	/// Sets center of RT ignoring the pivot offsets
-	/// </summary>
-	public static void SetCenter(this RectTransform rt, Vector3 pos) {
-		// .5 .5 is ideal for 0 offset
-		// 1 1 is add .5w .5h
-		Vector3 offset = (new Vector2(.5f, .5f) - rt.pivot).Multiply(new Vector2(rt.sizeDelta.x, -rt.sizeDelta.y));
-		rt.position = pos + offset;
+	// chatgpt
+	// Approximates average of past `n` values, knowing only the previous average and the current value.
+	public static float ApproxAvg(float prevAvg, float currentValue, int n) {
+		float alpha = 2.0f / (n + 1); // smoothing factor
+		return prevAvg + alpha * (currentValue - prevAvg);
 	}
 
-	/// <summary>
-	/// Gets center of RT ignoring the pivot offsets
-	/// </summary>
-	public static Vector2 GetCenter(this RectTransform rt) {
-		Vector3[] corners = new Vector3[4];
-		rt.GetWorldCorners(corners);
-		return (corners[0] + corners[2]) / 2;
-	}
 }

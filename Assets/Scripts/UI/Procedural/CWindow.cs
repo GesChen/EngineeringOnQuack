@@ -99,7 +99,7 @@ public class CWindow {
 		TimedEventInvoker.TimedEventCall action) {
 
 		CustomEvents ??= new();
-		CustomEvents.Add(new(action, timing));
+		CustomEvents.Add(new(timing, action));
 		return this;
 	}
 

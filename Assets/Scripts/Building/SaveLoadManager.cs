@@ -77,7 +77,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		currentlySelectedI = -1;
 
 		SaveLoadMenus.LoadOptionsLayout.SubItems = items;
-		WindowManager.Instance.realiser.UpdateWindow(SaveLoadMenus.LoadOptionsMenu);
+		WindowManager.Instance.Realiser.UpdateWindow(SaveLoadMenus.LoadOptionsMenu);
 	}
 
 	void LoadOptionSelect(int id) {

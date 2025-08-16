@@ -3374,10 +3374,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a390b803d92b5445a0625d2c1df5c77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  windows: []
-  realiser: {fileID: 916857751}
-  canvas: {fileID: 0}
-  canvasRect: {fileID: 0}
+  Realiser: {fileID: 916857751}
+  Canvas: {fileID: 0}
+  CanvasRect: {fileID: 0}
   anyDragging: 0
 --- !u!1 &958008122
 GameObject:

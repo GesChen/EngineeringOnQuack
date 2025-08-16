@@ -493,6 +493,10 @@ public class PComponents {
 	public class LayoutElement : Component {
 		public float SizeMultiplier;
 
+		public LayoutElement(float sizeMultiplier) {
+			SizeMultiplier = sizeMultiplier;
+		}
+
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
 			var element = newObj.AddComponent<UnityEngine.UI.LayoutElement>();
 			element.flexibleWidth = SizeMultiplier;

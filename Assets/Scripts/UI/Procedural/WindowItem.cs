@@ -22,7 +22,9 @@ public class WindowItem {
 		// min = left, up
 		// max = 1-right, 1-down
 		public FourSides Position; // 0 is fill
-
+		// think of each side as being pushed in by the amount
+		// of the position value so
+		// |       |<-.4--| is .4 right
 
 		// fixed values
 		public Vector2 SizeDelta;
@@ -119,7 +121,7 @@ public class WindowItem {
 		TimedEventInvoker.TimedEventCall action) {
 
 		CustomEvents ??= new();
-		CustomEvents.Add(new(action, timing));
+		CustomEvents.Add(new(timing, action));
 		return this;
 	}
 

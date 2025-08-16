@@ -206,7 +206,9 @@ public class AssemblerRewritten : Singleton<AssemblerRewritten> {
 
 		CalculateAssemblyMasses(assembleds);
 
-		CalculateAxleJoints(assembleds);
+		var joints = CalculateAxleJoints(assembleds);
+
+		ApplyAxleConnections(joints, assembleds);
 	}
 
 	void CalculateAssemblyMasses(List<Assembled> assembleds) {

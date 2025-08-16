@@ -7,22 +7,91 @@ using TMPro;
 using W = PMenu.Window;
 
 public static class BottomBar {
-	static readonly float size = 30;
+	static readonly float size = 50;
 
-	public static event Action OnTransformOpened;
-	public static event Action OnMaterialOpened;
+	static readonly float innerpadding = 10;
+
+	static readonly float splitspacing = 5;
+	static readonly float splittextspace = 10;
 
 	public static void ClearTransform() { OnTransformOpened = null; }
+	public static event Action OnTransformOpened;
 	public static void ClearMaterial() { OnMaterialOpened = null; }
+	public static event Action OnMaterialOpened;
+
+	public static void ClearAssemble() { OnAssemble = null; }
+	public static event Action OnAssemble;
+	public static void Assemble() { OnAssemble?.Invoke(); }
 
 	static readonly W FileMenu = new(
 		"File", 200, new(){
-			new W.Button(SaveLoadMenus.Save,	"Save"), // todo: descriptions? and icons
-			new W.Button(SaveLoadMenus.SaveAs,	"Save As"),
-			new W.Button(SaveLoadMenus.ShowLoadMenu, "Load"),
-			new W.Button(null, "Load Recent"),
+			new W.Button(null,	"New"),
+			new W.Button(null,	"Rename"),
+			new W.CustomItem(
+				WindowItem.NewEmpty( // use empty iinstead of layout for perf
+					PMenu.WindowItemLayout(200),
+					new() {
+						WindowItem.NewButton(
+							new PComponents.Button(SaveLoadMenus.Save),
+							WindowItem.LayoutConfig.DynamicLayout(
+								margin: new(0, splitspacing / 2, 0, 0),
+								padding: new(splittextspace, 0),
+								position: new FourSides(0,.5f,0,0))
+						).SetSubItems(
+							WindowItem.NewText(
+								new PComponents.Text(
+									"Save",
+									alignment: TextAlignmentOptions.Right),
+								WindowItem.LayoutConfig.FillLayout
+							)),
+						WindowItem.NewButton(
+							new PComponents.Button(SaveLoadMenus.SaveAs),
+							WindowItem.LayoutConfig.DynamicLayout(
+								margin: new(0, 0, 0, splitspacing / 2),
+								padding: new(splittextspace, 0),
+								position: new FourSides(0,0,0,.5f))
+						).SetSubItems(
+							WindowItem.NewText(
+								new PComponents.Text(
+									"As",
+									alignment: TextAlignmentOptions.Left),
+								WindowItem.LayoutConfig.FillLayout
+							))
+					}
+			)),
+			new W.CustomItem(
+				WindowItem.NewEmpty( // use empty iinstead of layout for perf
+					PMenu.WindowItemLayout(200),
+					new() {
+						WindowItem.NewButton(
+							new PComponents.Button(SaveLoadMenus.ShowLoadMenu),
+							WindowItem.LayoutConfig.DynamicLayout(
+								margin: new(0, splitspacing / 2, 0, 0),
+								padding: new(splittextspace, 0),
+								position: new FourSides(0,.5f,0,0))
+						).SetSubItems(
+							WindowItem.NewText(
+								new PComponents.Text(
+									"Load",
+									alignment: TextAlignmentOptions.Right),
+								WindowItem.LayoutConfig.FillLayout
+							)),
+						WindowItem.NewButton(
+							new PComponents.Button(null),
+							WindowItem.LayoutConfig.DynamicLayout(
+								margin: new(0, 0, 0, splitspacing / 2),
+								padding: new(splittextspace, 0),
+								position: new FourSides(0,0,0,.5f))
+						).SetSubItems(
+							WindowItem.NewText(
+								new PComponents.Text(
+									"Recent",
+									alignment: TextAlignmentOptions.Left),
+								WindowItem.LayoutConfig.FillLayout
+							))
+					}
+			)),
 			new W.Button(null, "Insert Assembly"), // ? might keep 
-			new W.Button(null, "Reset")
 		},
 		showTitle: false);
 
@@ -33,7 +102,7 @@ public static class BottomBar {
 		},
 		showTitle: false);
 
-	static WindowItem BarItem(string label, float width, CWindow target) =>
+	static WindowItem DynamicBarFlyout(string label, CWindow target, float width) =>
 		WindowItem.NewFlyoutTrigger(
 			label,
 			new PComponents.FlyoutTrigger(
@@ -42,26 +111,56 @@ public static class BottomBar {
 				openPrioritizingRight: true,
 				openPrioritizingUp: true
 				),
-			WindowItem.LayoutConfig.LayoutElement(new(width, size))
-			).SetSubItems(
+			WindowItem.LayoutConfig.LayoutElement(new(0, 0))
+		).SetSubItems(
+		WindowItem.NewText(
+			new PComponents.Text(
+				label,
+				alignment: TextAlignmentOptions.Center),
+			WindowItem.LayoutConfig.FillLayout
+			)
+		).AddComponents(
+			new PComponents.LayoutElement(width)
+		);
+	static WindowItem DynamicBarSpace(float width) =>
+		WindowItem.NewEmpty(
+			WindowItem.LayoutConfig.LayoutElement(new(0, 0))
+		).AddComponents(
+			new PComponents.LayoutElement(width)
+		);
+
+	static WindowItem DynamicBarText(string text, float width, float bgopacity) =>
+		WindowItem.NewImage(
+				new PComponents.Image(
+					Config.UI.Visual.BackgroundColor *
+						new Color(1, 1, 1, bgopacity)
+				),
+				WindowItem.LayoutConfig.LayoutElement(new (0, 0))
+		).SetSubItems(
 			WindowItem.NewText(
 				new PComponents.Text(
-					label,
-					alignment: TMPro.TextAlignmentOptions.Center),
+					text,
+					alignment: TextAlignmentOptions.Center),
 				WindowItem.LayoutConfig.FillLayout
-				)
-			);
-	/*.AddEvent(TimedEventInvoker.Timing.Start, // bold on hover
-		(source) => { // holy nesting
-			var hover = source.gameObject.GetComponent<HoverTarget>();
-			var text = source.gameObject.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-			hover.OnHoverStateChange += (state) => {
-				text.fontStyle = 
-					state 
-					? TMPro.FontStyles.Bold 
-					: TMPro.FontStyles.Normal;
-			};
-		});*/
+			)
+		).AddComponents(
+			new PComponents.LayoutElement(width)
+		);
+
+	static WindowItem DynamicBarButton(Action target, string label, float width) =>
+		WindowItem.NewButton(
+			new PComponents.Button(target),
+			WindowItem.LayoutConfig.LayoutElement(new(0, 0))
+		).SetSubItems(
+		WindowItem.NewText(
+			new PComponents.Text(
+				label,
+				alignment: TextAlignmentOptions.Center),
+			WindowItem.LayoutConfig.FillLayout
+			)
+		).AddComponents(
+			new PComponents.LayoutElement(width)
+		);
 
 	public static CWindow Bar = new(){
 		Name = "Bottom Bar",
@@ -81,14 +180,27 @@ public static class BottomBar {
 		Items = new WindowItem[] {
 			WindowItem.NewLayout(
 				PComponents.Layout.Horizontal.Fixed(
-					false,
 					true,
-					10 // todo
+					true,
+					10
 					),
-				WindowItem.LayoutConfig.FillLayout,
+				WindowItem.LayoutConfig.DynamicLayout(
+					padding: new(innerpadding)
+				),
 				new(){
-					BarItem("File", 100, FileMenu.CWindow),
-					BarItem("Tools", 100, ToolsMenu.CWindow),
+					DynamicBarFlyout("File", FileMenu.CWindow, 1),
+					DynamicBarFlyout("Tools", ToolsMenu.CWindow, 1),
+					DynamicBarSpace(2),
+					DynamicBarText("name", 5, .5f),
+					DynamicBarSpace(2),
+					DynamicBarButton(Assemble, "Assemble", 2)
+				})
+		},
+		CustomEvents = new() {
+			new TimedEventInvoker.TimedEvent(
+				TimedEventInvoker.Timing.Awake,
+				(_) => {
+Bar.RealisedWindow.backgroundImage.enabled = false;
 				})
 		}
 	};

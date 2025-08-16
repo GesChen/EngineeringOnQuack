@@ -20,7 +20,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		windowRT.sizeDelta			= window.Config.Size.Default;
 
 		// make background obj
-		var (bgRT, _) = MakeNewImageObj("Background", windowRT, window.Config.Color);
+		var (bgRT, bgIM) = MakeNewImageObj("Background", windowRT, window.Config.Color);
 		SetFull(bgRT);
 
 		// add outline
@@ -52,7 +52,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		// nevermind i just forgot to save when i changed to awake lmao
 
 		component.Config = window.Config;
-		component.backgroundImage = bgRT;
+		component.backgroundImage = bgIM;
 		component.cornerNodes = nodes;
 		component.contentsContainer = contentParent;
 

@@ -113,7 +113,7 @@ public class PMenu {
 			return this;
 		}
 
-		public class Item {
+		public abstract class Item {
 			public string Label;
 			
 			// repr for icons cuz there are multiple ways to represent an icon
@@ -168,6 +168,8 @@ public class PMenu {
 				RealItem = item;
 				RealItemMadeEvent?.Invoke(item);
 			}
+
+			public abstract WindowItem ConvertToItem(WindowItem[] subs, float width);
 		}
 
 		public class Text : Item {
@@ -178,6 +180,17 @@ public class PMenu {
 				string iconPath = null,
 				Sprite iconSprite = null)
 				: base(label, description, iconName, iconPath, iconSprite) { }
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return WindowItem.NewText(
+					Label,
+					new(
+						Label,
+						fontSize: M.FontSize
+						),
+					WindowItemLayout(width)
+				).SetSubItems(subs);
+			}
 		}
 
 		public class Button : Item {
@@ -198,6 +211,18 @@ public class PMenu {
 			public void ButtonClicked() {
 				OnButtonClick?.Invoke();
 			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return WindowItem.NewButton(
+					Label,
+					new(
+						ButtonClicked,
+						normalColor: Config.UI.Visual.BackgroundColor
+						),
+					WindowItemLayout(width)
+					).SetSubItems(subs)
+					.AddComponents(new PComponents.FlyoutHider());
+			}
 		}
 
 		public class InputField : Item {
@@ -214,6 +239,18 @@ public class PMenu {
 			}
 			public void InputFieldChanged(string newValue) {
 				OnValueChanged?.Invoke(newValue);
+			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return WindowItem.NewInputField(
+					Label,
+					new PComponents.InputField(
+						InputFieldChanged,
+						Label,
+						fontSize: M.FontSize),
+					WindowItemLayout(width)
+					).SetSubItems(subs);
+
 			}
 		}
 
@@ -247,6 +284,34 @@ public class PMenu {
 				SubWindow = subWindow;
 				AddIndicator = addIndicator;
 			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				WindowItem indicator = null;
+
+				if (AddIndicator) {
+					indicator = WindowItem.NewImage(
+						$"Flyout Indicator {DateTime.Now.Second}",
+						new(),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.AnchoredAt(UIPosition.MiddleRight),
+							new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
+						)
+					);
+				}
+
+				CWindow subWindow = SubWindow;
+				if (subWindow == null)
+					Debug.LogError($"Forgot to generate the subwindow of flyout {Label}");
+
+				var newitem = WindowItem.NewFlyoutTrigger(
+					Label,
+					new PComponents.FlyoutTrigger(subWindow, indicator),
+					WindowItemLayout(width),
+					new PComponents.HoverTarget(normalColor: Config.UI.Visual.BackgroundColor)
+					).SetSubItems(subs)
+					.AddComponents(new PComponents.FlyoutHider());
+				return newitem;
+			}
 		}
 
 		public class CustomItem : Item {
@@ -256,6 +321,10 @@ public class PMenu {
 			public CustomItem(WindowItem item)
 				: base("", null, null) {
 				this.item = item;
+			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return item;
 			}
 		}
 	}
@@ -366,9 +435,8 @@ public class PMenu {
 		}
 
 		// add icon if it exists
-		WindowItem icon = null;
+		WindowItem icon;
 		if (item.HasIcon) {
-
 			// get the pimage 
 			PComponents.Image image;
 			if (item.Icon.Sprite != null)
@@ -397,77 +465,8 @@ public class PMenu {
 		WindowItem[] subs = subList.ToArray();
 
 		// actually generate the WI
-		WindowItem newItem = null;
-		switch (item) {
-			case Window.CustomItem ci:
-				newItem = ci.item;
-				break;
+		WindowItem newItem = item.ConvertToItem(subs, rcw.Width);
 
-			case Window.Flyout flyout:
-				WindowItem indicator = null;
-
-				if (flyout.AddIndicator) {
-					indicator = WindowItem.NewImage(
-						$"Flyout Indicator {DateTime.Now.Second}",
-						new(),
-						WindowItem.LayoutConfig.FixedLayout(
-							UIPosition.AnchoredAt(UIPosition.MiddleRight),
-							new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
-						)
-					);
-				}
-
-				CWindow subWindow = flyout.SubWindow;
-				if (subWindow == null) 
-					Debug.LogError($"Forgot to generate the subwindow of flyout {flyout.Label}");
-
-				newItem = WindowItem.NewFlyoutTrigger(
-					item.Label,
-					new PComponents.FlyoutTrigger(subWindow, indicator),
-					WindowItemLayout(rcw.Width),
-					new PComponents.HoverTarget(normalColor: Config.UI.Visual.BackgroundColor)
-					).SetSubItems(subs)
-					.AddComponents(new PComponents.FlyoutHider());
-				break;
-
-			case Window.Button button:
-				newItem = WindowItem.NewButton(
-					item.Label,
-					new(
-						button.ButtonClicked,
-						normalColor: Config.UI.Visual.BackgroundColor
-						),
-					WindowItemLayout(rcw.Width)
-					).SetSubItems(subs)
-					.AddComponents(new PComponents.FlyoutHider());
-				break;
-
-			case Window.InputField field:
-				newItem = WindowItem.NewInputField(
-					item.Label,
-					new PComponents.InputField(
-						field.InputFieldChanged,
-						item.Label,
-						fontSize: M.FontSize),
-					WindowItemLayout(rcw.Width)
-					).SetSubItems(subs);
-				break;
-
-			case Window.Text:
-				newItem = WindowItem.NewText(
-					item.Label,
-					new(
-						item.Label,
-						fontSize: M.FontSize
-						),
-					WindowItemLayout(rcw.Width)
-				);
-
-				if (icon != null)
-					newItem.AddSubItems(icon);
-
-				break;
-		}
 		if (item.HasDescription)
 			newItem.AddDescription(item.Description);
 

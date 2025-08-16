@@ -40,6 +40,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
+
+		BottomBar.ClearAssemble();
+		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
 	}
 
 	WindowItem[] GenerateWindowItems() {

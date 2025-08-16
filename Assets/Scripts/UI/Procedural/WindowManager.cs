@@ -8,10 +8,10 @@ using UnityEngine.UI;
 // this file will probably not be used in final but here for temporary 
 // this is being used alot more than im expecting man im ngl
 public class WindowManager : Singleton<WindowManager> {
-	public List<LiveWindow> windows;
-	public WindowRealiser realiser;
-	[HideInInspector] public Canvas canvas;
-	[HideInInspector] public RectTransform canvasRect;
+	public List<CWindow> Windows;
+	public WindowRealiser Realiser;
+	[HideInInspector] public Canvas Canvas;
+	[HideInInspector] public RectTransform CanvasRect;
 
 	private RectTransform preview;
 	bool previewVisible;
@@ -35,15 +35,16 @@ public class WindowManager : Singleton<WindowManager> {
 	/// allwindows and windowmanager will do it
 	/// </summary>
 	public void RealiseWindows(params CWindow[] torealise) {
+		Windows ??= new();
 		foreach (var window in torealise) {
-			var realised = realiser.Realise(window);
-			windows.Add(realised);
+			Realiser.Realise(window);
+			Windows.Add(window);
 		}
 	}
 
 	void Start() {
-		canvas = GetComponent<Canvas>();
-		canvasRect = canvas.GetComponent<RectTransform>();
+		Canvas = GetComponent<Canvas>();
+		CanvasRect = Canvas.GetComponent<RectTransform>();
 		CreatePreviewWindow();
 	}
 
@@ -52,12 +53,12 @@ public class WindowManager : Singleton<WindowManager> {
 		preview = newObj.AddComponent<RectTransform>();
 		Image image = newObj.AddComponent<Image>();
 		image.color = Config.UI.Visual.PreviewWindowColor;
-		preview.SetParent(canvas.transform);
+		preview.SetParent(Canvas.transform);
 		newObj.SetActive(false);
 	}
 
 	void Update() {
-		anyDragging = windows.Any(w => w.dragging || w.anyNodesDragging);
+		anyDragging = Windows.Any(w => w.RealisedWindow.dragging || w.RealisedWindow.anyNodesDragging);
 
 		if (Conatrols.IM.UI.WindowSnap.IsPressed()) {
 			if (Conatrols.Mouse.Left.ReleasedThisFrame && beingDragged != null && lowestWindow != null) {
@@ -82,7 +83,8 @@ public class WindowManager : Singleton<WindowManager> {
 		lowestWindow = null;
 		int lowestHoverIndex = int.MaxValue;
 		beingDragged = null;
-		foreach (var window in windows) {
+		foreach (var cw in Windows) {
+			var window = cw.RealisedWindow;
 			if (!window.dragging) {
 				int index = UIHovers.hovers.IndexOf(window.backgroundImage.transform);
 				if (index >= 0 && index < lowestHoverIndex) {
@@ -144,7 +146,7 @@ public class WindowManager : Singleton<WindowManager> {
 			: new(oX, oY / 2);
 
 		Vector2 newPos =
-			(Vector2)snapTo.rt.position +
+			snapTo.rt.GetCenter() +
 			quadrant switch {
 				0 => new(0, oY / 4),
 				1 => new(oX / 4, 0),
@@ -170,7 +172,7 @@ public class WindowManager : Singleton<WindowManager> {
 			: new(oX, tY);
 
 		Vector2 newPos =
-			(Vector2)snapTo.rt.position +
+			snapTo.rt.GetCenter() +
 			quadrant switch {
 				0 => new(0, (oY + tY) / 2),
 				1 => new((oX + tX) / 2, 0),
@@ -197,7 +199,7 @@ public class WindowManager : Singleton<WindowManager> {
 			snapTo.rt.sizeDelta = size;
 		}
 
-		target.rt.position = preview.position;
+		target.rt.SetCenter(preview.position);
 		target.rt.sizeDelta = preview.sizeDelta;
 	}
 

@@ -52,7 +52,6 @@ public class Conatrols : MonoBehaviour {
 		public static Vector2 Position;
 		public static Vector2 LastPos;
 		public static Vector2 Delta;
-		public static Vector2 SmoothDelta;
 		public static Vector2 Scroll;
 
 		public static MouseButton Left;
@@ -72,8 +71,6 @@ public class Conatrols : MonoBehaviour {
 			Position = IM.Mouse.Position.ReadValue<Vector2>();
 			Delta = IM.Mouse.Delta.ReadValue<Vector2>();
 			Scroll = IM.Mouse.Scroll.ReadValue<Vector2>();
-
-			SmoothDelta = Vector2.Lerp(SmoothDelta, Delta, Config.Input.SmoothingFactor);
 
 			Left.Update();
 			Middle.Update();
