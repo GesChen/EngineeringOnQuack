@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 
 public class GroupManager : Singleton<GroupManager> {
-	public List<PartGroup> Groups = new();
 
 	public void Subscribe() {
 		RightClickMenus.OnGroup				+= GroupCurrentSelection;
@@ -14,6 +13,8 @@ public class GroupManager : Singleton<GroupManager> {
 		RightClickMenus.OnCombineGroups		+= CombineGroupsCurrentSelection;
 	}
 
+	private Assembly A => BuildingManager.Instance.Assembly;
+
 	// dry these if needed
 	void GroupCurrentSelection() {
 		Part[] parts = SelectionManager.Instance.PartSelection;
@@ -22,7 +23,7 @@ public class GroupManager : Singleton<GroupManager> {
 
 		list.ForEach(p => p.Group = group);
 
-		Groups.Add(group);
+		A.Groups.Add(group);
 	}
 
 	void UngroupCurrentSelection() {
@@ -46,7 +47,7 @@ public class GroupManager : Singleton<GroupManager> {
 			part.Group = null;
 		}
 
-		Groups.Remove(group);
+		A.Groups.Remove(group);
 	}
 
 	void AddToGroupCurrentSelection() {
@@ -99,8 +100,8 @@ public class GroupManager : Singleton<GroupManager> {
 
 		// replace old groups and set groups
 		foreach (var oldGroup in groups)
-			Groups.Remove(oldGroup);
-		Groups.Add(unified);
+			A.Groups.Remove(oldGroup);
+		A.Groups.Add(unified);
 
 		foreach (var part in unified.Parts) {
 			part.Group = unified;
@@ -109,8 +110,8 @@ public class GroupManager : Singleton<GroupManager> {
 
 	void PreventSoloGroups() {
 		List<int> toRemove = new();
-		for (int i = 0; i < Groups.Count; i++) {
-			PartGroup group = Groups[i];
+		for (int i = 0; i < A.Groups.Count; i++) {
+			PartGroup group = A.Groups[i];
 			if (group.Parts.Count == 1) {
 				group.Parts[0].Group = null;
 				toRemove.Add(i);
@@ -119,7 +120,7 @@ public class GroupManager : Singleton<GroupManager> {
 		toRemove.Reverse(); // should be sorted low to high already from the loop
 
 		foreach (var part in toRemove) {
-			Groups.RemoveAt(part);
+			A.Groups.RemoveAt(part);
 		}
 	}
 }

@@ -11,7 +11,7 @@ public static class AxleCalculationHelper {
 		Vector3 axleEndB,
 		out Vector3 jointPos) {
 
-		var parts = BuildingManager.Instance.Parts;
+		var parts = BuildingManager.Instance.Assembly.Parts;
 
 		// get all intersections between both ends
 		Vector3 direction = (axleEndB - axleEndA).normalized;

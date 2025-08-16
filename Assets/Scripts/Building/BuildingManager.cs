@@ -4,19 +4,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
-	public Transform mainPartsContainer;
-	public List<Part> Parts;
+	public Assembly Assembly;
+
+	public Transform MainPartsContainer;
 	public TransformTools TransformTools;
 	public Transform SimulationContainer;
-
-	public string CurrentAssemblyName;
-
-	BuildingClipboard clipboard;
 
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
-		clipboard = new();
+
+		Assembly = new();
 
 		Subscribe();
 	}
@@ -30,7 +28,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.OnNewPartMade += 
 			name => MakeNewPart(name, true);
 		RightClickMenus.OnDelete += DeleteSelection;
-		RightClickMenus.OnCopy += clipboard.Copy;
+		RightClickMenus.OnCopy += Copy;
 		RightClickMenus.OnPaste += Paste;
 		RightClickMenus.OnDuplicate += Duplicate;
 
@@ -63,7 +61,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		HandleInput();
 		
 		// set selection state of parts
-		foreach (Part part in Parts) {
+		foreach (Part part in Assembly.Parts) {
 			part.Selected = SelectionManager.Instance.PartSelection.Contains(part);
 		}
 	}
@@ -92,7 +90,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		if (select)
 			SelectionManager.Instance.ManuallySelect(newpart.transform);
 
-		Parts.Add(newpart);
+		Assembly.Parts.Add(newpart);
 
 		UpdateParts();
 	}
@@ -108,11 +106,18 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return pos;
 	}
 
-	public void ResetParts() {
-		foreach (Part part in Parts) {
+	public void NewAssembly() {
+		ResetPartsAndGroups();
+		Assembly = new();
+	}
+	public void ResetPartsAndGroups() {
+		foreach (Part part in Assembly.Parts) {
 			Destroy(part.gameObject);
 		}
-		Parts.Clear();
+		
+		Assembly.Parts.Clear();
+
+		Assembly.Groups.Clear();
 	}
 
 	public Part GeneratePart(int basePartID) {
@@ -136,7 +141,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	private Part GeneratePart(BasePart bp) {
-		GameObject newPart = Instantiate(bp.Prefab, mainPartsContainer);
+		GameObject newPart = Instantiate(bp.Prefab, MainPartsContainer);
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
@@ -168,19 +173,19 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	public void ReturnAllPartsToMain() {
-		foreach (Part part in Parts) {
-			part.transform.parent = mainPartsContainer;
+		foreach (Part part in Assembly.Parts) {
+			part.transform.parent = MainPartsContainer;
 		}
 	}
 	
 	void HideAllPartsForSimulation() {
-		foreach (Part part in Parts) {
+		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(false);
 		}
 	}
 	
 	void ShowAllPartsAfterSimulation() {
-		foreach (Part part in Parts) {
+		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(true);
 		}
 	}
@@ -188,15 +193,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	#region Selection
 	void DeselectAllParts() {
-		Parts.ForEach(p => { p.Selected = false; p.gameObject.layer = LayerMask.NameToLayer("Part"); });
+		Assembly.Parts.ForEach(p => { p.Selected = false; p.gameObject.layer = LayerMask.NameToLayer("Part"); });
 	}
 
 	void DeleteSelection() {
 		// delete current selection
 		foreach (var part in SelectionManager.Instance.PartSelection) {
-			if (!Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
+			if (!Assembly.Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
 			else
-				Parts.Remove(part);
+				Assembly.Parts.Remove(part);
 
 			Destroy(part.gameObject);
 		}
@@ -206,17 +211,21 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 	#endregion
 
+	void Copy() {
+		Assembly.Clipboard.Copy(); // uses the most current version of assembly
+	}
+
 	void Paste() {
-		var newparts = clipboard.Paste(PlacePos(), true);
+		var newparts = Assembly.Clipboard.Paste(PlacePos(), true);
 		if (newparts == null) return; // failed, no objects to paste
 
-		Parts.AddRange(newparts);
+		Assembly.Parts.AddRange(newparts);
 
 		UpdateParts();
 	}
 
 	void Duplicate() {
-		clipboard.Copy();
+		Assembly.Clipboard.Copy();
 		Paste();
 	}
 }

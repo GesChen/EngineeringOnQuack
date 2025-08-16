@@ -7,7 +7,6 @@ using UnityEngine;
 public class Assembler : Singleton<Assembler> {
 	// rewritten assembler with basically the same methods as before but
 	// just better because the old code sucks so much wtf
-	List<Part> Parts;
 
 	public struct Connection {
 		public int A;
@@ -32,15 +31,15 @@ public class Assembler : Singleton<Assembler> {
 	}
 
 	public void Assemble(out List<Assembled> assembleds) {
-		Parts = BuildingManager.Instance.Parts;
+		var parts = BuildingManager.Instance.Assembly.Parts;
 
 		// lmao WTF
 		//SetupPhysics(CopyToSimulation(ConnectionsToSubAssemblies(FindAllConnections())));
 
-		var connections = FindAllConnections();
-		var subassemblies = ConnectionsToSubAssemblies(connections);
-		var assembled = CopyToSimulation(subassemblies);
-		SetupPhysics(assembled);
+		var connections = FindAllConnections(parts);
+		var subassemblies = ConnectionsToSubAssemblies(connections, parts);
+		var assembled = CopyToSimulation(subassemblies, parts);
+		SetupPhysics(assembled, parts);
 
 		assembleds = assembled;
 	}
@@ -52,14 +51,14 @@ public class Assembler : Singleton<Assembler> {
 		return part.GetComponent<Axle>() != null; // also this check will be changed later 
 	}
 
-	public List<Connection> FindAllConnections() {
+	public List<Connection> FindAllConnections(List<Part> parts) {
 		List<Connection> connections = new();
 
-		for (int a = 0; a < Parts.Count; a++) {
-			for (int b = a + 1; b < Parts.Count; b++) {
+		for (int a = 0; a < parts.Count; a++) {
+			for (int b = a + 1; b < parts.Count; b++) {
 				if (TestTwoPartConnection(
-					Parts[a],
-					Parts[b]
+					parts[a],
+					parts[b]
 					))
 					connections.Add(
 						new() {
@@ -107,7 +106,7 @@ public class Assembler : Singleton<Assembler> {
 		}
 	}
 
-	public List<SubAssembly> ConnectionsToSubAssemblies(List<Connection> connections) {
+	public List<SubAssembly> ConnectionsToSubAssemblies(List<Connection> connections, List<Part> parts) {
 		// i COULD use the old method
 		// i was gonna rewrite this but actually fuck nah im lazy
 		// we porting bruh fts
@@ -115,7 +114,7 @@ public class Assembler : Singleton<Assembler> {
 		int subI = 0;
 
 		Dictionary<int, bool> partsInAssemblies = 
-			Enumerable.Range(0, Parts.Count).ToDictionary(part => part, value => false);
+			Enumerable.Range(0, parts.Count).ToDictionary(part => part, value => false);
 		List<SubAssembly> assemblies = new();
 
 		foreach (var connection in connections) {
@@ -160,7 +159,8 @@ public class Assembler : Singleton<Assembler> {
 		return assemblies;
 	}
 
-	List<Assembled> CopyToSimulation(List<SubAssembly> subassemblies) {
+	// can we rewrite this?????
+	List<Assembled> CopyToSimulation(List<SubAssembly> subassemblies, List<Part> Parts) {
 		// also a straight port
 
 		List<Assembled> assembleds = new();
@@ -181,7 +181,8 @@ public class Assembler : Singleton<Assembler> {
 				var partComp = newObject.GetComponent<Part>();
 				partComp.enabled = false;
 
-				BuildingManager.Instance.Parts.Remove(partComp);
+				//????
+				BuildingManager.Instance.Assembly.Parts.Remove(partComp);
 
 				parts.Add(newObject);
 
@@ -201,21 +202,21 @@ public class Assembler : Singleton<Assembler> {
 		return assembleds;
 	}
 
-	void SetupPhysics(List<Assembled> assembleds) {
+	void SetupPhysics(List<Assembled> assembleds, List<Part> parts) {
 		AddRBs(assembleds);
 
-		CalculateAssemblyMasses(assembleds);
+		CalculateAssemblyMasses(assembleds, parts);
 
-		var joints = CalculateAxleJoints(assembleds);
+		var joints = CalculateAxleJoints(assembleds, parts);
 
 		ApplyAxleConnections(joints, assembleds);
 	}
 
-	void CalculateAssemblyMasses(List<Assembled> assembleds) {
+	void CalculateAssemblyMasses(List<Assembled> assembleds, List<Part> parts) {
 		for (int i = 0; i < assembleds.Count; i++) {
 			Assembled assembled = assembleds[i];
 
-			assembled.Mass = SubassemblyTotalMass(assembleds[i].Source);
+			assembled.Mass = SubassemblyTotalMass(assembleds[i].Source, parts);
 
 			assembleds[i] = assembled;
 		}
@@ -233,10 +234,10 @@ public class Assembler : Singleton<Assembler> {
 		}
 	}
 
-	float SubassemblyTotalMass(SubAssembly asm) {
+	float SubassemblyTotalMass(SubAssembly asm, List<Part> parts) {
 		float total = 0;
 		foreach (var pi in asm.Parts) {
-			var part = Parts[pi];
+			var part = parts[pi];
 
 			total += CalculatePartMass(part);
 		}
@@ -257,11 +258,11 @@ public class Assembler : Singleton<Assembler> {
 		return total;
 	}
 
-	public List<AxleConnection> CalculateAxleJoints(List<Assembled> assembleds) {
+	public List<AxleConnection> CalculateAxleJoints(List<Assembled> assembleds, List<Part> parts) {
 		List<int> axleParts = new();
 		foreach (var assembly in assembleds)
 			axleParts.AddRange(
-				assembly.Source.Parts.Where(pi => PartIsAxle(Parts[pi])));
+				assembly.Source.Parts.Where(pi => PartIsAxle(parts[pi])));
 
 		List<AxleConnection> connections = new();
 
@@ -269,7 +270,7 @@ public class Assembler : Singleton<Assembler> {
 			int assemblyofpart = assembleds
 				.First(a => a.Source.Parts.Contains(api)).Source.ID;
 
-			Axle axle = Parts[api].GetComponent<Axle>();
+			Axle axle = parts[api].GetComponent<Axle>();
 
 			for (int connectionI = 0; connectionI < assembleds.Count; connectionI++) {
 				Assembled assembled = assembleds[connectionI];

@@ -32,10 +32,10 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	}
 
 	void Save() {
-		string name = BuildingManager.Instance.CurrentAssemblyName;
+		string name = BuildingManager.Instance.Assembly.Name;
 		if (string.IsNullOrWhiteSpace(name)) {
 			SaveLoadMenus.ShowNamePrompt((newName) => {
-				BuildingManager.Instance.CurrentAssemblyName = newName;
+				BuildingManager.Instance.Assembly.Name = newName;
 				SaveFile(newName);
 				}
 			);
@@ -46,7 +46,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 	void SaveAs() {
 		SaveLoadMenus.ShowNamePrompt((newName) => {
-			BuildingManager.Instance.CurrentAssemblyName = newName;
+			BuildingManager.Instance.Assembly.Name = newName;
 			SaveFile(newName);
 			}
 		);
@@ -57,7 +57,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.ShowSaveIcon();
 		SaveLoadMenus.SetSaveText("Saving...");
 
-		SaveLoadHelper.SaveCurrentBuild(name);
+		SaveLoadHelper.SaveCurrentBuild();
 
 		SaveLoadMenus.SetSaveText("Saved!");
 		StartCoroutine(SaveTextDelay());
