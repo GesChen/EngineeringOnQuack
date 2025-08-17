@@ -26,13 +26,23 @@ public class PMenu {
 		public bool Closable = false;
 		public bool HideOnStart = true;
 
+		// extra spacing between items
 		public float ExtraSpacing = 0;
 
-		private CWindow m_cwindow;
+		private bool RegenerateRequested = false;
+		public void RequestRegeneration() => RegenerateRequested = true;
+
+		private CWindow m_CWindow;
 		public CWindow CWindow {
 			get {
-				m_cwindow ??= ConvertWindow(this);
-				return m_cwindow;
+				if (m_CWindow == null)
+					m_CWindow = GenerateCWindow(this);
+				else if (RegenerateRequested)
+					UpdateWindow(ref m_CWindow, this);
+				
+				RegenerateRequested = false;
+
+				return m_CWindow;
 			}
 			// no setter because it is done by the getter
 		}
@@ -338,26 +348,32 @@ public class PMenu {
 		return converted;
 	}*/
 
-	private static CWindow ConvertWindow(Window rcw) {
+	private static CWindow GenerateCWindow(Window rcw) {
+		CWindow cw = new();
+		UpdateWindow(ref cw, rcw);
+		return cw;
+	}
+
+	// workaround to prevent creating a new cwindow object when regenerating
+	// and keep referneces to original
+	private static void UpdateWindow(ref CWindow cw, Window rcw) {
 		if (rcw == null) {
-			Debug.LogError("Window is null!");
-			return null;
+			throw new ("Window is null!");
 		}
 
-		CWindow cw = new() {
-			Name = 
-				rcw.Title != null
-				? $"[M] {rcw.Title}"
-				: "Menu",
-			Config = new() {
-				Resizable = false,
-				Movable = rcw.Movable,
-				ContentDynamic = true,
-				DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding),
-				IsFlyout = rcw.IsFlyout,
-				Closable = rcw.Closable,
-				HideOnStart = rcw.HideOnStart,
-			}
+		cw.Name =
+			rcw.Title != null
+			? $"[M] {rcw.Title}"
+			: "Menu";
+
+		cw.Config = new() {
+			Resizable = false,
+			Movable = rcw.Movable,
+			ContentDynamic = true,
+			DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding),
+			IsFlyout = rcw.IsFlyout,
+			Closable = rcw.Closable,
+			HideOnStart = rcw.HideOnStart,
 		};
 
 		List<WindowItem> items = new();
@@ -401,9 +417,11 @@ public class PMenu {
 
 		// add dynamic menu and items
 		if (rcw.Customizable) {
+			var tempcw = cw;
+
 			cw.AddEvent(TimedEventInvoker.Timing.Start, (_) => {
 				rcw.CustomizationComponent =
-					cw.RealisedWindow.gameObject.AddComponent<CustomizableMenu>();
+					tempcw.RealisedWindow.gameObject.AddComponent<CustomizableMenu>();
 
 				rcw.CustomizationComponent.title = title;
 				rcw.CustomizationComponent.items = new(items);
@@ -412,7 +430,6 @@ public class PMenu {
 					rcw.CustomizationComponent.items.RemoveAt(0);
 			});
 		}
-		return cw;
 	}
 
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {

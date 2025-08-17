@@ -10,7 +10,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	int currentlySelectedI = -1;
 	string currentlySelectedName;
 
-	List<WindowItem> items;
+	WindowItem[] items;
 
 	protected override void Awake() {
 		base.Awake();
@@ -72,11 +72,11 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		items =
 			SaveLoadHelper.GetSortedAssemblyInfos().
 			Select((info, i) => SaveLoadMenus.FileEntry(i, info.Name, info.Parts))
-			.ToList();
+			.ToArray();
 
 		currentlySelectedI = -1;
 
-		SaveLoadMenus.LoadOptionsLayout.SubItems = items;
+		SaveLoadMenus.LoadOptionsLayout.SetSubItems(items);
 		WindowManager.Instance.Realiser.UpdateWindow(SaveLoadMenus.LoadOptionsMenu);
 	}
 

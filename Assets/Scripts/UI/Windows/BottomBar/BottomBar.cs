@@ -14,6 +14,8 @@ public static class BottomBar {
 	static readonly float splitspacing = 5;
 	static readonly float splittextspace = 10;
 
+	public static void ClearOutputs() { OnOutputsOpened = null; }
+	public static event Action OnOutputsOpened;
 	public static void ClearTransform() { OnTransformOpened = null; }
 	public static event Action OnTransformOpened;
 	public static void ClearMaterial() { OnMaterialOpened = null; }
@@ -97,6 +99,7 @@ public static class BottomBar {
 
 	static readonly W ToolsMenu = new(
 		"Tools", 200, new(){
+			new W.Button(() => OnOutputsOpened?.Invoke(), "Outputs"), // todo: descriptions? and icons
 			new W.Button(() => OnTransformOpened?.Invoke(), "Transform"), // todo: descriptions? and icons
 			new W.Button(() => OnMaterialOpened?.Invoke(), "Material"), // todo: descriptions? and icons
 		},
@@ -111,7 +114,7 @@ public static class BottomBar {
 				openPrioritizingRight: true,
 				openPrioritizingUp: true
 				),
-			WindowItem.LayoutConfig.LayoutElement(new(0, 0))
+			WindowItem.LayoutConfig.LayoutElementDynamic()
 		).SetSubItems(
 		WindowItem.NewText(
 			new PComponents.Text(
@@ -124,7 +127,7 @@ public static class BottomBar {
 		);
 	static WindowItem DynamicBarSpace(float width) =>
 		WindowItem.NewEmpty(
-			WindowItem.LayoutConfig.LayoutElement(new(0, 0))
+			WindowItem.LayoutConfig.LayoutElementDynamic()
 		).AddComponents(
 			new PComponents.LayoutElement(width)
 		);
@@ -135,7 +138,7 @@ public static class BottomBar {
 					Config.UI.Visual.BackgroundColor *
 						new Color(1, 1, 1, bgopacity)
 				),
-				WindowItem.LayoutConfig.LayoutElement(new (0, 0))
+				WindowItem.LayoutConfig.LayoutElementDynamic()
 		).SetSubItems(
 			WindowItem.NewText(
 				new PComponents.Text(
@@ -150,7 +153,7 @@ public static class BottomBar {
 	static WindowItem DynamicBarButton(Action target, string label, float width) =>
 		WindowItem.NewButton(
 			new PComponents.Button(target),
-			WindowItem.LayoutConfig.LayoutElement(new(0, 0))
+			WindowItem.LayoutConfig.LayoutElementDynamic()
 		).SetSubItems(
 		WindowItem.NewText(
 			new PComponents.Text(

@@ -15,6 +15,7 @@ public class Assembly {
 	public List<Part> Parts = new();
 	public List<PartGroup> Groups = new();
 	public BuildingClipboard Clipboard = new();
+	public List<Output> Outputs = new();
 
 	// putting this code in here violates SRP btw dude
 

@@ -41,6 +41,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearAssemble();
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
+		BottomBar.ClearOutputs();
+		BottomBar.OnOutputsOpened += ModifyOutputs;
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -208,6 +210,16 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
+	}
+	#endregion
+
+	#region Outputs
+	public void ModifyOutputs() {
+		OutputsMenu.UpdateMenu(Assembly.Outputs.Select(o => o.Name).ToList());
+		OutputsMenu.ShowMenu();
+	}
+	public void AddNewOutput(string name) {
+		Assembly.Outputs.Add(new() { Name = name });
 	}
 	#endregion
 

@@ -10,6 +10,7 @@ public static class AllWindows {
 		wm.RealiseWindows(TransformToolsMenu.Windows);
 		wm.RealiseWindows(MaterialEditingMenu.Windows);
 		wm.RealiseWindows(SaveLoadMenus.Windows);
+		wm.RealiseWindows(OutputsMenu.Window);
 		wm.RealiseWindows(BottomBar.Windows);
 	}
 }

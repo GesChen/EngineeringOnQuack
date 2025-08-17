@@ -313,6 +313,13 @@ public class PComponents {
 			field.pointSize = FontSize;
 			field.onValueChanged.AddListener(ValueChanged);
 
+			// caret and small fix
+			field.customCaretColor = true;
+			field.caretColor = Config.UI.Visual.TextColor;
+
+			field.enabled = false;
+			field.enabled = true;
+
 			RealComponent = field;
 		}
 	}
@@ -343,7 +350,7 @@ public class PComponents {
 		public bool MatchOtherDimension;
 
 		/// <summary>
-		/// You probably shouldn't be using this constructor if you want 
+		/// <b><u>You probably shouldn't be using this</u></b> constructor if you want 
 		/// to make a layout. Use Pcomp.layout.[direction].whatever
 		/// </summary>
 		public Layout(
@@ -370,7 +377,7 @@ public class PComponents {
 			public abstract Type Type { get; }
 			public Layout Layout(
 				bool fixedSize,
-				bool fillHorizontally,
+				bool fillOwnAxis,
 				bool matchOtherDimension,
 				float? spacing				= null,
 				TextAnchor? itemAlignment	= null) => 
@@ -379,11 +386,11 @@ public class PComponents {
 					spacing,
 					itemAlignment,
 					fixedSize,
-					fillHorizontally,
+					fillOwnAxis,
 					matchOtherDimension);
 
 			public Layout Fixed(
-				bool fillHorizontally,
+				bool fillOwnAxis,
 				bool matchOtherDimension,
 				float? spacing				= null,
 				TextAnchor? itemAlignment	= null) => 
@@ -392,7 +399,7 @@ public class PComponents {
 					spacing,
 					itemAlignment,
 					true,
-					fillHorizontally,
+					fillOwnAxis,
 					matchOtherDimension);
 
 			public Layout Dynamic(

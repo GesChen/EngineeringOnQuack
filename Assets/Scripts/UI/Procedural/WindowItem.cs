@@ -73,6 +73,13 @@ public class WindowItem {
 			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
 		};
 
+		public static LayoutConfig LayoutElementDynamic(FourSides? padding = null) => new() {
+			IsFixed = true,
+			Padding = padding ?? FourSides.Zero,
+
+			SizeDelta = new(0, 0),
+			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
+		};
 	}
 	public LayoutConfig Layout;
 
@@ -111,11 +118,9 @@ public class WindowItem {
 		Construction.AddRange(comps);
 		return this;
 	}
-	public WindowItem SetLayoutElement(PComponents.LayoutElement element) {
-		Construction.Add(element);
-		return this;
-	}
 
+	// honestly idk the diff between this and onrealised atp the codebase
+	// is so chopped
 	public WindowItem AddEvent(
 		TimedEventInvoker.Timing timing,
 		TimedEventInvoker.TimedEventCall action) {

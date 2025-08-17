@@ -142,4 +142,6 @@ public class UIPosition {
 
 	public static UIPosition CenterAnchoredAt(Vector2 pos, Vector2 offset) =>
 		new(pos, pos, new(.5f, .5f), offset);
+
+	public static UIPosition LayoutItem => AnchoredAt(TopLeft);
 }
