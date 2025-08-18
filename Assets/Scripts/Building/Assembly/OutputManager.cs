@@ -31,9 +31,9 @@ public class OutputManager : Singleton<OutputManager> {
 	}
 
 	public void OpenModifyOutputs() {
-		UpdateMenu();
+		OutputsMenu.ShowMenu(BottomBar.OutputButton.RealObject());
 
-		OutputsMenu.ShowMenu();
+		UpdateMenu();
 	}
 
 	public void OnSubtractPressed() {
@@ -43,7 +43,8 @@ public class OutputManager : Singleton<OutputManager> {
 	}
 
 	public void OnRenamePressed() {
-		if (currentName != null && currentlySelectedI != -1) {
+		bool exists = Outputs().Contains(currentName);
+		if (currentName != null && currentlySelectedI != -1 && !exists) {
 			RenameOutput(currentlySelectedI, currentName);
 		}
 	}

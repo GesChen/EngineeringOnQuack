@@ -56,10 +56,10 @@ public static partial class Config {
 
 			public static readonly ColorBlock DefaultBlock = new(){
 				NormalColor		= new(.27f, .27f, .27f),
-				HoverColor		= new(.39f, .39f, .39f),
+				HoverColor		= new(.41f, .41f, .41f),
 				PressedColor	= new(.45f, .45f, .45f),
 				DisabledColor	= new(.16f, .16f, .16f),
-				ToggledColor	= new(.33f, .33f, .33f),
+				ToggledColor	= new(.35f, .35f, .35f),
 				FadeDuration	= .01f
 			};
 

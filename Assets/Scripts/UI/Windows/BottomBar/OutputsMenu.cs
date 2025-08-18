@@ -25,6 +25,11 @@ public static class OutputsMenu {
 
 	public static void ClearItemSelected() { OnItemSelected = null; }
 	public static event Action<int> OnItemSelected;
+	public static void Select(int i) {
+		OptionSelectionUIHelper.SetColors(LayoutContainer.SubItems.ToArray(), i);
+
+		OnItemSelected?.Invoke(i);
+	}
 
 	public static W Menu = new(
 		"Manage Outputs",
@@ -136,28 +141,27 @@ public static class OutputsMenu {
 		WindowRealiser.Instance.UpdateWindow(Menu.CWindow);
 	}
 
-	public static void ShowMenu() {
-		Vector2 center = Menu.CWindow.RealisedWindow.canvas
-			.renderingDisplaySize / 2f;
-		
-		Menu.CWindow.RealisedWindow.SetWorldCorner(center, 4);
+	public static void ShowMenu(RectTransform sourceButton) {
+		Menu.CWindow.RealisedWindow.PlaceAt(sourceButton, true, true, true);
 		Menu.CWindow.RealisedWindow.Show();
 	}
 
 	static WindowItem OutputItem(string name, int i) =>
 		WindowItem.NewButton(
 			new PComponents.Button(
-				() => OnItemSelected?.Invoke(i)
+				() => Select(i)
 			),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.LayoutItem,
-				new(width, Config.UI.Menu.ItemHeight)
+				new(width, Config.UI.Menu.ItemHeight),
+				new(Config.UI.Menu.ItemPadding)
 			)
 		).SetSubItems(
 			WindowItem.NewText(
 				new PComponents.Text(
 					name,
-					fontSize: Config.UI.Menu.FontSize
+					fontSize: Config.UI.Menu.FontSize,
+					alignment: TMPro.TextAlignmentOptions.Left
 				),
 				WindowItem.LayoutConfig.FillLayout
 			)

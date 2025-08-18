@@ -14,6 +14,7 @@ public static class BottomBar {
 	static readonly float splitspacing = 5;
 	static readonly float splittextspace = 10;
 
+	public static WindowItem OutputButton;
 	public static void ClearOutputs() { OnOutputsOpened = null; }
 	public static event Action OnOutputsOpened;
 	public static void ClearTransform() { OnTransformOpened = null; }
@@ -99,7 +100,8 @@ public static class BottomBar {
 
 	static readonly W ToolsMenu = new(
 		"Tools", 200, new(){
-			new W.Button(() => OnOutputsOpened?.Invoke(), "Outputs"), // todo: descriptions? and icons
+			new W.Button(() => OnOutputsOpened?.Invoke(), "Outputs")
+				.OnRealItemMade((wi) => OutputButton = wi), // todo: descriptions? and icons
 			new W.Button(() => OnTransformOpened?.Invoke(), "Transform"), // todo: descriptions? and icons
 			new W.Button(() => OnMaterialOpened?.Invoke(), "Material"), // todo: descriptions? and icons
 		},

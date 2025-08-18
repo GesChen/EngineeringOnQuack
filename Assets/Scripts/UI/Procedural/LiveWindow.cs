@@ -341,7 +341,6 @@ public class LiveWindow : MonoBehaviour {
 	/// Puts a selected corner 1-3 or 4 for center at a position
 	/// </summary>
 	public void SetWorldCorner(Vector3 targetWorldPosition, int corner) {
-
 		Vector3[] worldCorners = new Vector3[4];
 		rt.GetWorldCorners(worldCorners);
 
