@@ -9,27 +9,30 @@ public class WindowItem {
 	public string Name;
 
 	public struct LayoutConfig {
-		public bool Custom;
+		public bool IsCustom;
 
+		// fixed or dynamic? anchors together or not?
 		public bool IsFixed;
+
+		// fixed values
+		public Vector2 SizeDelta;
+		public UIPosition FixedPosition;
 
 		// applies for both
 		public FourSides Padding;
 
 		// dynamic values
 		public FourSides Margins; // offset min 
-		// anchor min max away from the respective side
-		// min = left, up
-		// max = 1-right, 1-down
-		public FourSides Position; // 0 is fill
+
+		// anchor settings
+		// left = min.x		right = 1 - max.x
+		// up = min.y		down = 1 - max.y
+		public FourSides Position; // responsible for the anchor
+		// 0 is fill
 		// think of each side as being pushed in by the amount
 		// of the position value so
 		// |       |<-.4--| is .4 right
-
-		// fixed values
-		public Vector2 SizeDelta;
-		public UIPosition FixedPosition;
-
+		
 		public static LayoutConfig FillLayout => new() {
 			IsFixed = false,
 			Padding = new(0),
@@ -79,6 +82,21 @@ public class WindowItem {
 
 			SizeDelta = new(0, 0),
 			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
+		};
+
+		public static LayoutConfig Custom(
+			Vector2? sizeDelta			= null,
+			UIPosition fixedPosition	= null,
+			FourSides? padding			= null,
+			FourSides? margins			= null,
+			FourSides? position			= null
+		) => new() {
+			IsCustom		= true,
+			SizeDelta		= sizeDelta			?? default,
+			FixedPosition	= fixedPosition		?? default,
+			Padding			= padding			?? default,
+			Margins			= margins			?? default,
+			Position		= position			?? default
 		};
 	}
 	public LayoutConfig Layout;

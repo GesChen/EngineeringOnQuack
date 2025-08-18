@@ -228,7 +228,9 @@ public class SaveLoadMenus {
 		Items = new WindowItem[]{
 			WindowItem.NewScrollView(
 				"Files Scroll View",
-				new PComponents.ScrollView(),
+				new PComponents.ScrollView(
+					horizontalScrolling: false
+				),
 				WindowItem.LayoutConfig.DynamicLayout(
 					margin: BottomOptionsHeight * FourSides.DownConst),
 				new() { // file entries, probably make this procedural and update
@@ -250,14 +252,13 @@ public class SaveLoadMenus {
 					true,
 					5
 					),
-				new WindowItem.LayoutConfig() {
-					Custom = true,
-					Position = new(0, 0, 1, 0),
-					SizeDelta = new(0, BottomOptionsHeight),
-					FixedPosition = new() {
+				WindowItem.LayoutConfig.Custom(
+					position: new(0, 0, 1, 0),
+					sizeDelta: new(0, BottomOptionsHeight),
+					fixedPosition: new() {
 						Pivot = UIPosition.BottomCenter
-					}
-				},
+						}
+				),
 				new() {
 					WindowItem.NewButton(
 						"Cancel",

@@ -662,27 +662,29 @@ public class PComponents {
 	}
 
 	public class ScrollView : Component {
+		public bool HorizontalScrolling = true;
+		public bool VerticalScrolling = true;
+
 		// might change
-		public Color Background = Config.UI.Visual.BackgroundColor;
-		public float BarSize = 20;
-		public Color BarBackgroundColor = Config.UI.Visual.SecondaryBackgroundColor;
-		public Config.UI.ColorBlock BarHandleColorBlock = Config.UI.ColorBlock.DefaultBlock;
+		public Color Background;
+		public float BarSize;
+		public Color BarBackgroundColor;
+		public Config.UI.ColorBlock BarHandleColorBlock;
 
 		public ScrollView(
+			bool horizontalScrolling = true,
+			bool verticalScrolling = true,
 			Color? background = null,
-			float? barSize = null,
+			float barSize = 20,
 			Color? barBackgroundColor = null,
-			Config.UI.ColorBlock? barHandleColorBlock = null) {
-
-			// new method prolly better than the ??s
-			if (background.HasValue)
-				Background = background.Value;
-			if (barSize.HasValue)
-				BarSize = barSize.Value;
-			if (barBackgroundColor.HasValue)
-				BarBackgroundColor = barBackgroundColor.Value;
-			if (barHandleColorBlock.HasValue)
-				BarHandleColorBlock = barHandleColorBlock.Value;
+			Config.UI.ColorBlock? barHandleColorBlock = null
+			) {
+			HorizontalScrolling	= horizontalScrolling;
+			VerticalScrolling	= verticalScrolling;
+			Background			= background ?? Config.UI.Visual.BackgroundColor;
+			BarSize				= barSize;
+			BarBackgroundColor	= barBackgroundColor ?? Config.UI.Visual.SecondaryBackgroundColor;
+			BarHandleColorBlock	= barHandleColorBlock ?? Config.UI.ColorBlock.DefaultBlock;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -694,40 +696,45 @@ public class PComponents {
 			// prolly gonna have to redo how the container works entirely too
 			// deal with the contents container last i guess
 
+			comp.horizontal = HorizontalScrolling;
+			comp.vertical = VerticalScrolling;
+
 			// make both scrollbars
-			var vertScrollbar = CreateScrollbar(
-				rt,
-				true,
-				1,
-				BarSize,
-				Vector2.one,
-				BarBackgroundColor,
-				BarHandleColorBlock);
+			if (VerticalScrolling) {
+				var vertScrollbar = CreateScrollbar(
+					rt,
+					true,
+					1,
+					BarSize,
+					Vector2.one,
+					BarBackgroundColor,
+					BarHandleColorBlock);
 
-			var horiScrollbar = CreateScrollbar(
-				rt,
-				false,
-				0,
-				BarSize,
-				Vector2.zero,
-				BarBackgroundColor,
-				BarHandleColorBlock);
+				comp.verticalScrollbar = vertScrollbar;
+				comp.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+				comp.verticalScrollbarSpacing = 0; // may chnage later but best 0
+			}
 
-			comp.horizontal = true;
-			comp.vertical = true;
+			if (HorizontalScrolling) {
+				var horiScrollbar = CreateScrollbar(
+					rt,
+					false,
+					0,
+					BarSize,
+					Vector2.zero,
+					BarBackgroundColor,
+					BarHandleColorBlock);
+			
+				comp.horizontalScrollbar = horiScrollbar;
+				comp.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+				comp.horizontalScrollbarSpacing = 0; // may chnage later but best 0
+			}
+
 			comp.movementType = ScrollRect.MovementType.Clamped;
 			comp.inertia = true;
 			comp.decelerationRate = .135f; // defaults
 			comp.scrollSensitivity = Config.Input.ScrollSensitivity;
-
-			comp.horizontalScrollbar = horiScrollbar;
-			comp.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
-			comp.horizontalScrollbarSpacing = 0; // may chnage later but best 0
-
-			comp.verticalScrollbar = vertScrollbar;
-			comp.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
-			comp.verticalScrollbarSpacing = 0; // may chnage later but best 0
-
+			
 			// yeah idk how we're gonna do this ikiab
 			// probably just parent the container to a new viewport object i guess 
 			GameObject viewportObj = new("Viewport");
@@ -743,6 +750,17 @@ public class PComponents {
 
 			comp.viewport = viewportRT;
 			comp.content = originalItem.ContentsObject;
+
+			// i hate you so much
+			originalItem.ContentsObject.anchorMin = new(0, 1);
+			originalItem.ContentsObject.anchorMax = new(1, 1);
+			originalItem.ContentsObject.pivot = new(0, 1);
+			originalItem.ContentsObject.offsetMin = new(0, 0);
+			originalItem.ContentsObject.offsetMax = new(0, 0);
+
+			var scaler = originalItem.ContentsObject.gameObject.AddComponent<global::ScaleToContents>();
+			scaler.IgnoreHorizontal = !HorizontalScrolling;
+			scaler.IgnoreVertical = !VerticalScrolling;
 
 			RealComponent = comp;
 		}
@@ -764,8 +782,15 @@ public class PComponents {
 			mainRT.SetParent(parent);
 
 			// the component will figure out the other axis so just set both
-			mainRT.anchorMin = otherAxisAnchor * Vector2.one;
-			mainRT.anchorMax = otherAxisAnchor * Vector2.one;
+			// apparently not anymore wtf
+			int axis = vertical ? 0 : 1;
+			Vector2 MAmin = Vector2.zero;
+			MAmin[axis] = otherAxisAnchor;
+			Vector2 MAmax = Vector2.one;
+			MAmax[axis] = otherAxisAnchor;
+
+			mainRT.anchorMin = MAmin;
+			mainRT.anchorMax = MAmax;
 
 			mainRT.sizeDelta = size * Vector2.one;
 			mainRT.pivot = pivot;

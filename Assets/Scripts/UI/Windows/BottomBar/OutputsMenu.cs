@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,23 +7,24 @@ using W = PMenu.Window;
 
 public static class OutputsMenu {
 	static readonly float ListBoxHeight = 100;
-	static WindowItem LayoutContainer;
+	public static WindowItem LayoutContainer;
 
-	static float width = 200;
+	static readonly float width = 200;
 
-	static string CurrentName = "";
+	public static void ClearNameChanged() { OnNameChanged = null; }
+	public static event Action<string> OnNameChanged;
 
-	static void Subtract() {
+	public static void ClearSubtract() { OnSubtract = null; }
+	public static event Action OnSubtract;
 
-	}
+	public static void ClearRename() { OnRename = null; }
+	public static event Action OnRename;
 
-	static void Rename() {
+	public static void ClearAdd() { OnAdd = null; }
+	public static event Action OnAdd;
 
-	}
-
-	static void Add() {
-
-	}
+	public static void ClearItemSelected() { OnItemSelected = null; }
+	public static event Action<int> OnItemSelected;
 
 	public static W Menu = new(
 		"Manage Outputs",
@@ -30,7 +32,9 @@ public static class OutputsMenu {
 		new() {
 			new W.CustomItem( // list
 				WindowItem.NewScrollView(
-					new PComponents.ScrollView(),
+					new PComponents.ScrollView(
+						horizontalScrolling: false
+					),
 					WindowItem.LayoutConfig.FixedLayout(
 						UIPosition.AnchoredAt(UIPosition.TopLeft),
 						new(width, ListBoxHeight),
@@ -42,7 +46,10 @@ public static class OutputsMenu {
 								false,
 								true
 							),
-							WindowItem.LayoutConfig.FillLayout,
+							WindowItem.LayoutConfig.Custom(
+								position: new(1, 0, 0, 0),
+								sizeDelta: new(0, 0)
+							),
 							new(){}
 						).OnRealized((_, wi) =>
 							LayoutContainer = wi
@@ -51,7 +58,8 @@ public static class OutputsMenu {
 				)
 			),
 			new W.InputField( // the actual naming part
-				(newname) => CurrentName = newname,
+				(name) => OnNameChanged?.Invoke(name), // you could put it directly as onnamechanged and it would work but 
+				// it wouldn't use the up to date version with all of the subscriptions
 				"Name for Output..."
 			),
 			new W.CustomItem( // controls
@@ -65,7 +73,9 @@ public static class OutputsMenu {
 					),
 					new() {
 						WindowItem.NewButtonCustomImageOverlay( // -
-							new PComponents.Button(Subtract),
+							new PComponents.Button(
+								() => OnSubtract?.Invoke()
+							),
 							new PComponents.Image(
 								Config.Locations.IconsFolder + "subtract"
 							),
@@ -76,7 +86,9 @@ public static class OutputsMenu {
 							new PComponents.LayoutElement(1)
 						),
 						WindowItem.NewButton( // rename
-							new PComponents.Button(Subtract),
+							new PComponents.Button(
+								() => OnRename.Invoke()
+							),
 							WindowItem.LayoutConfig.LayoutElementDynamic(
 								new(Config.UI.Menu.ItemPadding)
 							)
@@ -93,7 +105,9 @@ public static class OutputsMenu {
 							new PComponents.LayoutElement(4)
 						),
 						WindowItem.NewButtonCustomImageOverlay( // +
-							new PComponents.Button(Subtract),
+							new PComponents.Button(
+								() => OnAdd?.Invoke()
+							),
 							new PComponents.Image(
 								Config.Locations.IconsFolder + "add"
 							),
@@ -115,7 +129,7 @@ public static class OutputsMenu {
 
 	public static void UpdateMenu(List<string> outputs) {
 		LayoutContainer.SetSubItems(
-			outputs.Select(o => OutputItem(o)).ToArray());
+			outputs.Select((o, i) => OutputItem(o, i)).ToArray());
 
 		Menu.RequestRegeneration();
 
@@ -130,9 +144,11 @@ public static class OutputsMenu {
 		Menu.CWindow.RealisedWindow.Show();
 	}
 
-	static WindowItem OutputItem(string name) =>
-		WindowItem.NewImage(
-			new PComponents.Image(Config.UI.Visual.BackgroundColor),
+	static WindowItem OutputItem(string name, int i) =>
+		WindowItem.NewButton(
+			new PComponents.Button(
+				() => OnItemSelected?.Invoke(i)
+			),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.LayoutItem,
 				new(width, Config.UI.Menu.ItemHeight)

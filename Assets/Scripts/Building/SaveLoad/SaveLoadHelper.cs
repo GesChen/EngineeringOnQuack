@@ -209,12 +209,12 @@ public static class SaveLoadHelper {
 	/// <summary>
 	/// Dict containing all of the header definitions based on version
 	/// </summary>
-	public static Dictionary<ushort, HeaderHelper> HeaderVersions = new(){
-		{ 1, new(
-			HeaderHelper.HeaderItem.Int // parts count
-		)}
+	public static HeaderHelper GetHeaderVersion(ushort version) => version switch {
+		1 => new HeaderHelper(HeaderHelper.HeaderItem.Int),
+		_ => throw new ArgumentOutOfRangeException(nameof(version), $"Unsupported header version: {version}")
 	};
-	static HeaderHelper Header => HeaderVersions[Config.Building.Saving.VERSION];
+
+	static HeaderHelper Header => GetHeaderVersion(Config.Building.Saving.VERSION);
 
 	public static void SaveCurrentBuild() {
 		var assem = BuildingManager.Instance.Assembly;
@@ -250,27 +250,7 @@ public static class SaveLoadHelper {
 
 	public static void LoadFromFile(string name) {
 		string path = Pathify(name);
-
-		if (!File.Exists(path))
-			throw new($"Couldn't load {name} as it doesn't exist in the assemblies folder!");
-
-		byte[] bytes = File.ReadAllBytes(path);
-		HeaderHelper.GetVersionHeader(ref bytes, out bool isText, out ushort version);
-		var versionCorrectHeader = HeaderVersions[version];
-
-		string json;
-		if (isText) {
-			json = Encoding.UTF8.GetString(bytes);
-
-			versionCorrectHeader.GetStringHeader(ref json, out _);
-			// do something with this metadata? idk. 
-
-			json = CompressionUtil.DecodeGzippedBase64(json);
-		} else {
-			versionCorrectHeader.GetByteHeader(ref bytes, out _);
-
-			json = CompressionUtil.DecodeGzipBytes(bytes);
-		}
+		ReadFile(path, out string json, out _);
 
 		BuildingManager.Instance.ResetPartsAndGroups();
 
@@ -302,20 +282,10 @@ public static class SaveLoadHelper {
 
 	public static object[] GetAssemblyMetadata(string name) {
 		string filePath = Pathify(name);
-		
-		if (Config.Building.Saving.SaveAsText) {
-			var text = File.ReadAllText(filePath);
 
-			Header.GetStringHeader(ref text, out object[] data);
+		ReadFile(filePath, out _, out object[] data);
 
-			return data;
-		} else {
-			byte[] bytes = File.ReadAllBytes(filePath);
-
-			Header.GetByteHeader(ref bytes, out object[] data);
-
-			return data;
-		}
+		return data;
 	}
 
 	public static AssemblyInfo[] GetSortedAssemblyInfos() {
@@ -334,6 +304,27 @@ public static class SaveLoadHelper {
 		}
 
 		return infos;
+	}
+
+	private static void ReadFile(string path, out string json, out object[] data) {
+		if (!File.Exists(path))
+			throw new($"Couldn't load {path} as it doesn't exist in the assemblies folder!");
+
+		byte[] bytes = File.ReadAllBytes(path);
+		HeaderHelper.GetVersionHeader(ref bytes, out bool isText, out ushort version);
+		var versionCorrectHeader = GetHeaderVersion(version); // may error
+
+		if (isText) {
+			json = Encoding.UTF8.GetString(bytes);
+
+			versionCorrectHeader.GetStringHeader(ref json, out data);
+
+			json = CompressionUtil.DecodeGzippedBase64(json);
+		} else {
+			versionCorrectHeader.GetByteHeader(ref bytes, out data);
+
+			json = CompressionUtil.DecodeGzipBytes(bytes);
+		}
 	}
 
 	/* actual good implementation but nah

@@ -84,23 +84,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		currentlySelectedI = id;
 		currentlySelectedName = SaveLoadHelper.GetSortedAssemblyInfos()[id].Name;
 
-		// bad code yes i know im lazy and this isnt called that much
-
-		// set all backgrounds to normal
-		// then set the i one to selected
-		foreach (var item in items) {
-			var button = item.GetComponent<PComponents.Button>().RealComponent as UnityEngine.UI.Button;
-			if (button == null) throw new("bad casting to image, check this line");
-			
-			button.colors = (UnityEngine.UI.ColorBlock)Config.UI.ColorBlock.DefaultBlock;
-		}
-
-		var block = Config.UI.ColorBlock.DefaultBlock;
-		block.NormalColor = block.ToggledColor;
-
-		var selbutton = items[id].GetComponent<PComponents.Button>().RealComponent as UnityEngine.UI.Button;
-		if (selbutton == null) throw new("bad casting to image, check this line");
-		selbutton.colors = (UnityEngine.UI.ColorBlock)block;
+		OptionSelectionUIHelper.SetColors(items, id);
 	}
 
 	void Load() {

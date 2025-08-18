@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,14 +10,79 @@ using UnityEngine.UI;
 
 public class ScaleToContents : MonoBehaviour {
 	public FourSides padding;
+
+	public bool IgnoreHorizontal;
+	public bool IgnoreVertical;
+
 	private RectTransform rt;
 	void Start() {
 		rt = GetComponent<RectTransform>();
 	}
+	/*
 	void Update() {
-		Scale();
+		FastScaleWithoutOffset();
+	}*/
+
+	void LateUpdate() {
+		if (rt.childCount == 0) return;
+
+		var pad = new Vector2(padding.Left + padding.Right, padding.Up + padding.Down);
+		
+		//rt.sizeDelta = new(100, 100);
+
+		Bounds bounds = ModifiedRRTB(rt);
+		//rt.sizeDelta = bounds.size;
+		//rt.sizeDelta += pad;
+
+		if (!IgnoreHorizontal) rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, bounds.size.x);
+		if (!IgnoreVertical) rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, bounds.size.y);
+
+		/*Vector2 padOffset = new Vector2((padding.Right - padding.Left) * 0.5f,
+								(padding.Up - padding.Down) * 0.5f);*/
+		//Vector2 padOffset = pad / 2;
+
+		//Vector2 offset = bounds.center - (Vector3)(rt.worldToLocalMatrix * rt.rect.center);
+		//Vector2 offset = (Vector2)bounds.center - rt.rect.center;
+		//rt.localPosition += (Vector3)offset;
+
+		//rt.SetCenter(bounds.center);
 	}
-	
+
+	/// <summary>
+	/// modified version of RectTransformUtility.CalculateRelativeRectTransformBounds
+	/// that actually ignores the self rt and assumes child 
+	/// empty check already done
+	/// </summary>
+	Bounds ModifiedRRTB(RectTransform rt) {
+		Vector3[] s_Corners = new Vector3[4];
+		Matrix4x4 worldToLocalMatrix = rt.worldToLocalMatrix;
+
+		Vector3 min = Vector3.positiveInfinity;
+		Vector3 max = Vector3.negativeInfinity;
+
+		void Traverse(RectTransform current) {
+			if (!current.gameObject.activeInHierarchy) return;
+			if (current != rt) {
+				current.GetWorldCorners(s_Corners);
+				for (int j = 0; j < 4; j++) {
+					Vector3 localPoint = worldToLocalMatrix.MultiplyPoint3x4(s_Corners[j]);
+					min = Vector3.Min(min, localPoint);
+					max = Vector3.Max(max, localPoint);
+				}
+			}
+			if (current.GetComponent<Mask>() != null) return;
+			foreach (Transform child in current) {
+				Traverse(child as RectTransform);
+			}
+		}
+
+		Traverse(rt);
+
+		Bounds result = new(min, Vector3.zero);
+		result.Encapsulate(max);
+		return result;
+	}
+
 	void Scale() {
 		Vector2 padOffset = new(padding.Left + padding.Right, padding.Up + padding.Down);
 
@@ -82,5 +149,15 @@ public class ScaleToContents : MonoBehaviour {
 		foreach (Transform child in transform) {
 			child.position -= (Vector3)offset;
 		}
+	}
+
+	// why are you so frustrating
+	void FastScaleWithoutOffset() {
+		Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(rt, rt);
+		Vector2 size = bounds.size + new Vector3(padding.Left + padding.Right, padding.Up + padding.Down);
+		rt.sizeDelta = size;
+
+		Vector2 offset = (Vector2)bounds.center - rt.rect.center;
+		rt.localPosition += (Vector3)offset;
 	}
 }

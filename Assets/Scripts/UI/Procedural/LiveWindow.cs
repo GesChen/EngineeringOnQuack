@@ -116,7 +116,7 @@ public class LiveWindow : MonoBehaviour {
 		bool hovered = UIHovers.CheckFirstIgnoringChildrenOfOther(backgroundImage.transform, contentsContainer);
 		if (!hovered && !dragging) return;
 
-		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame) {
+		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame && DragAllowed()) {
 			dragging = true;
 			dragOffset = (Vector2)rt.position - Conatrols.Mouse.Position;
 			dragStartPos = Conatrols.Mouse.Position;
@@ -154,6 +154,13 @@ public class LiveWindow : MonoBehaviour {
 
 			rt.SetCenter(clampedPos);
 		}
+	}
+
+	// check if anythings stopping dragging from occuring
+	bool DragAllowed() {
+		if (UIHovers.hovers.Any(h => h.GetComponent<Scrollbar>() != null)) return false;
+
+		return true;
 	}
 
 	void CheckNodes() {

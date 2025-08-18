@@ -212,7 +212,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 			rt.anchoredPosition		= item.Layout.FixedPosition.Position;
 			rt.sizeDelta			= item.Layout.SizeDelta;
 
-		} else if (item.Layout.Custom) { // do everything that isnt zero
+		} else if (item.Layout.IsCustom) { // do everything that isnt zero
 			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
 			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
 
