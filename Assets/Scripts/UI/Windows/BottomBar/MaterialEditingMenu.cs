@@ -153,9 +153,9 @@ public class MaterialEditingMenu : MonoBehaviour {
 
 	// has to be property because it needs to be reevaluated at creationtime
 	public static CWindow[] Windows => new[] {
-		colorPicker,
-		CompositionPicker,
-		Editor.CWindow
+		colorPicker.SetGroup("tools/materialeditor"),
+		CompositionPicker.SetGroup("tools/materialeditor"),
+		Editor.CWindow.SetGroup("tools/materialeditor")
 	};
 
 	static RectTransform colorPickerButton;

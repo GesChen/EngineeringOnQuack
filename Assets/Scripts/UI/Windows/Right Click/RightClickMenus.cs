@@ -66,10 +66,10 @@ public class RightClickMenus : MonoBehaviour {
 		"Digital",
 		120,
 		new(){
-			new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "Parts/cpu"),
-			new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "Parts/ram"),
-			new W.Button(() => MakeNewPart("display"),  "display",  iconName: "Parts/display"),
-			new W.Button(() => MakeNewPart("script"),   "script",   iconName: "Parts/script")
+			new W.Button(() => MakeNewPart("cpu"),		"cpu",		iconName: "Parts/cpu"),
+			new W.Button(() => MakeNewPart("ram"),		"ram",		iconName: "Parts/ram"),
+			new W.Button(() => MakeNewPart("display"),	"display",	iconName: "Parts/display"),
+			new W.Button(() => MakeNewPart("script"),	"script",	iconName: "Parts/script")
 		},
 		showTitle: false);
 
@@ -254,5 +254,8 @@ public class RightClickMenus : MonoBehaviour {
 		inWorldUniversalMenu
 	};
 
-	public static CWindow[] Windows => windows.Select(w => w.CWindow).ToArray();
+	public static CWindow[] Windows => 
+		windows.Select(w => 
+			w.CWindow.SetGroup("rightclick")
+		).ToArray();
 }

@@ -294,8 +294,8 @@ public class SaveLoadMenus {
 	};
 
 	public static CWindow[] Windows => new[] {
-		NamePrompt.CWindow,
-		SaveStatus,
-		LoadOptionsMenu
+		NamePrompt.CWindow.SetGroup("saveload"),
+		SaveStatus.SetGroup("saveload"),
+		LoadOptionsMenu.SetGroup("saveload")
 	};
 }

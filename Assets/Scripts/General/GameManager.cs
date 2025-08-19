@@ -1,12 +1,12 @@
 using System;
 using UnityEngine;
 
-public enum PlayingMode {
-	Building,
-	Simulating
-}
-
 public class GameManager : Singleton<GameManager> {
+	public enum PlayingMode {
+		Building,
+		Simulating
+	}
+
 	public PlayingMode currentPlayMode = PlayingMode.Building;
 	protected override void Awake() {
 		base.Awake();
@@ -14,35 +14,35 @@ public class GameManager : Singleton<GameManager> {
 		// reset events
 		OnStartSimulating = null;
 		OnStopSimulating = null;
-		OnPlayModeChange = null;
+		OnPlayModeChanged = null;
 
 		Config.Fonts.Reset();
 	}
 	void Start() {
 		UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;
+		Application.targetFrameRate = Config.FPS_LIMIT;
 	}
 
 	void Update() {
-		Application.targetFrameRate = Config.FPS_LIMIT;
 	}
 
 	public void StartSimulating() {
 		currentPlayMode = PlayingMode.Simulating;
 
 		OnStartSimulating?.Invoke();
-		OnPlayModeChange?.Invoke(currentPlayMode);
+		OnPlayModeChanged?.Invoke(currentPlayMode);
 	}
 
 	public void StopSimulating() {
 		currentPlayMode = PlayingMode.Building;
 
 		OnStopSimulating?.Invoke();
-		OnPlayModeChange?.Invoke(currentPlayMode);
+		OnPlayModeChanged?.Invoke(currentPlayMode);
 	}
 
 	public event Action OnStartSimulating;
 	public event Action OnStopSimulating;
 
 	public delegate void PlayModeChange(PlayingMode curMode);
-	public event PlayModeChange OnPlayModeChange;
+	public event PlayModeChange OnPlayModeChanged;
 }
