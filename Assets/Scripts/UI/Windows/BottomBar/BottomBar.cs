@@ -211,8 +211,8 @@ Bar.RealisedWindow.backgroundImage.enabled = false;
 	};
 	
 	public static CWindow[] Windows => new CWindow[] {
-		Bar,
-		FileMenu.CWindow,
-		ToolsMenu.CWindow
+		Bar.SetGroup("bar"),
+		FileMenu.CWindow.SetGroup("bar"),
+		ToolsMenu.CWindow.SetGroup("bar")
 	};
 }

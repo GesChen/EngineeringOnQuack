@@ -14,7 +14,6 @@ public class CWindow {
 	/// </summary>
 	[Serializable]
 	public class Configuration {
-
 		/// <summary>
 		/// <para>Resizable (T), Movable (T)</para>
 		/// <para>Color, Outline (float, color)</para>
@@ -80,6 +79,8 @@ public class CWindow {
 
 	public Configuration Config = new();
 	public List<TimedEventInvoker.TimedEvent> CustomEvents;
+	public string GroupPath = null;
+	public WindowRealiser.Group RealGroup;
 
 	private LiveWindow m_realisedWindow;
 	public LiveWindow RealisedWindow {
@@ -100,6 +101,11 @@ public class CWindow {
 
 		CustomEvents ??= new();
 		CustomEvents.Add(new(timing, action));
+		return this;
+	}
+
+	public CWindow SetGroup(string path) {
+		GroupPath = path;
 		return this;
 	}
 

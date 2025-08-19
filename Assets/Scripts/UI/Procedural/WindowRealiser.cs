@@ -7,8 +7,101 @@ using TMPro;
 
 public class WindowRealiser : Singleton<WindowRealiser> {
 	public Canvas canvas;
+	public Group root;
+
+	protected override void Awake() {
+		base.Awake();
+
+		root = new("root") {
+			Transform = canvas.GetComponent<RectTransform>()
+		};
+	}
+
+	public class Group {
+		public string Name;
+		public List<Group> SubGroups = new();
+		public List<CWindow> Windows = new();
+
+		public RectTransform Transform;
+
+		public Group(string name) {
+			Name = name;
+		}
+
+		public Group FindSubGroup(string name) => SubGroups.Find(x => x.Name == name);
+		public Group AddSubGroup(string name) {
+			var ng = new Group(name);
+			SubGroups.Add(ng);
+			return ng;
+		}
+		public void AddWindow(CWindow cw) {
+			Windows.Add(cw);
+			cw.RealGroup = this;
+		}
+	}
+
+	void GenerateGroup(CWindow window) {
+		var stringpath = window.GroupPath;
+
+		var path = 
+			stringpath == null
+			? new string[0]
+			: stringpath.Split('/').Select(part => part.Trim()).ToArray();
+
+		GenerateGroup(window, root, path);
+	}
+	void GenerateGroup(CWindow cw, Group current, string[] path) {
+		for (int i = 0; i < path.Length; i++) {
+			var name = path[i];
+			var sub = current.FindSubGroup(name);
+			sub ??= current.AddSubGroup(name);
+			current = sub;
+		}
+
+		current.AddWindow(cw);
+	}
+	void RealiseGroups() {
+		RealiseGroups(root, null);
+	}
+	void RealiseGroups(Group current, RectTransform parent, int i = 0) {
+		if (i > 100) { // safety
+			throw new("Some kind of circular group reference, it should not go on this long");
+		}
+
+		if (current.Transform == null) {
+			// generate new
+			var newT = new GameObject(current.Name).AddComponent<RectTransform>();
+			newT.SetParent(parent);
+			
+			newT.anchorMin = Vector2.zero;
+			newT.anchorMax = Vector2.one;
+			newT.offsetMin = Vector2.zero;
+			newT.offsetMax = Vector2.zero;
+
+			current.Transform = newT;
+		}
+
+		foreach (var sub in current.SubGroups) {
+			RealiseGroups(sub, current.Transform, i + 1);
+		}
+	}
+
+	/*recursive version, just a tad worse, cg's refactored above
+	 * public void GenerateGroup(CWindow cw, Group current, string[] path, int i = 0) {
+		if (i == path.Length) {
+			current.AddWindow(cw);
+			return;
+		}
+
+		var name = path[i];
+		var sub = current.FindSubGroup(name);
+		sub ??= current.AddSubGroup(name);
+
+		GenerateGroup(cw, sub, path, i + 1);
+	}*/
 
 	public LiveWindow Realise(CWindow window) {
+		GenerateGroup(window);
 
 		// make new live window
 		var (newWindow, windowRT) =
@@ -80,6 +173,9 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 			var invoker = newWindow.AddComponent<TimedEventInvoker>();
 			invoker.CustomEvents = window.CustomEvents; // calls customawake anyway
 		}
+
+		RealiseGroups();
+		windowRT.SetParent(window.RealGroup.Transform);
 
 		return component;
 	}

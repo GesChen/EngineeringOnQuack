@@ -18,6 +18,9 @@ public class Assembly {
 	public List<Output> Outputs = new();
 
 	// putting this code in here violates SRP btw dude
+	// somehow put the S classes into their own files
+
+	// we are REALLY gonna need to refactor this
 
 	// S prefix for serializable
 	// they need to be converted this way because newtonsoft json
@@ -65,8 +68,6 @@ public class Assembly {
 				compositionID = other.composition.ID
 			};
 		}
-
-
 	}
 	public struct SGroup {
 		public List<int> PartIDs;
@@ -75,18 +76,27 @@ public class Assembly {
 			PartIDs = other.Parts.Select(p => p.ID).ToList(),
 		};
 	}
+	public struct SOutput {
+		public string Name;
+
+		public static explicit operator SOutput(Output other) => new() {
+			Name = other.Name,
+		};
+	}
 
 	public struct SAssembly {
 		public string Name;
 		public List<SPart> Parts;
 		public List<SGroup> Groups;
 		public BuildingClipboard Clipboard; // should serialize just fine
+		public List<SOutput> Outputs;
 
 		public static explicit operator SAssembly(Assembly other) => new() {
 			Name = other.Name,
 			Parts = other.Parts.Select(p => (SPart)p).ToList(),
 			Groups = other.Groups.Select(group => (SGroup)group).ToList(),
-			Clipboard = Config.Building.Saving.SaveClipboard ? other.Clipboard : null
+			Clipboard = Config.Building.Saving.SaveClipboard ? other.Clipboard : null,
+			Outputs = other.Outputs.Select(o => (SOutput)o).ToList()
 		};
 	}
 
@@ -129,8 +139,13 @@ public class Assembly {
 
 		reconstructed.Clipboard = assembly.Clipboard ?? new(); // hope it serializes well
 
+		// reconstruct outputs
+		reconstructed.Outputs = assembly.Outputs.Select(o =>
+			new Output() {
+				Name = o.Name
+			}
+		).ToList();
+
 		return reconstructed;
 	}
-
-
 }

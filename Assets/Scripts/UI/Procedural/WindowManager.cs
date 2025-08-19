@@ -42,6 +42,10 @@ public class WindowManager : Singleton<WindowManager> {
 		}
 	}
 
+	public void DestroyAllWindows() {
+
+	}
+
 	void Start() {
 		Canvas = GetComponent<Canvas>();
 		CanvasRect = Canvas.GetComponent<RectTransform>();

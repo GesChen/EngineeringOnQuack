@@ -154,7 +154,7 @@ public static class OutputsMenu {
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.LayoutItem,
 				new(width, Config.UI.Menu.ItemHeight),
-				new(Config.UI.Menu.ItemPadding)
+				new(5)
 			)
 		).SetSubItems(
 			WindowItem.NewText(

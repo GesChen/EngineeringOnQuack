@@ -128,13 +128,13 @@ public static partial class Config {
 					HF.LoadResource(ref m_closeSprite, Locations.CloseIcon);
 
 				public static float EasingFunction(float x) {
-					return x;
+					//return x;
 					if (x <= 0) return 0;
 					if (x >= 1) return 1;
 
 					// can be changed to customize behaviour
 					float a = 2;
-					float b = 2;
+					float b = 1;
 
 					float powStart = Mathf.Pow(x, a);
 
