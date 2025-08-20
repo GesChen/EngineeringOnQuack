@@ -63,5 +63,7 @@ public static class TransformToolsMenu {
 		}
 	};
 
-	public static CWindow[] Windows = { MainWindow.SetGroup("tools") };
+	public static CWindow[] Windows => new[] {
+		MainWindow.SetGroup("tools") 
+	};
 }

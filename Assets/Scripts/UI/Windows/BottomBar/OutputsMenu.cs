@@ -166,5 +166,7 @@ public static class OutputsMenu {
 			)
 		);
 
-	public static CWindow Window => Menu.CWindow.SetGroup("tools");
+	public static CWindow[] Windows => new[] {
+		Menu.CWindow.SetGroup("tools")
+	};
 }

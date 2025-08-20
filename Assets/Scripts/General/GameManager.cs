@@ -11,6 +11,7 @@ public class GameManager : Singleton<GameManager> {
 
 		Config.Fonts.Reset();
 	}
+
 	void Start() {
 		UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;
 		Application.targetFrameRate = Config.FPS_LIMIT;

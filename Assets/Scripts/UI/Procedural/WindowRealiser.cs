@@ -85,6 +85,12 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 			RealiseGroups(sub, current.Transform, i + 1);
 		}
 	}
+	public void DestroyAllGroupObjects() {
+		// destroying this top layer is enough
+		foreach (var group in root.SubGroups) {
+			Destroy(group.Transform.gameObject);
+		}
+	}
 
 	/*recursive version, just a tad worse, cg's refactored above
 	 * public void GenerateGroup(CWindow cw, Group current, string[] path, int i = 0) {

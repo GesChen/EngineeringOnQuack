@@ -8,7 +8,7 @@ using UnityEngine.UI;
 // this file will probably not be used in final but here for temporary 
 // this is being used alot more than im expecting man im ngl
 public class WindowManager : Singleton<WindowManager> {
-	public List<CWindow> Windows;
+	public List<CWindow> Windows = new();
 	public WindowRealiser Realiser;
 	[HideInInspector] public Canvas Canvas;
 	[HideInInspector] public RectTransform CanvasRect;
@@ -20,14 +20,38 @@ public class WindowManager : Singleton<WindowManager> {
 
 	public bool anyDragging = false;
 
+	IContext LastContext = null;
+
 	// only good way i can think of for now to ensure that the 
 	// other awakes are called before init is to just delay this script's 
 	// execution order cuz every other method doesn't make sense or this class
 	// cant access it
 	protected override void Awake() {
 		base.Awake();
-		
-		AllWindows.Init(this);
+
+		ContextManager.OnContextChanged += ContextChanged;
+	}
+
+	void ContextChanged(IContext newContext) {
+		if (newContext is Contexts.Main) return; // ignore main switch
+
+		if (LastContext == null || !ContextManager.RelatedWithoutMain(newContext, LastContext)) {
+			SwitchCollectionsByContext(newContext);
+		}
+
+		LastContext = newContext;
+	}
+
+	private void SwitchCollectionsByContext(IContext newContext) {
+		var collection = ContextWindows.FindCollectionByContext(newContext);
+
+		if (collection != null) {
+			DestroyAllWindows();
+
+			RealiseWindows(collection.Value.Windows);
+		} else {
+			Debug.LogWarning($"window collection not found for context {newContext.Name}");
+		}
 	}
 
 	/// <summary>
@@ -43,7 +67,14 @@ public class WindowManager : Singleton<WindowManager> {
 	}
 
 	public void DestroyAllWindows() {
+		// destroy these for good measure and non grouped
+		foreach (var window in Windows) {
+			Destroy(window.RealisedWindow.gameObject);
+		}
+		Windows.Clear();
 
+		// destroy the groups too
+		WindowRealiser.Instance.DestroyAllGroupObjects();
 	}
 
 	void Start() {

@@ -9,8 +9,6 @@ public class ContextObserver : Singleton<ContextObserver> {
 
 	// tbd and finished all the way cuz this is very temporary
 	void Start() {
-		ContextManager.ClearContextChanged();
-
 		ContextManager.ForceEnterContext(new Main());
 		ContextManager.EnterContext<Editing>();
 
