@@ -2,19 +2,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static Codice.CM.Common.CmCallContext;
 
-public class ContextManager {
+public static class ContextManager {
+	static ContextManager() {
+		OnContextChanged = null;
+	}
+
 	private static IContext _current;
 
 	public static IContext Current => _current;
 
-	public static void EnterContext(IContext context) {
+	public static void ClearContextChanged() { OnContextChanged = null; }
+	public static event Action<IContext> OnContextChanged;
+
+	public static void ForceEnterContext(IContext context) {
 		_current = context;
 	}
 
 	public static T EnterContext<T>() where T : IContext {
-		if (IsInContext<T>(out T instance)) {
+		if (IsInContext(out T instance)) {
 			return instance;
 		}
 		// ????

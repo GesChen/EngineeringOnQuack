@@ -9,15 +9,27 @@ public class ContextObserver : Singleton<ContextObserver> {
 
 	// tbd and finished all the way cuz this is very temporary
 	void Start() {
-		ContextManager.EnterContext(new Main());
+		ContextManager.ClearContextChanged();
+
+		ContextManager.ForceEnterContext(new Main());
 		ContextManager.EnterContext<Editing>();
+
+		GameManager.Instance.OnStartSimulating += StartSimulating;
+		GameManager.Instance.OnStopSimulating += StartEditing;
 	}
+
 	void Update() {
 		if (ContextManager.IsInContext<Editing>(out _))
 			CheckEditing();
 
+		if (ContextManager.IsInContext<Simulating>(out _))
+			CheckSimulating();
+
 		debug_currentContext = ContextManager.Current.Name;
 	}
+
+	public void StartEditing() { ContextManager.EnterContext<Editing>(); }
+	public void StartSimulating() { ContextManager.EnterContext<Simulating>(); }
 
 	[HideInNormalInspector] public int selectionCount;
 	public Func<bool> GroupCheck;
@@ -41,5 +53,9 @@ public class ContextObserver : Singleton<ContextObserver> {
 				}
 			}
 		}
+	}
+	
+	void CheckSimulating() {
+
 	}
 }
