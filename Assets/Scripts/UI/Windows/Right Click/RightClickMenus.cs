@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using W = PMenu.Window;
 
-public class RightClickMenus : MonoBehaviour {
+public static class RightClickMenus {
 
 	public delegate void NewPartEvent(string name);
 	public static event NewPartEvent OnNewPartMade;
@@ -27,7 +27,7 @@ public class RightClickMenus : MonoBehaviour {
 	public delegate void TabOpenEvent(WindowItem source);
 	public static event TabOpenEvent OnMaterial;
 
-	public static void ClearEvents() {
+	static RightClickMenus() {
 		// theres no reason to align them i just think it looks funny
 		OnNewPartMade			= null;
 		OnUndo					= null;

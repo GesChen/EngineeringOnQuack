@@ -11,22 +11,16 @@ public class OutputManager : Singleton<OutputManager> {
 	protected override void Awake() {
 		base.Awake();
 
-		BottomBar.ClearOutputs();
 		BottomBar.OnOutputsOpened += OpenModifyOutputs;
 
-		OutputsMenu.ClearItemSelected();
 		OutputsMenu.OnItemSelected += (i) => currentlySelectedI = i;
 
-		OutputsMenu.ClearNameChanged();
 		OutputsMenu.OnNameChanged += (name) => currentName = name;
 
-		OutputsMenu.ClearSubtract();
 		OutputsMenu.OnSubtract += OnSubtractPressed;
 
-		OutputsMenu.ClearRename();
 		OutputsMenu.OnRename += OnRenamePressed;
 
-		OutputsMenu.ClearAdd();
 		OutputsMenu.OnAdd += OnAddPressed;
 	}
 

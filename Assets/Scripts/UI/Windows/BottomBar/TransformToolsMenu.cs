@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TransformToolsMenu {
+public static class TransformToolsMenu {
 	public static event Action onTranslatePressed;
 	public static event Action onRotatePressed;
 	public static event Action onScalePressed;
 
-	public static void ClearEvents() {
+	static TransformToolsMenu() {
 		onTranslatePressed	= null;
 		onRotatePressed		= null;
 		onScalePressed		= null;

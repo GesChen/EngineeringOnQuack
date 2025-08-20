@@ -5,8 +5,8 @@ using UnityEngine;
 using System;
 using W = PMenu.Window;
 
-public class MaterialEditingMenu : MonoBehaviour {
-	public static void ClearEvents() {
+public static class MaterialEditingMenu {
+	static MaterialEditingMenu() {
 		OnStart = null;
 		OnColorSelection = null;
 		OnRequestCompositionItems = null;
