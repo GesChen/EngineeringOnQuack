@@ -61,80 +61,86 @@ public class SaveLoadMenus {
 	static TextMeshProUGUI SaveStatusText;
 	static event Action OnNameEnterPressed;
 
-	static readonly W NamePrompt = new(
-		"Name Your Creation!", 220, new(){
-			new W.InputField(
-				(value) => PromptedName = value,
-				"Enter name here..."),
-			new W.CustomItem(
-				WindowItem.NewButtonCustomText(
-					new PComponents.Button(() => OnNameEnterPressed?.Invoke()),
-					new PComponents.Text(
-						"Save!",
-						fontSize: Config.UI.Menu.FontSize,
-						alignment: TextAlignmentOptions.Center
-					),
-					PMenu.WindowItemLayout(220)
+	static W NamePrompt;
+	static void SetNamePrompt() {
+		NamePrompt = new(
+			"Name Your Creation!", 220, new(){
+				new W.InputField(
+					(value) => PromptedName = value,
+					"Enter name here..."),
+				new W.CustomItem(
+					WindowItem.NewButtonCustomText(
+						new PComponents.Button(() => OnNameEnterPressed?.Invoke()),
+						new PComponents.Text(
+							"Save!",
+							fontSize: Config.UI.Menu.FontSize,
+							alignment: TextAlignmentOptions.Center
+						),
+						PMenu.WindowItemLayout(220)
+					)
 				)
-			)
-		},
-		showTitle: true,
-		isFlyout: false,
-		closable: true,
-		extraSpacing: 5
-		);
+			},
+			showTitle: true,
+			isFlyout: false,
+			closable: true,
+			extraSpacing: 5
+			);
+	}
 
 	static readonly float imageSize = 50;
 	static readonly float textHeight = 20;
 	static readonly float margin = 5;
 
-	static readonly CWindow SaveStatus = new(){
-		Name = "Save Status",
-		Config = new(){
-			Resizable = false,
-			Movable = false,
-			Size = CWindow.Configuration.FixedSize(new(
-				imageSize + margin * 2,
-				imageSize + textHeight + margin * 3)),
-			Position = UIPosition.AnchoredOffset(
-				UIPosition.TopRight,
-				new(-100, -100)),
-			Closable = false,
-		},
-		Items = new WindowItem[]{
-			WindowItem.NewImage(
-				"Status Image",
-				new PComponents.Image(
-					Config.Locations.IconsFolder + "save"
-				),
-				WindowItem.LayoutConfig.FixedLayout(
-					UIPosition.AnchoredOffset(
-						UIPosition.TopLeft,
-						new(margin, -margin)),
-					new(imageSize, imageSize)
-					)
-			)
-			.OnRealized((rt, _) => {
-
-			}),
-			WindowItem.NewText(
-					"Status text",
-					new PComponents.Text(
-						"",
-						alignment: TextAlignmentOptions.Center,
-						fontSize: 16),
+	static CWindow SaveStatus;
+	public static void SetSaveStatus() {
+		SaveStatus = new() {
+			Name = "Save Status",
+			Config = new() {
+				Resizable = false,
+				Movable = false,
+				Size = CWindow.Configuration.FixedSize(new(
+					imageSize + margin * 2,
+					imageSize + textHeight + margin * 3)),
+				Position = UIPosition.AnchoredOffset(
+					UIPosition.TopRight,
+					new(-100, -100)),
+				Closable = false,
+			},
+			Items = new WindowItem[]{
+				WindowItem.NewImage(
+					"Status Image",
+					new PComponents.Image(
+						Config.Locations.IconsFolder + "save"
+					),
 					WindowItem.LayoutConfig.FixedLayout(
 						UIPosition.AnchoredOffset(
-							UIPosition.BottomLeft,
-							new(margin, margin)),
-						new(imageSize, textHeight)
+							UIPosition.TopLeft,
+							new(margin, -margin)),
+						new(imageSize, imageSize)
 						)
 				)
-			.OnRealized((rt, _) => {
-				SaveStatusText = rt.GetComponent<TextMeshProUGUI>();
-			})
-		}
-	};
+				.OnRealized((rt, _) => {
+
+				}),
+				WindowItem.NewText(
+						"Status text",
+						new PComponents.Text(
+							"",
+							alignment: TextAlignmentOptions.Center,
+							fontSize: 16),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.AnchoredOffset(
+								UIPosition.BottomLeft,
+								new(margin, margin)),
+							new(imageSize, textHeight)
+							)
+					)
+				.OnRealized((rt, _) => {
+					SaveStatusText = rt.GetComponent<TextMeshProUGUI>();
+				})
+			}
+		};
+	}
 
 	static void Cancel() {
 		LoadOptionsMenu.RealisedWindow.Hide();
@@ -217,79 +223,87 @@ public class SaveLoadMenus {
 
 	public static WindowItem LoadOptionsLayout;
 	static readonly float BottomOptionsHeight = 50;
-	public static readonly CWindow LoadOptionsMenu = new(){
-		Name = "Load Options Menu",
-		Config = new(){
-			Size = CWindow.Configuration.FreeSize(new(500, 500))
-		},
-		Items = new WindowItem[]{
-			WindowItem.NewScrollView(
-				"Files Scroll View",
-				new PComponents.ScrollView(
-					horizontalScrolling: false
-				),
-				WindowItem.LayoutConfig.DynamicLayout(
-					margin: BottomOptionsHeight * FourSides.DownConst),
-				new() { // file entries, probably make this procedural and update
-					WindowItem.NewLayout(
-						PComponents.Layout.Vertical.Fixed(
-							false,
-							true),
-						WindowItem.LayoutConfig.FillLayout,
-						new(){
-						}).OnRealized((_, item) => {
-							LoadOptionsLayout = item;
-						})
-				}
-			),
-			WindowItem.NewLayout(
-				"Button Container",
-				PComponents.Layout.Horizontal.Fixed(
-					true,
-					true,
-					5
+	public static CWindow LoadOptionsMenu;
+	static void SetLOM() {
+		LoadOptionsMenu = new() {
+			Name = "Load Options Menu",
+			Config = new() {
+				Size = CWindow.Configuration.FreeSize(new(500, 500))
+			},
+			Items = new WindowItem[]{
+				WindowItem.NewScrollView(
+					"Files Scroll View",
+					new PComponents.ScrollView(
+						horizontalScrolling: false
 					),
-				WindowItem.LayoutConfig.Custom(
-					position: new(0, 0, 1, 0),
-					sizeDelta: new(0, BottomOptionsHeight),
-					fixedPosition: new() {
-						Pivot = UIPosition.BottomCenter
-						}
-				),
-				new() {
-					WindowItem.NewButton(
-						"Cancel",
-						new PComponents.Button(Cancel),
-						WindowItem.LayoutConfig.DynamicLayout(
-							margin: new(10),
-							position: new(0, .5f, 0, 0))
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"Cancel",
-									alignment: TextAlignmentOptions.Center
-									),
-								WindowItem.LayoutConfig.FillLayout)
-						),
-					WindowItem.NewButton(
-						"Load",
-						new PComponents.Button(Load),
-						WindowItem.LayoutConfig.DynamicLayout(
-							margin: new(10),
-							position: new(0, 0, 0, .5f))
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"Load",
-									alignment: TextAlignmentOptions.Center
-									),
-								WindowItem.LayoutConfig.FillLayout)
-						)
+					WindowItem.LayoutConfig.DynamicLayout(
+						margin: BottomOptionsHeight * FourSides.DownConst),
+					new() { // file entries, probably make this procedural and update
+						WindowItem.NewLayout(
+							PComponents.Layout.Vertical.Fixed(
+								false,
+								true),
+							WindowItem.LayoutConfig.FillLayout,
+							new(){
+							}).OnRealized((_, item) => {
+								LoadOptionsLayout = item;
+							})
 					}
-				)
-		}
-	};
+				),
+				WindowItem.NewLayout(
+					"Button Container",
+					PComponents.Layout.Horizontal.Fixed(
+						true,
+						true,
+						5
+						),
+					WindowItem.LayoutConfig.Custom(
+						position: new(0, 0, 1, 0),
+						sizeDelta: new(0, BottomOptionsHeight),
+						fixedPosition: new() {
+							Pivot = UIPosition.BottomCenter
+							}
+					),
+					new() {
+						WindowItem.NewButton(
+							"Cancel",
+							new PComponents.Button(Cancel),
+							WindowItem.LayoutConfig.DynamicLayout(
+								margin: new(10),
+								position: new(0, .5f, 0, 0))
+							).SetSubItems(
+								WindowItem.NewText(
+									new PComponents.Text(
+										"Cancel",
+										alignment: TextAlignmentOptions.Center
+										),
+									WindowItem.LayoutConfig.FillLayout)
+							),
+						WindowItem.NewButton(
+							"Load",
+							new PComponents.Button(Load),
+							WindowItem.LayoutConfig.DynamicLayout(
+								margin: new(10),
+								position: new(0, 0, 0, .5f))
+							).SetSubItems(
+								WindowItem.NewText(
+									new PComponents.Text(
+										"Load",
+										alignment: TextAlignmentOptions.Center
+										),
+									WindowItem.LayoutConfig.FillLayout)
+							)
+						}
+					)
+			}
+		};
+	}
 
+	public static void Set() {
+		SetNamePrompt();
+		SetSaveStatus();
+		SetLOM();
+	}
 	public static CWindow[] Windows => new[] {
 		NamePrompt.CWindow.SetGroup("saveload"),
 		SaveStatus.SetGroup("saveload"),

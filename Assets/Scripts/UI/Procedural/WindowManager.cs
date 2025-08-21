@@ -59,6 +59,7 @@ public class WindowManager : Singleton<WindowManager> {
 			Menus.AddRange(collection.Value.Menus);
 
 			DestroyAllWindows();
+			//ReSetAllValues(collection.Value.Sets);
 			RealiseWindows(collection.Value.Windows);
 		} else {
 			Debug.LogWarning($"window collection not found for context {newContext.Name}");
@@ -69,7 +70,7 @@ public class WindowManager : Singleton<WindowManager> {
 	/// stop calling this from individual classes, instead put them all into
 	/// allwindows and windowmanager will do it
 	/// </summary>
-	public void RealiseWindows(params CWindow[] torealise) {
+	void RealiseWindows(params CWindow[] torealise) {
 		Windows ??= new();
 		foreach (var window in torealise) {
 			Realiser.Realise(window);
@@ -77,7 +78,7 @@ public class WindowManager : Singleton<WindowManager> {
 		}
 	}
 
-	public void DestroyAllWindows() {
+	void DestroyAllWindows() {
 		// destroy these for good measure and non grouped
 		foreach (var window in Windows) {
 			Destroy(window.RealisedWindow.gameObject);
@@ -88,11 +89,17 @@ public class WindowManager : Singleton<WindowManager> {
 		WindowRealiser.Instance.DestroyAllGroupObjects();
 	}
 
-	public void ResetAllMenus() {
+	void ResetAllMenus() {
 		foreach (var menu in Menus) {
 			menu.Reset();
 		}
 		Menus.Clear();
+	}
+
+	void ReSetAllValues(Action[] Sets) {
+		foreach (var setter in Sets) {
+			setter();
+		}
 	}
 
 	void Start() {

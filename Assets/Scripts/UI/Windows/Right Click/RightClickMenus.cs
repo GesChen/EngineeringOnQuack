@@ -61,52 +61,68 @@ public class RightClickMenus : MonoBehaviour {
 	// will have to add more later for other contexts but for now this is enough
 
 	// TODO: some grouping system to put them all under one parent
-	public static readonly W digital = new(
-		"Digital",
-		120,
-		new(){
-			new W.Button(() => MakeNewPart("cpu"),		"cpu",		iconName: "Parts/cpu"),
-			new W.Button(() => MakeNewPart("ram"),		"ram",		iconName: "Parts/ram"),
-			new W.Button(() => MakeNewPart("display"),	"display",	iconName: "Parts/display"),
-			new W.Button(() => MakeNewPart("script"),	"script",	iconName: "Parts/script")
-		},
-		showTitle: false);
+	public static W digital;
+	static void SetDigital() {
+		digital = new(
+			"Digital",
+			120,
+			new(){
+				new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "Parts/cpu"),
+				new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "Parts/ram"),
+				new W.Button(() => MakeNewPart("display"),  "display",  iconName: "Parts/display"),
+				new W.Button(() => MakeNewPart("script"),   "script",   iconName: "Parts/script")
+			},
+			showTitle: false
+		);
+	}
 
-	public static readonly W mechanical = new(
-		"Mechanical",
-		120,
-		new(){
-			new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
-			new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
-			new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
-			new W.Button(() => MakeNewPart("piston ii"),	"piston ii",	iconName: "Parts/piston 2"),
-			new W.Button(() => MakeNewPart("servo i"),		"servo i",		iconName: "Parts/servo 1"),
-			new W.Button(() => MakeNewPart("servo ii"),		"servo ii",		iconName: "Parts/servo 2")
-		},
-		showTitle: false);
+	public static W mechanical;
+	static void SetMechanical() { 
+		mechanical = new(
+			"Mechanical",
+			120,
+			new(){
+				new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
+				new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
+				new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
+				new W.Button(() => MakeNewPart("piston ii"),	"piston ii",	iconName: "Parts/piston 2"),
+				new W.Button(() => MakeNewPart("servo i"),		"servo i",		iconName: "Parts/servo 1"),
+				new W.Button(() => MakeNewPart("servo ii"),		"servo ii",		iconName: "Parts/servo 2")
+			},
+			showTitle: false
+		);
+	}
 
-	public static readonly W structural = new(
-		"Structural",
-		120,
-		new(){
-			new W.Button(() => MakeNewPart("cube"),		"cube",		iconName: "Parts/cube"),
-			new W.Button(() => MakeNewPart("sphere"),	"sphere",	iconName: "Parts/sphere"),
-			new W.Button(() => MakeNewPart("cylinder"),	"cylinder",	iconName: "Parts/cylinder"),
-			new W.Button(() => MakeNewPart("wedge"),	"wedge",	iconName: "Parts/wedge")
-		},
-		showTitle: false);
+	public static W structural;
+	static void SetStructural() {
+		structural = new(
+			"Structural",
+			120,
+			new(){
+				new W.Button(() => MakeNewPart("cube"),		"cube",		iconName: "Parts/cube"),
+				new W.Button(() => MakeNewPart("sphere"),	"sphere",	iconName: "Parts/sphere"),
+				new W.Button(() => MakeNewPart("cylinder"),	"cylinder",	iconName: "Parts/cylinder"),
+				new W.Button(() => MakeNewPart("wedge"),	"wedge",	iconName: "Parts/wedge")
+			},
+			showTitle: false
+		);
+	}
 
-	public static readonly W newPart = new(
-		"New Part",
-		160,
-		new() {
-			new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
-			new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
-			new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
-			new W.Button(()=>MakeNewPart("axle"), "axle",	iconName: ""), // TODO
-			new W.Button(()=>MakeNewPart("cable"), "cable",	iconName: "Parts/cable")
-		},
-		showTitle: false);
+	public static W newPart;
+	static void SetNewPart() {
+		newPart = new(
+			"New Part",
+			160,
+			new() {
+				new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
+				new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
+				new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
+				new W.Button(()=>MakeNewPart("axle"), "axle",	iconName: ""), // TODO
+				new W.Button(()=>MakeNewPart("cable"), "cable",	iconName: "Parts/cable")
+			},
+			showTitle: false
+		);
+	}
 
 	// yagni for now we're just doing multiple variations of the same main panel
 	// ¯\_("/)_/¯ if this starts getting excessive, then make a variating panel class
@@ -124,7 +140,7 @@ public class RightClickMenus : MonoBehaviour {
 
 	// horizontal layout with a bunch of buttons for modifying stuff
 	// undo redo copy paste delete
-	public static readonly WindowItem modifierList =
+	public static WindowItem modifierList =>
 		WindowItem.NewLayout(
 			PComponents.Layout.Horizontal.Fixed(
 				true,
@@ -173,13 +189,11 @@ public class RightClickMenus : MonoBehaviour {
 				.AddDescription("Delete")
 			});
 
-	private static W m_inWorldUniversalMenu;
-	
-	public static W inWorldUniversalMenu {
-		get {
-			if (m_inWorldUniversalMenu == null) {
-				m_inWorldUniversalMenu = new(
-					"Editing", mainwidth, new() { // deindented for readability
+	public static W inWorldUniversalMenu;
+	static void SetIWUM() { 
+		inWorldUniversalMenu = new(
+			"Editing", mainwidth, new() { // deindented for readability
+
 // ---------------------------- Universal Menu Items ------------------------------------
 /* 0*/	new W.Flyout(newPart,						"new part",		iconName: "plus"),
 /* 1*/	new W.Button(() => Call(OnUndo),			"undo",			iconName: "undo"),
@@ -194,14 +208,13 @@ public class RightClickMenus : MonoBehaviour {
 /*10*/	new W.Button(() => Call(OnAddToGroup),		"add to group",			iconName: "add to group"),
 /*11*/	new W.Button(() => Call(OnRemoveFromGroup),	"remove from group",	iconName: "remove from group"),
 // -----------------------------------------------------------------------------------
-					},
-					switchable: true);
+	
+			},
+			switchable: true
+		);
 
-				// fill in the material item
-				m_inWorldUniversalMenu.Items[6] = materialItem(m_inWorldUniversalMenu, 6); // manual reflection lol
-			}
-			return m_inWorldUniversalMenu;
-		}
+		// fill in the material item
+		inWorldUniversalMenu.Items[6] = materialItem(inWorldUniversalMenu, 6); // manual reflection lol
 	}
 
 /*	public static class UniversalMasks {
@@ -245,7 +258,7 @@ public class RightClickMenus : MonoBehaviour {
 		}
 	}
 
-	private static readonly W[] windows = {
+	private static W[] windows => new[] {
 		digital,
 		mechanical,
 		structural,
@@ -253,6 +266,13 @@ public class RightClickMenus : MonoBehaviour {
 		inWorldUniversalMenu
 	};
 
+	public static void Set() {
+		SetDigital();
+		SetMechanical();
+		SetStructural();
+		SetNewPart();
+		SetIWUM();
+	}
 	public static CWindow[] Windows => 
 		windows.Select(w => 
 			w.CWindow.SetGroup("rightclick")

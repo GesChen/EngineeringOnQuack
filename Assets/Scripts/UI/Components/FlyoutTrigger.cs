@@ -38,6 +38,7 @@ public class FlyoutTrigger : MonoBehaviour {
 			openIndicator.sprite = closedSprite;
 
 		create = DateTime.Now;
+
 	}
 
 	void Update() {
@@ -94,16 +95,14 @@ public class FlyoutTrigger : MonoBehaviour {
 			return;
 		}
 
-		if (state) {			
+		if (state) {
+			targetFlyout.sourceTrigger = this;
+		
 			targetFlyout.Show(this, openHorizontally, openPrioritizingRight, openPrioritizingUp);
 		} else {
 
 			if (!targetFlyout.mouseInRange) // and the mouse isnt hovering on the target flyout now
 				targetFlyout.Hide();
-		}
-
-		if (parentIsFlyout) {
-			parentFlyout.openChildFlyout = targetFlyout;
 		}
 	}
 }

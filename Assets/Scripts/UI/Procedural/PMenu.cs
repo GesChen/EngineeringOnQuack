@@ -319,7 +319,7 @@ public class PMenu {
 
 				CWindow window = SubCWindow;
 				window ??= SubWindow.CWindow;
-				Debug.Log($"call convert on {Label} cw {window.CreationTime}");
+				//Debug.Log($"call convert on {Label} cw {window.CreationTime}");
 
 				if (window == null)
 					Debug.LogError($"Forgot to generate the subwindow of flyout {Label}");

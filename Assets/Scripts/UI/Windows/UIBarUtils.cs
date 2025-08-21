@@ -25,7 +25,7 @@ public static class UIBarUtils {
 		).AddComponents(
 			new PComponents.LayoutElement(width)
 		);
-	
+
 	public static WindowItem DynamicBarSpace(float width) =>
 		WindowItem.NewEmpty(
 			WindowItem.LayoutConfig.LayoutElementDynamic()

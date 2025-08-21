@@ -26,10 +26,12 @@ public static class BottomBar {
 	public static event Action OnAssemble;
 	public static void Assemble() { OnAssemble?.Invoke(); }
 
-	static readonly W FileMenu = new(
-		"File", 200, new(){
-			new W.Button(null,	"New"),
-			new W.Button(null,	"Rename"),
+	static W FileMenu;
+	static void SetFileMenu() {
+		FileMenu = new(
+			"File", 200, new(){
+			new W.Button(null,  "New"),
+			new W.Button(null,  "Rename"),
 			new W.CustomItem(
 				WindowItem.NewEmpty( // use empty iinstead of layout for perf
 					PMenu.WindowItemLayout(200),
@@ -87,62 +89,75 @@ public static class BottomBar {
 					}
 			)),
 			new W.Button(null, "Insert Assembly"), // ? might keep 
-		},
-		showTitle: false);
+			},
+			showTitle: false);
+	}
 
-	static readonly W ToolsMenu = new(
-		"Tools", 200, new(){
-			new W.Button(() => OnOutputsOpened?.Invoke(), "Outputs")
-				.OnRealItemMade((wi) => OutputButton = wi), // todo: descriptions? and icons
-			new W.Button(() => OnTransformOpened?.Invoke(), "Transform"), // todo: descriptions? and icons
-			new W.Button(() => OnMaterialOpened?.Invoke(), "Material"), // todo: descriptions? and icons
-		},
-		showTitle: false);
+	static W ToolsMenu;
+	static void SetToolsMenu() {
+		ToolsMenu = new(
+			"Tools", 200, new(){
+				new W.Button(() => OnOutputsOpened?.Invoke(), "Outputs")
+					.OnRealItemMade((wi) => OutputButton = wi), // todo: descriptions? and icons
+				new W.Button(() => OnTransformOpened?.Invoke(), "Transform"), // todo: descriptions? and icons
+				new W.Button(() => OnMaterialOpened?.Invoke(), "Material"), // todo: descriptions? and icons
+			},
+			showTitle: false);
+	}
 
-	
-	public static CWindow Bar = new(){
-		Name = "Bottom Bar",
-		Config = new(){
-			Resizable = false,
-			Movable = false,
-			Size = CWindow.Configuration.FixedSize(new(0, size)),
-			Position = new(
+
+	public static CWindow Bar;
+	static void SetBar() {
+		Bar = new() {
+			Name = "Bottom Bar",
+			Config = new() {
+				Resizable = false,
+				Movable = false,
+				Size = CWindow.Configuration.FixedSize(new(0, size)),
+				Position = new(
 				new(0, 0),
 				new(1, 0),
 				new(.5f, 0),
 				new(0, 0)
 				),
-			Closable = false,
-			HideOnStart = false
-		},
-		Items = new WindowItem[] {
-			WindowItem.NewLayout(
-				PComponents.Layout.Horizontal.Fixed(
-					true,
-					true,
-					10
+				Closable = false,
+				HideOnStart = false
+			},
+			Items = new WindowItem[] {
+				WindowItem.NewLayout(
+					PComponents.Layout.Horizontal.Fixed(
+						true,
+						true,
+						10
+						),
+					WindowItem.LayoutConfig.DynamicLayout(
+						padding: new(innerpadding)
 					),
-				WindowItem.LayoutConfig.DynamicLayout(
-					padding: new(innerpadding)
-				),
-				new(){
-UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, (true, true)),
-UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, (true, true)),
-UIBarUtils.DynamicBarSpace	(2),
-UIBarUtils.DynamicBarText	(5, "name", .5f),
-UIBarUtils.DynamicBarSpace	(2),
-UIBarUtils.DynamicBarButton	(2, "Assemble", Assemble)
-				})
-		},
-		CustomEvents = new() {
-			new TimedEventInvoker.TimedEvent(
-				TimedEventInvoker.Timing.Awake,
-				(_) => {
-Bar.RealisedWindow.backgroundImage.enabled = false;
-				})
-		}
-	};
-	
+					new(){
+	UIBarUtils.DynamicBarFlyout (1, "File", FileMenu.CWindow, (true, true)),
+	UIBarUtils.DynamicBarFlyout (1, "Tools", ToolsMenu.CWindow, (true, true)),
+	UIBarUtils.DynamicBarSpace  (2),
+	UIBarUtils.DynamicBarText   (5, "name", .5f),
+	UIBarUtils.DynamicBarSpace  (2),
+	UIBarUtils.DynamicBarButton (2, "Assemble", Assemble)
+					})
+			},
+			CustomEvents = new() {
+				new TimedEventInvoker.TimedEvent(
+					TimedEventInvoker.Timing.Awake,
+					(_) => {
+	Bar.RealisedWindow.backgroundImage.enabled = false;
+					})
+			}
+		};
+	}
+
+
+	public static void Set() {
+		SetFileMenu();
+		SetToolsMenu();
+		SetBar();
+	}
 	public static CWindow[] Windows => new CWindow[] {
 		Bar.SetGroup("bar"),
 		FileMenu.CWindow.SetGroup("bar"),

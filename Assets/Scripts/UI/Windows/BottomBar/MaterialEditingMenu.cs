@@ -24,38 +24,40 @@ public class MaterialEditingMenu {
 	public static Action<Color> OnColorSelection;
 
 	// right click version for now
-	public static readonly CWindow colorPicker = new(){
-		Name = "Color Picker",
-		Config = new(){
-			Movable = false,
-			Resizable = false,
-			ContentDynamic = true,
-			DynamicPadding = new(5),
-			Closable = false
-		},
-		Items = new WindowItem[] {
-			WindowItem.NewLayout(
-				PComponents.Layout.Horizontal.Dynamic(),
-				WindowItem.LayoutConfig.FillLayout,
-				Config.Building.Colors.Select(c => 
+	public static CWindow ColorPicker;
+	static void SetColorPicker() {
+		ColorPicker = new() {
+			Name = "Color Picker",
+			Config = new() {
+				Movable = false,
+				Resizable = false,
+				ContentDynamic = true,
+				DynamicPadding = new(5),
+				Closable = false
+			},
+			Items = new WindowItem[] {
+				WindowItem.NewLayout(
+					PComponents.Layout.Horizontal.Dynamic(),
+					WindowItem.LayoutConfig.FillLayout,
+					Config.Building.Colors.Select(c => 
 
-					// make the color button for each one
-					WindowItem.NewButtonCustomImageComponent(
-						"Color option",
-						new (
-							() => OnColorSelection?.Invoke(c),
-							Config.UI.ColorBlock.WhiteBlock),
-						new (c), // might make the color part an inner element
-						WindowItem.LayoutConfig.LayoutElement(
-							Config.Building.ColorPickerItemSize,
-							new(0)
+						// make the color button for each one
+						WindowItem.NewButtonCustomImageComponent(
+							"Color option",
+							new (
+								() => OnColorSelection?.Invoke(c),
+								Config.UI.ColorBlock.WhiteBlock),
+							new (c), // might make the color part an inner element
+							WindowItem.LayoutConfig.LayoutElement(
+								Config.Building.ColorPickerItemSize,
+								new(0)
+								)
 							)
-						)
-					).ToList()
-				)
-		}
-	};
-
+						).ToList()
+					)
+			}
+		};
+	}
 	// also rc version for now
 	public static Func<WindowItem[]> OnRequestCompositionItems;
 	public static event Action<int> OnCompositionSelection;
@@ -64,77 +66,68 @@ public class MaterialEditingMenu {
 		OnCompositionSelection?.Invoke(index);
 	}
 
-	private static CWindow m_compositionPicker;
-	public static CWindow CompositionPicker {
-		get {
-			if (m_compositionPicker == null) {
-				var items =
-					OnRequestCompositionItems?.Invoke()
-					?? throw new InvalidOperationException("No composition items provider registered.");
-				m_compositionPicker = new() {
-					Name = "Composition Picker",
-					Config = new() {
-						Movable = false,
-						Resizable = false,
-						ContentDynamic = true,
-						DynamicPadding = new(5),
-						Closable = false
-					},
-					Items = new[] {
-						WindowItem.NewLayout(
-							PComponents.Layout.Horizontal.Dynamic(),
-							WindowItem.LayoutConfig.FillLayout,
-							items.ToList() // too lazy to refactor this
-							)
-					}
-				};
+	public static CWindow CompositionPicker;
+	static void SetCompositionPicker() { 
+		var items =
+			OnRequestCompositionItems?.Invoke()
+			?? throw new InvalidOperationException("No composition items provider registered.");
+		
+		CompositionPicker = new() {
+			Name = "Composition Picker",
+			Config = new() {
+				Movable = false,
+				Resizable = false,
+				ContentDynamic = true,
+				DynamicPadding = new(5),
+				Closable = false
+			},
+			Items = new[] {
+				WindowItem.NewLayout(
+					PComponents.Layout.Horizontal.Dynamic(),
+					WindowItem.LayoutConfig.FillLayout,
+					items.ToList() // too lazy to refactor this
+					)
 			}
-
-			return m_compositionPicker;
-		}
+		};
 	}
 
 	// has to be a property to prevent getting evaluated at type initialization
-	private static W m_editor;
-	public static W Editor {
-		get {
-			m_editor ??= new W(
-				"Material",
-				size,
-				new(){
-					new W.Flyout(
-						colorPicker,
-						"",
-						addIndicator: false
-						).AddSubItems(
-							WindowItem.NewImage( // color preview
-								new(),
-								WindowItem.LayoutConfig.FillLayout // solid fill of color
-							)),
+	public static W Editor;
+	static void SetEditor() { 
+		Editor = new W(
+			"Material",
+			size,
+			new(){
+				new W.Flyout(
+					ColorPicker,
+					"",
+					addIndicator: false
+					).AddSubItems(
+						WindowItem.NewImage( // color preview
+							new(),
+							WindowItem.LayoutConfig.FillLayout // solid fill of color
+						)),
 
-					new W.CustomItem(
-						WindowItem.NewFlyoutTrigger(
-							new PComponents.FlyoutTrigger(CompositionPicker),
-							WindowItem.LayoutConfig.FixedLayout(
-								UIPosition.AnchoredAt(UIPosition.TopLeft),
-								new (size, size)
-								),
-							new PComponents.HoverTarget(Config.UI.ColorBlock.WhiteBlock) // make it white
-							)
+				new W.CustomItem(
+					WindowItem.NewFlyoutTrigger(
+						new PComponents.FlyoutTrigger(CompositionPicker),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.AnchoredAt(UIPosition.TopLeft),
+							new (size, size)
+							),
+						new PComponents.HoverTarget(Config.UI.ColorBlock.WhiteBlock) // make it white
 						)
-				},
-				movable: true,
-				isFlyout: false,
-				closable: true
-				).AddEventToCW(
-					TimedEventInvoker.Timing.Start,
-					(_) => {
-						OnStart?.Invoke(m_editor.CWindow, ref colorPickerButton, ref compositionPickerButton);
-					}
-				);
-			
-			return m_editor;
-		}
+					)
+			},
+			movable: true,
+			isFlyout: false,
+			closable: true
+		).AddEventToCW(
+			TimedEventInvoker.Timing.Start,
+			(_) => {
+				OnStart?.Invoke(Editor.CWindow, ref colorPickerButton, ref compositionPickerButton);
+			}
+		);
 	}
 
 	public static void ShowMenu(WindowItem source) {
@@ -151,9 +144,13 @@ public class MaterialEditingMenu {
 		Editor.CWindow.RealisedWindow.SetWorldCorner(at, 4);
 	}
 
-	// has to be property because it needs to be reevaluated at creationtime
+	public static void Set() {
+		SetColorPicker();
+		SetCompositionPicker();
+		SetEditor();
+	}
 	public static CWindow[] Windows => new[] {
-		colorPicker.SetGroup("tools/materialeditor"),
+		ColorPicker.SetGroup("tools/materialeditor"),
 		CompositionPicker.SetGroup("tools/materialeditor"),
 		Editor.CWindow.SetGroup("tools/materialeditor")
 	};
@@ -164,12 +161,11 @@ public class MaterialEditingMenu {
 	static RectTransform colorPickerButton;
 	static RectTransform compositionPickerButton;
 	static void ShowColorPicker() {
-		colorPicker.RealisedWindow.Show();
-		colorPicker.RealisedWindow.PlaceAt(colorPickerButton, true, true, false);
+		ColorPicker.RealisedWindow.Show();
+		ColorPicker.RealisedWindow.PlaceAt(colorPickerButton, true, true, false);
 	}
 	static void ShowCompositionPicker() {
 		CompositionPicker.RealisedWindow.Show();
 		CompositionPicker.RealisedWindow.PlaceAt(compositionPickerButton, true, true, false);
 	}
-
 }

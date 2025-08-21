@@ -28,59 +28,62 @@ public static class SimulatingMainUI {
 		public static event Action<int> OnItemToggled;
 
 		public static WindowItem OutputsLayoutItem;
-		public static W Outputs = new(
-			"Outputs", 250, new() {
-				new W.CustomItem(
-					WindowItem.NewLayout(
-						PComponents.Layout.Horizontal.Dynamic(),
-						PMenu.WindowItemLayout(250),
-						new() {
-							WindowItem.NewButtonCustomText(
-								new PComponents.Button(() => OnHideAll?.Invoke()),
-								new PComponents.Text(
-									"Hide All",
-									alignment: TMPro.TextAlignmentOptions.Center
+		public static W Outputs;
+		internal static void SetOutputs() {
+			Outputs = new(
+				"Outputs", 250, new() {
+					new W.CustomItem(
+						WindowItem.NewLayout(
+							PComponents.Layout.Horizontal.Dynamic(),
+							PMenu.WindowItemLayout(250),
+							new() {
+								WindowItem.NewButtonCustomText(
+									new PComponents.Button(() => OnHideAll?.Invoke()),
+									new PComponents.Text(
+										"Hide All",
+										alignment: TMPro.TextAlignmentOptions.Center
+									),
+									WindowItem.LayoutConfig.LayoutElementDynamic()
 								),
-								WindowItem.LayoutConfig.LayoutElementDynamic()
+								WindowItem.NewButtonCustomText(
+									new PComponents.Button(() => OnShowAll?.Invoke()),
+									new PComponents.Text(
+										"Show All",
+										alignment: TMPro.TextAlignmentOptions.Center
+									),
+									WindowItem.LayoutConfig.LayoutElementDynamic()
+								)
+							}
+						)
+					),
+					new W.CustomItem(
+						WindowItem.NewScrollView(
+							new PComponents.ScrollView(
+								horizontalScrolling: false
 							),
-							WindowItem.NewButtonCustomText(
-								new PComponents.Button(() => OnShowAll?.Invoke()),
-								new PComponents.Text(
-									"Show All",
-									alignment: TMPro.TextAlignmentOptions.Center
-								),
-								WindowItem.LayoutConfig.LayoutElementDynamic()
-							)
-						}
+							WindowItem.LayoutConfig.FixedLayout(
+								UIPosition.AnchoredAt(UIPosition.TopLeft),
+								new(250, listboxheight),
+								new FourSides(10)
+							),
+							new() {
+								WindowItem.NewLayout(
+									PComponents.Layout.Vertical.Fixed(
+										false,
+										true
+									),
+									WindowItem.LayoutConfig.Custom(
+										position: new(1, 0, 0, 0),
+										sizeDelta: new(0, 0)
+									),
+									new() { }
+								).OnRealized((_, wi) => OutputsLayoutItem = wi)
+							}
+						)
 					)
-				),
-				new W.CustomItem(
-					WindowItem.NewScrollView(
-						new PComponents.ScrollView(
-							horizontalScrolling: false
-						),
-						WindowItem.LayoutConfig.FixedLayout(
-							UIPosition.AnchoredAt(UIPosition.TopLeft),
-							new(250, listboxheight),
-							new FourSides(10)
-						),
-						new() {
-							WindowItem.NewLayout(
-								PComponents.Layout.Vertical.Fixed(
-									false,
-									true
-								),
-								WindowItem.LayoutConfig.Custom(
-									position: new(1, 0, 0, 0),
-									sizeDelta: new(0, 0)
-								),
-								new() { }
-							).OnRealized((_, wi) => OutputsLayoutItem = wi)
-						}
-					)
-				)
-			}
-		);
+				}
+			);
+		}
 
 		public static WindowItem OutputItem(string name, int i) =>
 			WindowItem.NewButton(
@@ -96,7 +99,7 @@ public static class SimulatingMainUI {
 						UIPosition.AnchoredAt(UIPosition.MiddleLeft),
 						Config.UI.Menu.IconSize * Vector2.one
 					)
-				).OnRealized((rt, _) => 
+				).OnRealized((rt, _) =>
 					ToggleIcons[i] = rt.GetComponent<Image>()
 				),
 				WindowItem.NewText( // label
@@ -107,49 +110,56 @@ public static class SimulatingMainUI {
 				)
 			);
 
-		public static CWindow Bar = new(){
-			Name = "Top Bar",
-			Config = new(){
-				Resizable = false,
-				Movable = false,
-				Size = CWindow.Configuration.FixedSize(new(0, size)),
-				Position = new(
-					new(0, 1),
-					new(1, 1),
-					new(.5f, 1),
-					new(0, 0)
-				),
-				Closable = false,
-				HideOnStart = false
-			},
-			Items = new WindowItem[] {
-			WindowItem.NewLayout(
-				PComponents.Layout.Horizontal.Fixed(
-					true,
-					true,
-					10
+		public static CWindow Bar;
+		internal static void SetBar() {
+			Bar = new() {
+				Name = "Top Bar",
+				Config = new() {
+					Resizable = false,
+					Movable = false,
+					Size = CWindow.Configuration.FixedSize(new(0, size)),
+					Position = new(
+						new(0, 1),
+						new(1, 1),
+						new(.5f, 1),
+						new(0, 0)
 					),
-				WindowItem.LayoutConfig.DynamicLayout(
-					padding: new(innerpadding)
-				),
-				new(){
+					Closable = false,
+					HideOnStart = false
+				},
+				Items = new WindowItem[] {
+				WindowItem.NewLayout(
+					PComponents.Layout.Horizontal.Fixed(
+						true,
+						true,
+						10
+						),
+					WindowItem.LayoutConfig.DynamicLayout(
+						padding: new(innerpadding)
+					),
+					new(){
 UIBarUtils.DynamicBarButton(2, "Return to Editing", () => OnReturnToEditing?.Invoke()),
 UIBarUtils.DynamicBarSpace(1),
 UIBarUtils.DynamicBarText(3, "name", .5f),
 UIBarUtils.DynamicBarSpace(1),
 UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.CWindow, (false, false))
-				})
-			},
-			CustomEvents = new() {
-				new TimedEventInvoker.TimedEvent(
-					TimedEventInvoker.Timing.Awake,
-					(_) => {
-	Bar.RealisedWindow.backgroundImage.enabled = false;
 					})
-			}
-		};
+				},
+				CustomEvents = new() {
+					new TimedEventInvoker.TimedEvent(
+						TimedEventInvoker.Timing.Awake,
+						(_) => {
+		Bar.RealisedWindow.backgroundImage.enabled = false;
+						})
+				}
+			};
+		}
 	}
-
+	
+	public static void Set() {
+		TopBar.SetOutputs();
+		TopBar.SetBar();
+	}
 	public static CWindow[] Windows => new[] {
 		TopBar.Bar,
 		TopBar.Outputs.CWindow

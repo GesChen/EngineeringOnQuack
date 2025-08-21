@@ -32,6 +32,8 @@ public class DynamicLayoutGroup : HorizontalOrVerticalLayoutGroup {
 	protected override void Start() {
 		base.Start();
 		rt = GetComponent<RectTransform>();
+		
+		IsVertical = rt.rect.height > rt.rect.width;
 	}
 	protected override void Update() {
 		base.Update();
