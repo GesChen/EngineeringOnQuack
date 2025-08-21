@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,6 +14,8 @@ public class FlyoutTrigger : MonoBehaviour {
 	public Image openIndicator;
 	public Sprite openSprite;
 	public Sprite closedSprite;
+
+	DateTime create;
 
 	[HideInNormalInspector] public HoverTarget selfHoverTarget;
 
@@ -33,6 +36,8 @@ public class FlyoutTrigger : MonoBehaviour {
 
 		if (openIndicator != null)
 			openIndicator.sprite = closedSprite;
+
+		create = DateTime.Now;
 	}
 
 	void Update() {
@@ -58,8 +63,14 @@ public class FlyoutTrigger : MonoBehaviour {
 			return;
 		}
 
+		/*try {
+			var _ = targetCWindow.RealisedWindow;
+		} catch {
+			Debug.Log($"fetch {create}");
+		}*/
+
 		// try to retrieve the target flyout component or make it
-		if (targetCWindow.RealisedWindow != null) {
+		if (targetCWindow.GetRealisedOrNull() != null) {
 			var window = targetCWindow.RealisedWindow.gameObject;
 			// other triggers may have already created a component
 			if (window.TryGetComponent(out Flyout flyoutInstance)) {
@@ -68,9 +79,10 @@ public class FlyoutTrigger : MonoBehaviour {
 				targetFlyout = window.AddComponent<Flyout>();
 				// component needs no setup
 			}
-		} else {
+		} else { 
 			if (Time.frameCount > Config.UI.Behaviour.MaxFramesForRealization) {
-				Debug.LogError("Target CWindow still not created!");
+				Debug.Log($"{rt.GetPath()} fetch {create} cw created {targetCWindow.CreationTime}");
+				Debug.LogError("Target CWindow still not realised!");
 				return;
 			}
 		}

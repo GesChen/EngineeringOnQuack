@@ -272,7 +272,8 @@ public class PMenu {
 		}
 
 		public class Flyout : Item {
-			public CWindow SubWindow;
+			public CWindow SubCWindow;
+			public Window SubWindow;
 			public bool AddIndicator;
 
 			public Flyout(
@@ -285,7 +286,7 @@ public class PMenu {
 				Sprite iconSprite = null)
 				: base(label, description, iconName, iconPath, iconSprite) {
 
-				SubWindow = subWindow.CWindow;
+				SubWindow = subWindow;
 				AddIndicator = addIndicator;
 			}
 
@@ -298,7 +299,7 @@ public class PMenu {
 				Sprite iconSprite = null)
 				: base(label, description, iconName, iconPath, iconSprite) {
 
-				SubWindow = subWindow;
+				SubCWindow = subWindow;
 				AddIndicator = addIndicator;
 			}
 
@@ -316,13 +317,16 @@ public class PMenu {
 					);
 				}
 
-				CWindow subWindow = SubWindow;
-				if (subWindow == null)
+				CWindow window = SubCWindow;
+				window ??= SubWindow.CWindow;
+				Debug.Log($"call convert on {Label} cw {window.CreationTime}");
+
+				if (window == null)
 					Debug.LogError($"Forgot to generate the subwindow of flyout {Label}");
 
 				var newitem = WindowItem.NewFlyoutTrigger(
 					Label,
-					new PComponents.FlyoutTrigger(subWindow, indicator),
+					new PComponents.FlyoutTrigger(window, indicator),
 					WindowItemLayout(width),
 					new PComponents.HoverTarget(normalColor: Config.UI.Visual.BackgroundColor)
 					).SetSubItems(subs)
