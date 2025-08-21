@@ -36,64 +36,56 @@ public static class BottomBar {
 				WindowItem.NewEmpty( // use empty iinstead of layout for perf
 					PMenu.WindowItemLayout(200),
 					new() {
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomText(
 							new PComponents.Button(SaveLoadMenus.Save),
+							new PComponents.Text(
+								"Save",
+								alignment: TextAlignmentOptions.Right
+							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, splitspacing / 2, 0, 0),
 								padding: new(splittextspace, 0),
 								position: new FourSides(0,.5f,0,0))
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"Save",
-									alignment: TextAlignmentOptions.Right),
-								WindowItem.LayoutConfig.FillLayout
-							)),
-						WindowItem.NewButton(
+						),
+						WindowItem.NewButtonCustomText(
 							new PComponents.Button(SaveLoadMenus.SaveAs),
+							new PComponents.Text(
+								"As",
+								alignment: TextAlignmentOptions.Left
+							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, 0, 0, splitspacing / 2),
 								padding: new(splittextspace, 0),
 								position: new FourSides(0,0,0,.5f))
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"As",
-									alignment: TextAlignmentOptions.Left),
-								WindowItem.LayoutConfig.FillLayout
-							))
+						)
 					}
 			)),
 			new W.CustomItem(
 				WindowItem.NewEmpty( // use empty iinstead of layout for perf
 					PMenu.WindowItemLayout(200),
 					new() {
-						WindowItem.NewButton(
+						WindowItem.NewButtonCustomText(
 							new PComponents.Button(SaveLoadMenus.ShowLoadMenu),
+							new PComponents.Text(
+								"Load",
+								alignment: TextAlignmentOptions.Right
+							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, splitspacing / 2, 0, 0),
 								padding: new(splittextspace, 0),
 								position: new FourSides(0,.5f,0,0))
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"Load",
-									alignment: TextAlignmentOptions.Right),
-								WindowItem.LayoutConfig.FillLayout
-							)),
-						WindowItem.NewButton(
+						),
+						WindowItem.NewButtonCustomText(
 							new PComponents.Button(null),
+							new PComponents.Text(
+								"Recent",
+								alignment: TextAlignmentOptions.Left
+							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, 0, 0, splitspacing / 2),
 								padding: new(splittextspace, 0),
 								position: new FourSides(0,0,0,.5f))
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"Recent",
-									alignment: TextAlignmentOptions.Left),
-								WindowItem.LayoutConfig.FillLayout
-							))
+						)
 					}
 			)),
 			new W.Button(null, "Insert Assembly"), // ? might keep 
@@ -109,66 +101,7 @@ public static class BottomBar {
 		},
 		showTitle: false);
 
-	static WindowItem DynamicBarFlyout(string label, CWindow target, float width) =>
-		WindowItem.NewFlyoutTrigger(
-			label,
-			new PComponents.FlyoutTrigger(
-				target,
-				openHorizontally: false,
-				openPrioritizingRight: true,
-				openPrioritizingUp: true
-				),
-			WindowItem.LayoutConfig.LayoutElementDynamic()
-		).SetSubItems(
-		WindowItem.NewText(
-			new PComponents.Text(
-				label,
-				alignment: TextAlignmentOptions.Center),
-			WindowItem.LayoutConfig.FillLayout
-			)
-		).AddComponents(
-			new PComponents.LayoutElement(width)
-		);
-	static WindowItem DynamicBarSpace(float width) =>
-		WindowItem.NewEmpty(
-			WindowItem.LayoutConfig.LayoutElementDynamic()
-		).AddComponents(
-			new PComponents.LayoutElement(width)
-		);
-
-	static WindowItem DynamicBarText(string text, float width, float bgopacity) =>
-		WindowItem.NewImage(
-				new PComponents.Image(
-					Config.UI.Visual.BackgroundColor *
-						new Color(1, 1, 1, bgopacity)
-				),
-				WindowItem.LayoutConfig.LayoutElementDynamic()
-		).SetSubItems(
-			WindowItem.NewText(
-				new PComponents.Text(
-					text,
-					alignment: TextAlignmentOptions.Center),
-				WindowItem.LayoutConfig.FillLayout
-			)
-		).AddComponents(
-			new PComponents.LayoutElement(width)
-		);
-
-	static WindowItem DynamicBarButton(Action target, string label, float width) =>
-		WindowItem.NewButton(
-			new PComponents.Button(target),
-			WindowItem.LayoutConfig.LayoutElementDynamic()
-		).SetSubItems(
-		WindowItem.NewText(
-			new PComponents.Text(
-				label,
-				alignment: TextAlignmentOptions.Center),
-			WindowItem.LayoutConfig.FillLayout
-			)
-		).AddComponents(
-			new PComponents.LayoutElement(width)
-		);
-
+	
 	public static CWindow Bar = new(){
 		Name = "Bottom Bar",
 		Config = new(){
@@ -195,12 +128,12 @@ public static class BottomBar {
 					padding: new(innerpadding)
 				),
 				new(){
-					DynamicBarFlyout("File", FileMenu.CWindow, 1),
-					DynamicBarFlyout("Tools", ToolsMenu.CWindow, 1),
-					DynamicBarSpace(2),
-					DynamicBarText("name", 5, .5f),
-					DynamicBarSpace(2),
-					DynamicBarButton(Assemble, "Assemble", 2)
+UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, (true, true)),
+UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, (true, true)),
+UIBarUtils.DynamicBarSpace	(2),
+UIBarUtils.DynamicBarText	(5, "name", .5f),
+UIBarUtils.DynamicBarSpace	(2),
+UIBarUtils.DynamicBarButton	(2, "Assemble", Assemble)
 				})
 		},
 		CustomEvents = new() {

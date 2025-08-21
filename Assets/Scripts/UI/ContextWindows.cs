@@ -30,8 +30,18 @@ public static class ContextWindows {
 		.ToArray()
 	);
 
+	static readonly WindowCollection SimulatingWindows = new(
+		typeof(Contexts.Simulating),
+		new[] {
+			SimulatingMainUI.Windows
+		}
+		.SelectMany(l => l)
+		.ToArray()
+	);
+
 	public static WindowCollection[] WindowCollections = new[] {
-		EditingWindows
+		EditingWindows,
+		SimulatingWindows
 	};
 
 	public static WindowCollection? FindCollectionByContext(IContext context) {

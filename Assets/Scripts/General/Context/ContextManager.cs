@@ -7,6 +7,7 @@ using UnityEngine;
 public static class ContextManager {
 	static ContextManager() {
 		OnContextChanged = null;
+		_current = null;
 	}
 
 	private static IContext _current;

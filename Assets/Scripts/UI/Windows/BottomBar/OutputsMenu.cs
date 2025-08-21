@@ -89,21 +89,17 @@ public static class OutputsMenu {
 						).AddComponents(
 							new PComponents.LayoutElement(1)
 						),
-						WindowItem.NewButton( // rename
+						WindowItem.NewButtonCustomText( // rename
 							new PComponents.Button(
 								() => OnRename.Invoke()
 							),
+							new PComponents.Text(
+								"Rename",
+								fontSize: Config.UI.Menu.FontSize,
+								alignment: TMPro.TextAlignmentOptions.Center
+							),
 							WindowItem.LayoutConfig.LayoutElementDynamic(
 								new(Config.UI.Menu.ItemPadding)
-							)
-						).SetSubItems(
-							WindowItem.NewText(
-								new PComponents.Text(
-									"Rename",
-									fontSize: Config.UI.Menu.FontSize,
-									alignment: TMPro.TextAlignmentOptions.Center
-								),
-								WindowItem.LayoutConfig.FillLayout
 							)
 						).AddComponents(
 							new PComponents.LayoutElement(4)
@@ -146,23 +142,19 @@ public static class OutputsMenu {
 	}
 
 	static WindowItem OutputItem(string name, int i) =>
-		WindowItem.NewButton(
+		WindowItem.NewButtonCustomText(
 			new PComponents.Button(
 				() => Select(i)
+			),
+			new PComponents.Text(
+				name,
+				fontSize: Config.UI.Menu.FontSize,
+				alignment: TMPro.TextAlignmentOptions.Left
 			),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.LayoutItem,
 				new(width, Config.UI.Menu.ItemHeight),
 				new(5)
-			)
-		).SetSubItems(
-			WindowItem.NewText(
-				new PComponents.Text(
-					name,
-					fontSize: Config.UI.Menu.FontSize,
-					alignment: TMPro.TextAlignmentOptions.Left
-				),
-				WindowItem.LayoutConfig.FillLayout
 			)
 		);
 

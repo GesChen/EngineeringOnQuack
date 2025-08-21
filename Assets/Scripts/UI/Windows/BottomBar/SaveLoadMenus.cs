@@ -72,19 +72,16 @@ public static class SaveLoadMenus {
 				(value) => PromptedName = value,
 				"Enter name here..."),
 			new W.CustomItem(
-				WindowItem.NewButton(
+				WindowItem.NewButtonCustomText(
 					new PComponents.Button(() => OnNameEnterPressed?.Invoke()),
+					new PComponents.Text(
+						"Save!",
+						fontSize: Config.UI.Menu.FontSize,
+						alignment: TextAlignmentOptions.Center
+					),
 					PMenu.WindowItemLayout(220)
-					).SetSubItems(
-					WindowItem.NewText(
-						new PComponents.Text(
-							"Save!",
-							fontSize: Config.UI.Menu.FontSize,
-							alignment: TextAlignmentOptions.Center
-							),
-						WindowItem.LayoutConfig.FillLayout)
-					)
 				)
+			)
 		},
 		showTitle: true,
 		isFlyout: false,

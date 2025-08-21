@@ -44,7 +44,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		var stringpath = window.GroupPath;
 
 		var path = 
-			stringpath == null
+			stringpath == null || stringpath == ""
 			? new string[0]
 			: stringpath.Split('/').Select(part => part.Trim()).ToArray();
 
