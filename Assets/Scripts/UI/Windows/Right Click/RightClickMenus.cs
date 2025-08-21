@@ -36,13 +36,12 @@ public static class RightClickMenus {
 		OnPaste					= null;
 		OnDuplicate				= null;
 		OnDelete				= null;
-		OnMaterial				= null;
 		OnGroup					= null;
-		OnUnGroup				= null;
 		OnUnGroup				= null;
 		OnCombineGroups			= null;
 		OnAddToGroup			= null;
 		OnRemoveFromGroup		= null;
+		OnMaterial				= null;
 	}
 
 	static void MakeNewPart(string name) {
@@ -258,4 +257,6 @@ public static class RightClickMenus {
 		windows.Select(w => 
 			w.CWindow.SetGroup("rightclick")
 		).ToArray();
+
+	public static W[] Menus => windows;
 }

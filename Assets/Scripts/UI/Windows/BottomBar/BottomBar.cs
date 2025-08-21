@@ -150,4 +150,8 @@ Bar.RealisedWindow.backgroundImage.enabled = false;
 		FileMenu.CWindow.SetGroup("bar"),
 		ToolsMenu.CWindow.SetGroup("bar")
 	};
+	public static W[] Menus => new[] {
+		FileMenu,
+		ToolsMenu
+	};
 }

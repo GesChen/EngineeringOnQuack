@@ -37,6 +37,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		GroupManager.Instance.Subscribe();
 
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
+		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
 	}
 
 	WindowItem[] GenerateWindowItems() {

@@ -86,6 +86,8 @@ public class CWindow {
 	public LiveWindow RealisedWindow {
 		get {
 			if (m_realisedWindow == null) {
+				if (!ReferenceEquals(m_realisedWindow, null))
+					throw new($"Window \"{Name}\" destroyed!");
 				throw new($"Window \"{Name}\" not realised!"); 
 			}
 			return m_realisedWindow;

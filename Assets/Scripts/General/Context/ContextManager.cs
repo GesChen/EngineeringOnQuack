@@ -14,6 +14,7 @@ public static class ContextManager {
 
 	public static IContext Current => _current;
 
+	public static void ResetContextChanged() { OnContextChanged = null; }
 	static void Changed() { OnContextChanged?.Invoke(_current); }
 	public static event Action<IContext> OnContextChanged;
 

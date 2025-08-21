@@ -9,6 +9,7 @@ using UnityEngine.UI;
 // this is being used alot more than im expecting man im ngl
 public class WindowManager : Singleton<WindowManager> {
 	public List<CWindow> Windows = new();
+	public List<PMenu.Window> Menus = new();
 	public WindowRealiser Realiser;
 	[HideInInspector] public Canvas Canvas;
 	[HideInInspector] public RectTransform CanvasRect;
@@ -29,6 +30,14 @@ public class WindowManager : Singleton<WindowManager> {
 	protected override void Awake() {
 		base.Awake();
 
+		// weird domain clearing bug somehow these persist????????
+		Windows.Clear();
+		Menus.Clear();
+
+		// todo:investigate why this static constructor thing
+		// didnt null occ properly and we have to do this hack
+		// to get it to rest properly
+		ContextManager.ResetContextChanged();
 		ContextManager.OnContextChanged += ContextChanged;
 	}
 
@@ -46,8 +55,10 @@ public class WindowManager : Singleton<WindowManager> {
 		var collection = ContextWindows.FindCollectionByContext(newContext);
 
 		if (collection != null) {
-			DestroyAllWindows();
+			ResetAllMenus();
+			Menus.AddRange(collection.Value.Menus);
 
+			DestroyAllWindows();
 			RealiseWindows(collection.Value.Windows);
 		} else {
 			Debug.LogWarning($"window collection not found for context {newContext.Name}");
@@ -75,6 +86,13 @@ public class WindowManager : Singleton<WindowManager> {
 
 		// destroy the groups too
 		WindowRealiser.Instance.DestroyAllGroupObjects();
+	}
+
+	public void ResetAllMenus() {
+		foreach (var menu in Menus) {
+			menu.Reset();
+		}
+		Menus.Clear();
 	}
 
 	void Start() {

@@ -9,37 +9,54 @@ public static class ContextWindows {
 	public struct WindowCollection {
 		public Type Context;
 		public CWindow[] Windows;
+		public PMenu.Window[] Menus;
 
-		public WindowCollection(Type context, CWindow[] windows) {
+		public WindowCollection(
+			Type context,
+			CWindow[] windows,
+			PMenu.Window[] menus) {
+
 			Context = context;
 			Windows = windows;
+			Menus = menus;
 		}
 	}
 
-	static readonly WindowCollection EditingWindows = new(
+	static T[] Conglomerate<T>(params T[][] lists) =>
+		lists
+		.SelectMany(l => l)
+		.ToArray();
+
+	static WindowCollection EditingWindows => new(
 		typeof(Contexts.Editing),
-		new[] {
+		Conglomerate(
 			RightClickMenus.Windows,
 			TransformToolsMenu.Windows,
 			MaterialEditingMenu.Windows,
 			SaveLoadMenus.Windows,
 			OutputsMenu.Windows,
-			BottomBar.Windows,
-		}
-		.SelectMany(l => l)
-		.ToArray()
+			BottomBar.Windows
+		),
+		Conglomerate(
+			RightClickMenus.Menus,
+			MaterialEditingMenu.Menus,
+			SaveLoadMenus.Menus,
+			OutputsMenu.Menus,
+			BottomBar.Menus
+		)
 	);
 
-	static readonly WindowCollection SimulatingWindows = new(
+	static WindowCollection SimulatingWindows => new(
 		typeof(Contexts.Simulating),
-		new[] {
+		Conglomerate(
 			SimulatingMainUI.Windows
-		}
-		.SelectMany(l => l)
-		.ToArray()
+		),
+		Conglomerate(
+			SimulatingMainUI.Menus
+		)
 	);
 
-	public static WindowCollection[] WindowCollections = new[] {
+	public static WindowCollection[] WindowCollections => new[] {
 		EditingWindows,
 		SimulatingWindows
 	};

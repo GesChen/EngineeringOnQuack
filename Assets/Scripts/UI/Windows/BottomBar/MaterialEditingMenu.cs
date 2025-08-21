@@ -157,6 +157,9 @@ public static class MaterialEditingMenu {
 		CompositionPicker.SetGroup("tools/materialeditor"),
 		Editor.CWindow.SetGroup("tools/materialeditor")
 	};
+	public static W[] Menus => new[] {
+		Editor
+	};
 
 	static RectTransform colorPickerButton;
 	static RectTransform compositionPickerButton;

@@ -90,6 +90,8 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		foreach (var group in root.SubGroups) {
 			Destroy(group.Transform.gameObject);
 		}
+
+		root.SubGroups.Clear();
 	}
 
 	/*recursive version, just a tad worse, cg's refactored above

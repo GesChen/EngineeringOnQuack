@@ -26,6 +26,11 @@ public class PMenu {
 		public bool Closable = false;
 		public bool HideOnStart = true;
 
+		public void Reset() {
+			m_CWindow = null;
+			m_customizationComponent = null;
+		}
+
 		// extra spacing between items
 		public float ExtraSpacing = 0;
 
@@ -46,6 +51,8 @@ public class PMenu {
 			}
 			// no setter because it is done by the getter
 		}
+
+		
 
 		#region Customization
 		// i am rewriting like half of this at 11:58 pm i woke at 3:45 

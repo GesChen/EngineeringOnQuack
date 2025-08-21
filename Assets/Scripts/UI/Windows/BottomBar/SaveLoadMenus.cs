@@ -298,4 +298,7 @@ public static class SaveLoadMenus {
 		SaveStatus.SetGroup("saveload"),
 		LoadOptionsMenu.SetGroup("saveload")
 	};
+	public static W[] Menus => new[] {
+		NamePrompt
+	};
 }

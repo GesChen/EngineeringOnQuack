@@ -114,10 +114,10 @@ public static class SimulatingMainUI {
 				Movable = false,
 				Size = CWindow.Configuration.FixedSize(new(0, size)),
 				Position = new(
-				new(0, 1),
-				new(1, 1),
-				new(.5f, 1),
-				new(0, 0)
+					new(0, 1),
+					new(1, 1),
+					new(.5f, 1),
+					new(0, 0)
 				),
 				Closable = false,
 				HideOnStart = false
@@ -151,6 +151,10 @@ UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.CWindow, (false, false))
 	}
 
 	public static CWindow[] Windows => new[] {
-		TopBar.Bar
+		TopBar.Bar,
+		TopBar.Outputs.CWindow
+	};
+	public static W[] Menus => new[] {
+		TopBar.Outputs
 	};
 }
