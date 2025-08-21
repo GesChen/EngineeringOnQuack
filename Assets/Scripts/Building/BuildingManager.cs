@@ -22,6 +22,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// hit that bell for more epic code (this is garbage)
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
+		RightClickMenus.ClearEvents();
+		MaterialEditingMenu.ClearEvents();
+
 		RightClickMenus.OnNewPartMade += 
 			name => MakeNewPart(name, true);
 		RightClickMenus.OnDelete += DeleteSelection;
@@ -36,6 +39,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
+		BottomBar.ClearAssemble();
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
 		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
 	}

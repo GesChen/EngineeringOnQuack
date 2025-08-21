@@ -11,18 +11,19 @@ public static class OutputsMenu {
 
 	static readonly float width = 200;
 
-	static OutputsMenu() {
-		OnNameChanged = null;
-		OnSubtract = null;
-		OnRename = null;
-		OnAdd = null;
-		OnItemSelected = null;
-	}
-
+	public static void ClearNameChanged() { OnNameChanged = null; }
 	public static event Action<string> OnNameChanged;
+
+	public static void ClearSubtract() { OnSubtract = null; }
 	public static event Action OnSubtract;
+
+	public static void ClearRename() { OnRename = null; }
 	public static event Action OnRename;
+
+	public static void ClearAdd() { OnAdd = null; }
 	public static event Action OnAdd;
+
+	public static void ClearItemSelected() { OnItemSelected = null; }
 	public static event Action<int> OnItemSelected;
 	public static void Select(int i) {
 		OptionSelectionUIHelper.SetColors(LayoutContainer.SubItems.ToArray(), i);

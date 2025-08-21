@@ -6,20 +6,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using W = PMenu.Window;
 
-public static class SaveLoadMenus {
-
-	static SaveLoadMenus() {
-		OnSave = null;
-		OnSaveAs = null;
-		OnLoad = null;
-		OnLoadRequested = null;
-		OnLoadEntryChosen = null;
-	}
+public class SaveLoadMenus {
 
 	public static event Action OnSave;
+	public static void ClearSave() { OnSave = null; }
 	public static void Save() { OnSave?.Invoke(); }
 
 	public static event Action OnSaveAs;
+	public static void ClearSaveAs() { OnSaveAs = null; }
 	public static void SaveAs() { OnSaveAs?.Invoke(); }
 
 	public static void ShowNamePrompt(Action<string> nameCallback) {
@@ -39,6 +33,7 @@ public static class SaveLoadMenus {
 	}
 
 	public static event Action OnLoadRequested;
+	public static void ClearLoadRequested() { OnLoadRequested = null; }
 	public static void ShowLoadMenu() {
 		OnLoadRequested?.Invoke();
 
@@ -145,6 +140,7 @@ public static class SaveLoadMenus {
 		LoadOptionsMenu.RealisedWindow.Hide();
 	}
 
+	public static void ClearOnLoad() { OnLoad = null; }
 	public static event Action OnLoad;
 	static void Load() {
 		OnLoad?.Invoke();
@@ -188,6 +184,7 @@ public static class SaveLoadMenus {
 		LeftAndRights(Spacings);
 	static readonly float FileEntryHeight = 40;
 
+	public static void ClearLoadEntryChosen() { OnLoadEntryChosen = null; }
 	public static event Action<int> OnLoadEntryChosen;
 
 	// add other details later like part count or whatever

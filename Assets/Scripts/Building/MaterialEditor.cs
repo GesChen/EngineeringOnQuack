@@ -50,6 +50,7 @@ public class MaterialEditor : MonoBehaviour {
 		MaterialEditingMenu.OnColorSelection += editor.SetColor;
 		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
 
+		BottomBar.ClearMaterial();
 		// look idk where else to put it and for now im too lazy to add the windowitem callback
 		// thing cuz it has to refernce itself and whatnot
 		var canvas = editor.GetComponentInParent<Canvas>();

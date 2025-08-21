@@ -15,16 +15,14 @@ public static class BottomBar {
 	static readonly float splittextspace = 10;
 
 	public static WindowItem OutputButton;
-	
-	static BottomBar() {
-		OnOutputsOpened = null;
-		OnTransformOpened = null;
-		OnMaterialOpened = null;
-		OnAssemble = null;
-	}
+	public static void ClearOutputs() { OnOutputsOpened = null; }
 	public static event Action OnOutputsOpened;
+	public static void ClearTransform() { OnTransformOpened = null; }
 	public static event Action OnTransformOpened;
+	public static void ClearMaterial() { OnMaterialOpened = null; }
 	public static event Action OnMaterialOpened;
+
+	public static void ClearAssemble() { OnAssemble = null; }
 	public static event Action OnAssemble;
 	public static void Assemble() { OnAssemble?.Invoke(); }
 

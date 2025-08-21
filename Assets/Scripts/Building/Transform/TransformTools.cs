@@ -106,12 +106,15 @@ public class TransformTools : Singleton<TransformTools> {
 	}
 
 	void SubscribeToControls() {
+		TransformToolsMenu.ClearEvents();
+
 		TransformToolsMenu.onTranslatePressed += ToggleTranslate;
 		TransformToolsMenu.onRotatePressed += ToggleRotate;
 		TransformToolsMenu.onScalePressed += ToggleScale;
 	}
 
 	void SubscribeToBottomBar() {
+		BottomBar.ClearTransform();
 		BottomBar.OnTransformOpened += () => SetToolsState(true);
 	}
 
