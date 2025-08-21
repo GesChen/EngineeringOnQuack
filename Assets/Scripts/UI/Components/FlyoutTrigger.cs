@@ -23,9 +23,6 @@ public class FlyoutTrigger : MonoBehaviour {
 	[HideInNormalInspector] public CWindow targetCWindow;
 	[HideInNormalInspector] public RectTransform rt;
 
-	bool parentIsFlyout;
-	Flyout parentFlyout;
-
 	bool open;
 
 	void Start() {
@@ -42,11 +39,6 @@ public class FlyoutTrigger : MonoBehaviour {
 	}
 
 	void Update() {
-		if (parentFlyout == null && Time.frameCount < Config.UI.Behaviour.MaxFramesForRealization) {
-			parentFlyout = GetComponentInParent<Flyout>();
-			parentIsFlyout = parentFlyout != null;
-		}
-
 		CheckRealization();
 		if (targetFlyout == null) return; // give it time
 
@@ -82,7 +74,6 @@ public class FlyoutTrigger : MonoBehaviour {
 			}
 		} else { 
 			if (Time.frameCount > Config.UI.Behaviour.MaxFramesForRealization) {
-				Debug.Log($"{rt.GetPath()} fetch {create} cw created {targetCWindow.CreationTime}");
 				Debug.LogError("Target CWindow still not realised!");
 				return;
 			}

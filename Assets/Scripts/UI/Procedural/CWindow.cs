@@ -6,8 +6,6 @@ using UnityEngine;
 
 // window, class form (class window, cwindow)
 public class CWindow {
-	public DateTime CreationTime;
-
 	public string Name;
 	public WindowItem[] Items;
 
@@ -77,12 +75,14 @@ public class CWindow {
 	/// <summary>
 	/// Name, Config, Items
 	/// </summary>
-	public CWindow() { CreationTime = DateTime.Now; }
+	public CWindow() { CreationFrame = Time.frameCount; }
 
 	public Configuration Config = new();
 	public List<TimedEventInvoker.TimedEvent> CustomEvents;
 	public string GroupPath = null;
 	public WindowRealiser.Group RealGroup;
+
+	public int CreationFrame { get; }
 
 	private LiveWindow m_realisedWindow;
 	public LiveWindow RealisedWindow {

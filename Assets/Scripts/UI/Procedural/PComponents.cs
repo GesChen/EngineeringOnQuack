@@ -544,7 +544,7 @@ public class PComponents {
 	}
 
 	public class FlyoutTrigger : Component {
-		public CWindow TargetFlyout;
+		public CWindow TargetWindow;
 		public WindowItem IndicatorImage;
 		public bool OpenHorizontally;
 		public bool OpenPrioritizingRight;
@@ -561,7 +561,7 @@ public class PComponents {
 			string openSpriteLocation = null,
 			string closedSpriteLocation = null) {
 
-			TargetFlyout = targetFlyout;
+			TargetWindow = targetFlyout;
 			IndicatorImage = indicatorImage;
 
 			OpenHorizontally = openHorizontally;
@@ -586,7 +586,7 @@ public class PComponents {
 			}
 
 			ftComp.selfHoverTarget = htInstance;
-			ftComp.targetCWindow = TargetFlyout;
+			ftComp.targetCWindow = TargetWindow;
 
 			// allow null, and just dont use it
 			if (IndicatorImage != null) {

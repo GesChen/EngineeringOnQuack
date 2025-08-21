@@ -26,13 +26,10 @@ public class LiveWindow : MonoBehaviour {
 
 	public CWindow Source;
 
-	int creationFrame;
 	void Awake() {
 		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
-
-		creationFrame = Time.frameCount;
 	}
 
 	public void FlipNodesVertically() {
@@ -58,9 +55,9 @@ public class LiveWindow : MonoBehaviour {
 
 	void Update() {
 		if (Config.HideOnStart) {
-			if (Time.frameCount - creationFrame == global::Config.UI.Behaviour.MaxFramesForRealization)
+			if (Time.frameCount - Source.CreationFrame == global::Config.UI.Behaviour.MaxFramesForRealization)
 				gameObject.SetActive(false);
-			if (Time.frameCount - creationFrame <= global::Config.UI.Behaviour.MaxFramesForRealization) {
+			if (Time.frameCount - Source.CreationFrame <= global::Config.UI.Behaviour.MaxFramesForRealization) {
 				//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
 				return;
 			}

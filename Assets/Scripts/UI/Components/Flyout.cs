@@ -1,4 +1,3 @@
-using Codice.Client.BaseCommands;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,9 +12,8 @@ public class Flyout : MonoBehaviour {
 	RectTransform rt;
 	LiveWindow lw;
 	
-	Flyout[] childFlyouts;
+	CWindow[] childFlyouts;
 
-	int creationFrame;
 	void Start() {
 		rt = GetComponent<RectTransform>();
 		lw = GetComponent<LiveWindow>();
@@ -24,7 +22,6 @@ public class Flyout : MonoBehaviour {
 		//if (TryGetComponent(out ScaleToContents scale))
 			//scale.
 		//gameObject.SetActive(false);
-		creationFrame = Time.frameCount;
 
 		FindChildren();
 	}
@@ -35,15 +32,16 @@ public class Flyout : MonoBehaviour {
 		// hacky workaround to give the ui elements time to load as active objects
 		// cuz forcerebuildlayoutimmediate doesnt wanna work for shit for some reason
 		// sorry future me
-		if (Time.frameCount - creationFrame == Config.UI.Behaviour.MaxFramesForRealization)
+		if (Time.frameCount - lw.Source.CreationFrame == Config.UI.Behaviour.MaxFramesForRealization)
 			gameObject.SetActive(false);
-		if (Time.frameCount - creationFrame <= Config.UI.Behaviour.MaxFramesForRealization) {
+		if (Time.frameCount - lw.Source.CreationFrame <= Config.UI.Behaviour.MaxFramesForRealization) {
 			//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
 			return;
 		}
 
+
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
-		bool anyChildOpen = childFlyouts.Any(f => f.gameObject.activeInHierarchy);
+		bool anyChildOpen = childFlyouts.Any(f => f.RealisedWindow.gameObject.activeInHierarchy);
 		bool triggerOpening = 
 			sourceTrigger != null 
 			&& sourceTrigger.selfHoverTarget.Hovering;
@@ -56,7 +54,7 @@ public class Flyout : MonoBehaviour {
 
 	void FindChildren() {
 		var triggers = GetComponentsInChildren<FlyoutTrigger>();
-		childFlyouts = triggers.Select(t => t.targetFlyout).ToArray();
+		childFlyouts = triggers.Select(t => t.targetCWindow).ToArray();
 	}
 
 	public bool CheckMouseValidity(float margin) {
@@ -90,7 +88,7 @@ public class Flyout : MonoBehaviour {
 
 	public void Hide() {
 		foreach (var child in childFlyouts)
-			child.Hide();
+			child.RealisedWindow.Hide();
 
 		gameObject.SetActive(false);
 	}
