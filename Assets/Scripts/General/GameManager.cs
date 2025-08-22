@@ -1,47 +1,30 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-public enum PlayingMode
-{
-	Building,
-	Simulating
-}
+public class GameManager : Singleton<GameManager> {
+	protected override void Awake() {
+		base.Awake();
 
-public class GameManager : MonoBehaviour
-{
-	#region singleton
-	private static GameManager _instance;
-	public static GameManager Instance { get { return _instance; } }
-	void Awake() { UpdateSingleton(); }
-	private void OnEnable() { UpdateSingleton(); }
-	void UpdateSingleton()
-	{
-		if (_instance != null && _instance != this)
-		{
-			Destroy(this);
-		}
-		else
-		{
-			_instance = this;
-		}
-	}
-	#endregion
+		// reset events
+		OnStartSimulating = null;
+		OnStopSimulating = null;
 
-	public PlayingMode currentPlayMode = PlayingMode.Building;
-
-	void Update()
-	{
-		Application.targetFrameRate = Config.FpsLimit;
+		Config.Fonts.Reset();
 	}
 
-	public void StartSimulating()
-	{
-		currentPlayMode = PlayingMode.Simulating;
+	void Start() {
+		UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;
+		Application.targetFrameRate = Config.FPS_LIMIT;
 	}
 
-	public void StopSimulating()
-	{
-		currentPlayMode = PlayingMode.Building;
+	public void StartSimulating() {
+		OnStartSimulating?.Invoke();
 	}
+
+	public void StopSimulating() {
+		OnStopSimulating?.Invoke();
+	}
+
+	public event Action OnStartSimulating;
+	public event Action OnStopSimulating;
 }

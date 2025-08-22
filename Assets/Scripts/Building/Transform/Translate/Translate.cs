@@ -14,8 +14,6 @@ public class Translate : MonoBehaviour
 
 	bool over;
 	bool lastOver;
-	bool mouseDown;
-	bool lastMouseDown;
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
@@ -61,11 +59,10 @@ public class Translate : MonoBehaviour
 			localAxes = main.transform.rotation * axes;
 
 		over = MouseOver();
-		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
-		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime)
 			ResetTransform();
-		if (mouseDown != lastMouseDown && !mouseDown) resetting = false;
+		if (Conatrols.Mouse.Left.ReleasedThisFrame) resetting = false;
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
@@ -73,9 +70,9 @@ public class Translate : MonoBehaviour
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown && !resetting)
+		if (Conatrols.Mouse.Left.PressedThisFrame && !resetting)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 
 		UpdateVisuals();
@@ -84,16 +81,15 @@ public class Translate : MonoBehaviour
 
 		UseAxisIndicator();
 
-		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
+		if (Conatrols.Mouse.Left.PressedThisFrame) lastMouseDownTime = Time.time;
 		lastOver = over;
-		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
 
 	void ResetTransform() // reset ALL transforms (except position)
 	{
 		resetting = true;
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			t.rotation = Quaternion.identity;
 			t.localScale = Vector3.one;
@@ -128,7 +124,7 @@ public class Translate : MonoBehaviour
 			maxScreen = Vector2.Max(maxScreen, corner);
 		}
 
-		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Conatrols.Mouse.Position;
 		bool inBounds;
 
 		// dynamic bounds offset
@@ -152,8 +148,6 @@ public class Translate : MonoBehaviour
 	{
 		if (!main.hovering && !dragging)// || axes == Vector3.one)
 		{
-			main.currentlyUsingTransformObj = this;
-
 			if (axes == Vector3.one)
 				main.specialCenterCase = true;	
 
@@ -195,7 +189,7 @@ public class Translate : MonoBehaviour
 			if (numaxes < 3) axisIndicator = main.axisIndicatorManager.NewIndicator(); // full doesn't need
 			if (numaxes == 2) otherAxisIndicator = main.axisIndicatorManager.NewIndicator(); // two axes needs another
 
-			mouseOffset = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>() - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
+			mouseOffset = Conatrols.Mouse.Position - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			distance = Vector3.Distance(transform.position, Camera.main.transform.position);
 			dragStartPos = main.transform.position;
 		}
@@ -250,7 +244,7 @@ public class Translate : MonoBehaviour
 
 		Camera mainCamera = Camera.main;
 
-		Vector3 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
+		Vector3 mouseScreenSpace = Conatrols.Mouse.Position - mouseOffset;
 		mouseScreenSpace.z = mainCamera.nearClipPlane;
 
 		Vector3 cameraPos = mainCamera.transform.position;

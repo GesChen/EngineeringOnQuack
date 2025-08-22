@@ -17,8 +17,6 @@ public class Scale : MonoBehaviour
 
 	bool over;
 	bool lastOver;
-	bool mouseDown;
-	bool lastMouseDown;
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
@@ -62,11 +60,10 @@ public class Scale : MonoBehaviour
 		localAxes = main.transform.rotation * axis;
 
 		over = MouseOver() && !main.specialCenterCase;
-		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
-		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime)
 			ResetTransform();
-		if (mouseDown != lastMouseDown && !mouseDown) resetting = false;
+		if (Conatrols.Mouse.Left.ReleasedThisFrame) resetting = false;
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
 		if ((over != lastOver || specialAfterReleaseCase) && over)
@@ -74,9 +71,9 @@ public class Scale : MonoBehaviour
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown && !resetting)
+		if (Conatrols.Mouse.Left.PressedThisFrame && !resetting)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 
 		UpdateVisuals();
@@ -88,15 +85,14 @@ public class Scale : MonoBehaviour
 		
 		UseAxisIndicator();
 
-		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
+		if (Conatrols.Mouse.Left.PressedThisFrame) lastMouseDownTime = Time.time;
 		lastOver = over;
-		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
 	void ResetTransform()
 	{
 		resetting = true;
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			Vector3 scaling = t.localScale;
 			scaling.Scale(Vector3.one - axis);
@@ -139,7 +135,7 @@ public class Scale : MonoBehaviour
 			maxScreen = Vector2.Max(maxScreen, ssPos);
 		}
 
-		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Conatrols.Mouse.Position;
 		bool inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
 						mousePos.y >= minScreen.y + main.boundsOffset && mousePos.y <= maxScreen.y - main.boundsOffset;
 		return inBounds;
@@ -183,13 +179,13 @@ public class Scale : MonoBehaviour
 			// axis indicator code here if going to use 
 			UpdateAxisIndicators();
 
-			dragStartMousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+			dragStartMousePos = Conatrols.Mouse.Position;
 			dragStartSSPos = Camera.main.WorldToScreenPoint(transform.position);
 			mouseOffset = dragStartMousePos - (Vector2)Camera.main.WorldToScreenPoint(transform.position);
 			dragStartPos = main.transform.position;
 
 			startScales = new();
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				startScales[t] = t.localScale;
 			}
@@ -244,7 +240,7 @@ public class Scale : MonoBehaviour
 	{
 		if (!dragging) return;
 
-		Vector3 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>() - mouseOffset;
+		Vector3 mouseScreenSpace = Conatrols.Mouse.Position - mouseOffset;
 		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
 		Vector3 cameraPos = Camera.main.transform.position;
@@ -266,13 +262,13 @@ public class Scale : MonoBehaviour
 		{
 			Vector3 newScale = scaleInAxis * axis + Vector3.one - axis;
 
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				t.localScale = HF.MV3(startScales[t], newScale);
 			}
 		}
 		else
-		{	foreach (Transform t in SelectionManager.Instance.selection)
+		{	foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				float currentScaleInAxis = HF.MV3(startScales[t], axis).magnitude;
 
@@ -290,7 +286,7 @@ public class Scale : MonoBehaviour
 	{
 		if (!dragging) return;
 		
-		Vector2 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mouseScreenSpace = Conatrols.Mouse.Position;
 
 		float scale = (mouseScreenSpace - dragStartSSPos).magnitude / (dragStartSSPos - dragStartMousePos).magnitude;
 
@@ -300,21 +296,21 @@ public class Scale : MonoBehaviour
 		if (main.snapping)
 			scale = Mathf.Round(scale / main.scaleSnappingIncrement) * main.scaleSnappingIncrement;
 
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			t.localScale = startScales[t] * scale;
 		}
 	}
 	void UseAxisIndicator()
 	{
-		if (lastSelection != SelectionManager.Instance.selection) // selection changed, update axis indicator list
+		if (lastSelection != SelectionManager.Instance.Selection) // selection changed, update axis indicator list
 		{
 			UpdateAxisIndicators();
 		}
 
 		if (dragging && !full)
 		{
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				objectAxisIndicators[t].UpdateIndicator(
 					t.position,
@@ -324,7 +320,7 @@ public class Scale : MonoBehaviour
 			}
 		}
 
-		lastSelection = SelectionManager.Instance.selection;
+		lastSelection = SelectionManager.Instance.Selection;
 	}
 	void UpdateAxisIndicators()
 	{
@@ -334,7 +330,7 @@ public class Scale : MonoBehaviour
 
 			axisIndicators = new();
 			objectAxisIndicators = new();
-			foreach (Transform t in SelectionManager.Instance.selection)
+			foreach (Transform t in SelectionManager.Instance.Selection)
 			{
 				AxisIndicator axisIndicator = main.axisIndicatorManager.NewIndicator();
 				axisIndicators.Add(axisIndicator);

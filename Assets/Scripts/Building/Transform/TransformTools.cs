@@ -1,11 +1,10 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TransformTools : MonoBehaviour
-{
+public class TransformTools : Singleton<TransformTools> {
 	public bool active;
 	[Space]
+	public WindowManager windowManager;
 	public Transform selectionContainer;
 	public BuildingManager buildingManager;
 	[Space]
@@ -55,14 +54,16 @@ public class TransformTools : MonoBehaviour
 	public float draggingScale = 1.2f;
 	public float draggingOutset = .07f;
 	public float draggingAlpha = .01f;
-	
+
 	[Header ("Axis Indicator")]
 	public AxisIndicatorManager axisIndicatorManager;
 	public float axisIndicatorAlpha;
 	public float axisIndicatorLengthOffset;
 
 	[Header("Debug")]
-	public dynamic currentlyUsingTransformObj;
+	// this is really old code so i dont know what i was doing here
+	// they shoulda been put until a transformtools class but im too lazy to refactor it all now
+	//public dynamic currentlyUsingTransformObj;
 	public bool hovering;
 	public List<Transform> hoveringTransforms;
 	public bool dragging;
@@ -73,29 +74,58 @@ public class TransformTools : MonoBehaviour
 	public bool rotating;
 	public bool scaling;
 
-	void Update()
-	{
-		// dont display while selecting, issues pop up with interference in hovering and stuff
-		currentSize = (active && !SelectionManager.Instance.selectionBoxDragging)? size : 0;
+	void Start() {
+		SubscribeToControls();
+		SubscribeToBottomBar();
+	}
 
-		if (!dragging)
-			transform.localScale = Vector3.Distance(Camera.main.transform.position, selectionContainer.position) * currentSize * Vector3.one;
-		
+	void Update() {
+		// dont display while selecting, issues pop up with interference in hovering and stuff
+		bool selectionDragging = SelectionManager.Instance.selectionBoxDragging &&
+			(Time.time - SelectionManager.Instance.dragStartTime > Config.Input.clickMaxTimeMs / 1000f);
+
+		currentSize = (active && !selectionDragging) ? size : 0;
+
+		if (!dragging) {
+			float dist = HF.DistanceInDirection(
+				Camera.main.transform.position,
+				selectionContainer.position,
+				-Camera.main.transform.forward);
+
+			transform.localScale = dist * currentSize * Vector3.one;
+		}
 		if (local && !dragging)
 			transform.rotation = selectionContainer.rotation;
 		else if (!local)
 			transform.rotation = Quaternion.identity;
 
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			currentlyUsingTransformObj.StopOver();
-			hovering = false;
-		}
-
-		snapping = Controls.inputMaster.Transform.Snap.IsPressed();
+		snapping = Conatrols.IM.Building.Snap.IsPressed();
 	}
-	public void UpdatePosition()
-	{
+	public void UpdatePosition() {
 		transform.position = selectionContainer.position;
 	}
+
+	void SubscribeToControls() {
+		TransformToolsMenu.ClearEvents();
+
+		TransformToolsMenu.onTranslatePressed += ToggleTranslate;
+		TransformToolsMenu.onRotatePressed += ToggleRotate;
+		TransformToolsMenu.onScalePressed += ToggleScale;
+	}
+
+	void SubscribeToBottomBar() {
+		BottomBar.ClearTransform();
+		BottomBar.OnTransformOpened += () => SetToolsState(true);
+	}
+
+	public void SetToolsState(bool state) {
+		if (state)
+			TransformToolsMenu.MainWindow.RealisedWindow.Show();
+		else
+			TransformToolsMenu.MainWindow.RealisedWindow.Hide();
+	}
+
+	void ToggleTranslate() => translating = !translating;
+	void ToggleRotate() => rotating = !rotating;
+	void ToggleScale() => scaling = !scaling;
 }

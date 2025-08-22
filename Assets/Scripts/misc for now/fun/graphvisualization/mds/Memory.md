@@ -1,0 +1,5 @@
+[[global]]
+[[Interpreter]]
+[[Memory]]
+[[Data]]
+[[string]]

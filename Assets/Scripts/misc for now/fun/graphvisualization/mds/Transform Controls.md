@@ -1,0 +1,3 @@
+[[TransformControls]]
+[[Outline]]
+[[ColorBlock]]

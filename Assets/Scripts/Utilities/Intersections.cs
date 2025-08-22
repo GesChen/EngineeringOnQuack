@@ -3,12 +3,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Geometry;
 
-public class Intersections
-{
-	// determines if two objects are intersecting
-	public static bool MeshesIntersect(Transform obj1, Transform obj2)
-	{
+public static class Intersections {
+	#region Meshes
+	/// <summary>
+	/// Determines if two transforms intersect
+	/// </summary>
+	public static bool MeshesIntersect(Transform obj1, Transform obj2) {
 		Mesh mesh1 = obj1.GetComponent<MeshFilter>().mesh;
 		Mesh mesh2 = obj2.GetComponent<MeshFilter>().mesh;
 
@@ -23,10 +25,43 @@ public class Intersections
 		int[] m1t = mesh1.triangles;
 		int[] m2t = mesh2.triangles;
 
-		return MeshesIntersect(m1v, m2v, m1t, m2t);
+		return MeshesIntersectRawMesh(m1v, m2v, m1t, m2t);
 	}
-	public static bool MeshesIntersect(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris)
-	{
+	
+	// should port to use the geometry classes but if theres no GOOD reason to
+	// for now we will keep using these as they are because well im lazy
+
+	/// <summary>
+	/// Determines if two meshes given the raw verts and tris intersect
+	/// </summary>
+	public static bool MeshesIntersectRawMesh(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
+		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
+
+		int numtris1 = mesh1tris.Length / 3;
+		int numtris2 = mesh2tris.Length / 3;
+		
+		for (int i = 0; i < numtris1; i++) {
+			for (int j = 0; j < numtris2; j++) {
+				Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
+				Vector3 p2 = mesh1verts[mesh1tris[i * 3 + 1]];
+				Vector3 p3 = mesh1verts[mesh1tris[i * 3 + 2]];
+				Vector3 q1 = mesh2verts[mesh2tris[j * 3]];
+				Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
+				Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
+
+#if DEBUGMODE
+				DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
+				DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
+#endif
+
+				if (TrianglesIntersect(p1, p2, p3, q1, q2, q3))
+					return true;
+			}
+		}
+
+		return false;
+	}
+	public static bool MeshesIntersectRawMesh_OldWithOptimizations(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
 		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
 		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
 
@@ -35,18 +70,16 @@ public class Intersections
 		int combinations = numtris1 * numtris2;
 
 		int[] indices = new int[combinations];
-		float[] distances = new float[combinations];
+		//float[] distances = new float[combinations];
 		int[] triindex1 = new int[combinations];
 		int[] triindex2 = new int[combinations];
 		int count = 0;
-		for (int i = 0; i < numtris1; i++)
-		{
-			for (int j = 0; j < numtris2; j++)
-			{
+		for (int i = 0; i < numtris1; i++) {
+			for (int j = 0; j < numtris2; j++) {
 				indices[count] = count;
 				triindex1[count] = i;
 				triindex2[count] = j;
-
+/*
 				Vector3 avg1 =(
 					mesh1verts[mesh1tris[i * 3]] +
 					mesh1verts[mesh1tris[i * 3 + 1]] +
@@ -58,17 +91,16 @@ public class Intersections
 					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
 
 				float dist = (avg1 - avg2).sqrMagnitude;
-				distances[count] = dist;
+				distances[count] = dist;*/
 
 				count++;
 			}
 		}
 
-		indices = SortIndicesByDistance(indices, distances);
+		//indices = SortIndicesByDistance(indices, distances);
 
 		float t = 0;
-		foreach (int index in indices)
-		{
+		foreach (int index in indices) {
 			t++;
 			int i = triindex1[index];
 			int j = triindex2[index];
@@ -93,8 +125,7 @@ public class Intersections
 				mesh2verts[mesh2tris[j * 3]],
 				mesh2verts[mesh2tris[j * 3 + 1]],
 				mesh2verts[mesh2tris[j * 3 + 2]]
-				))
-			{
+				)) {
 				return true;
 			}
 		}
@@ -102,87 +133,20 @@ public class Intersections
 		return false;
 	}
 
-	public static bool OptimizedMeshesIntersect(
-		Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris,
-		Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2)
-	{
-		if (!BoundsIntersectWorldSpace(min1, max1, min2, max2)) return false;
-
-		int numtris1 = mesh1tris.Length / 3;
-		int numtris2 = mesh2tris.Length / 3;
-		int combinations = numtris1 * numtris2;
-
-		int[] indices = new int[combinations];
-		float[] distances = new float[combinations];
-		int[] triindex1 = new int[combinations];
-		int[] triindex2 = new int[combinations];
-		int count = 0;
-		for (int i = 0; i < numtris1; i++)
-		{
-			for (int j = 0; j < numtris2; j++)
-			{
-				indices[count] = count;
-				triindex1[count] = i;
-				triindex2[count] = j;
-				/*
-				Vector3 avg1 = (
-					mesh1verts[mesh1tris[i * 3]] +
-					mesh1verts[mesh1tris[i * 3 + 1]] +
-					mesh1verts[mesh1tris[i * 3 + 2]]) / 3f;
-
-				Vector3 avg2 =
-					(mesh2verts[mesh2tris[j * 3]] +
-					mesh2verts[mesh2tris[j * 3 + 1]] +
-					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
-
-				float dist = (avg1 - avg2).sqrMagnitude;
-				distances[count] = dist;
-				*/
-				count++;
-			}
-		}
-
-		//indices = SortIndicesByDistance(indices, distances);
-
-		float t = 0;
-		foreach (int index in indices)
-		{
-			t++;
-			int i = triindex1[index];
-			int j = triindex2[index];
-
-			if (TrianglesIntersect(
-				mesh1verts[mesh1tris[i * 3]],
-				mesh1verts[mesh1tris[i * 3 + 1]],
-				mesh1verts[mesh1tris[i * 3 + 2]],
-				mesh2verts[mesh2tris[j * 3]],
-				mesh2verts[mesh2tris[j * 3 + 1]],
-				mesh2verts[mesh2tris[j * 3 + 2]]
-				))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-
-	// expects world space verts, determines if bounds collide
-	public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2)
-	{
+	/// <summary>
+	/// Determines if the bounds of two sets of world space points intersect
+	/// </summary>
+	public static bool BoundsIntersectWorldSpace(Vector3[] verts1, Vector3[] verts2) {
 		Vector3 min1 = Vector3.positiveInfinity;
 		Vector3 max1 = Vector3.negativeInfinity;
-		foreach (Vector3 v in verts1)
-		{
+		foreach (Vector3 v in verts1) {
 			min1 = Vector3.Min(min1, v);
 			max1 = Vector3.Max(max1, v);
 		}
 
 		Vector3 min2 = Vector3.positiveInfinity;
 		Vector3 max2 = Vector3.negativeInfinity;
-		foreach (Vector3 v in verts2)
-		{
+		foreach (Vector3 v in verts2) {
 			min2 = Vector3.Min(min2, v);
 			max2 = Vector3.Max(max2, v);
 		}
@@ -200,8 +164,10 @@ public class Intersections
 
 	}
 
-	public static bool BoundsIntersectWorldSpace(Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2)
-	{
+	/// <summary>
+	/// Determines if two 3D AABBs intersect
+	/// </summary>
+	public static bool BoundsIntersectWorldSpace(Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2) {
 		return
 			min1.x <= max2.x &&
 			max1.x >= min2.x &&
@@ -211,29 +177,26 @@ public class Intersections
 			max1.z >= min2.z;
 	}
 
-	// quicksort, sorts indicies based on distance at that index in indices list
-	private static int[] SortIndicesByDistance(int[] indices, float[] distances)
-	{
+	/// <summary>
+	/// Quicksort algorithm to order indices based on distance value
+	/// for internal use only
+	/// </summary>
+	private static int[] SortIndicesByDistance(int[] indices, float[] distances) {
 		return SortIndicesByDistance(indices, distances, 0, indices.Length - 1);
 	}
-	private static int[] SortIndicesByDistance(int[] indices, float[] distances, int leftIndex, int rightIndex)
-	{
+	private static int[] SortIndicesByDistance(int[] indices, float[] distances, int leftIndex, int rightIndex) {
 		var i = leftIndex;
 		var j = rightIndex;
 		var pivot = distances[leftIndex];
-		while (i <= j)
-		{
-			while (distances[i] < pivot)
-			{
+		while (i <= j) {
+			while (distances[i] < pivot) {
 				i++;
 			}
 
-			while (distances[j] > pivot)
-			{
+			while (distances[j] > pivot) {
 				j--;
 			}
-			if (i <= j)
-			{
+			if (i <= j) {
 				(distances[j], distances[i]) = (distances[i], distances[j]);
 				(indices[j], indices[i]) = (indices[i], indices[j]);
 				i++;
@@ -247,10 +210,12 @@ public class Intersections
 			SortIndicesByDistance(indices, distances, i, rightIndex);
 		return indices;
 	}
+	#endregion
 
-	// triangle-triangle intersection
-	public static bool TrianglesIntersect(Vector3 a1, Vector3 a2, Vector3 a3, Vector3 b1, Vector3 b2, Vector3 b3)
-	{
+	/// <summary>
+	/// Triangle-triangle intersection, given by a and b points
+	/// </summary>
+	public static bool TrianglesIntersect(Vector3 a1, Vector3 a2, Vector3 a3, Vector3 b1, Vector3 b2, Vector3 b3) {
 		// step 1: get the planes of the two triangles
 		Vector3 planeDirA = Vector3.Cross(a2 - a1, a3 - a1).normalized;
 		Vector3 planeDirB = Vector3.Cross(b2 - b1, b3 - b1).normalized;
@@ -273,15 +238,14 @@ public class Intersections
 		midPoint /= AIntersects.Count + BIntersects.Count;
 
 		float maxDistSquared = float.NegativeInfinity;
-		foreach (Vector3 i in intersections)
-		{
+		foreach (Vector3 i in intersections) {
 			float d = (i - midPoint).sqrMagnitude;
 			if (d > maxDistSquared) maxDistSquared = d;
 		}
 
 		// convert intersection points into distances
 		Vector3 planeIntersectionVector = (AIntersects[0] - BIntersects[0]).normalized; // 1 from each guaranteed
-		Vector3 measurementPoint = midPoint + planeIntersectionVector * maxDistSquared * 2; // arbitrary point guarunteed not in 
+		Vector3 measurementPoint = midPoint + 2 * maxDistSquared * planeIntersectionVector; // arbitrary point guarunteed not in 
 
 		float[] aDists = new float[AIntersects.Count];
 		float[] bDists = new float[BIntersects.Count];
@@ -291,8 +255,7 @@ public class Intersections
 			bDists[i] = (BIntersects[i] - measurementPoint).sqrMagnitude;
 
 		// check overlapping cases
-		if (bDists.Length > 1)
-		{
+		if (bDists.Length > 1) {
 			// sorted
 			if (bDists[0] > bDists[1]) (bDists[0], bDists[1]) = (bDists[1], bDists[0]);
 
@@ -301,13 +264,12 @@ public class Intersections
 				(aDists[1] > bDists[1] && aDists[0] < bDists[1]))
 				return true;
 		}
-		if (aDists.Length > 1)
-		{
+		if (aDists.Length > 1) {
 			// sorted
 			if (aDists[0] > aDists[1]) (aDists[0], aDists[1]) = (aDists[1], aDists[0]);
 
 			// either point of b inside a
-			if ((bDists[0] > aDists[0] && bDists[0] < aDists[1]) ||
+			if ((bDists[0] > aDists[0] && bDists[0] < aDists[1]) || // TODO!!!!!!! figure out why this returns indexoutofbounds sometimes
 				(bDists[1] > aDists[1] && bDists[0] < aDists[1]))
 				return true;
 		}
@@ -315,9 +277,11 @@ public class Intersections
 		return false;
 	}
 
-	public static List<Vector3> TriPlaneIntersect(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2, Vector3 p3)
-	{
-		List<Vector3> intersects = new List<Vector3>();
+	/// <summary>
+	/// Intersection between a 3D triangle and a plane
+	/// </summary>
+	public static List<Vector3> TriPlaneIntersect(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2, Vector3 p3) {
+		List<Vector3> intersects = new();
 
 		Vector3 v;
 		float t;
@@ -339,12 +303,13 @@ public class Intersections
 
 		return intersects;
 	}
-	
-	// very slow!!! do not use.
-	public static List<Vector3> TriPlaneOld(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2, Vector3 p3)
-	{
 
-		List<Vector3> intersects = new List<Vector3>();
+	/// <summary>
+	/// Old triangle plane intserction, DO NOT USE, slow
+	/// </summary>
+	public static List<Vector3> TriPlaneOld(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2, Vector3 p3) {
+
+		List<Vector3> intersects = new();
 
 		Vector3? i1 = SegmentPlaneIntersect(planeOrig, planeDir, p1, p2);
 		if (i1 != null) intersects.Add(i1.Value);
@@ -357,8 +322,12 @@ public class Intersections
 
 		return intersects;
 	}
-	public static Vector3? SegmentPlaneIntersect(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2)
-	{
+
+	/// <summary>
+	/// Intersection between a line segment and a 3D plane
+	/// </summary>
+	/// <returns>Intersection point in 3D if it exists, otherwise null</returns>
+	public static Vector3? SegmentPlaneIntersect(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2) {
 		Vector3 v = p2 - p1;
 		float t = Vector3.Dot(planeDir, (planeOrig - p1)) / Vector3.Dot(planeDir, v);
 
@@ -367,10 +336,11 @@ public class Intersections
 		return null;
 	}
 
-	// do two triangles p and q intersect?
-	// OLD CODE!! dont use it, it's slow
-	public static bool TrianglesIntersect2(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 q1, Vector3 q2, Vector3 q3)
-	{
+	/// <summary>
+	/// do two triangles p and q intersect?
+	/// OLD CODE!! dont use it, it's slow
+	/// </summary>
+	public static bool TrianglesIntersect2(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 q1, Vector3 q2, Vector3 q3) {
 		// turn edges of p into rays and get distance to hit with q
 		float d;
 		// disgusting hack, dont normalize the direction, check the result with 1, same result
@@ -391,14 +361,19 @@ public class Intersections
 		return false;
 	}
 
-	// ray-triangle intersection distance, -1 is no hit
-	public static float RayTriIntersectDist(Vector3 orig, Vector3 dir, Vector3 a, Vector3 b, Vector3 c)
-	{
+	/// <summary>
+	/// Ray-Triangle intersection distance, -1 is no hit
+	/// </summary>
+	public static float RayTriIntersectDist(Vector3 orig, Vector3 dir, Vector3 a, Vector3 b, Vector3 c) {
 		Vector3 edge1 = b - a;
 		Vector3 edge2 = c - a;
 		Vector3 ray_cross_e2 = Vector3.Cross(dir, edge2);
 
-		float inv_det = 1f / Vector3.Dot(edge1, ray_cross_e2);
+		float det = Vector3.Dot(edge1, ray_cross_e2);
+		if (Mathf.Abs(det) < 1e-8)
+			return -1;
+
+		float inv_det = 1f / det;
 		Vector3 s = orig - a;
 		float u = inv_det * Vector3.Dot(s, ray_cross_e2);
 
@@ -414,8 +389,7 @@ public class Intersections
 		// At this stage we can compute t to find out where the intersection point is on the line.
 		return inv_det * Vector3.Dot(edge2, s_cross_e1);
 	}
-	
-	// TODO
+
 	// projects points of tri onto plane of other, if projected outside of tri's bounds, then return
 	/*public static bool ProjectionCheck(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 q1, Vector3 q2, Vector3 q3, float rank)
 	{
@@ -426,11 +400,177 @@ public class Intersections
 		Debug.DrawRay(p1, dir);
 		return false;
 	}*/
-	public Vector3 ProjectPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal)
-	{
+	
+	/// <summary>
+	/// Project a 3D point onto a 3D plane, and returns the closest poistion on the plane 
+	/// to the point
+	/// </summary>
+	public static Vector3 ProjectPointOnPlane(Vector3 point, Vector3 planeOrig, Vector3 planeNormal) {
 		Vector3 v = point - planeOrig;
 		float dist = Vector3.Dot(v, planeNormal);
 		return point - dist * planeNormal;
+	}
+
+	/// <summary>
+	/// Checks if two 2D line segments intersect
+	/// modified https://stackoverflow.com/a/1968345
+	/// </summary>
+	public static bool LineSegments2D(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3) {
+		Vector2 s1 = p1 - p0;
+		Vector2 s2 = p3 - p2;
+
+		float denom = 1 / (-s2.x * s1.y + s1.x * s2.y);
+		float s = (-s1.y * (p0.x - p2.x) + s1.x * (p0.y - p2.y)) * denom;
+		float t = (s2.x * (p0.y - p2.y) - s2.y * (p0.x - p2.x)) * denom;
+
+		return s >= 0 && s <= 1 && t >= 0 && t <= 1; // actual detection logic
+	}
+
+	/// <summary>
+	/// Checks if a 2D rectangle and a 2D triangle intersect
+	/// </summary>
+	public static bool RectangleTriangle2D(
+		Vector2 rectCorner1, Vector2 rectCorner2,
+		Vector2 triCorner1, Vector2 triCorner2, Vector2 triCorner3) {
+		Vector2 rectMin = Vector2.Min(rectCorner1, rectCorner2);
+		Vector2 rectMax = Vector2.Max(rectCorner1, rectCorner2);
+
+		Vector2 triMin = Vector2.Min(triCorner1, Vector2.Min(triCorner2, triCorner3));
+		Vector2 triMax = Vector2.Max(triCorner1, Vector2.Max(triCorner2, triCorner3));
+
+		// do the bounds not intersect/overlap?
+		if (rectMax.x < triMin.x || rectMin.x > triMax.x || rectMax.y < triMin.y || rectMin.y > triMax.y)
+			return false;
+
+		// any vert of tri in rect (axis aligned)
+		Vector2[] triCorners = new Vector2[3] { triCorner1, triCorner2, triCorner3 };
+		foreach (Vector2 p in triCorners) {
+			bool inBounds =
+				p.x >= rectMin.x && p.x <= rectMax.x &&
+				p.y >= rectMin.y && p.y <= rectMax.y;
+
+			if (inBounds)
+				return true;
+		}
+
+		// any vert of rect in tri
+		Vector2[] rectCorners = new Vector2[2] { rectCorner1, rectCorner2 };
+		foreach (Vector2 p in rectCorners) {
+			float d1, d2, d3;
+			bool has_neg, has_pos;
+
+			static float Sign(Vector3 p1, Vector3 p2, Vector3 p3) {
+				return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+			}
+
+			d1 = Sign(p, triCorner1, triCorner2);
+			d2 = Sign(p, triCorner2, triCorner3);
+			d3 = Sign(p, triCorner3, triCorner1);
+
+			has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+			has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+			if (!(has_neg && has_pos)) // intersecting
+				return true;
+		}
+
+		// any edges intersect
+		// optimization: only need to test 2 edges, at least one must intersect if they do
+		for (int i = 0; i < 2; i++) // triangle verts iter
+		{
+			// test all 4 edges of rectangle against edge
+			Vector2 triEdgep0 = triCorners[i];
+			Vector2 triEdgep1 = triCorners[(i + 1) % 3];
+			if (LineSegments2D(triEdgep0, triEdgep1,
+				new(rectCorner1.x, rectCorner1.y), new(rectCorner1.x, rectCorner2.y)) ||
+				LineSegments2D(triEdgep0, triEdgep1,
+				new(rectCorner1.x, rectCorner2.y), new(rectCorner2.x, rectCorner2.y)) ||
+				LineSegments2D(triEdgep0, triEdgep1,
+				new(rectCorner2.x, rectCorner2.y), new(rectCorner2.x, rectCorner1.y)) ||
+				LineSegments2D(triEdgep0, triEdgep1,
+				new(rectCorner2.x, rectCorner1.y), new(rectCorner1.x, rectCorner1.y)))
+
+				return true;
+		}
+
+		return false;
+	}
+
+	// attempt at a freaky method for point in mesh testing
+	// from what i can remember from some stackoverflow post
+	// but i cant find it now so im going off of what i remember lol
+	public static bool PointInMesh(
+		Vector3 point,
+		Vector3[] tris,
+		Transform relativeTo = null) {
+		return PointInMesh(point, Triangle.FromVertexArray(tris), relativeTo);
+	}
+	public static bool PointInMesh(
+		Vector3 point,
+		Triangle[] triangles,
+		Transform relativeTo = null) {
+
+		// cut time from like 400 ms -> 200 ms ish -> 77 -> 56 
+		Triangle[] tris = new Triangle[triangles.Length];
+		
+		// transform points if relative to 
+		if (relativeTo != null) {
+			/*for (int i = 0; i < tris.Length; i++) {
+				var tri = tris[i];
+				tris[i].p1 = relativeTo.TransformPoint(tri.p1);
+				tris[i].p2 = relativeTo.TransformPoint(tri.p2);
+				tris[i].p3 = relativeTo.TransformPoint(tri.p3);
+			}*/
+
+			// fast transformpoints and put everything into one big array for SPEED
+			Vector3[] points = new Vector3[triangles.Length * 3];
+			for (int i = 0; i < triangles.Length; i++) {
+				points[i * 3 + 0] = triangles[i].p1;
+				points[i * 3 + 1] = triangles[i].p2;
+				points[i * 3 + 2] = triangles[i].p3;
+			}
+
+			relativeTo.TransformPoints(points); // fast?
+
+			// reassign
+			for (int i = 0; i < tris.Length; i++) {
+				tris[i].p1 = points[i * 3 + 0];
+				tris[i].p2 = points[i * 3 + 1];
+				tris[i].p3 = points[i * 3 + 2];
+			}
+		} else {
+			System.Array.Copy(triangles, tris, tris.Length); // copy.. 
+		}
+
+		// flatten mesh and point along one axis
+		// for this i'm gonna use the z axis cuz it allows easy flattening by conversion to v2
+		// actualy we dont have to do this as long as we just use v2s in the code
+		// nevermind i just made a triangle2d class so im gonna use it lmao
+		Vector2 p = point;
+
+		// check for 2d triangle aabb intersects with point
+		// store indexes of tris that passed
+		List<int> flatIntersects = new();
+		for (int i = 0; i < tris.Length; i++) {
+			Triangle2D tri = (Triangle2D)tris[i]; // flatten here
+
+			if (tri.Bounds.Test(p))
+				flatIntersects.Add(i);
+		}
+
+		// perform 3d ray intersection along flattened axis and count intersections
+		// in the positive direction
+		// check all triangles that passed aabb and have any verts' z component greater than point
+		// greater bc we go positive
+		int count = 0;
+		foreach (int index in flatIntersects) {
+			Triangle tri = tris[index];
+
+			float d = RayTriIntersectDist(point, Vector3.forward, tri.p1, tri.p2, tri.p3);
+			if (d > 0) count++;
+		}
+
+		// odd = inside, even = outside
+		return count % 2 == 1;
 	}
 }
 // tomas mullers, i doubt it would be any bit faster, probably slower even

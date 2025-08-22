@@ -19,8 +19,6 @@ public class RotateAxis : MonoBehaviour
 	
 	bool over;
 	bool lastOver;
-	bool mouseDown;
-	bool lastMouseDown;
 	bool lastMainHovering;
 	bool hovering;
 	bool dragging;
@@ -55,9 +53,8 @@ public class RotateAxis : MonoBehaviour
 	void Update()
 	{
 		over = MouseOver();
-		mouseDown = Controls.inputMaster.Transform.Drag.IsPressed();
 
-		if (mouseDown && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime && mouseDown != lastMouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame && over && Time.time - lastMouseDownTime < main.doubleClickResetMaxTime)
 			ResetTransform();
 
 		bool specialAfterReleaseCase = main.hovering != lastMainHovering;
@@ -66,23 +63,22 @@ public class RotateAxis : MonoBehaviour
 		else if (over != lastOver && !over)
 			StopOver();
 
-		if (mouseDown != lastMouseDown && mouseDown)
+		if (Conatrols.Mouse.Left.PressedThisFrame)
 			StartClicking();
-		else if (mouseDown != lastMouseDown && !mouseDown)
+		else if (Conatrols.Mouse.Left.ReleasedThisFrame)
 			StopClicking();
 
 		UpdateVisuals();
 
 		PerformRotating();
 
-		if (mouseDown != lastMouseDown && mouseDown) lastMouseDownTime = Time.time;
+		if (Conatrols.Mouse.Left.PressedThisFrame) lastMouseDownTime = Time.time;
 		lastOver = over;
-		lastMouseDown = mouseDown;
 		lastMainHovering = main.hovering;
 	}
 	void ResetTransform()
 	{
-		foreach (Transform t in SelectionManager.Instance.selection)
+		foreach (Transform t in SelectionManager.Instance.Selection)
 		{
 			Vector3 rotation = t.rotation.eulerAngles;
 			rotation.Scale(Vector3.one - axis);
@@ -97,7 +93,7 @@ public class RotateAxis : MonoBehaviour
 		for (int i = 0; i < 36; i++)
 			screenPointPositions[i] = Camera.main.WorldToScreenPoint(samplePoints[i].position);
 
-		Vector2 mousePos = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+		Vector2 mousePos = Conatrols.Mouse.Position;
 		float mouseToCircleDistance = HF.PointToPolygonEdgeDistance(mousePos, screenPointPositions);
 		return mouseToCircleDistance <= distance;
 	}
@@ -105,7 +101,6 @@ public class RotateAxis : MonoBehaviour
 	{
 		if (!main.hovering && !dragging)
 		{
-			main.currentlyUsingTransformObj = this;
 			hovering = true;
 			main.hovering = true;
 
@@ -200,7 +195,7 @@ public class RotateAxis : MonoBehaviour
 		Vector3 planePos = transform.position;
 		Vector3 planeNormal = (main.transform.rotation * axis).normalized;
 
-		Vector3 mouseScreenSpace = Controls.inputMaster.Transform.MousePos.ReadValue<Vector2>();
+		Vector3 mouseScreenSpace = Conatrols.Mouse.Position;
 		mouseScreenSpace.z = Camera.main.nearClipPlane;
 
 		Vector3 cameraPos = Camera.main.transform.position;
@@ -250,7 +245,7 @@ public class RotateAxis : MonoBehaviour
 			}*/
 
 #if DEBUGMODE
-		DebugExtra.DrawPoint(planeHitPos - planePos, Color.blue); 
+		DebugExtra.DrawPoint(planeHitPos - planePos, color: Color.blue); 
 #endif
 
 		transform.localRotation = Quaternion.AngleAxis(angleDelta, axis);

@@ -1,0 +1,7 @@
+[[char]]
+[[bool]]
+[[Data]]
+[[double]]
+[[Flags]]
+[[constructor]]
+[[string]]

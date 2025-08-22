@@ -1,0 +1,5 @@
+[[Name]]
+[[Token]]
+[[Operator]]
+[[Reference]]
+[[Keyword]]
