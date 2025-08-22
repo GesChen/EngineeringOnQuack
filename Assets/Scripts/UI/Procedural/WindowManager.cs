@@ -62,7 +62,7 @@ public class WindowManager : Singleton<WindowManager> {
 			//ReSetAllValues(collection.Value.Sets);
 			RealiseWindows(collection.Value.Windows);
 		} else {
-			Debug.LogWarning($"window collection not found for context {newContext.Name}");
+			Debug.LogWarning($"window collection not found for context {newContext.GetType().Name}");
 		}
 	}
 

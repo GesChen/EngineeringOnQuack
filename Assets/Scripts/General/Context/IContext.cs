@@ -1,6 +1,5 @@
 using System;
 public interface IContext {
-	string Name { get; }
 	// can't figure out good way to do this, get it to prevent using the setter
 	IContext Parent { get; set; } // just do NOT use the setter, always use setparent
 	Type ParentType { get; }

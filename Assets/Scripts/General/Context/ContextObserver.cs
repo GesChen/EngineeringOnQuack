@@ -23,7 +23,7 @@ public class ContextObserver : Singleton<ContextObserver> {
 		if (ContextManager.IsInContext<Simulating>(out _))
 			CheckSimulating();
 
-		debug_currentContext = ContextManager.Current.Name;
+		debug_currentContext = ContextManager.Current.GetType().Name;
 	}
 
 	public void StartEditing() { ContextManager.EnterContext<Editing>(); }

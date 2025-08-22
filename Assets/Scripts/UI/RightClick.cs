@@ -49,7 +49,7 @@ public class RightClick : Singleton<RightClick> {
 			currentOpen.Show(Conatrols.Mouse.Position, true, true, false);
 
 		} else {
-			Debug.LogWarning($"No right click defined for {ContextManager.Current.Name}");
+			Debug.LogWarning($"No right click defined for {ContextManager.Current.GetType().Name}");
 		}
 	}
 	public void Hide() {
