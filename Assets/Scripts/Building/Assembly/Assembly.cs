@@ -11,7 +11,7 @@ using System.Linq;
 /// serializatoin/deserialzation and other stuff
 /// </summary>
 public class Assembly {
-	public string Name = "New Assembly";
+	public string Name = "";
 	public List<Part> Parts = new();
 	public List<PartGroup> Groups = new();
 	public BuildingClipboard Clipboard = new();

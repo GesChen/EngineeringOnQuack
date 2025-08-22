@@ -42,6 +42,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.ClearAssemble();
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
 		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
+
+		BottomBar.ClearNameChanged();
+		BottomBar.OnNameChanged += ChangeName;
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -228,5 +231,11 @@ public class BuildingManager : Singleton<BuildingManager> {
 	void Duplicate() {
 		Assembly.Clipboard.Copy();
 		Paste();
+	}
+
+	public void ChangeName(string name) {
+		Assembly.Name = name;
+
+		BottomBar.UpdateNameText(name);
 	}
 }

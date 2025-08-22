@@ -105,6 +105,12 @@ public static class BottomBar {
 			showTitle: false);
 	}
 
+	static TMP_InputField NameField;
+	public static void UpdateNameText(string name) {
+		NameField.text = name;
+	}
+	public static void ClearNameChanged() { OnNameChanged = null; }
+	public static Action<string> OnNameChanged;
 
 	public static CWindow Bar;
 	static void SetBar() {
@@ -115,10 +121,10 @@ public static class BottomBar {
 				Movable = false,
 				Size = CWindow.Configuration.FixedSize(new(0, size)),
 				Position = new(
-				new(0, 0),
-				new(1, 0),
-				new(.5f, 0),
-				new(0, 0)
+					new(0, 0),
+					new(1, 0),
+					new(.5f, 0),
+					new(0, 0)
 				),
 				Closable = false,
 				HideOnStart = false
@@ -134,12 +140,16 @@ public static class BottomBar {
 						padding: new(innerpadding)
 					),
 					new(){
-	UIBarUtils.DynamicBarFlyout (1, "File", FileMenu.CWindow, (true, true)),
-	UIBarUtils.DynamicBarFlyout (1, "Tools", ToolsMenu.CWindow, (true, true)),
-	UIBarUtils.DynamicBarSpace  (2),
-	UIBarUtils.DynamicBarText   (5, "name", .5f),
-	UIBarUtils.DynamicBarSpace  (2),
-	UIBarUtils.DynamicBarButton (2, "Assemble", Assemble)
+	UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, (true, true)),
+	UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, (true, true)),
+	UIBarUtils.DynamicBarSpace	(2),
+	UIBarUtils.DynamicBarInputField	(5, "Name Your Creation!", .5f, OnNameChanged)
+		.OnRealized((_, wi) => NameField = 
+		wi.SubItems[0]
+		.GetComponent<PComponents.InputField>().RealComponent 
+		as TMP_InputField),
+	UIBarUtils.DynamicBarSpace	(2),
+	UIBarUtils.DynamicBarButton	(2, "Assemble", Assemble)
 					})
 			},
 			CustomEvents = new() {

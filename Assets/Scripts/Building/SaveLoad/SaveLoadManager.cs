@@ -33,26 +33,22 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 	void Save() {
 		string name = BuildingManager.Instance.Assembly.Name;
-		if (string.IsNullOrWhiteSpace(name)) {
-			SaveLoadMenus.ShowNamePrompt((newName) => {
-				BuildingManager.Instance.Assembly.Name = newName;
-				SaveFile(newName);
-				}
-			);
-		} else {
-			SaveFile(name);
-		}
+		bool nameUnset = string.IsNullOrWhiteSpace(name);
+		if (nameUnset)
+			SaveAs();
+		else
+			SaveFile();
 	}
 
 	void SaveAs() {
 		SaveLoadMenus.ShowNamePrompt((newName) => {
-			BuildingManager.Instance.Assembly.Name = newName;
-			SaveFile(newName);
+			BuildingManager.Instance.ChangeName(newName);
+			SaveFile();
 			}
 		);
 	}
 
-	void SaveFile(string name) {
+	void SaveFile() {
 		SaveLoadMenus.HideNamePrompt();
 		SaveLoadMenus.ShowSaveIcon();
 		SaveLoadMenus.SetSaveText("Saving...");

@@ -59,9 +59,29 @@ public static class UIBarUtils {
 				alignment: TextAlignmentOptions.Center
 			),
 			WindowItem.LayoutConfig.LayoutElementDynamic()
-		)
-		.AddComponents(
+		).AddComponents(
 			new PComponents.LayoutElement(width)
 		);
+
+	public static WindowItem DynamicBarInputField(float width, string placeholder, float bgopacity, Action<string> onValueChanged) =>
+		WindowItem.NewImage(
+				new PComponents.Image(
+					Config.UI.Visual.BackgroundColor *
+						new Color(1, 1, 1, bgopacity)
+				),
+				WindowItem.LayoutConfig.LayoutElementDynamic()
+		).SetSubItems(
+			WindowItem.NewInputField(
+				new PComponents.InputField(
+					onValueChanged,
+					placeholder,
+					alignment: TextAlignmentOptions.Center
+				),
+				WindowItem.LayoutConfig.FillLayout
+			)
+		).AddComponents(
+			new PComponents.LayoutElement(width)
+		);
+
 
 }
