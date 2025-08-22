@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class SimulationManager : Singleton<SimulationManager> {
-	public List<AssemblerRewritten.Assembled> assembledSubassemblies = new();
+	public List<Assembler.Assembled> assembledSubassemblies = new();
 
 	public void StartSimulating() {
-		AssemblerRewritten.Instance.Assemble(out assembledSubassemblies);
+		Assembler.Instance.Assemble(out assembledSubassemblies);
 	}
 
 	public void StopSimulating() {

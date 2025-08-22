@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,14 +15,13 @@ public class FlyoutTrigger : MonoBehaviour {
 	public Sprite openSprite;
 	public Sprite closedSprite;
 
+	DateTime create;
+
 	[HideInNormalInspector] public HoverTarget selfHoverTarget;
 
 	// potentially null until it gets realised
 	[HideInNormalInspector] public CWindow targetCWindow;
 	[HideInNormalInspector] public RectTransform rt;
-
-	bool parentIsFlyout;
-	Flyout parentFlyout;
 
 	bool open;
 
@@ -33,14 +33,12 @@ public class FlyoutTrigger : MonoBehaviour {
 
 		if (openIndicator != null)
 			openIndicator.sprite = closedSprite;
+
+		create = DateTime.Now;
+
 	}
 
 	void Update() {
-		if (parentFlyout == null && Time.frameCount < Config.UI.Behaviour.MaxFramesForRealization) {
-			parentFlyout = GetComponentInParent<Flyout>();
-			parentIsFlyout = parentFlyout != null;
-		}
-
 		CheckRealization();
 		if (targetFlyout == null) return; // give it time
 
@@ -58,8 +56,14 @@ public class FlyoutTrigger : MonoBehaviour {
 			return;
 		}
 
+		/*try {
+			var _ = targetCWindow.RealisedWindow;
+		} catch {
+			Debug.Log($"fetch {create}");
+		}*/
+
 		// try to retrieve the target flyout component or make it
-		if (targetCWindow.RealisedWindow != null) {
+		if (targetCWindow.GetRealisedOrNull() != null) {
 			var window = targetCWindow.RealisedWindow.gameObject;
 			// other triggers may have already created a component
 			if (window.TryGetComponent(out Flyout flyoutInstance)) {
@@ -68,9 +72,9 @@ public class FlyoutTrigger : MonoBehaviour {
 				targetFlyout = window.AddComponent<Flyout>();
 				// component needs no setup
 			}
-		} else {
+		} else { 
 			if (Time.frameCount > Config.UI.Behaviour.MaxFramesForRealization) {
-				Debug.LogError("Target CWindow still not created!");
+				Debug.LogError("Target CWindow still not realised!");
 				return;
 			}
 		}
@@ -82,16 +86,14 @@ public class FlyoutTrigger : MonoBehaviour {
 			return;
 		}
 
-		if (state) {			
+		if (state) {
+			targetFlyout.sourceTrigger = this;
+		
 			targetFlyout.Show(this, openHorizontally, openPrioritizingRight, openPrioritizingUp);
 		} else {
 
 			if (!targetFlyout.mouseInRange) // and the mouse isnt hovering on the target flyout now
 				targetFlyout.Hide();
-		}
-
-		if (parentIsFlyout) {
-			parentFlyout.openChildFlyout = targetFlyout;
 		}
 	}
 }

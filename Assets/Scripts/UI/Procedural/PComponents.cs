@@ -84,7 +84,7 @@ public class PComponents {
 
 	public class Button : Component {
 		public bool Enabled = true;
-		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock Colors = Config.UI.ColorBlock.DefaultBlock;
 		public event Action OnClick;
 
 		public Button(
@@ -108,10 +108,10 @@ public class PComponents {
 			OnClick = onClick;
 			Enabled = enabled;
 			Colors = new() {
-				NormalColor		= normalColor		?? Config.UI.Visual.DefaultColorBlock.NormalColor,
-				HoverColor		= highlightedColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
-				PressedColor	= pressedColor		?? Config.UI.Visual.DefaultColorBlock.PressedColor,
-				DisabledColor	= disabledColor		?? Config.UI.Visual.DefaultColorBlock.DisabledColor
+				NormalColor		= normalColor		?? Config.UI.ColorBlock.DefaultBlock.NormalColor,
+				HoverColor		= highlightedColor	?? Config.UI.ColorBlock.DefaultBlock.HoverColor,
+				PressedColor	= pressedColor		?? Config.UI.ColorBlock.DefaultBlock.PressedColor,
+				DisabledColor	= disabledColor		?? Config.UI.ColorBlock.DefaultBlock.DisabledColor
 			};
 		}
 
@@ -191,7 +191,7 @@ public class PComponents {
 	}
 
 	public class InputField : Component {
-		public Config.UI.ColorBlock Colors		= Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock Colors		= Config.UI.ColorBlock.DefaultBlock;
 
 		public string			PlaceholderText	= Config.UI.InputField.PlaceholderDefaultText;
 
@@ -239,7 +239,7 @@ public class PComponents {
 			FontSize			= fontSize			?? Config.UI.Visual.FontSize;
 			Alignment			= alignment			?? TextAlignmentOptions.TopLeft;
 
-			Colors				= colors			?? Config.UI.Visual.DefaultColorBlock;
+			Colors				= colors			?? Config.UI.ColorBlock.DefaultBlock;
 
 			TextColor			= textColor			?? Config.UI.Visual.TextColor;
 			PlaceholderColor	= placeholderColor	?? Config.UI.Visual.PlaceholderColor;
@@ -313,6 +313,13 @@ public class PComponents {
 			field.pointSize = FontSize;
 			field.onValueChanged.AddListener(ValueChanged);
 
+			// caret and small fix
+			field.customCaretColor = true;
+			field.caretColor = Config.UI.Visual.TextColor;
+
+			field.enabled = false;
+			field.enabled = true;
+
 			RealComponent = field;
 		}
 	}
@@ -343,7 +350,7 @@ public class PComponents {
 		public bool MatchOtherDimension;
 
 		/// <summary>
-		/// You probably shouldn't be using this constructor if you want 
+		/// <b><u>You probably shouldn't be using this</u></b> constructor if you want 
 		/// to make a layout. Use Pcomp.layout.[direction].whatever
 		/// </summary>
 		public Layout(
@@ -370,7 +377,7 @@ public class PComponents {
 			public abstract Type Type { get; }
 			public Layout Layout(
 				bool fixedSize,
-				bool fillHorizontally,
+				bool fillOwnAxis,
 				bool matchOtherDimension,
 				float? spacing				= null,
 				TextAnchor? itemAlignment	= null) => 
@@ -379,11 +386,11 @@ public class PComponents {
 					spacing,
 					itemAlignment,
 					fixedSize,
-					fillHorizontally,
+					fillOwnAxis,
 					matchOtherDimension);
 
 			public Layout Fixed(
-				bool fillHorizontally,
+				bool fillOwnAxis,
 				bool matchOtherDimension,
 				float? spacing				= null,
 				TextAnchor? itemAlignment	= null) => 
@@ -392,7 +399,7 @@ public class PComponents {
 					spacing,
 					itemAlignment,
 					true,
-					fillHorizontally,
+					fillOwnAxis,
 					matchOtherDimension);
 
 			public Layout Dynamic(
@@ -493,6 +500,10 @@ public class PComponents {
 	public class LayoutElement : Component {
 		public float SizeMultiplier;
 
+		public LayoutElement(float sizeMultiplier) {
+			SizeMultiplier = sizeMultiplier;
+		}
+
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
 			var element = newObj.AddComponent<UnityEngine.UI.LayoutElement>();
 			element.flexibleWidth = SizeMultiplier;
@@ -503,7 +514,7 @@ public class PComponents {
 	}
 
 	public class HoverTarget : Component {
-		public Config.UI.ColorBlock Colors = Config.UI.Visual.DefaultColorBlock;
+		public Config.UI.ColorBlock Colors = Config.UI.ColorBlock.DefaultBlock;
 
 		public HoverTarget(
 			Color? normalColor	= null, 
@@ -511,9 +522,9 @@ public class PComponents {
 			float? fadeDuration	= null) {
 			
 			Colors = new() { 
-				NormalColor		= normalColor	?? Config.UI.Visual.DefaultColorBlock.NormalColor,
-				HoverColor		= hoverColor	?? Config.UI.Visual.DefaultColorBlock.HoverColor,
-				FadeDuration	= fadeDuration	?? Config.UI.Visual.DefaultColorBlock.FadeDuration,
+				NormalColor		= normalColor	?? Config.UI.ColorBlock.DefaultBlock.NormalColor,
+				HoverColor		= hoverColor	?? Config.UI.ColorBlock.DefaultBlock.HoverColor,
+				FadeDuration	= fadeDuration	?? Config.UI.ColorBlock.DefaultBlock.FadeDuration,
 			};
 		}
 
@@ -533,7 +544,7 @@ public class PComponents {
 	}
 
 	public class FlyoutTrigger : Component {
-		public CWindow TargetFlyout;
+		public CWindow TargetWindow;
 		public WindowItem IndicatorImage;
 		public bool OpenHorizontally;
 		public bool OpenPrioritizingRight;
@@ -550,7 +561,7 @@ public class PComponents {
 			string openSpriteLocation = null,
 			string closedSpriteLocation = null) {
 
-			TargetFlyout = targetFlyout;
+			TargetWindow = targetFlyout;
 			IndicatorImage = indicatorImage;
 
 			OpenHorizontally = openHorizontally;
@@ -575,7 +586,7 @@ public class PComponents {
 			}
 
 			ftComp.selfHoverTarget = htInstance;
-			ftComp.targetCWindow = TargetFlyout;
+			ftComp.targetCWindow = TargetWindow;
 
 			// allow null, and just dont use it
 			if (IndicatorImage != null) {
@@ -651,27 +662,29 @@ public class PComponents {
 	}
 
 	public class ScrollView : Component {
+		public bool HorizontalScrolling = true;
+		public bool VerticalScrolling = true;
+
 		// might change
-		public Color Background = Config.UI.Visual.BackgroundColor;
-		public float BarSize = 20;
-		public Color BarBackgroundColor = Config.UI.Visual.SecondaryBackgroundColor;
-		public Config.UI.ColorBlock BarHandleColorBlock = Config.UI.Visual.DefaultColorBlock;
+		public Color Background;
+		public float BarSize;
+		public Color BarBackgroundColor;
+		public Config.UI.ColorBlock BarHandleColorBlock;
 
 		public ScrollView(
+			bool horizontalScrolling = true,
+			bool verticalScrolling = true,
 			Color? background = null,
-			float? barSize = null,
+			float barSize = 20,
 			Color? barBackgroundColor = null,
-			Config.UI.ColorBlock? barHandleColorBlock = null) {
-
-			// new method prolly better than the ??s
-			if (background.HasValue)
-				Background = background.Value;
-			if (barSize.HasValue)
-				BarSize = barSize.Value;
-			if (barBackgroundColor.HasValue)
-				BarBackgroundColor = barBackgroundColor.Value;
-			if (barHandleColorBlock.HasValue)
-				BarHandleColorBlock = barHandleColorBlock.Value;
+			Config.UI.ColorBlock? barHandleColorBlock = null
+			) {
+			HorizontalScrolling	= horizontalScrolling;
+			VerticalScrolling	= verticalScrolling;
+			Background			= background ?? Config.UI.Visual.BackgroundColor;
+			BarSize				= barSize;
+			BarBackgroundColor	= barBackgroundColor ?? Config.UI.Visual.SecondaryBackgroundColor;
+			BarHandleColorBlock	= barHandleColorBlock ?? Config.UI.ColorBlock.DefaultBlock;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -683,40 +696,45 @@ public class PComponents {
 			// prolly gonna have to redo how the container works entirely too
 			// deal with the contents container last i guess
 
+			comp.horizontal = HorizontalScrolling;
+			comp.vertical = VerticalScrolling;
+
 			// make both scrollbars
-			var vertScrollbar = CreateScrollbar(
-				rt,
-				true,
-				1,
-				BarSize,
-				Vector2.one,
-				BarBackgroundColor,
-				BarHandleColorBlock);
+			if (VerticalScrolling) {
+				var vertScrollbar = CreateScrollbar(
+					rt,
+					true,
+					1,
+					BarSize,
+					Vector2.one,
+					BarBackgroundColor,
+					BarHandleColorBlock);
 
-			var horiScrollbar = CreateScrollbar(
-				rt,
-				false,
-				0,
-				BarSize,
-				Vector2.zero,
-				BarBackgroundColor,
-				BarHandleColorBlock);
+				comp.verticalScrollbar = vertScrollbar;
+				comp.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+				comp.verticalScrollbarSpacing = 0; // may chnage later but best 0
+			}
 
-			comp.horizontal = true;
-			comp.vertical = true;
+			if (HorizontalScrolling) {
+				var horiScrollbar = CreateScrollbar(
+					rt,
+					false,
+					0,
+					BarSize,
+					Vector2.zero,
+					BarBackgroundColor,
+					BarHandleColorBlock);
+			
+				comp.horizontalScrollbar = horiScrollbar;
+				comp.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+				comp.horizontalScrollbarSpacing = 0; // may chnage later but best 0
+			}
+
 			comp.movementType = ScrollRect.MovementType.Clamped;
 			comp.inertia = true;
 			comp.decelerationRate = .135f; // defaults
 			comp.scrollSensitivity = Config.Input.ScrollSensitivity;
-
-			comp.horizontalScrollbar = horiScrollbar;
-			comp.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
-			comp.horizontalScrollbarSpacing = 0; // may chnage later but best 0
-
-			comp.verticalScrollbar = vertScrollbar;
-			comp.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
-			comp.verticalScrollbarSpacing = 0; // may chnage later but best 0
-
+			
 			// yeah idk how we're gonna do this ikiab
 			// probably just parent the container to a new viewport object i guess 
 			GameObject viewportObj = new("Viewport");
@@ -732,6 +750,17 @@ public class PComponents {
 
 			comp.viewport = viewportRT;
 			comp.content = originalItem.ContentsObject;
+
+			// i hate you so much
+			originalItem.ContentsObject.anchorMin = new(0, 1);
+			originalItem.ContentsObject.anchorMax = new(1, 1);
+			originalItem.ContentsObject.pivot = new(0, 1);
+			originalItem.ContentsObject.offsetMin = new(0, 0);
+			originalItem.ContentsObject.offsetMax = new(0, 0);
+
+			var scaler = originalItem.ContentsObject.gameObject.AddComponent<global::ScaleToContents>();
+			scaler.IgnoreHorizontal = !HorizontalScrolling;
+			scaler.IgnoreVertical = !VerticalScrolling;
 
 			RealComponent = comp;
 		}
@@ -753,8 +782,15 @@ public class PComponents {
 			mainRT.SetParent(parent);
 
 			// the component will figure out the other axis so just set both
-			mainRT.anchorMin = otherAxisAnchor * Vector2.one;
-			mainRT.anchorMax = otherAxisAnchor * Vector2.one;
+			// apparently not anymore wtf
+			int axis = vertical ? 0 : 1;
+			Vector2 MAmin = Vector2.zero;
+			MAmin[axis] = otherAxisAnchor;
+			Vector2 MAmax = Vector2.one;
+			MAmax[axis] = otherAxisAnchor;
+
+			mainRT.anchorMin = MAmin;
+			mainRT.anchorMax = MAmax;
 
 			mainRT.sizeDelta = size * Vector2.one;
 			mainRT.pivot = pivot;

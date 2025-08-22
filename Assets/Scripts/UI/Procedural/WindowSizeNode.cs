@@ -134,7 +134,7 @@ public class WindowSizeNode : MonoBehaviour {
 			Vector2 pos = HF.Vector2Clamp(
 				Conatrols.Mouse.Position,
 				new Vector2(pad.Left, pad.Down),
-				main.manager.canvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
+				main.manager.CanvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
 			SetCornerPosition(pos);
 
 			oppositeVert =

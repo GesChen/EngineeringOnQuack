@@ -14,7 +14,6 @@ public class CWindow {
 	/// </summary>
 	[Serializable]
 	public class Configuration {
-
 		/// <summary>
 		/// <para>Resizable (T), Movable (T)</para>
 		/// <para>Color, Outline (float, color)</para>
@@ -76,20 +75,27 @@ public class CWindow {
 	/// <summary>
 	/// Name, Config, Items
 	/// </summary>
-	public CWindow() { }
+	public CWindow() { CreationFrame = Time.frameCount; }
 
 	public Configuration Config = new();
 	public List<TimedEventInvoker.TimedEvent> CustomEvents;
+	public string GroupPath = null;
+	public WindowRealiser.Group RealGroup;
+
+	public int CreationFrame { get; }
 
 	private LiveWindow m_realisedWindow;
 	public LiveWindow RealisedWindow {
 		get {
 			if (m_realisedWindow == null) {
-				throw new($"Window \"{Name}\" not realised!"); 
+				if (!ReferenceEquals(m_realisedWindow, null))
+					throw new($"Window \"{Name}\" destroyed!");
+				throw new($"Window \"{Name}\" not realised!");
 			}
 			return m_realisedWindow;
 		}
 	}
+	public LiveWindow GetRealisedOrNull() => m_realisedWindow;
 	public void SetRealised(LiveWindow live) {
 		m_realisedWindow = live;
 	}
@@ -99,7 +105,12 @@ public class CWindow {
 		TimedEventInvoker.TimedEventCall action) {
 
 		CustomEvents ??= new();
-		CustomEvents.Add(new(action, timing));
+		CustomEvents.Add(new(timing, action));
+		return this;
+	}
+
+	public CWindow SetGroup(string path) {
+		GroupPath = path;
 		return this;
 	}
 
@@ -142,4 +153,6 @@ public class UIPosition {
 
 	public static UIPosition CenterAnchoredAt(Vector2 pos, Vector2 offset) =>
 		new(pos, pos, new(.5f, .5f), offset);
+
+	public static UIPosition LayoutItem => AnchoredAt(TopLeft);
 }

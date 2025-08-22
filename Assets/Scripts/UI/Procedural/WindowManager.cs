@@ -8,10 +8,11 @@ using UnityEngine.UI;
 // this file will probably not be used in final but here for temporary 
 // this is being used alot more than im expecting man im ngl
 public class WindowManager : Singleton<WindowManager> {
-	public List<LiveWindow> windows;
-	public WindowRealiser realiser;
-	[HideInInspector] public Canvas canvas;
-	[HideInInspector] public RectTransform canvasRect;
+	public List<CWindow> Windows = new();
+	public List<PMenu.Window> Menus = new();
+	public WindowRealiser Realiser;
+	[HideInInspector] public Canvas Canvas;
+	[HideInInspector] public RectTransform CanvasRect;
 
 	private RectTransform preview;
 	bool previewVisible;
@@ -20,30 +21,90 @@ public class WindowManager : Singleton<WindowManager> {
 
 	public bool anyDragging = false;
 
+	IContext LastContext = null;
+
 	// only good way i can think of for now to ensure that the 
 	// other awakes are called before init is to just delay this script's 
 	// execution order cuz every other method doesn't make sense or this class
 	// cant access it
 	protected override void Awake() {
 		base.Awake();
-		
-		AllWindows.Init(this);
+
+		// weird domain clearing bug somehow these persist????????
+		Windows.Clear();
+		Menus.Clear();
+
+		// todo:investigate why this static constructor thing
+		// didnt null occ properly and we have to do this hack
+		// to get it to rest properly
+		ContextManager.ResetContextChanged();
+		ContextManager.OnContextChanged += ContextChanged;
+	}
+
+	void ContextChanged(IContext newContext) {
+		if (newContext is Contexts.Main) return; // ignore main switch
+
+		if (LastContext == null || !ContextManager.RelatedWithoutMain(newContext, LastContext)) {
+			SwitchCollectionsByContext(newContext);
+		}
+
+		LastContext = newContext;
+	}
+
+	private void SwitchCollectionsByContext(IContext newContext) {
+		var collection = ContextWindows.FindCollectionByContext(newContext);
+
+		if (collection != null) {
+			ResetAllMenus();
+			Menus.AddRange(collection.Value.Menus);
+
+			DestroyAllWindows();
+			//ReSetAllValues(collection.Value.Sets);
+			RealiseWindows(collection.Value.Windows);
+		} else {
+			Debug.LogWarning($"window collection not found for context {newContext.GetType().Name}");
+		}
 	}
 
 	/// <summary>
 	/// stop calling this from individual classes, instead put them all into
 	/// allwindows and windowmanager will do it
 	/// </summary>
-	public void RealiseWindows(params CWindow[] torealise) {
+	void RealiseWindows(params CWindow[] torealise) {
+		Windows ??= new();
 		foreach (var window in torealise) {
-			var realised = realiser.Realise(window);
-			windows.Add(realised);
+			Realiser.Realise(window);
+			Windows.Add(window);
+		}
+	}
+
+	void DestroyAllWindows() {
+		// destroy these for good measure and non grouped
+		foreach (var window in Windows) {
+			Destroy(window.RealisedWindow.gameObject);
+		}
+		Windows.Clear();
+
+		// destroy the groups too
+		WindowRealiser.Instance.DestroyAllGroupObjects();
+	}
+
+	void ResetAllMenus() {
+		foreach (var menu in Menus) {
+			menu.Reset();
+		}
+		Menus.Clear();
+	}
+
+	void ReSetAllValues(Action[] Sets) {
+		foreach (var setter in Sets) {
+			setter();
 		}
 	}
 
 	void Start() {
-		canvas = GetComponent<Canvas>();
-		canvasRect = canvas.GetComponent<RectTransform>();
+		Canvas = GetComponent<Canvas>();
+		CanvasRect = Canvas.GetComponent<RectTransform>();
 		CreatePreviewWindow();
 	}
 
@@ -52,12 +113,12 @@ public class WindowManager : Singleton<WindowManager> {
 		preview = newObj.AddComponent<RectTransform>();
 		Image image = newObj.AddComponent<Image>();
 		image.color = Config.UI.Visual.PreviewWindowColor;
-		preview.SetParent(canvas.transform);
+		preview.SetParent(Canvas.transform);
 		newObj.SetActive(false);
 	}
 
 	void Update() {
-		anyDragging = windows.Any(w => w.dragging || w.anyNodesDragging);
+		anyDragging = Windows.Any(w => w.RealisedWindow.dragging || w.RealisedWindow.anyNodesDragging);
 
 		if (Conatrols.IM.UI.WindowSnap.IsPressed()) {
 			if (Conatrols.Mouse.Left.ReleasedThisFrame && beingDragged != null && lowestWindow != null) {
@@ -82,7 +143,8 @@ public class WindowManager : Singleton<WindowManager> {
 		lowestWindow = null;
 		int lowestHoverIndex = int.MaxValue;
 		beingDragged = null;
-		foreach (var window in windows) {
+		foreach (var cw in Windows) {
+			var window = cw.RealisedWindow;
 			if (!window.dragging) {
 				int index = UIHovers.hovers.IndexOf(window.backgroundImage.transform);
 				if (index >= 0 && index < lowestHoverIndex) {
@@ -144,7 +206,7 @@ public class WindowManager : Singleton<WindowManager> {
 			: new(oX, oY / 2);
 
 		Vector2 newPos =
-			(Vector2)snapTo.rt.position +
+			snapTo.rt.GetCenter() +
 			quadrant switch {
 				0 => new(0, oY / 4),
 				1 => new(oX / 4, 0),
@@ -170,7 +232,7 @@ public class WindowManager : Singleton<WindowManager> {
 			: new(oX, tY);
 
 		Vector2 newPos =
-			(Vector2)snapTo.rt.position +
+			snapTo.rt.GetCenter() +
 			quadrant switch {
 				0 => new(0, (oY + tY) / 2),
 				1 => new((oX + tX) / 2, 0),
@@ -197,7 +259,7 @@ public class WindowManager : Singleton<WindowManager> {
 			snapTo.rt.sizeDelta = size;
 		}
 
-		target.rt.position = preview.position;
+		target.rt.SetCenter(preview.position);
 		target.rt.sizeDelta = preview.sizeDelta;
 	}
 

@@ -189,7 +189,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 			Selection = new();
 
 		Camera maincamera = Camera.main;
-		foreach (Part part in BuildingManager.Instance.Parts) {
+		foreach (Part part in BuildingManager.Instance.Assembly.Parts) {
 			if (part == null) continue;
 
 			if (PartIntersectsWithSelectionBox(part, boundsStart, boundsEnd, maincamera) &&
@@ -288,7 +288,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		Transform selected = null;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit)) {
 			Part component = hit.transform.GetComponent<Part>();
-			if (component && BuildingManager.Instance.Parts.Contains(component))
+			if (component && BuildingManager.Instance.Assembly.Parts.Contains(component))
 				selected = hit.transform;
 		}
 
@@ -333,10 +333,10 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		// remove objects from the container that are no longer in selection 
 		// (this is put before return, in case selection is empty then this will not happen
-		foreach (Part p in BuildingManager.Instance.Parts) {
+		foreach (Part p in BuildingManager.Instance.Assembly.Parts) {
 			Transform t = p.transform;
 			if (!Selection.Contains(t)) {
-				t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
+				t.SetParent(BuildingManager.Instance.MainPartsContainer, true);
 			}
 		}
 
@@ -354,7 +354,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// handle position
 		Vector3 totalPosition = Vector3.zero;
 		foreach (Transform t in Selection) {
-			t.SetParent(BuildingManager.Instance.mainPartsContainer, true);
+			t.SetParent(BuildingManager.Instance.MainPartsContainer, true);
 			totalPosition += t.position;
 		}
 

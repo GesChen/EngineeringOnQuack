@@ -1,11 +1,15 @@
+using System;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
 public static partial class Config {
 	public static class Building {
-		private static readonly float saturation	= .6f;
-		private static readonly float value			= 1f;
+		public static readonly int ClipboardHistorySize = 10; // might consolidate all clipboard sizes into one
+
+		private static readonly float saturation	= .6f; // values for
+		private static readonly float value			= 1f; // colors array
 
 		public static readonly Color[] Colors = 
 			new[]{
@@ -36,5 +40,25 @@ public static partial class Config {
 		private static Sprite m_ColorIcon;
 		public static Sprite ColorIcon =>
 			HF.LoadResource(ref m_ColorIcon, Locations.IconsFolder + "Composition/color1");
+
+		public static class Saving {
+			public static readonly ushort VERSION = 1;
+
+			public static readonly bool SaveAsText = true;
+			public static readonly string SaveExtension = ".assembly";
+
+			public static readonly bool SaveClipboard;
+			
+			public static string SavingLocation =>
+				HF.GuaranteePath(
+					Path.Combine(
+						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+						"EOQ")
+					);
+			public static string AssembliesLocation =>
+				HF.GuaranteePath(
+					Path.Combine(SavingLocation, "Assemblies")
+					);
+		}
 	}
 }

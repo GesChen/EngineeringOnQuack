@@ -1,11 +1,17 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityEngine;
 
+/// <remarks>
+/// Don't store references to LiveWindows themselves
+/// if they are not temporary as windowrealiser.updatewindow
+/// will destroy old references and you'll get null errors
+/// </remarks>
 public class LiveWindow : MonoBehaviour {
 	public List<WindowSizeNode> cornerNodes = new();
-	public Transform backgroundImage;
+	public Image backgroundImage;
 	public Transform contentsContainer;
 	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
@@ -49,9 +55,9 @@ public class LiveWindow : MonoBehaviour {
 
 	void Update() {
 		if (Config.HideOnStart) {
-			if (Time.frameCount == global::Config.UI.Behaviour.MaxFramesForRealization)
+			if (Time.frameCount - Source.CreationFrame == global::Config.UI.Behaviour.MaxFramesForRealization)
 				gameObject.SetActive(false);
-			if (Time.frameCount <= global::Config.UI.Behaviour.MaxFramesForRealization) {
+			if (Time.frameCount - Source.CreationFrame <= global::Config.UI.Behaviour.MaxFramesForRealization) {
 				//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
 				return;
 			}
@@ -107,10 +113,10 @@ public class LiveWindow : MonoBehaviour {
 	Vector2 dragStartPos;
 	bool goodToStartDragging = false;
 	void HandleDrag() {
-		bool hovered = UIHovers.CheckFirstIgnoringChildrenOfOther(backgroundImage, contentsContainer);
+		bool hovered = UIHovers.CheckFirstIgnoringChildrenOfOther(backgroundImage.transform, contentsContainer);
 		if (!hovered && !dragging) return;
 
-		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame) {
+		if (!dragging && Conatrols.Mouse.Left.PressedThisFrame && DragAllowed()) {
 			dragging = true;
 			dragOffset = (Vector2)rt.position - Conatrols.Mouse.Position;
 			dragStartPos = Conatrols.Mouse.Position;
@@ -133,7 +139,7 @@ public class LiveWindow : MonoBehaviour {
 
 			// prevent going off the sides
 			FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
-			Vector2 canvasSize = manager.canvasRect.sizeDelta;
+			Vector2 canvasSize = manager.CanvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
 			float halfHeight = rt.sizeDelta.y / 2;
@@ -148,6 +154,13 @@ public class LiveWindow : MonoBehaviour {
 
 			rt.SetCenter(clampedPos);
 		}
+	}
+
+	// check if anythings stopping dragging from occuring
+	bool DragAllowed() {
+		if (UIHovers.hovers.Any(h => h.GetComponent<Scrollbar>() != null)) return false;
+
+		return true;
 	}
 
 	void CheckNodes() {
@@ -328,7 +341,6 @@ public class LiveWindow : MonoBehaviour {
 	/// Puts a selected corner 1-3 or 4 for center at a position
 	/// </summary>
 	public void SetWorldCorner(Vector3 targetWorldPosition, int corner) {
-
 		Vector3[] worldCorners = new Vector3[4];
 		rt.GetWorldCorners(worldCorners);
 

@@ -1,10 +1,11 @@
 //#define DEBUGMODE
-
+/*
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Assembler : Singleton<Assembler> {
+[System.Obsolete]
+public class ObsoleteAssembler : Singleton<ObsoleteAssembler> {
 	public BuildingManager bm;
 
 	struct Connection {

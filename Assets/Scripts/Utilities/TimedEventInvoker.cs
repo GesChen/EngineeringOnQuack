@@ -5,11 +5,11 @@ using UnityEngine;
 
 public class TimedEventInvoker : MonoBehaviour {
 	public struct TimedEvent {
-		public TimedEventCall Action;
 		public Timing Timing;
-		public TimedEvent(TimedEventCall action, Timing timing) {
-			Action = action;
+		public TimedEventCall Action;
+		public TimedEvent(Timing timing, TimedEventCall action) {
 			Timing = timing;
+			Action = action;
 		}
 	}
 

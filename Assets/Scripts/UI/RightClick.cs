@@ -12,11 +12,15 @@ public class RightClick : Singleton<RightClick> {
 	public WindowManager windowManager;
 	[HideInNormalInspector] public Vector2 downPos;
 	Flyout currentOpen;
+	float smoothDelta = 0f;
 
 	protected override void Awake() {
 		base.Awake();
 	}
+
 	void Update() {
+		smoothDelta = HF.ApproxAvg(smoothDelta, Conatrols.Mouse.Delta.magnitude, 10);
+
 		if (Conatrols.Mouse.Right.PressedThisFrame) {
 			Click();
 		} else 
@@ -29,8 +33,7 @@ public class RightClick : Singleton<RightClick> {
 	}
 
 	void Click() {
-		if (Conatrols.Mouse.SmoothDelta.sqrMagnitude >
-			Config.UI.Behaviour.MaxMouseMovementForClick * Config.UI.Behaviour.MaxMouseMovementForClick)
+		if (smoothDelta > Config.UI.Behaviour.MaxMouseMovementForClick)
 			return;
 
 		downPos = Conatrols.Mouse.Position;
@@ -46,7 +49,7 @@ public class RightClick : Singleton<RightClick> {
 			currentOpen.Show(Conatrols.Mouse.Position, true, true, false);
 
 		} else {
-			Debug.LogWarning($"No right click defined for {ContextManager.Current.Name}");
+			Debug.LogWarning($"No right click defined for {ContextManager.Current.GetType().Name}");
 		}
 	}
 	public void Hide() {

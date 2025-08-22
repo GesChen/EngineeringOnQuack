@@ -2,54 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public static class SaveLoadHelper {
-	struct Assembly {
-		public string Name;
-		public List<PartInfo> Parts;
-		public List<Group> Groups;
-	}
-	struct PVector3 {
-		public float x, y, z;
-		public PVector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
-		public static implicit operator Vector3(PVector3 other) =>
-			new(other.x, other.y, other.z);
-		public static implicit operator PVector3(Vector3 other) =>
-			new(other.x, other.y, other.z);
-		public static implicit operator Color(PVector3 other) =>
-			new(other.x, other.y, other.z);
-		public static implicit operator PVector3(Color other) =>
-			new(other.r, other.g, other.b);
-	}
-	struct PVector4 {
-		public float x, y, z, w;
-		public PVector4(float X, float Y, float Z, float W) { x = X; y = Y; z = Z; w = W; }
-		public static implicit operator Quaternion(PVector4 other) =>
-			new(other.x, other.y, other.z, other.w);
-		public static implicit operator PVector4(Quaternion other) =>
-			new(other.x, other.y, other.z, other.w);
-	}
-	struct PartInfo {
-		public int basePartID;
-		public int id;
-		public PVector3 position;
-		public PVector4 rotation;
-		public PVector3 scale;
-
-		public PVector3 color;
-		public int compositionID;
-	}
-	struct Group {
-		public List<int> PartIDs;
-	}
-
-	
 	static string Pathify(string name) => // turns name into full path
 		Path.Combine(
-		Config.Saving.AssembliesLocation,
-		name + Config.Saving.SaveExtension);
+		Config.Building.Saving.AssembliesLocation,
+		name + Config.Building.Saving.SaveExtension);
 
 	static string Depath(string path) => // turns path into name
 		Path.GetFileNameWithoutExtension(path);
@@ -110,17 +71,27 @@ public static class SaveLoadHelper {
 
 		}
 
-		public List<HeaderItem> Items;
+		public HeaderHelper(params HeaderItem[] items) {
+			Items = items;
+		}
+
+		public HeaderItem[] Items;
 		
 		public int TotalBytes => Items.Sum(x => x.Bytes);
 		public int TotalChars => Items.Sum(x => x.Chars);
 
 		public void AddStringHeader(ref string original, params object[] data) {
+			if (data.Length != Items.Length)
+				throw new ArgumentException("Data params must be the same length as items definition");
+			
 			string header = "";
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem item = Items[i];
 				object o = data[i];
+			
+				if (o.GetType() != item.Type)
+					throw new InvalidDataException($"Object at index {i} of header data must be a {item.Type.Name}, got {o.GetType().Name}");
 
 				try {
 					header += item.ToCharsFunction(o);
@@ -135,9 +106,9 @@ public static class SaveLoadHelper {
 		public void GetStringHeader(ref string chars, out object[] data) {
 			string header = chars[..TotalChars];
 
-			data = new object[Items.Count];
+			data = new object[Items.Length];
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem h = Items[i];
 
 				int count = h.Chars;
@@ -156,12 +127,18 @@ public static class SaveLoadHelper {
 		}
 
 		public void AddByteHeader(ref byte[] original, params object[] data) {
+			if (data.Length != Items.Length)
+				throw new ArgumentException("Data params must be the same length as items definition");
+
 			List<byte> header = new(); // list of bytes feels cursed but 
 									   // im too lazy to use a byte array :P
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem item = Items[i];
 				object o = data[i];
+
+				if (o.GetType() != item.Type)
+					throw new InvalidDataException($"Object at index {i} of header data must be a {item.Type.Name}, got {o.GetType().Name}");
 
 				try {
 					header.AddRange(item.ToBytesFunction(o));
@@ -176,9 +153,9 @@ public static class SaveLoadHelper {
 		public void GetByteHeader(ref byte[] bytes, out object[] data) {
 			byte[] header = bytes[..TotalBytes];
 
-			data = new object[Items.Count];
+			data = new object[Items.Length];
 
-			for (int i = 0; i < Items.Count; i++) {
+			for (int i = 0; i < Items.Length; i++) {
 				HeaderItem h = Items[i];
 
 				int count = h.Bytes;
@@ -192,127 +169,100 @@ public static class SaveLoadHelper {
 
 			bytes = bytes[TotalBytes..];
 		}
+	
+		public static void AddVersionHeader(ref byte[] original, in bool isText, in ushort version) {
+			byte[] vh = new byte[2];
+
+			// set the version bits first
+
+			// keep only lower 14 bits
+			ushort value = version;
+			value &= 0x3FFF; // 0011_1111_1111_1111
+
+			// byte 0: bits 13..8 (shift down 8) into lower 6 bits
+			vh[0] = (byte)((value >> 8) & 0x3F);
+
+			// byte 1: bits 7..0
+			vh[1] = (byte)(value & 0xFF);
+			
+			// then set the type
+			vh[0] |= 1 << 6; // always set the 1 bit to prevent a 0 byte
+
+			if (isText) vh[0] |= 1 << 7;
+
+			original = vh.Concat(original).ToArray(); // linq is just less buggy
+		}
+
+		public static void GetVersionHeader(ref byte[] original, out bool isText, out ushort version) {
+			ushort high = (ushort)(original[0] & 0x3F); // mask 6 bits
+			ushort low  = original[1];
+
+			ushort value = (ushort)((high << 8) | low);
+			version = value;
+
+			isText = (original[0] & (1 << 7)) != 0; // check first bit
+
+			original = original.Skip(2).ToArray(); // same reason its not that laggy
+		}
 	}
 
-	public static HeaderHelper Header = new(){
-		Items = new(){
-			HeaderHelper.HeaderItem.Int // parts
-		}
+	/// <summary>
+	/// Dict containing all of the header definitions based on version
+	/// </summary>
+	public static HeaderHelper GetHeaderVersion(ushort version) => version switch {
+		1 => new HeaderHelper(HeaderHelper.HeaderItem.Int),
+		_ => throw new ArgumentOutOfRangeException(nameof(version), $"Unsupported header version: {version}")
 	};
 
-	public static void SaveCurrentBuild(string name) {
-		string serializedObject = Serialize(name);
+	static HeaderHelper Header => GetHeaderVersion(Config.Building.Saving.VERSION);
+
+	public static void SaveCurrentBuild() {
+		var assem = BuildingManager.Instance.Assembly;
+
+		string serializedObject = Assembly.Serialize(assem);
 
 		// header data
-		int parts = BuildingManager.Instance.Parts.Count;
+		string name = assem.Name;
+		int parts = assem.Parts.Count;
 
-		if (Config.Saving.SaveAsText) {
+		byte[] bytes;
+
+		if (Config.Building.Saving.SaveAsText) {
 			serializedObject = CompressionUtil.EncodeGzipBase64(serializedObject);
 
 			Header.AddStringHeader(ref serializedObject,
 				parts
 				);
 
-			File.WriteAllText(Pathify(name), serializedObject);
+			bytes = Encoding.UTF8.GetBytes(serializedObject);
 		} else {
-			byte[] bytes = CompressionUtil.EncodeGzipBytes(serializedObject);
+			bytes = CompressionUtil.EncodeGzipBytes(serializedObject);
 
 			Header.AddByteHeader(ref bytes,
 				parts
 				);
-
-			File.WriteAllBytes(Pathify(name), bytes);
 		}
+
+		HeaderHelper.AddVersionHeader(ref bytes, Config.Building.Saving.SaveAsText, Config.Building.Saving.VERSION);
+
+		File.WriteAllBytes(Pathify(name), bytes);
 	}
 
 	public static void LoadFromFile(string name) {
 		string path = Pathify(name);
+		ReadFile(path, out string json, out _);
 
-		if (!File.Exists(path))
-			throw new($"Couldn't load {name} as it doesn't exist in the assemblies folder!");
+		BuildingManager.Instance.ResetPartsAndGroups();
 
-		string json;
-		if (Config.Saving.SaveAsText) {
-			json = File.ReadAllText(path);
+		var assembly = JsonConvert.DeserializeObject<Assembly.SAssembly>(json);
 
-			Header.GetStringHeader(ref json, out _);
-			// do something with this metadata? idk. 
+		var reconstructed = Assembly.Reconstruct(assembly);
 
-			json = CompressionUtil.DecodeGzippedBase64(json);
-		} else {
-			byte[] bytes = File.ReadAllBytes(path);
-
-			Header.GetByteHeader(ref bytes, out _);
-
-			json = CompressionUtil.DecodeGzipBytes(bytes);
-		}
-
-		BuildingManager.Instance.ResetParts();
-
-		Assembly assembly = JsonConvert.DeserializeObject<Assembly>(json);
-
-		foreach (PartInfo part in assembly.Parts) {
-			Part newPart = BuildingManager.Instance.GeneratePart(part.basePartID);
-
-			newPart.transform.localPosition = new(part.position.x, part.position.y, part.position.z);
-			newPart.transform.rotation = new(part.rotation.x, part.rotation.y, part.rotation.z, part.rotation.w);
-			newPart.transform.localScale = new(part.scale.x, part.scale.y, part.scale.z);
-
-			newPart.ID = part.id;
-			newPart.color = part.color;
-
-			BuildingManager.Instance.Parts.Add(newPart);
-
-			var composition = Compositions.All.FirstOrDefault(c => c.ID == newPart.ID);
-			if (composition != null) {
-				newPart.composition = composition;
-			} else {
-				newPart.composition = Compositions.Concrete;
-				// somehow tell the player that there was an invalid composition
-			}
-		}
-
-		BuildingManager.Instance.CurrentAssemblyName = name;
-	}
-
-	static string Serialize(string name) {
-		Assembly assembly = new(){ Name = name };
-
-		List<Part> workingParts = BuildingManager.Instance.Parts;
-		Vector3 localOrigin = BuildingManager.Instance.mainPartsContainer.transform.position;
-
-		List<PartInfo> parts = new();
-		for (int i = 0; i < workingParts.Count; i++) {
-			Part part = workingParts[i];
-			parts.Add(new() {
-				basePartID = part.basePart.ID,
-				id = part.ID,
-				position = part.transform.position - localOrigin,
-				rotation = part.transform.rotation,
-				scale = part.transform.localScale,
-
-				color = part.color,
-				compositionID = part.composition.ID
-			});
-		}
-
-		var baseGroups = GroupManager.Instance.Groups;
-
-		List<Group> groups = new();
-		foreach (var group in baseGroups) {
-			groups.Add(new() {
-				PartIDs = group.Parts.Select(p => p.ID).ToList(),
-			});
-		}
-
-		assembly.Parts = parts;
-		assembly.Groups = groups;
-
-		return JsonConvert.SerializeObject(assembly);
+		BuildingManager.Instance.Assembly = reconstructed;
 	}
 
 	public static string[] GetAllAssemblyNames() => 
-		Directory.GetFiles(Config.Saving.AssembliesLocation, "*" + Config.Saving.SaveExtension)
+		Directory.GetFiles(Config.Building.Saving.AssembliesLocation, "*" + Config.Building.Saving.SaveExtension)
 		.Select(path => Depath(path)).ToArray();
 
 	public static string[] GetRecentAssemblyNames(int count) => 
@@ -332,20 +282,10 @@ public static class SaveLoadHelper {
 
 	public static object[] GetAssemblyMetadata(string name) {
 		string filePath = Pathify(name);
-		
-		if (Config.Saving.SaveAsText) {
-			var text = File.ReadAllText(filePath);
 
-			Header.GetStringHeader(ref text, out object[] data);
+		ReadFile(filePath, out _, out object[] data);
 
-			return data;
-		} else {
-			byte[] bytes = File.ReadAllBytes(filePath);
-
-			Header.GetByteHeader(ref bytes, out object[] data);
-
-			return data;
-		}
+		return data;
 	}
 
 	public static AssemblyInfo[] GetSortedAssemblyInfos() {
@@ -364,6 +304,27 @@ public static class SaveLoadHelper {
 		}
 
 		return infos;
+	}
+
+	private static void ReadFile(string path, out string json, out object[] data) {
+		if (!File.Exists(path))
+			throw new($"Couldn't load {path} as it doesn't exist in the assemblies folder!");
+
+		byte[] bytes = File.ReadAllBytes(path);
+		HeaderHelper.GetVersionHeader(ref bytes, out bool isText, out ushort version);
+		var versionCorrectHeader = GetHeaderVersion(version); // may error
+
+		if (isText) {
+			json = Encoding.UTF8.GetString(bytes);
+
+			versionCorrectHeader.GetStringHeader(ref json, out data);
+
+			json = CompressionUtil.DecodeGzippedBase64(json);
+		} else {
+			versionCorrectHeader.GetByteHeader(ref bytes, out data);
+
+			json = CompressionUtil.DecodeGzipBytes(bytes);
+		}
 	}
 
 	/* actual good implementation but nah

@@ -6,12 +6,12 @@ using UnityEngine;
 
 public static class AxleCalculationHelper {
 	public static bool AxleIntersectionTest(
-		AssemblerRewritten.SubAssembly subassembly, 
+		Assembler.SubAssembly subassembly, 
 		Vector3 axleEndA,
 		Vector3 axleEndB,
 		out Vector3 jointPos) {
 
-		var parts = BuildingManager.Instance.Parts;
+		var parts = BuildingManager.Instance.Assembly.Parts;
 
 		// get all intersections between both ends
 		Vector3 direction = (axleEndB - axleEndA).normalized;

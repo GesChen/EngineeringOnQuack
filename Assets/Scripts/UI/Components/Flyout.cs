@@ -1,4 +1,4 @@
-using Codice.Client.BaseCommands;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,19 +7,12 @@ using UnityEngine.UI;
 public class Flyout : MonoBehaviour {
 	// really exists juist to exist
 	// no serialized members either
-
 	[HideInNormalInspector] public bool mouseInRange;
-	[HideInNormalInspector] public Flyout openChildFlyout;
-	FlyoutTrigger[] childTriggers = new FlyoutTrigger[0];
+	[HideInNormalInspector] public FlyoutTrigger sourceTrigger;
 	RectTransform rt;
-	FlyoutTrigger thisTrigger;
 	LiveWindow lw;
-	bool childOpen;
 	
-	bool startOverride = false;
-	bool overrideProtection = false;
-
-	int lastChildCount = 0;
+	CWindow[] childFlyouts;
 
 	void Start() {
 		rt = GetComponent<RectTransform>();
@@ -30,6 +23,7 @@ public class Flyout : MonoBehaviour {
 			//scale.
 		//gameObject.SetActive(false);
 
+		FindChildren();
 	}
 
 	// only updates when visible (active)
@@ -38,35 +32,29 @@ public class Flyout : MonoBehaviour {
 		// hacky workaround to give the ui elements time to load as active objects
 		// cuz forcerebuildlayoutimmediate doesnt wanna work for shit for some reason
 		// sorry future me
-		if (Time.frameCount == Config.UI.Behaviour.MaxFramesForRealization)
+		if (Time.frameCount - lw.Source.CreationFrame == Config.UI.Behaviour.MaxFramesForRealization)
 			gameObject.SetActive(false);
-		if (Time.frameCount <= Config.UI.Behaviour.MaxFramesForRealization) {
-			transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
+		if (Time.frameCount - lw.Source.CreationFrame <= Config.UI.Behaviour.MaxFramesForRealization) {
+			//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
 			return;
 		}
 
+
 		mouseInRange = CheckMouseValidity(Config.UI.Behaviour.FlyoutHoverMargin);
+		bool anyChildOpen = childFlyouts.Any(f => f.RealisedWindow.gameObject.activeInHierarchy);
+		bool triggerOpening = 
+			sourceTrigger != null 
+			&& sourceTrigger.selfHoverTarget.Hovering;
 
-		if (mouseInRange)
-			overrideProtection = false;
-		if (!mouseInRange && !overrideProtection)
-			startOverride = false;
-
-		childOpen = openChildFlyout != null && openChildFlyout.gameObject.activeSelf;
-		if (!(mouseInRange || childOpen || startOverride) 
-			&& (thisTrigger == null || !thisTrigger.selfHoverTarget.Hovering)) {
+		if (!(mouseInRange 
+			|| anyChildOpen 
+			|| triggerOpening))
 			Hide();
-		}
-
-		int count = transform.childCount;
-		if (count != lastChildCount) {
-			GetChildTriggers();
-		}
-		lastChildCount = count;
 	}
 
-	void GetChildTriggers() {
-		childTriggers = GetComponentsInChildren<FlyoutTrigger>();
+	void FindChildren() {
+		var triggers = GetComponentsInChildren<FlyoutTrigger>();
+		childFlyouts = triggers.Select(t => t.targetCWindow).ToArray();
 	}
 
 	public bool CheckMouseValidity(float margin) {
@@ -85,8 +73,6 @@ public class Flyout : MonoBehaviour {
 	}
 
 	public void Show(FlyoutTrigger trigger, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
-		thisTrigger = trigger;
-
 		transform.SetAsLastSibling(); // might change this idk
 
 		lw.Show();
@@ -101,26 +87,9 @@ public class Flyout : MonoBehaviour {
 	}
 
 	public void Hide() {
-		if (openChildFlyout != null)
-			openChildFlyout.Hide();
+		foreach (var child in childFlyouts)
+			child.RealisedWindow.Hide();
 
 		gameObject.SetActive(false);
-	}
-
-	public void HideAllChildFlyouts() {
-		foreach(var trigger in childTriggers) {
-			trigger.targetFlyout.Hide();
-		}
-	}
-	public void HideAllChildFlyoutsExcept(Transform t) {
-		foreach (var trigger in childTriggers) {
-			if (trigger.transform != t)
-				trigger.targetFlyout.Hide();
-		}
-	}
-
-	public void OverrideStart() {
-		startOverride = true;
-		overrideProtection = true;
 	}
 }

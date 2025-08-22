@@ -26,16 +26,33 @@ public class PMenu {
 		public bool Closable = false;
 		public bool HideOnStart = true;
 
+		public void Reset() {
+			m_CWindow = null;
+			m_customizationComponent = null;
+		}
+
+		// extra spacing between items
 		public float ExtraSpacing = 0;
 
-		private CWindow m_cwindow;
+		private bool RegenerateRequested = false;
+		public void RequestRegeneration() => RegenerateRequested = true;
+
+		private CWindow m_CWindow;
 		public CWindow CWindow {
 			get {
-				m_cwindow ??= ConvertWindow(this);
-				return m_cwindow;
+				if (m_CWindow == null)
+					m_CWindow = GenerateCWindow(this);
+				else if (RegenerateRequested)
+					UpdateWindow(ref m_CWindow, this);
+				
+				RegenerateRequested = false;
+
+				return m_CWindow;
 			}
 			// no setter because it is done by the getter
 		}
+
+		
 
 		#region Customization
 		// i am rewriting like half of this at 11:58 pm i woke at 3:45 
@@ -113,7 +130,7 @@ public class PMenu {
 			return this;
 		}
 
-		public class Item {
+		public abstract class Item {
 			public string Label;
 			
 			// repr for icons cuz there are multiple ways to represent an icon
@@ -168,6 +185,8 @@ public class PMenu {
 				RealItem = item;
 				RealItemMadeEvent?.Invoke(item);
 			}
+
+			public abstract WindowItem ConvertToItem(WindowItem[] subs, float width);
 		}
 
 		public class Text : Item {
@@ -178,6 +197,17 @@ public class PMenu {
 				string iconPath = null,
 				Sprite iconSprite = null)
 				: base(label, description, iconName, iconPath, iconSprite) { }
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return WindowItem.NewText(
+					Label,
+					new(
+						Label,
+						fontSize: M.FontSize
+						),
+					WindowItemLayout(width)
+				).SetSubItems(subs);
+			}
 		}
 
 		public class Button : Item {
@@ -198,6 +228,18 @@ public class PMenu {
 			public void ButtonClicked() {
 				OnButtonClick?.Invoke();
 			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return WindowItem.NewButton(
+					Label,
+					new(
+						ButtonClicked,
+						normalColor: Config.UI.Visual.BackgroundColor
+						),
+					WindowItemLayout(width)
+					).SetSubItems(subs)
+					.AddComponents(new PComponents.FlyoutHider());
+			}
 		}
 
 		public class InputField : Item {
@@ -215,10 +257,23 @@ public class PMenu {
 			public void InputFieldChanged(string newValue) {
 				OnValueChanged?.Invoke(newValue);
 			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return WindowItem.NewInputField(
+					Label,
+					new PComponents.InputField(
+						InputFieldChanged,
+						Label,
+						fontSize: M.FontSize),
+					WindowItemLayout(width)
+					).SetSubItems(subs);
+
+			}
 		}
 
 		public class Flyout : Item {
-			public CWindow SubWindow;
+			public CWindow SubCWindow;
+			public Window SubWindow;
 			public bool AddIndicator;
 
 			public Flyout(
@@ -231,7 +286,7 @@ public class PMenu {
 				Sprite iconSprite = null)
 				: base(label, description, iconName, iconPath, iconSprite) {
 
-				SubWindow = subWindow.CWindow;
+				SubWindow = subWindow;
 				AddIndicator = addIndicator;
 			}
 
@@ -244,8 +299,39 @@ public class PMenu {
 				Sprite iconSprite = null)
 				: base(label, description, iconName, iconPath, iconSprite) {
 
-				SubWindow = subWindow;
+				SubCWindow = subWindow;
 				AddIndicator = addIndicator;
+			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				WindowItem indicator = null;
+
+				if (AddIndicator) {
+					indicator = WindowItem.NewImage(
+						$"Flyout Indicator {DateTime.Now.Second}",
+						new(),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.AnchoredAt(UIPosition.MiddleRight),
+							new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
+						)
+					);
+				}
+
+				CWindow window = SubCWindow;
+				window ??= SubWindow.CWindow;
+				//Debug.Log($"call convert on {Label} cw {window.CreationTime}");
+
+				if (window == null)
+					Debug.LogError($"Forgot to generate the subwindow of flyout {Label}");
+
+				var newitem = WindowItem.NewFlyoutTrigger(
+					Label,
+					new PComponents.FlyoutTrigger(window, indicator),
+					WindowItemLayout(width),
+					new PComponents.HoverTarget(normalColor: Config.UI.Visual.BackgroundColor)
+					).SetSubItems(subs)
+					.AddComponents(new PComponents.FlyoutHider());
+				return newitem;
 			}
 		}
 
@@ -256,6 +342,10 @@ public class PMenu {
 			public CustomItem(WindowItem item)
 				: base("", null, null) {
 				this.item = item;
+			}
+
+			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
+				return item;
 			}
 		}
 	}
@@ -269,26 +359,32 @@ public class PMenu {
 		return converted;
 	}*/
 
-	private static CWindow ConvertWindow(Window rcw) {
+	private static CWindow GenerateCWindow(Window rcw) {
+		CWindow cw = new();
+		UpdateWindow(ref cw, rcw);
+		return cw;
+	}
+
+	// workaround to prevent creating a new cwindow object when regenerating
+	// and keep referneces to original
+	private static void UpdateWindow(ref CWindow cw, Window rcw) {
 		if (rcw == null) {
-			Debug.LogError("Window is null!");
-			return null;
+			throw new ("Window is null!");
 		}
 
-		CWindow cw = new() {
-			Name = 
-				rcw.Title != null
-				? $"[M] {rcw.Title}"
-				: "Menu",
-			Config = new() {
-				Resizable = false,
-				Movable = rcw.Movable,
-				ContentDynamic = true,
-				DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding),
-				IsFlyout = rcw.IsFlyout,
-				Closable = rcw.Closable,
-				HideOnStart = rcw.HideOnStart,
-			}
+		cw.Name =
+			rcw.Title != null
+			? $"[M] {rcw.Title}"
+			: "Menu";
+
+		cw.Config = new() {
+			Resizable = false,
+			Movable = rcw.Movable,
+			ContentDynamic = true,
+			DynamicPadding = FourSides.Even(Config.UI.RightClick.WindowPadding),
+			IsFlyout = rcw.IsFlyout,
+			Closable = rcw.Closable,
+			HideOnStart = rcw.HideOnStart,
 		};
 
 		List<WindowItem> items = new();
@@ -332,9 +428,11 @@ public class PMenu {
 
 		// add dynamic menu and items
 		if (rcw.Customizable) {
+			var tempcw = cw;
+
 			cw.AddEvent(TimedEventInvoker.Timing.Start, (_) => {
 				rcw.CustomizationComponent =
-					cw.RealisedWindow.gameObject.AddComponent<CustomizableMenu>();
+					tempcw.RealisedWindow.gameObject.AddComponent<CustomizableMenu>();
 
 				rcw.CustomizationComponent.title = title;
 				rcw.CustomizationComponent.items = new(items);
@@ -343,7 +441,6 @@ public class PMenu {
 					rcw.CustomizationComponent.items.RemoveAt(0);
 			});
 		}
-		return cw;
 	}
 
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {
@@ -366,9 +463,8 @@ public class PMenu {
 		}
 
 		// add icon if it exists
-		WindowItem icon = null;
+		WindowItem icon;
 		if (item.HasIcon) {
-
 			// get the pimage 
 			PComponents.Image image;
 			if (item.Icon.Sprite != null)
@@ -397,77 +493,8 @@ public class PMenu {
 		WindowItem[] subs = subList.ToArray();
 
 		// actually generate the WI
-		WindowItem newItem = null;
-		switch (item) {
-			case Window.CustomItem ci:
-				newItem = ci.item;
-				break;
+		WindowItem newItem = item.ConvertToItem(subs, rcw.Width);
 
-			case Window.Flyout flyout:
-				WindowItem indicator = null;
-
-				if (flyout.AddIndicator) {
-					indicator = WindowItem.NewImage(
-						$"Flyout Indicator {DateTime.Now.Second}",
-						new(),
-						WindowItem.LayoutConfig.FixedLayout(
-							UIPosition.AnchoredAt(UIPosition.MiddleRight),
-							new(M.FlyoutIndicatorSize, M.FlyoutIndicatorSize)
-						)
-					);
-				}
-
-				CWindow subWindow = flyout.SubWindow;
-				if (subWindow == null) 
-					Debug.LogError($"Forgot to generate the subwindow of flyout {flyout.Label}");
-
-				newItem = WindowItem.NewFlyoutTrigger(
-					item.Label,
-					new PComponents.FlyoutTrigger(subWindow, indicator),
-					WindowItemLayout(rcw.Width),
-					new PComponents.HoverTarget(normalColor: Config.UI.Visual.BackgroundColor)
-					).SetSubItems(subs)
-					.AddComponents(new PComponents.FlyoutHider());
-				break;
-
-			case Window.Button button:
-				newItem = WindowItem.NewButton(
-					item.Label,
-					new(
-						button.ButtonClicked,
-						normalColor: Config.UI.Visual.BackgroundColor
-						),
-					WindowItemLayout(rcw.Width)
-					).SetSubItems(subs)
-					.AddComponents(new PComponents.FlyoutHider());
-				break;
-
-			case Window.InputField field:
-				newItem = WindowItem.NewInputField(
-					item.Label,
-					new PComponents.InputField(
-						field.InputFieldChanged,
-						item.Label,
-						fontSize: M.FontSize),
-					WindowItemLayout(rcw.Width)
-					).SetSubItems(subs);
-				break;
-
-			case Window.Text:
-				newItem = WindowItem.NewText(
-					item.Label,
-					new(
-						item.Label,
-						fontSize: M.FontSize
-						),
-					WindowItemLayout(rcw.Width)
-				);
-
-				if (icon != null)
-					newItem.AddSubItems(icon);
-
-				break;
-		}
 		if (item.HasDescription)
 			newItem.AddDescription(item.Description);
 

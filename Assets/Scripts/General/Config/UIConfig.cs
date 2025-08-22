@@ -21,24 +21,6 @@ public static partial class Config {
 			public static readonly float OutlineThickness		= 2;
 
 			public static readonly float DefaultLayoutSpacing	= 5; // might delete
-
-			public static readonly ColorBlock DefaultColorBlock = new(){
-				NormalColor		= new(.27f, .27f, .27f),
-				HoverColor		= new(.39f, .39f, .39f),
-				PressedColor	= new(.45f, .45f, .45f),
-				DisabledColor	= new(.16f, .16f, .16f),
-				ToggledColor	= new(.33f, .33f, .33f),
-				FadeDuration	= .01f
-			};
-
-			public static readonly ColorBlock WhiteColorBlock = new(){
-				NormalColor		= new(1f, 1f, 1f),
-				HoverColor		= new(0.88f, 0.88f, 0.88f),
-				PressedColor	= new(0.82f, 0.82f, 0.82f),
-				DisabledColor	= new(0.70f, 0.70f, 0.70f),
-				ToggledColor	= new(0.94f, 0.94f, 0.94f),
-				FadeDuration	= .01f
-			};
 		}
 
 		public static class Behaviour {
@@ -49,7 +31,7 @@ public static partial class Config {
 			public static readonly int		DescriptionHoverMs		= 500;
 			public static readonly float	MaxMouseMovementForClick	= 5;
 			public static readonly int		TimeForDescriptionChangeMs	= 100;
-			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 40, 10);
+			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 50, 10);
 		}
 
 		// experimental design change
@@ -70,6 +52,24 @@ public static partial class Config {
 				disabledColor = other.DisabledColor,
 				colorMultiplier = 1,
 				fadeDuration = other.FadeDuration
+			};
+
+			public static readonly ColorBlock DefaultBlock = new(){
+				NormalColor		= new(.27f, .27f, .27f),
+				HoverColor		= new(.41f, .41f, .41f),
+				PressedColor	= new(.45f, .45f, .45f),
+				DisabledColor	= new(.16f, .16f, .16f),
+				ToggledColor	= new(.35f, .35f, .35f),
+				FadeDuration	= .01f
+			};
+
+			public static readonly ColorBlock WhiteBlock = new(){
+				NormalColor		= new(1f, 1f, 1f),
+				HoverColor		= new(0.88f, 0.88f, 0.88f),
+				PressedColor	= new(0.82f, 0.82f, 0.82f),
+				DisabledColor	= new(0.70f, 0.70f, 0.70f),
+				ToggledColor	= new(0.94f, 0.94f, 0.94f),
+				FadeDuration	= .01f
 			};
 		}
 
@@ -128,13 +128,13 @@ public static partial class Config {
 					HF.LoadResource(ref m_closeSprite, Locations.CloseIcon);
 
 				public static float EasingFunction(float x) {
-					return x;
+					//return x;
 					if (x <= 0) return 0;
 					if (x >= 1) return 1;
 
 					// can be changed to customize behaviour
 					float a = 2;
-					float b = 2;
+					float b = 1;
 
 					float powStart = Mathf.Pow(x, a);
 

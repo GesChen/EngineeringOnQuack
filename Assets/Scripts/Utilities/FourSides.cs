@@ -105,7 +105,7 @@ public class FourSidesDrawer : PropertyDrawer {
 			float totalSpacing = spacingBetween * 3;
 			float fieldWidth = (position.width - labelWidth * 4 - totalSpacing) / 4f;
 
-			Rect upRect = new Rect(position.x, position.y, labelWidth, rowHeight);
+			Rect upRect = new(position.x, position.y, labelWidth, rowHeight);
 			EditorGUI.LabelField(upRect, "Up");
 			upRect.x += labelWidth;
 			upRect.width = fieldWidth;
