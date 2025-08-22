@@ -54,8 +54,8 @@ public class SelectionManager : MonoBehaviour
 
 	void HandleInput()
 	{
-		bool mouseDown = Conatrols.IM.Selection.Drag.IsPressed();
-		mousePos = Conatrols.IM.Selection.MousePos.ReadValue<Vector2>();
+		bool mouseDown = Controls.inputMaster.Selection.Drag.IsPressed();
+		mousePos = Controls.inputMaster.Selection.MousePos.ReadValue<Vector2>();
 
 		// detect mouse down
 		if (mouseDown && mouseDown != lastMouseDown)
@@ -71,8 +71,8 @@ public class SelectionManager : MonoBehaviour
 		// detect mouse up
 		if (!mouseDown && mouseDown != lastMouseDown && !BuildingManager.Instance.TransformTools.hovering)
 		{
-			if (Time.time - mouseDownStartTime < Conatrols.clickMaxTime &&
-				Vector2.Distance(mousePos, mouseDownStartPos) < Conatrols.clickMaxDist)
+			if (Time.time - mouseDownStartTime < Controls.clickMaxTime &&
+				Vector2.Distance(mousePos, mouseDownStartPos) < Controls.clickMaxDist)
 			{ // counts as a click
 				ClickCheck();
 			}
@@ -114,7 +114,7 @@ public class SelectionManager : MonoBehaviour
 		if ((boundsStart - boundsEnd).sqrMagnitude < minBoxSize) return;
 
 		// handle multiselection
-		if (Conatrols.IM.Selection.Multiselect.IsPressed())
+		if (Controls.inputMaster.Selection.Multiselect.IsPressed())
 			selection = dragStartSelections;
 		else
 			selection = new();
@@ -315,12 +315,12 @@ public class SelectionManager : MonoBehaviour
 
 		if (selected == null)
 		{
-			if (!Conatrols.IM.Selection.Multiselect.IsPressed())
+			if (!Controls.inputMaster.Selection.Multiselect.IsPressed())
 				selection = new();
 			return;
 		}
 
-		if (Conatrols.IM.Selection.Multiselect.IsPressed()) 
+		if (Controls.inputMaster.Selection.Multiselect.IsPressed()) 
 		{	// toggle object in selection
 			if (selection.Contains(selected))
 				selection.Remove(selected);

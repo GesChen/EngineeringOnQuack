@@ -1,5 +1,0 @@
-[[constructor]]
-[[Type]]
-[[double]]
-[[Primitive]]
-[[Number]]

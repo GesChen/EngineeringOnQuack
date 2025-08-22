@@ -1,8 +1,0 @@
-[[Mesh]]
-[[float]]
-[[GameObject]]
-[[Rigidbody]]
-[[MeshRenderer]]
-[[CableObject]]
-[[ConfigurableJoint]]
-[[int]]

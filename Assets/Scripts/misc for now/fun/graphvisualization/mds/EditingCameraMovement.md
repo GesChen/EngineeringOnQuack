@@ -1,5 +1,0 @@
-[[Vector3]]
-[[EditingCameraMovement]]
-[[float]]
-[[Quaternion]]
-[[else]]

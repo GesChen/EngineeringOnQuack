@@ -1,6 +1,0 @@
-[[ConditionalHidePropertyDrawer]]
-[[object]]
-[[bool]]
-[[SerializedProperty]]
-[[string]]
-[[ConditionalHideAttribute]]

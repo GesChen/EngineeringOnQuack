@@ -1,5 +1,0 @@
-[[MyStructDrawer]]
-[[Label]]
-[[SerializedProperty]]
-[[Labels]]
-[[Rect]]

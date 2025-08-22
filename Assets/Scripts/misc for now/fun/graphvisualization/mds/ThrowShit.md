@@ -1,3 +1,0 @@
-[[GameObject]]
-[[Rigidbody]]
-[[ThrowShit]]

@@ -1,8 +1,0 @@
-[[PUI_Component]]
-[[bool]]
-[[for]]
-[[float]]
-[[Layout]]
-[[Sprite]]
-[[Config]]
-[[string]]

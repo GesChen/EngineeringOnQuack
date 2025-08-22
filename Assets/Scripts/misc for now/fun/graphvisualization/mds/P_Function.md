@@ -1,4 +1,0 @@
-[[constructor]]
-[[Type]]
-[[Primitive]]
-[[Function]]

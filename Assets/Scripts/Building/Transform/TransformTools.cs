@@ -92,7 +92,7 @@ public class TransformTools : MonoBehaviour
 			hovering = false;
 		}
 
-		snapping = Conatrols.IM.Transform.Snap.IsPressed();
+		snapping = Controls.inputMaster.Transform.Snap.IsPressed();
 	}
 	public void UpdatePosition()
 	{

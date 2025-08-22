@@ -1,8 +1,0 @@
-[[Vector3]]
-[[fucntions]]
-[[bool]]
-[[float]]
-[[else]]
-[[RotateView]]
-[[Vector2]]
-[[int]]

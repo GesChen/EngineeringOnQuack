@@ -1,2 +1,0 @@
-[[CustomVerticalLayout]]
-[[int]]

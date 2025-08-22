@@ -1,8 +1,0 @@
-[[var]]
-[[MaskMaker]]
-[[Texture2D]]
-[[RenderTexture]]
-[[float]]
-[[GUIStyle]]
-[[else]]
-[[int]]

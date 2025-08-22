@@ -1,5 +1,0 @@
-[[BuildingManager]]
-[[Part]]
-[[BasePart]]
-[[GameObject]]
-[[int]]

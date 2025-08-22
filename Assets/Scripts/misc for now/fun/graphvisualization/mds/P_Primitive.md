@@ -1,7 +1,0 @@
-[[Bool]]
-[[Number]]
-[[String]]
-[[Dict]]
-[[Primitive]]
-[[Function]]
-[[List]]

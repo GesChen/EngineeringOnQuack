@@ -1,2 +1,0 @@
-[[NewSystemTest]]
-[[PUI_Panel]]

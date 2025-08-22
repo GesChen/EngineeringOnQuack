@@ -1,5 +1,0 @@
-[[Bool]]
-[[constructor]]
-[[Type]]
-[[Data]]
-[[Primitive]]

@@ -1,4 +1,0 @@
-[[bool]]
-[[string]]
-[[int]]
-[[LanguageConfig]]

@@ -1,8 +1,0 @@
-[[String]]
-[[Type]]
-[[double]]
-[[Data]]
-[[string]]
-[[constructor]]
-[[Primitive]]
-[[int]]
