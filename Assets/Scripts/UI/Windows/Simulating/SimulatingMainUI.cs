@@ -34,7 +34,7 @@ public static class SimulatingMainUI {
 				"Outputs", 250, new() {
 					new W.CustomItem(
 						WindowItem.NewLayout(
-							PComponents.Layout.Horizontal.Dynamic(),
+							PComponents.Layout.Horizontal.Fixed(true, true),
 							PMenu.WindowItemLayout(250),
 							new() {
 								WindowItem.NewButtonCustomText(
@@ -142,7 +142,7 @@ UIBarUtils.DynamicBarButton(2, "Return to Editing", () => OnReturnToEditing?.Inv
 UIBarUtils.DynamicBarSpace(1),
 UIBarUtils.DynamicBarText(3, "name", .5f),
 UIBarUtils.DynamicBarSpace(1),
-UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.CWindow, (false, false))
+UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.CWindow, 2, false)
 					})
 				},
 				CustomEvents = new() {

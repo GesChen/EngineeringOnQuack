@@ -140,8 +140,8 @@ public static class BottomBar {
 						padding: new(innerpadding)
 					),
 					new(){
-	UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, (true, true)),
-	UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, (true, true)),
+	UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, 0, true),
+	UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, 0, true),
 	UIBarUtils.DynamicBarSpace	(2),
 	UIBarUtils.DynamicBarInputField	(5, "Name Your Creation!", .5f, OnNameChanged)
 		.OnRealized((_, wi) => NameField = 

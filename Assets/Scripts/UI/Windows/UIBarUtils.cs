@@ -5,14 +5,13 @@ using TMPro;
 using UnityEngine;
 
 public static class UIBarUtils {
-	public static WindowItem DynamicBarFlyout(float width, string label, CWindow target, (bool right, bool up) openDirection) =>
+	public static WindowItem DynamicBarFlyout(float width, string label, CWindow target, int edge, bool alignment) =>
 		WindowItem.NewFlyoutTrigger(
 			label,
 			new PComponents.FlyoutTrigger(
 				target,
-				openHorizontally: false,
-				openPrioritizingRight: openDirection.right,
-				openPrioritizingUp: openDirection.up
+				openTargetEdge: edge,
+				openAlignment: alignment
 				),
 			WindowItem.LayoutConfig.LayoutElementDynamic()
 		).SetSubItems(

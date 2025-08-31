@@ -46,7 +46,7 @@ public class RightClick : Singleton<RightClick> {
 
 			window.CustomizeIfAble(customization);
 
-			currentOpen.Show(Conatrols.Mouse.Position, true, true, false);
+			currentOpen.Show(Conatrols.Mouse.Position, 1, false);
 
 		} else {
 			Debug.LogWarning($"No right click defined for {ContextManager.Current.GetType().Name}");

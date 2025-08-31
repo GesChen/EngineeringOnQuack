@@ -141,7 +141,7 @@ public static class OutputsMenu {
 	}
 
 	public static void ShowMenu(RectTransform sourceButton) {
-		Menu.CWindow.RealisedWindow.PlaceAt(sourceButton, true, true, true);
+		Menu.CWindow.RealisedWindow.PlaceAt(sourceButton, 1, false);
 		Menu.CWindow.RealisedWindow.Show();
 	}
 

@@ -546,27 +546,25 @@ public class PComponents {
 	public class FlyoutTrigger : Component {
 		public CWindow TargetWindow;
 		public WindowItem IndicatorImage;
-		public bool OpenHorizontally;
-		public bool OpenPrioritizingRight;
-		public bool OpenPrioritizingUp;
+		public int OpenTargetEdge;
+		public bool OpenAlignment;
+
 		public string OpenSpriteLocation = Config.UI.Locations.FlyoutTriggerOpenSprite;
 		public string ClosedSpriteLocation = Config.UI.Locations.FlyoutTriggerClosedSprite;
 
 		public FlyoutTrigger(
 			CWindow targetFlyout,
 			WindowItem indicatorImage = null,
-			bool openHorizontally = true,
-			bool openPrioritizingRight = true,
-			bool openPrioritizingUp = false,
+			int openTargetEdge = 1,
+			bool openAlignment = false,
 			string openSpriteLocation = null,
 			string closedSpriteLocation = null) {
 
 			TargetWindow = targetFlyout;
 			IndicatorImage = indicatorImage;
 
-			OpenHorizontally = openHorizontally;
-			OpenPrioritizingUp = openPrioritizingUp;
-			OpenPrioritizingRight = openPrioritizingRight;
+			OpenTargetEdge = openTargetEdge;
+			OpenAlignment = openAlignment;
 			
 			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Locations.FlyoutTriggerOpenSprite;
 			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Locations.FlyoutTriggerClosedSprite;
@@ -575,9 +573,8 @@ public class PComponents {
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
 			var ftComp = newObj.AddComponent<global::FlyoutTrigger>();
 
-			ftComp.openHorizontally			= OpenHorizontally;
-			ftComp.openPrioritizingUp		= OpenPrioritizingUp;
-			ftComp.openPrioritizingRight	= OpenPrioritizingRight;
+			ftComp.openTargetEdge	= OpenTargetEdge;
+			ftComp.openAlignment	= OpenAlignment;
 
 			// find hovertarget component
 			if (!newObj.TryGetComponent<global::HoverTarget>(out var htInstance)) {
