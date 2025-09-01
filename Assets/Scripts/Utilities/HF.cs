@@ -1,15 +1,35 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using UnityEngine;
+using System.Linq;
+using System.Text;
 using TMPro;
-using UnityEngine.UI;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public static class HF {
 	#region Base Class Extensions
+	public static string ToBetterString<T>(this IEnumerable<T> collection) {
+		if (collection == null) return "[]";
+
+		var sb = new StringBuilder();
+		sb.Append("[");
+
+		bool first = true;
+		foreach (var item in collection) {
+			if (!first) sb.Append(", ");
+			first = false;
+
+			if (item == null) sb.Append("null");
+			else if (item is string) sb.Append($"'{item}'");
+			else sb.Append(item.ToString());
+		}
+
+		sb.Append("]");
+		return sb.ToString();
+	}
 	public static Color MultiplyColorByVector(Vector3 vector, Color color) {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}

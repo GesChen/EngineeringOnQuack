@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -122,11 +123,10 @@ public class PMenu {
 			ExtraSpacing = extraSpacing;
 		}
 
-		public Window AddEventToCW(
-			TimedEventInvoker.Timing timing, 
-			TimedEventInvoker.TimedEventCall action) {
+		public TimedEventInvoker.TimedEvent[] CWEvents;
 
-			CWindow.AddEvent(timing, action);
+		public Window SetCWEvents(params TimedEventInvoker.TimedEvent[] events) {
+			CWEvents = events;
 			return this;
 		}
 
@@ -441,6 +441,8 @@ public class PMenu {
 					rcw.CustomizationComponent.items.RemoveAt(0);
 			});
 		}
+
+		if (rcw.CWEvents != null) cw.CustomEvents = rcw.CWEvents.ToList();
 	}
 
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {

@@ -2,11 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEditor;
+using System.Reflection;
 
 public class TimedEventInvoker : MonoBehaviour {
 	public struct TimedEvent {
 		public Timing Timing;
 		public TimedEventCall Action;
+
 		public TimedEvent(Timing timing, TimedEventCall action) {
 			Timing = timing;
 			Action = action;
@@ -52,4 +55,45 @@ public class TimedEventInvoker : MonoBehaviour {
 
 	void Start() { CallEvents(Timing.Start); }
 	void Update() { CallEvents(Timing.Update); }
+}
+
+[CustomEditor(typeof(TimedEventInvoker))]
+public class TimedEventInvokerEditor : Editor {
+	public override void OnInspectorGUI() {
+		DrawDefaultInspector();
+
+		var invoker = (TimedEventInvoker)target;
+		var field = typeof(TimedEventInvoker).GetField("m_customEvents", BindingFlags.NonPublic | BindingFlags.Instance);
+		var events = field?.GetValue(invoker) as System.Collections.IEnumerable;
+
+		if (events == null) {
+			EditorGUILayout.HelpBox("No CustomEvents assigned.", MessageType.Info);
+			return;
+		}
+
+		EditorGUILayout.LabelField("Serialized Custom Events Debug", EditorStyles.boldLabel);
+
+		foreach (var e in events) {
+			var timingField = e.GetType().GetField("Timing");
+			var actionField = e.GetType().GetField("Action");
+
+			var timing = timingField?.GetValue(e);
+			var action = actionField?.GetValue(e) as System.Delegate;
+
+			EditorGUILayout.BeginHorizontal();
+			EditorGUILayout.LabelField(timing != null ? timing.ToString() : "Unknown Timing", GUILayout.Width(80));
+
+			if (action != null) {
+				var target = action.Target;
+				if (target != null) {
+					EditorGUILayout.LabelField($"Target: {target}", GUILayout.ExpandWidth(true));
+				} else {
+					EditorGUILayout.LabelField($"Method: {action.Method.Name}", GUILayout.ExpandWidth(true));
+				}
+			} else {
+				EditorGUILayout.LabelField("Null Action", GUILayout.ExpandWidth(true));
+			}
+			EditorGUILayout.EndHorizontal();
+		}
+	}
 }

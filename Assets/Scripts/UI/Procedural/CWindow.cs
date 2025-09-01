@@ -100,6 +100,12 @@ public class CWindow {
 		m_realisedWindow = live;
 	}
 
+	/// <summary>
+	/// Adds an Event with a Timing
+	/// </summary>
+	/// <param name="timing"></param>
+	/// <param name="action">(timedeventinvoker source)</param>
+	/// <returns></returns>
 	public CWindow AddEvent(
 		TimedEventInvoker.Timing timing, 
 		TimedEventInvoker.TimedEventCall action) {

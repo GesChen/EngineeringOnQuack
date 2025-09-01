@@ -133,7 +133,8 @@ public static class OutputsMenu {
 
 	public static void UpdateMenu(List<string> outputs) {
 		LayoutContainer.SetSubItems(
-			outputs.Select((o, i) => OutputItem(o, i)).ToArray());
+			outputs.Select(OutputItem).ToArray()
+		);
 
 		Menu.RequestRegeneration();
 

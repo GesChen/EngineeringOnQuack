@@ -1,17 +1,15 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using W = PMenu.Window;
 
 public static class SimulatingMainUI {
 
 	public static class TopBar {
-		static TopBar() {
-			OnReturnToEditing = null;
-			OnItemToggled = null;
-		}
 
 		// todo: consolidate bar values into config
 		static readonly float size = 50;
@@ -19,18 +17,42 @@ public static class SimulatingMainUI {
 
 		static readonly float listboxheight = 150;
 
+		public static void ClearReturnToEditing() { OnReturnToEditing = null; }
 		public static event Action OnReturnToEditing;
 
 		public static event Action OnHideAll;
 		public static event Action OnShowAll;
 
+		private static TextMeshProUGUI NameText;
+		public static void SetName(string name) {
+			NameText.text = name;
+		}
+
+		public static void ClearBarCreated() { OnBarCreated = null; }
+		public static event Action OnBarCreated;
+
+		public static void ClearRequestOutputs() { OnRequestOutputs = null; }
+		public static event Action OnRequestOutputs;
+		internal static bool outputsUpdated = false;
+
+		public static void UpdateOutputs(string[] names) {
+			OutputsLayoutItem.SetSubItems(
+				names.Select(OutputItem).ToArray() // LMAOOOOO THIS WORKS????? OK??? THE SIGNATURES MATCH IG??? LMAOO
+			);
+
+			Outputs.RequestRegeneration();
+
+			WindowRealiser.Instance.UpdateWindow(Outputs.CWindow);
+		}
+
 		static Dictionary<int, Image> ToggleIcons = new();
+		public static void ClearItemToggled() { OnItemToggled = null; }
 		public static event Action<int> OnItemToggled;
 
 		public static WindowItem OutputsLayoutItem;
 		public static W Outputs;
 		internal static void SetOutputs() {
-			Outputs = new(
+			Outputs = new W(
 				"Outputs", 250, new() {
 					new W.CustomItem(
 						WindowItem.NewLayout(
@@ -77,11 +99,21 @@ public static class SimulatingMainUI {
 										sizeDelta: new(0, 0)
 									),
 									new() { }
-								).OnRealized((_, wi) => OutputsLayoutItem = wi)
+								).OnRealized((_, wi) => OutputsLayoutItem = wi )
 							}
 						)
 					)
 				}
+			).SetCWEvents(
+				new TimedEventInvoker.TimedEvent(
+					TimedEventInvoker.Timing.Awake,
+					(_) => {
+						if (!outputsUpdated) {
+							outputsUpdated = true;
+							OnRequestOutputs?.Invoke();
+						}
+					}
+				)
 			);
 		}
 
@@ -140,7 +172,12 @@ public static class SimulatingMainUI {
 					new(){
 UIBarUtils.DynamicBarButton(2, "Return to Editing", () => OnReturnToEditing?.Invoke()),
 UIBarUtils.DynamicBarSpace(1),
-UIBarUtils.DynamicBarText(3, "name", .5f),
+UIBarUtils.DynamicBarText(3, "name", .5f)
+	.OnRealized((_, wi) => {
+		NameText = wi.SubItems[0]
+		.GetComponent<PComponents.Text>().RealComponent
+		as TextMeshProUGUI;
+		}),
 UIBarUtils.DynamicBarSpace(1),
 UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.CWindow, 2, false)
 					})
@@ -150,15 +187,18 @@ UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.CWindow, 2, false)
 						TimedEventInvoker.Timing.Awake,
 						(_) => {
 		Bar.RealisedWindow.backgroundImage.enabled = false;
+		OnBarCreated?.Invoke();
 						})
 				}
 			};
 		}
 	}
-	
+
 	public static void Set() {
 		TopBar.SetOutputs();
 		TopBar.SetBar();
+
+		TopBar.outputsUpdated = false;
 	}
 	public static CWindow[] Windows => new[] {
 		TopBar.Bar,

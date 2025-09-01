@@ -31,7 +31,7 @@ public static class BottomBar {
 		FileMenu = new(
 			"File", 200, new(){
 			new W.Button(null,  "New"),
-			new W.Button(null,  "Rename"),
+			//new W.Button(null,  "Rename"),
 			new W.CustomItem(
 				WindowItem.NewEmpty( // use empty iinstead of layout for perf
 					PMenu.WindowItemLayout(200),

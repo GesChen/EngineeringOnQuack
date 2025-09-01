@@ -122,11 +122,13 @@ public class MaterialEditingMenu {
 			movable: true,
 			isFlyout: false,
 			closable: true
-		).AddEventToCW(
-			TimedEventInvoker.Timing.Start,
-			(_) => {
-				OnStart?.Invoke(Editor.CWindow, ref colorPickerButton, ref compositionPickerButton);
-			}
+		).SetCWEvents(
+			new TimedEventInvoker.TimedEvent(
+				TimedEventInvoker.Timing.Start,
+				(_) => {
+					OnStart?.Invoke(Editor.CWindow, ref colorPickerButton, ref compositionPickerButton);
+				}
+			)
 		);
 	}
 

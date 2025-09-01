@@ -34,11 +34,11 @@ public static class UIBarUtils {
 
 	public static WindowItem DynamicBarText(float width, string text, float bgopacity) =>
 		WindowItem.NewImage(
-				new PComponents.Image(
-					Config.UI.Visual.BackgroundColor *
-						new Color(1, 1, 1, bgopacity)
-				),
-				WindowItem.LayoutConfig.LayoutElementDynamic()
+			new PComponents.Image(
+				Config.UI.Visual.BackgroundColor *
+					new Color(1, 1, 1, bgopacity)
+			),
+			WindowItem.LayoutConfig.LayoutElementDynamic()
 		).SetSubItems(
 			WindowItem.NewText(
 				new PComponents.Text(

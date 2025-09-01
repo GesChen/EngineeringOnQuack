@@ -41,6 +41,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearAssemble();
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
+
+		SimulatingMainUI.TopBar.ClearReturnToEditing();
 		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
 
 		BottomBar.ClearNameChanged();
@@ -165,14 +167,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 		DeselectAllParts();
 		ReturnAllPartsToMain();
 		HideAllPartsForSimulation();
-		SimulationManager.Instance.StartSimulating();
 	}
 
 	public void StopSimulating() {
 		SelectionManager.Instance.enabled = true;
 		//TransformTools.enabled = true;
 
-		SimulationManager.Instance.StopSimulating();
 		ShowAllPartsAfterSimulation();
 	}
 

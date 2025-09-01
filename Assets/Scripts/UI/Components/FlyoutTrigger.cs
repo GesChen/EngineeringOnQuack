@@ -14,8 +14,6 @@ public class FlyoutTrigger : MonoBehaviour {
 	public Sprite openSprite;
 	public Sprite closedSprite;
 
-	DateTime create;
-
 	[HideInNormalInspector] public HoverTarget selfHoverTarget;
 
 	// potentially null until it gets realised
@@ -32,9 +30,6 @@ public class FlyoutTrigger : MonoBehaviour {
 
 		if (openIndicator != null)
 			openIndicator.sprite = closedSprite;
-
-		create = DateTime.Now;
-
 	}
 
 	void Update() {
