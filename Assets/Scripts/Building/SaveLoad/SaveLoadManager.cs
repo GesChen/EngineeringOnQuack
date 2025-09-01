@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class SaveLoadManager : Singleton<SaveLoadManager> {
@@ -31,7 +32,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.OnLoad += Load;
 	}
 
-	void Save() {
+	public void Save() {
 		string name = BuildingManager.Instance.Assembly.Name;
 		bool nameUnset = string.IsNullOrWhiteSpace(name);
 		if (nameUnset)
@@ -53,15 +54,18 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.ShowSaveIcon();
 		SaveLoadMenus.SetSaveText("Saving...");
 
+		//await Task.Run(() => SaveLoadHelper.SaveCurrentBuild());
 		SaveLoadHelper.SaveCurrentBuild();
 
 		SaveLoadMenus.SetSaveText("Saved!");
 		StartCoroutine(SaveTextDelay());
+
+		BuildingManager.Instance.Dirty = false;
 	}
 
 	IEnumerator SaveTextDelay() {
 		yield return new WaitForSeconds(SaveTextHideDelay);
-		SaveLoadMenus.HideSaveIcon(); 
+		SaveLoadMenus.HideSaveIcon();
 	}
 
 	void UpdateLoadMenu() {

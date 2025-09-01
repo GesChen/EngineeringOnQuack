@@ -281,6 +281,8 @@ public class Scale : MonoBehaviour
 				t.localScale = newScale;
 			}
 		}
+
+		BuildingManager.SetDirty();
 	}
 	void PerformScalingFull()
 	{
@@ -300,6 +302,8 @@ public class Scale : MonoBehaviour
 		{
 			t.localScale = startScales[t] * scale;
 		}
+
+		BuildingManager.SetDirty();
 	}
 	void UseAxisIndicator()
 	{

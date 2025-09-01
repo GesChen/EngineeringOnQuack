@@ -53,7 +53,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.OnNameChanged += ChangeName;
 
 		BottomBar.ClearNewPressed();
-		BottomBar.OnNewPressed += NewAssembly;
+		BottomBar.OnNewPressed += New;
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -119,7 +119,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return pos;
 	}
 
-	public void NewAssembly() {
+	void NewAssembly() {
 		ResetPartsAndGroups();
 		Assembly = new();
 
@@ -228,6 +228,25 @@ public class BuildingManager : Singleton<BuildingManager> {
 		UpdateParts();
 	}
 	#endregion
+
+	public void New() {
+		if (!Dirty) NewAssembly();
+		else {
+			UnsavedWorkMenu.Notify((choice) => {
+				switch (choice) {
+					case UnsavedWorkMenu.Choice.Save:
+						SaveLoadManager.Instance.Save();
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Discard:
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Cancel:
+						break; // do nothing
+				}
+			});
+		}
+	}
 
 	void Copy() {
 		Assembly.Clipboard.Copy(); // uses the most current version of assembly

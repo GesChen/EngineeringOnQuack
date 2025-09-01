@@ -469,5 +469,9 @@ public class LiveWindow : MonoBehaviour {
 
 		rt.position += offset;
 	}
+	public void PlaceAtCenter() {
+		Vector2 center = canvas.renderingDisplaySize / 2;
+		SetWorldCorner(center, 4);
+	}
 	#endregion
 }

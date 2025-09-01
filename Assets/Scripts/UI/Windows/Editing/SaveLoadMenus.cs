@@ -17,11 +17,8 @@ public class SaveLoadMenus {
 	public static void SaveAs() { OnSaveAs?.Invoke(); }
 
 	public static void ShowNamePrompt(Action<string> nameCallback) {
+		NamePrompt.CWindow.RealisedWindow.PlaceAtCenter();
 		NamePrompt.CWindow.RealisedWindow.Show();
-
-		var canvas = NamePrompt.CWindow.RealisedWindow.canvas;
-		Vector2 center = canvas.renderingDisplaySize / 2;
-		NamePrompt.CWindow.RealisedWindow.SetWorldCorner(center, 4);
 
 		SaveStatusText.text = "";
 
@@ -37,9 +34,7 @@ public class SaveLoadMenus {
 	public static void ShowLoadMenu() {
 		OnLoadRequested?.Invoke();
 
-		Vector2 center = LoadOptionsMenu.RealisedWindow.canvas
-			.renderingDisplaySize / 2f;
-		LoadOptionsMenu.RealisedWindow.SetWorldCorner(center, 4);
+		LoadOptionsMenu.RealisedWindow.PlaceAtCenter();
 		LoadOptionsMenu.RealisedWindow.Show();
 	}
 	public static void HideLoadMenu() {
@@ -64,7 +59,7 @@ public class SaveLoadMenus {
 	static W NamePrompt;
 	static void SetNamePrompt() {
 		NamePrompt = new(
-			"Name Your Creation!", 220, new(){
+			"Name Your Creation!", 220, false, new(){
 				new W.InputField(
 					(value) => PromptedName = value,
 					"Enter name here..."),
@@ -81,7 +76,6 @@ public class SaveLoadMenus {
 				)
 			},
 			showTitle: true,
-			isFlyout: false,
 			closable: true,
 			extraSpacing: 5
 			);

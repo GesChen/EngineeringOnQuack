@@ -54,10 +54,9 @@ public class MaterialEditor : MonoBehaviour {
 		// look idk where else to put it and for now im too lazy to add the windowitem callback
 		// thing cuz it has to refernce itself and whatnot
 		var canvas = editor.GetComponentInParent<Canvas>();
-		Vector2 center = canvas.renderingDisplaySize / 2f;
 		BottomBar.OnMaterialOpened += () => {
 			editor.UpdateParts();
-			MaterialEditingMenu.ShowMenu(center);
+			MaterialEditingMenu.ShowMenu();
 		};
 	}
 

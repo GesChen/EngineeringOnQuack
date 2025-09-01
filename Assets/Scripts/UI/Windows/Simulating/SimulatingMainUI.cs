@@ -45,7 +45,7 @@ public static class SimulatingMainUI {
 			WindowRealiser.Instance.UpdateWindow(Outputs.CWindow);
 		}
 
-		static Dictionary<int, Image> ToggleIcons = new();
+		static readonly Dictionary<int, Image> ToggleIcons = new();
 		public static void ClearItemToggled() { OnItemToggled = null; }
 		public static event Action<int> OnItemToggled;
 
@@ -53,7 +53,7 @@ public static class SimulatingMainUI {
 		public static W Outputs;
 		internal static void SetOutputs() {
 			Outputs = new W(
-				"Outputs", 250, new() {
+				"Outputs", 250, true, new() {
 					new W.CustomItem(
 						WindowItem.NewLayout(
 							PComponents.Layout.Horizontal.Fixed(true, true),

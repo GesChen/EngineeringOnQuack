@@ -32,7 +32,7 @@ public static class BottomBar {
 	static W FileMenu;
 	static void SetFileMenu() {
 		FileMenu = new(
-			"File", 200, new(){
+			"File", 200, true, new(){
 			new W.Button(() => OnNewPressed?.Invoke(), "New"),
 			//new W.Button(null,  "Rename"),
 			new W.CustomItem(
@@ -99,7 +99,7 @@ public static class BottomBar {
 	static W ToolsMenu;
 	static void SetToolsMenu() {
 		ToolsMenu = new(
-			"Tools", 200, new(){
+			"Tools", 200, true, new(){
 				new W.Button(() => OnOutputsOpened?.Invoke(), "Outputs")
 					.OnRealItemMade((wi) => OutputButton = wi), // todo: descriptions? and icons
 				new W.Button(() => OnTransformOpened?.Invoke(), "Transform"), // todo: descriptions? and icons

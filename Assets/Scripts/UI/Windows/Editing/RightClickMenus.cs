@@ -65,7 +65,7 @@ public class RightClickMenus : MonoBehaviour {
 	static void SetDigital() {
 		digital = new(
 			"Digital",
-			120,
+			120, true,
 			new(){
 				new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "Parts/cpu"),
 				new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "Parts/ram"),
@@ -80,7 +80,7 @@ public class RightClickMenus : MonoBehaviour {
 	static void SetMechanical() { 
 		mechanical = new(
 			"Mechanical",
-			120,
+			120, true,
 			new(){
 				new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
 				new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
@@ -97,7 +97,7 @@ public class RightClickMenus : MonoBehaviour {
 	static void SetStructural() {
 		structural = new(
 			"Structural",
-			120,
+			120, true,
 			new(){
 				new W.Button(() => MakeNewPart("cube"),		"cube",		iconName: "Parts/cube"),
 				new W.Button(() => MakeNewPart("sphere"),	"sphere",	iconName: "Parts/sphere"),
@@ -112,7 +112,7 @@ public class RightClickMenus : MonoBehaviour {
 	static void SetNewPart() {
 		newPart = new(
 			"New Part",
-			160,
+			160, true,
 			new() {
 				new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
 				new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
@@ -192,7 +192,7 @@ public class RightClickMenus : MonoBehaviour {
 	public static W inWorldUniversalMenu;
 	static void SetIWUM() { 
 		inWorldUniversalMenu = new(
-			"Editing", mainwidth, new() { // deindented for readability
+			"Editing", mainwidth, true, new() { // deindented for readability
 
 // ---------------------------- Universal Menu Items ------------------------------------
 /* 0*/	new W.Flyout(newPart,						"new part",		iconName: "plus"),

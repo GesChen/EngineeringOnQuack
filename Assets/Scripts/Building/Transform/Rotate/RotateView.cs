@@ -189,5 +189,7 @@ public class RotateView : MonoBehaviour
 
 		main.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
 		firstFrameAfterStartDrag = false;
+
+		BuildingManager.SetDirty();
 	}
 }

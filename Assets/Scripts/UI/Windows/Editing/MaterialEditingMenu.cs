@@ -96,7 +96,7 @@ public class MaterialEditingMenu {
 	static void SetEditor() { 
 		Editor = new W(
 			"Material",
-			size,
+			size, false,
 			new(){
 				new W.Flyout(
 					ColorPicker,
@@ -120,7 +120,6 @@ public class MaterialEditingMenu {
 					)
 			},
 			movable: true,
-			isFlyout: false,
 			closable: true
 		).SetCWEvents(
 			new TimedEventInvoker.TimedEvent(
@@ -141,9 +140,9 @@ public class MaterialEditingMenu {
 		//editor.CWindow.RealisedWindow.GetComponent<Flyout>().OverrideStart();
 	}
 
-	public static void ShowMenu(Vector2 at) {
+	public static void ShowMenu() {
 		Editor.CWindow.RealisedWindow.Show();
-		Editor.CWindow.RealisedWindow.SetWorldCorner(at, 4);
+		Editor.CWindow.RealisedWindow.PlaceAtCenter();
 	}
 
 	public static void Set() {

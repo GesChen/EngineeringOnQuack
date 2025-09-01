@@ -97,13 +97,14 @@ public class PMenu {
 			public float? Width;
 		}
 		#endregion
+
 		public Window(
 			string title, 
 			float width, 
+			bool isFlyout,
 			List<Item> items, 
 			bool showTitle = true, 
 			bool movable = false,
-			bool isFlyout = true,
 			bool closable = false,
 			bool hideOnStart = true,
 			bool switchable = false,
@@ -199,12 +200,8 @@ public class PMenu {
 				: base(label, description, iconName, iconPath, iconSprite) { }
 
 			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
-				return WindowItem.NewText(
+				return WindowItem.NewEmpty(
 					Label,
-					new(
-						Label,
-						fontSize: M.FontSize
-						),
 					WindowItemLayout(width)
 				).SetSubItems(subs);
 			}
@@ -449,7 +446,9 @@ public class PMenu {
 		List<WindowItem> subList = new();
 
 		// add label if its not empty or null or input field
-		if (!(item.Label == null || item.Label == "" || item is Window.InputField)) {
+		if (!(item.Label == null
+			|| item.Label == ""
+			|| item is Window.InputField)) {
 			var label = WindowItem.NewText(
 				"Label",
 				new(

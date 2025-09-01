@@ -25,6 +25,9 @@ public static class ContextWindows {
 		}
 	}
 
+	// possibly the most cursed thing ever written. however? it works? 
+	// because the issue is that the custom setters need to be called
+	// before the things can be accessed and like at all accessed
 	public static WindowCollection MakeCollection(
 		Type context,
 		Action[] sets,
@@ -54,7 +57,8 @@ public static class ContextWindows {
 			MaterialEditingMenu.Set,
 			SaveLoadMenus.Set,
 			OutputsMenu.Set,
-			BottomBar.Set
+			BottomBar.Set,
+			UnsavedWorkMenu.Set
 		},
 		() => (
 		Conglomerate(
@@ -63,14 +67,16 @@ public static class ContextWindows {
 			MaterialEditingMenu.Windows,
 			SaveLoadMenus.Windows,
 			OutputsMenu.Windows,
-			BottomBar.Windows
+			BottomBar.Windows,
+			UnsavedWorkMenu.Windows
 		),
 		Conglomerate(
 			RightClickMenus.Menus,
 			MaterialEditingMenu.Menus,
 			SaveLoadMenus.Menus,
 			OutputsMenu.Menus,
-			BottomBar.Menus
+			BottomBar.Menus,
+			UnsavedWorkMenu.Menus
 		))
 	);
 

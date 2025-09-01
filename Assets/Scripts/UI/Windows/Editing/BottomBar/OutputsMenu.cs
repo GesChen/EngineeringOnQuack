@@ -38,7 +38,7 @@ public static class OutputsMenu {
 	static void SetMenu() {
 		Menu = new(
 			"Manage Outputs",
-			width,
+			width, false,
 			new() {
 				new W.CustomItem( // list
 					WindowItem.NewScrollView(
@@ -127,7 +127,6 @@ public static class OutputsMenu {
 					)
 				)
 			},
-			isFlyout: false,
 			movable: true,
 			closable: true,
 			extraSpacing: Config.UI.Visual.DefaultLayoutSpacing
