@@ -34,7 +34,7 @@ public class WindowSizeNode : MonoBehaviour {
 		im = GetComponent<Image>();
 	}
 
-	void Update() {
+	void LateUpdate() {
 		isClose = position == Positions.TopRight;
 
 		if (main.Config.Closable)

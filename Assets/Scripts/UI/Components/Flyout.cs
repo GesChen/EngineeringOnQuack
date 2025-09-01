@@ -13,6 +13,7 @@ public class Flyout : MonoBehaviour {
 	LiveWindow lw;
 	
 	CWindow[] childFlyouts;
+	FlyoutTrigger[] childTriggers;
 
 	void Start() {
 		rt = GetComponent<RectTransform>();
@@ -53,8 +54,8 @@ public class Flyout : MonoBehaviour {
 	}
 
 	void FindChildren() {
-		var triggers = GetComponentsInChildren<FlyoutTrigger>();
-		childFlyouts = triggers.Select(t => t.targetCWindow).ToArray();
+		childTriggers = GetComponentsInChildren<FlyoutTrigger>();
+		childFlyouts = childTriggers.Select(t => t.targetCWindow).ToArray();
 	}
 
 	public bool CheckMouseValidity(float margin) {
@@ -87,8 +88,8 @@ public class Flyout : MonoBehaviour {
 	}
 
 	public void Hide() {
-		foreach (var child in childFlyouts)
-			child.RealisedWindow.Hide();
+		foreach (var child in childTriggers)
+			child.targetFlyout.Hide();
 
 		gameObject.SetActive(false);
 	}

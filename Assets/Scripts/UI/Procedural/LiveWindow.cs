@@ -73,9 +73,14 @@ public class LiveWindow : MonoBehaviour {
 			CheckNodes();
 
 		CheckSize();
+
 		if (Config.Movable) {
 			HandleDrag();
 		}
+	}
+
+	private void LateUpdate() {
+		
 	}
 
 	void SetNodesActive(bool state, bool closeState) {

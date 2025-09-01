@@ -173,7 +173,7 @@ public static class SimulatingMainUI {
 UIBarUtils.DynamicBarButton(2, "Return to Editing", () => OnReturnToEditing?.Invoke()),
 UIBarUtils.DynamicBarSpace(1),
 UIBarUtils.DynamicBarText(3, "name", .5f)
-	.OnRealized((_, wi) => {
+	.OnRealized((_, wi) => { // get the ugui component off subitem 0 
 		NameText = wi.SubItems[0]
 		.GetComponent<PComponents.Text>().RealComponent
 		as TextMeshProUGUI;
