@@ -29,12 +29,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.ClearEvents();
 		MaterialEditingMenu.ClearEvents();
 
-		RightClickMenus.OnNewPartMade +=
-			name => MakeNewPart(name, true);
-		RightClickMenus.OnDelete += DeleteSelection;
-		RightClickMenus.OnCopy += Copy;
-		RightClickMenus.OnPaste += Paste;
-		RightClickMenus.OnDuplicate += Duplicate;
+		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
+		RightClickMenus.OnNewPartMade	+= _ => SetDirty();
+		RightClickMenus.OnDelete		+= DeleteSelection;
+		RightClickMenus.OnDelete		+= SetDirty;
+		RightClickMenus.OnCopy			+= Copy;
+		RightClickMenus.OnPaste			+= Paste;
+		RightClickMenus.OnDuplicate		+= Duplicate;
+		RightClickMenus.OnDuplicate		+= SetDirty;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
@@ -51,6 +53,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearNameChanged();
 		BottomBar.OnNameChanged += ChangeName;
+		BottomBar.OnNameChanged += _ => SetDirty();
 
 		BottomBar.ClearNewPressed();
 		BottomBar.OnNewPressed += New;
@@ -128,6 +131,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.UpdateNameText("");
 
+		SelectionManager.Instance.ManuallySelect();
 		SelectionManager.Instance.UpdateContainer();
 	}
 	public void ResetPartsAndGroups() {
@@ -270,7 +274,5 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Name = name;
 
 		BottomBar.UpdateNameText(name);
-
-		SetDirty();
 	}
 }
