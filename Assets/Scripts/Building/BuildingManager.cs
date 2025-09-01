@@ -5,9 +5,13 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
+	[HideInNormalInspector] public bool Dirty;
+	/// <summary>
+	/// Call this method whenever a change to the assembly is made! ANY CHANGE!
+	/// </summary>
+	public static void SetDirty() { Instance.Dirty = true; }
 
 	public Transform MainPartsContainer;
-	public TransformTools TransformTools;
 	public Transform SimulationContainer;
 
 	#region Setup
@@ -25,7 +29,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.ClearEvents();
 		MaterialEditingMenu.ClearEvents();
 
-		RightClickMenus.OnNewPartMade += 
+		RightClickMenus.OnNewPartMade +=
 			name => MakeNewPart(name, true);
 		RightClickMenus.OnDelete += DeleteSelection;
 		RightClickMenus.OnCopy += Copy;
@@ -47,6 +51,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearNameChanged();
 		BottomBar.OnNameChanged += ChangeName;
+
+		BottomBar.ClearNewPressed();
+		BottomBar.OnNewPressed += NewAssembly;
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -65,7 +72,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void Update() {
 		HandleInput();
-		
+
 		// set selection state of parts
 		foreach (Part part in Assembly.Parts) {
 			part.Selected = SelectionManager.Instance.PartSelection.Contains(part);
@@ -90,7 +97,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		// place part
 		// the container provides all the functionality i need already
-		
+
 		newpart.transform.position = PlacePos();
 
 		if (select)
@@ -115,12 +122,19 @@ public class BuildingManager : Singleton<BuildingManager> {
 	public void NewAssembly() {
 		ResetPartsAndGroups();
 		Assembly = new();
+
+		OutputManager.Instance.UpdateMenu();
+		OutputsMenu.HideMenu();
+
+		BottomBar.UpdateNameText("");
+
+		SelectionManager.Instance.UpdateContainer();
 	}
 	public void ResetPartsAndGroups() {
 		foreach (Part part in Assembly.Parts) {
 			Destroy(part.gameObject);
 		}
-		
+
 		Assembly.Parts.Clear();
 
 		Assembly.Groups.Clear();
@@ -161,7 +175,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 	public void StartSimulating() {
 		SelectionManager.Instance.Clear();
 		SelectionManager.Instance.enabled = false;
-		TransformTools.active = false;
+		TransformTools.Instance.active = false;
 		//TransformTools.enabled = false;
 
 		DeselectAllParts();
@@ -181,13 +195,13 @@ public class BuildingManager : Singleton<BuildingManager> {
 			part.transform.parent = MainPartsContainer;
 		}
 	}
-	
+
 	void HideAllPartsForSimulation() {
 		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(false);
 		}
 	}
-	
+
 	void ShowAllPartsAfterSimulation() {
 		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(true);
@@ -237,5 +251,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Name = name;
 
 		BottomBar.UpdateNameText(name);
+
+		SetDirty();
 	}
 }

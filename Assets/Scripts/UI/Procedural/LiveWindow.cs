@@ -79,10 +79,6 @@ public class LiveWindow : MonoBehaviour {
 		}
 	}
 
-	private void LateUpdate() {
-		
-	}
-
 	void SetNodesActive(bool state, bool closeState) {
 		foreach (var n in cornerNodes) {
 			if (n.position == WindowSizeNode.Positions.TopRight)

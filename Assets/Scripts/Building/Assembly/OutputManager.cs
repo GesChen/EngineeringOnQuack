@@ -76,6 +76,8 @@ public class OutputManager : Singleton<OutputManager> {
 
 	public void UpdateMenu() {
 		OutputsMenu.UpdateMenu(Outputs());
+
+		BuildingManager.SetDirty();
 	}
 
 	private static List<string> Outputs() {

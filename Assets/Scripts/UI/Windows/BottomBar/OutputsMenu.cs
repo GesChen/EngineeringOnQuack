@@ -31,98 +31,101 @@ public static class OutputsMenu {
 		OnItemSelected?.Invoke(i);
 	}
 
+	public static void ShowMenu() { Menu.CWindow.RealisedWindow.Show(); }
+	public static void HideMenu() { Menu.CWindow.RealisedWindow.Hide(); }
+
 	public static W Menu;
 	static void SetMenu() {
 		Menu = new(
 			"Manage Outputs",
 			width,
 			new() {
-					new W.CustomItem( // list
-						WindowItem.NewScrollView(
-							new PComponents.ScrollView(
-								horizontalScrolling: false
-							),
-							WindowItem.LayoutConfig.FixedLayout(
-								UIPosition.AnchoredAt(UIPosition.TopLeft),
-								new(width, ListBoxHeight),
-								new FourSides(10)
-							),
-							new(){
-								WindowItem.NewLayout(
-									PComponents.Layout.Vertical.Fixed(
-										false,
-										true
-									),
-									WindowItem.LayoutConfig.Custom(
-										position: new(1, 0, 0, 0),
-										sizeDelta: new(0, 0)
-									),
-									new(){}
-								).OnRealized((_, wi) =>
-									LayoutContainer = wi
-								)
-							}
-						)
-					),
-					new W.InputField( // the actual naming part
-						(name) => OnNameChanged?.Invoke(name), // you could put it directly as onnamechanged and it would work but 
-						// it wouldn't use the up to date version with all of the subscriptions
-						"Name for Output..."
-					),
-					new W.CustomItem( // controls
-						WindowItem.NewLayout(
-							PComponents.Layout.Horizontal.Fixed(
-								true,
-								true),
-							WindowItem.LayoutConfig.FixedLayout(
-								UIPosition.LayoutItem,
-								new(width, Config.UI.Menu.ItemHeight)
-							),
-							new() {
-								WindowItem.NewButtonCustomImageOverlay( // -
-									new PComponents.Button(
-										() => OnSubtract?.Invoke()
-									),
-									new PComponents.Image(
-										Config.Locations.IconsFolder + "subtract"
-									),
-									WindowItem.LayoutConfig.LayoutElementDynamic(
-										new(Config.UI.Menu.ItemPadding)
-									)
-								).AddComponents(
-									new PComponents.LayoutElement(1)
+				new W.CustomItem( // list
+					WindowItem.NewScrollView(
+						new PComponents.ScrollView(
+							horizontalScrolling: false
+						),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.AnchoredAt(UIPosition.TopLeft),
+							new(width, ListBoxHeight),
+							new FourSides(10)
+						),
+						new(){
+							WindowItem.NewLayout(
+								PComponents.Layout.Vertical.Fixed(
+									false,
+									true
 								),
-								WindowItem.NewButtonCustomText( // rename
-									new PComponents.Button(
-										() => OnRename.Invoke()
-									),
-									new PComponents.Text(
-										"Rename",
-										fontSize: Config.UI.Menu.FontSize,
-										alignment: TMPro.TextAlignmentOptions.Center
-									),
-									WindowItem.LayoutConfig.LayoutElementDynamic(
-										new(Config.UI.Menu.ItemPadding)
-									)
-								).AddComponents(
-									new PComponents.LayoutElement(4)
+								WindowItem.LayoutConfig.Custom(
+									position: new(1, 0, 0, 0),
+									sizeDelta: new(0, 0)
 								),
-								WindowItem.NewButtonCustomImageOverlay( // +
-									new PComponents.Button(
-										() => OnAdd?.Invoke()
-									),
-									new PComponents.Image(
-										Config.Locations.IconsFolder + "add"
-									),
-									WindowItem.LayoutConfig.LayoutElementDynamic(
-										new(Config.UI.Menu.ItemPadding)
-									)
-								).AddComponents(
-									new PComponents.LayoutElement(1)
-								)
-							}
-						)
+								new(){}
+							).OnRealized((_, wi) =>
+								LayoutContainer = wi
+							)
+						}
 					)
+				),
+				new W.InputField( // the actual naming part
+					(name) => OnNameChanged?.Invoke(name), // you could put it directly as onnamechanged and it would work but 
+					// it wouldn't use the up to date version with all of the subscriptions
+					"Name for Output..."
+				),
+				new W.CustomItem( // controls
+					WindowItem.NewLayout(
+						PComponents.Layout.Horizontal.Fixed(
+							true,
+							true),
+						WindowItem.LayoutConfig.FixedLayout(
+							UIPosition.LayoutItem,
+							new(width, Config.UI.Menu.ItemHeight)
+						),
+						new() {
+							WindowItem.NewButtonCustomImageOverlay( // -
+								new PComponents.Button(
+									() => OnSubtract?.Invoke()
+								),
+								new PComponents.Image(
+									Config.Locations.IconsFolder + "subtract"
+								),
+								WindowItem.LayoutConfig.LayoutElementDynamic(
+									new(Config.UI.Menu.ItemPadding)
+								)
+							).AddComponents(
+								new PComponents.LayoutElement(1)
+							),
+							WindowItem.NewButtonCustomText( // rename
+								new PComponents.Button(
+									() => OnRename.Invoke()
+								),
+								new PComponents.Text(
+									"Rename",
+									fontSize: Config.UI.Menu.FontSize,
+									alignment: TMPro.TextAlignmentOptions.Center
+								),
+								WindowItem.LayoutConfig.LayoutElementDynamic(
+									new(Config.UI.Menu.ItemPadding)
+								)
+							).AddComponents(
+								new PComponents.LayoutElement(4)
+							),
+							WindowItem.NewButtonCustomImageOverlay( // +
+								new PComponents.Button(
+									() => OnAdd?.Invoke()
+								),
+								new PComponents.Image(
+									Config.Locations.IconsFolder + "add"
+								),
+								WindowItem.LayoutConfig.LayoutElementDynamic(
+									new(Config.UI.Menu.ItemPadding)
+								)
+							).AddComponents(
+								new PComponents.LayoutElement(1)
+							)
+						}
+					)
+				)
 			},
 			isFlyout: false,
 			movable: true,

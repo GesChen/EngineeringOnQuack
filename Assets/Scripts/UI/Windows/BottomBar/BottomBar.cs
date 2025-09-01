@@ -14,6 +14,9 @@ public static class BottomBar {
 	static readonly float splitspacing = 5;
 	static readonly float splittextspace = 10;
 
+	public static void ClearNewPressed() { OnNewPressed = null; }
+	public static event Action OnNewPressed;
+
 	public static WindowItem OutputButton;
 	public static void ClearOutputs() { OnOutputsOpened = null; }
 	public static event Action OnOutputsOpened;
@@ -30,7 +33,7 @@ public static class BottomBar {
 	static void SetFileMenu() {
 		FileMenu = new(
 			"File", 200, new(){
-			new W.Button(null,  "New"),
+			new W.Button(() => OnNewPressed?.Invoke(), "New"),
 			//new W.Button(null,  "Rename"),
 			new W.CustomItem(
 				WindowItem.NewEmpty( // use empty iinstead of layout for perf
