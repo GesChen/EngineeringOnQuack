@@ -24,7 +24,7 @@ RenderSettings:
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 4
+  m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
@@ -2025,8 +2025,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75870b0c37ccb4a49b72078578885ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Dirty: 0
   MainPartsContainer: {fileID: 1596101662}
-  TransformTools: {fileID: 578040684}
   SimulationContainer: {fileID: 1062049965}
 --- !u!114 &825630088
 MonoBehaviour:

@@ -58,7 +58,8 @@ public static class ContextWindows {
 			SaveLoadMenus.Set,
 			OutputsMenu.Set,
 			BottomBar.Set,
-			UnsavedWorkMenu.Set
+			UnsavedWorkMenu.Set,
+			FileExplorer.Set
 		},
 		() => (
 		Conglomerate(
@@ -68,7 +69,8 @@ public static class ContextWindows {
 			SaveLoadMenus.Windows,
 			OutputsMenu.Windows,
 			BottomBar.Windows,
-			UnsavedWorkMenu.Windows
+			UnsavedWorkMenu.Windows,
+			FileExplorer.Windows
 		),
 		Conglomerate(
 			RightClickMenus.Menus,

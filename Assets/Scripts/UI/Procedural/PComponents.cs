@@ -183,6 +183,8 @@ public class PComponents {
 			text.color		= Color;
 			text.alignment	= Alignment;
 
+			text.overflowMode = TextOverflowModes.Ellipsis;
+
 			if (!originalItem.Layout.IsFixed)
 				text.margin = originalItem.Layout.Padding.ToTMProType();
 

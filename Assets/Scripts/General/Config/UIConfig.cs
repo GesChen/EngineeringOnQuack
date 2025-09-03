@@ -32,6 +32,8 @@ public static partial class Config {
 			public static readonly float	MaxMouseMovementForClick	= 5;
 			public static readonly int		TimeForDescriptionChangeMs	= 100;
 			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 50, 10);
+
+			public static readonly Vector2  WindowUniversalMinSize = new(50, 50);
 		}
 
 		// experimental design change

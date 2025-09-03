@@ -72,8 +72,6 @@ public class LiveWindow : MonoBehaviour {
 		if (Config.Resizable)
 			CheckNodes();
 
-		CheckSize();
-
 		if (Config.Movable) {
 			HandleDrag();
 		}
@@ -104,10 +102,6 @@ public class LiveWindow : MonoBehaviour {
 		BL.rt.anchorMax = new(0, 0);
 		BR.rt.anchorMin = new(1, 0);
 		BR.rt.anchorMax = new(1, 0);
-	}
-
-	void CheckSize() {
-		rt.sizeDelta = Vector2.Min(Vector2.Max(rt.sizeDelta, Config.Size.Minimum), Config.Size.Maximum);
 	}
 
 	Vector2 dragOffset;

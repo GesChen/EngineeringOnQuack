@@ -99,7 +99,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void HandleInput() {
-		if (ContextManager.IsInContext<Contexts.OverUI>(out _)) return;
+		//if (ContextManager.IsInContext<Contexts.OverUI>(out _)) return;
+		if (UIHovers.results.Count > 0) return;
 		CheckCancel();
 
 		mousePos = Conatrols.Mouse.Position;

@@ -131,10 +131,30 @@ public class WindowSizeNode : MonoBehaviour {
 			//GetOtherCorner();
 
 			var pad = Config.UI.Behaviour.CanvasInnerWindowsPadding;
-			Vector2 pos = HF.Vector2Clamp(
-				Conatrols.Mouse.Position,
+			Vector2 pos = Conatrols.Mouse.Position;
+
+			// sizemin
+			Vector2 minSize = Vector2.Max(
+				Config.UI.Behaviour.WindowUniversalMinSize, 
+				main.Config.Size.Minimum);
+			Vector2 minC1 = dragStartCenter + minSize;
+			Vector2 minC2 = dragStartCenter - minSize;
+			pos = new(
+				ClosestOutside(pos.x, minC1.x, minC2.x),
+				ClosestOutside(pos.y, minC1.y, minC2.y));
+
+			// sizemax
+			Vector2 min = Vector2.Min(dragStartCenter + main.Config.Size.Maximum, dragStartCenter - main.Config.Size.Maximum);
+			Vector2 max = Vector2.Max(dragStartCenter + main.Config.Size.Maximum, dragStartCenter - main.Config.Size.Maximum);
+
+			pos = HF.Vector2Clamp(pos, min, max);
+			
+			// canvas padding
+			pos = HF.Vector2Clamp(
+				pos,
 				new Vector2(pad.Left, pad.Down),
 				main.manager.CanvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
+			
 			SetCornerPosition(pos);
 
 			oppositeVert =
@@ -153,6 +173,42 @@ public class WindowSizeNode : MonoBehaviour {
 			if (oppositeHori)
 				main.FlipNodesHorizontally();
 		}
+	}
+
+	public static float ClosestOutside(float p, float b1, float b2) {
+		float min = Mathf.Min(b1, b2);
+		float max = Mathf.Max(b1, b2);
+
+		if (p < min || p > max) return p;
+
+		return 
+			Mathf.Abs(p - b1) < Mathf.Abs(p - b2)
+			? b1
+			: b2;
+	}
+
+	public static Vector2 ClosestOutside(Vector2 point, Vector2 p1, Vector2 p2) {
+		float xmin = Mathf.Min(p1.x, p2.x);
+		float xmax = Mathf.Max(p1.x, p2.x);
+		float ymin = Mathf.Min(p1.y, p2.y);
+		float ymax = Mathf.Max(p1.y, p2.y);
+
+		// already outside
+		if (point.x < xmin || point.x > xmax || point.y < ymin || point.y > ymax)
+			return point;
+
+		// distances to edges
+		float dLeft  = point.x - xmin;
+		float dRight = xmax - point.x;
+		float dDown  = point.y - ymin;
+		float dUp    = ymax - point.y;
+
+		float min = Mathf.Min(Mathf.Min(dLeft, dRight), Mathf.Min(dDown, dUp));
+
+		if (min == dLeft) return new Vector2(xmin, point.y);
+		if (min == dRight) return new Vector2(xmax, point.y);
+		if (min == dDown) return new Vector2(point.x, ymin);
+		else return new Vector2(point.x, ymax);
 	}
 
 	void Close() {

@@ -489,6 +489,7 @@ public static class HF {
 	/// <summary>
 	/// Loads a resource of type T from Resources at the given path,
 	/// caches it in the provided field, and logs an error if load fails.
+	/// Should be used with => 
 	/// </summary>
 	public static T LoadResource<T>(ref T cacheField, string path) where T : UnityEngine.Object {
 		if (cacheField == null) {
