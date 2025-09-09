@@ -152,7 +152,7 @@ public class PComponents {
 		public FontWeight			Weight		= Config.UI.Visual.DefaultWeight;
 		public float				FontSize	= Config.UI.Visual.FontSize;
 		public Color				Color		= Config.UI.Visual.TextColor;
-		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.TopLeft;
+		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.Left;
 
 		public Text(
 				string					content,
@@ -184,6 +184,7 @@ public class PComponents {
 			text.alignment	= Alignment;
 
 			text.overflowMode = TextOverflowModes.Ellipsis;
+			text.isTextObjectScaleStatic = true;
 
 			if (!originalItem.Layout.IsFixed)
 				text.margin = originalItem.Layout.Padding.ToTMProType();

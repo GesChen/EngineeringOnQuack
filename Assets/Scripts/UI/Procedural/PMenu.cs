@@ -453,8 +453,7 @@ public class PMenu {
 				"Label",
 				new(
 					item.Label,
-					fontSize: M.FontSize,
-					alignment : TextAlignmentOptions.Left
+					fontSize: M.FontSize
 				),
 				WindowItem.LayoutConfig.DynamicLayout(
 					margin: new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing)

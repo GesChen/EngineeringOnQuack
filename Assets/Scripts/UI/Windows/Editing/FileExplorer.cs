@@ -12,11 +12,12 @@ public class FileExplorer {
 		Use // may change this schema later
 	}
 
-	static string IconName = "add to group";
+	static string IconPath = "Icons/add to group";
 
 	// properties will be instance members too
 	static float FooterSize = 30;
 	static float ItemHeight = 30;
+	static float IconNameSpacing = 10;
 	static WindowItem ItemsLayout;
 
 	public static void ClearOnOptionChosen() { OnOptionChosen = null; }
@@ -50,8 +51,14 @@ public class FileExplorer {
 				new PComponents.ScrollView(horizontalScrolling: false),
 				WindowItem.LayoutConfig.DynamicLayout(
 					FooterSize * FourSides.DownConst),
-				new()
-			).OnRealized((_, wi) => ItemsLayout = wi),
+				new() {
+					WindowItem.NewLayout(
+						PComponents.Layout.Vertical.Fixed(false, true),
+						WindowItem.LayoutConfig.FillLayout,
+						new()
+					).OnRealized((_, wi) => ItemsLayout = wi)
+				}
+			),
 			WindowItem.NewLayout(
 				"Buttons",
 				PComponents.Layout.Horizontal.Fixed(true, true),
@@ -93,47 +100,70 @@ public class FileExplorer {
 		};
 	}
 
-	static WindowItem FileEntry(
-		int id,
-		string name,
-		float namewidth,
-		params (string label, float width)[] metadata) =>
+	public struct EntryData {
+		public string Name;
+		public float NameWidth;
+		public (string label, float width)[] Metadata;
+
+		public EntryData(string name, float namewidth, params (string label, float width)[] metadata) {
+			Name = name;
+			NameWidth = namewidth;
+			Metadata = metadata;
+		}
+	}
+	static WindowItem FileEntry(int id, EntryData entry) =>
 		WindowItem.NewButton(
 			"File Entry",
 			new PComponents.Button(() => Select(id)),
 			WindowItem.LayoutConfig.LayoutElement(new(0, ItemHeight))
-		).AddComponents(PComponents.Layout.Horizontal.Dynamic())
-		.SetSubItems(
-			new WindowItem[] {
-				WindowItem.NewText(
-					new PComponents.Text(name),
-					WindowItem.LayoutConfig.LayoutElementDynamic(
-						FourSides.LeftConst * ItemHeight // room for icon
-					)
-				).AddComponents(new PComponents.LayoutElement(namewidth))
-				.AddSubItems(
-					WindowItem.NewImage(
-						"Icon",
-						new PComponents.Image(IconName),
-						WindowItem.LayoutConfig.FixedLayout(
-							UIPosition.AnchoredOffset(
-								UIPosition.MiddleLeft,
-								new(Config.UI.Menu.ItemPadding, 0)
-							),
-							Vector2.one * (ItemHeight - 2 * Config.UI.Menu.ItemPadding)
+		).SetSubItems(
+			WindowItem.NewLayout(
+				PComponents.Layout.Horizontal.Fixed(true, true),
+				WindowItem.LayoutConfig.FillLayout,
+				new WindowItem[] {
+					WindowItem.NewEmpty(
+						WindowItem.LayoutConfig.LayoutElementDynamic(),
+						new() {
+							WindowItem.NewText(
+							new PComponents.Text(entry.Name),
+							WindowItem.LayoutConfig.DynamicLayout(
+								FourSides.LeftConst * (ItemHeight + IconNameSpacing) // room for icon
+							)
+						),
+						WindowItem.NewImage(
+							"Icon",
+							new PComponents.Image(IconPath),
+							WindowItem.LayoutConfig.FixedLayout(
+								UIPosition.AnchoredOffset(
+									UIPosition.MiddleLeft,
+									new(Config.UI.Menu.ItemPadding, 0)
+								),
+								Vector2.one * (ItemHeight - 2 * Config.UI.Menu.ItemPadding)
+							)
 						)
-					)
-				)
-			}.Concat(metadata.Select(md =>
-				WindowItem.NewText(
-					new PComponents.Text(md.label),
-					WindowItem.LayoutConfig.LayoutElementDynamic()
-				).AddComponents(new PComponents.LayoutElement(md.width))
-			)).ToArray()
+						}
+					).AddComponents(new PComponents.LayoutElement(entry.NameWidth))
+					.Wrap()
+				}.Concat(entry.Metadata.Select(md =>
+					WindowItem.NewText(
+						new PComponents.Text(md.label),
+						WindowItem.LayoutConfig.LayoutElementDynamic()
+					).AddComponents(new PComponents.LayoutElement(md.width))
+					.Wrap()
+				)).ToList()
+			)
 		);
+
+	public static void SetEntries(params EntryData[] entries) {
+		ItemsLayout.SetSubItems(entries.Select((e, i) => FileEntry(i, e)).ToArray());
+		 
+		WindowRealiser.Instance.UpdateWindow(ExplorerWindow);
+	}
 
 	public static void Set() {
 		SetEW();
+
+		
 	}
 	public static CWindow[] Windows => new[] {
 		ExplorerWindow

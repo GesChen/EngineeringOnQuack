@@ -155,8 +155,7 @@ public static class OutputsMenu {
 			),
 			new PComponents.Text(
 				name,
-				fontSize: Config.UI.Menu.FontSize,
-				alignment: TMPro.TextAlignmentOptions.Left
+				fontSize: Config.UI.Menu.FontSize
 			),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.LayoutItem,

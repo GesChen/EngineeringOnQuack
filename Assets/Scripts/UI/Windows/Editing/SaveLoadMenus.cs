@@ -200,15 +200,13 @@ public class SaveLoadMenus {
 			).SetSubItems(
 				WindowItem.NewText( // name text
 					new PComponents.Text(
-						name,
-						alignment: TextAlignmentOptions.Left),
+						name),
 					WindowItem.LayoutConfig.DynamicLayout(
 						margin: EntryTextMargin,
 						position: new(0, LeftRights[0].right, 0, LeftRights[0].left))),
 				WindowItem.NewText( // more stuff idk 
 					new PComponents.Text(
-						$"{parts} Parts",
-						alignment: TextAlignmentOptions.Left),
+						$"{parts} Parts"),
 					WindowItem.LayoutConfig.DynamicLayout(
 						margin: EntryTextMargin,
 						position: new(0, LeftRights[1].right, 0, LeftRights[1].left)))

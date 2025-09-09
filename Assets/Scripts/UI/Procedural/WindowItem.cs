@@ -341,6 +341,22 @@ public class WindowItem {
 		);
 	public static WindowItem NewScrollView(PComponents.ScrollView scroll, LayoutConfig layout, List<WindowItem> items) =>
 		NewScrollView("Scroll View", scroll, layout, items);
+
+	/// <summary>
+	/// Wraps this WI in a parent wrapper, useful to bypass layoutelement scaling
+	/// </summary>
+	/// <remarks>
+	/// This method should be placed at the end of a chain
+	/// </remarks>
+	public WindowItem Wrap() {
+		WindowItem wrapper = NewEmpty(
+			$"Wrapper for {Name}",
+			Layout);
+		Layout = LayoutConfig.FillLayout;
+		wrapper.SetSubItems(this);
+		return wrapper;
+	}
+
 	#endregion
 
 	public override string ToString() {
