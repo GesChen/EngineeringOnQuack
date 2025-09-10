@@ -41,6 +41,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
+		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
+		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
+
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
@@ -209,6 +212,28 @@ public class BuildingManager : Singleton<BuildingManager> {
 	void ShowAllPartsAfterSimulation() {
 		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(true);
+		}
+	}
+
+	/// <summary>
+	/// Find and trigger all parts with nonstatic components, call the functions based on the state
+	/// </summary>
+	/// <param name="state">0-start simulating 1-stop simulating</param>
+	void TriggerNonStaticFunctions(int state) {
+		NonStaticPart[] nonStaticParts = Assembly.Parts
+			.Where(p => p.GetComponent<NonStaticPart>() != null) // optimize this
+			.Select(p => p.GetComponent<NonStaticPart>())
+			.ToArray();
+
+		switch (state) {
+		case 0: //start
+			foreach (var part in nonStaticParts)
+				part.OnStartSimulating();
+			break;
+		case 1:
+			foreach (var part in nonStaticParts)
+				part.OnStopSimulating();
+			break;
 		}
 	}
 	#endregion

@@ -31,6 +31,7 @@ public class ContextObserver : Singleton<ContextObserver> {
 
 	[HideInNormalInspector] public int selectionCount;
 	public Func<bool> GroupCheck;
+	public Func<int> GetCurrentSSBasePartID;
 	void CheckEditing() {
 		if (UIHovers.AnyHovers()) {
 			ContextManager.EnterContext<OverUI>();
@@ -44,9 +45,10 @@ public class ContextObserver : Singleton<ContextObserver> {
 				bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
 
 				if (!isGroup) {
-					if (selectionCount == 1)
-						ContextManager.EnterContext<SingleSelection>();
-					else
+					if (selectionCount == 1) {
+						var c = ContextManager.EnterContext<SingleSelection>();
+						c.SelectedBasePartID = GetCurrentSSBasePartID?.Invoke() ?? throw new("GCSSBPID not subscribed to");
+					} else
 						ContextManager.EnterContext<MultiSelection>();
 				}
 			}

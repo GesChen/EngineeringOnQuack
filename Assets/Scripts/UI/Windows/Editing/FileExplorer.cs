@@ -20,6 +20,9 @@ public class FileExplorer {
 	static float IconNameSpacing = 10;
 	static WindowItem ItemsLayout;
 
+	static void Cancel() {
+
+	}
 	public static void ClearOnOptionChosen() { OnOptionChosen = null; }
 	static event Action<Option> OnOptionChosen;
 	static void Decide(Option o) {

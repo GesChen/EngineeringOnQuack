@@ -7,7 +7,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	public bool selectionBoxDragging;
 
 	public List<Transform> Selection { get; private set; }
-	public Part[] PartSelection { get; private set; }
+	public Part[] PartSelection { get; private set; } // always in sync with selection
 
 	public Transform selectionContainer;
 
@@ -44,6 +44,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Subscribe() {
 		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
+
+		ContextObserver.Instance.GetCurrentSSBasePartID += () => PartSelection[0].basePart.ID;
 	}
 
 	bool UpdateGroupContext() {

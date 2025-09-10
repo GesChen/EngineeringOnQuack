@@ -30,6 +30,17 @@ public static class HF {
 		sb.Append("]");
 		return sb.ToString();
 	}
+	public static bool TryFind<T>(this IEnumerable<T> source, Func<T, bool> predicate, out T result) {
+		foreach (var item in source) {
+			if (predicate(item)) {
+				result = item;
+				return true;
+			}
+		}
+		result = default!;
+		return false;
+	}
+
 	public static Color MultiplyColorByVector(Vector3 vector, Color color) {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}

@@ -288,6 +288,10 @@ public class Tokenizer {
 		return (new(sectionLines.ToArray()), T_Data.Success);
 	}
 
+	/// <summary>
+	/// The main function to call to tokenize a script. 
+	/// </summary>
+	/// <returns>If no compilation errors are encountered, this function returns success</returns>
 	public (Script, T_Data) Tokenize(string text) {
 		string preprocessed = RemoveComments(text);
 

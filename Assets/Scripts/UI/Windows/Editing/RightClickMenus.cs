@@ -42,6 +42,8 @@ public class RightClickMenus : MonoBehaviour {
 		OnAddToGroup			= null;
 		OnRemoveFromGroup		= null;
 		OnMaterial				= null;
+
+		RCM_Extensions.ClearEvents();
 	}
 
 	static void MakeNewPart(string name) {
@@ -51,7 +53,7 @@ public class RightClickMenus : MonoBehaviour {
 	}
 
 	// i wanna dry but kiss is more important
-	static void Call(Action action) { RightClick.Instance.Hide(); action?.Invoke(); }
+	public static void Call(Action action) { RightClick.Instance.Hide(); action?.Invoke(); }
 	static void Material(W source, int index) {
 		WindowItem item = source.Items[index].RealItem;
 
@@ -65,12 +67,14 @@ public class RightClickMenus : MonoBehaviour {
 	static void SetDigital() {
 		digital = new(
 			"Digital",
-			120, true,
+			150, true,
 			new(){
-				new W.Button(() => MakeNewPart("cpu"),      "cpu",      iconName: "Parts/cpu"),
-				new W.Button(() => MakeNewPart("ram"),      "ram",      iconName: "Parts/ram"),
-				new W.Button(() => MakeNewPart("display"),  "display",  iconName: "Parts/display"),
-				new W.Button(() => MakeNewPart("script"),   "script",   iconName: "Parts/script")
+				new W.Button(() => MakeNewPart("cable"),	"cable",	iconName: "Parts/cable"),
+				new W.Button(() => MakeNewPart("cpu"),		"cpu",		iconName: "Parts/cpu"),
+				//new W.Button(() => MakeNewPart("ram"),	"ram",		iconName: "Parts/ram"),
+				new W.Button(() => MakeNewPart("display"),	"display",	iconName: "Parts/display"),
+				//new W.Button(() => MakeNewPart("script"),	"script",	iconName: "Parts/script"),
+				new W.Button(() => MakeNewPart("transceiver"),  "transceiver",  iconName: "Parts/transceiver"),
 			},
 			showTitle: false
 		);
@@ -82,6 +86,7 @@ public class RightClickMenus : MonoBehaviour {
 			"Mechanical",
 			120, true,
 			new(){
+				new W.Button(() => MakeNewPart("axle"),			"axle",			iconName: ""), // TODO
 				new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
 				new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
 				new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
@@ -117,8 +122,6 @@ public class RightClickMenus : MonoBehaviour {
 				new W.Flyout(structural,	"structural",		iconName: "Parts/structural"),
 				new W.Flyout(mechanical,	"mechanical",		iconName: "Parts/mechanical"),
 				new W.Flyout(digital,		"digital",			iconName: "Parts/digital"),
-				new W.Button(()=>MakeNewPart("axle"), "axle",	iconName: ""), // TODO
-				new W.Button(()=>MakeNewPart("cable"), "cable",	iconName: "Parts/cable")
 			},
 			showTitle: false
 		);
@@ -195,26 +198,37 @@ public class RightClickMenus : MonoBehaviour {
 			"Editing", mainwidth, true, new() { // deindented for readability
 
 // ---------------------------- Universal Menu Items ------------------------------------
-/* 0*/	new W.Flyout(newPart,						"new part",		iconName: "plus"),
-/* 1*/	new W.Button(() => Call(OnUndo),			"undo",			iconName: "undo"),
-/* 2*/	new W.Button(() => Call(OnRedo),			"redo",			iconName: "redo"),
-/* 3*/	new W.Button(() => Call(OnPaste),			"paste",		iconName: "paste"),
+/* 0*/	new W.Flyout(newPart,						"new part",				iconName: "plus"),
+/* 1*/	new W.Button(() => Call(OnUndo),			"undo",					iconName: "undo"),
+/* 2*/	new W.Button(() => Call(OnRedo),			"redo",					iconName: "redo"),
+/* 3*/	new W.Button(() => Call(OnPaste),			"paste",				iconName: "paste"),
 /* 4*/	new W.CustomItem(modifierList),
-/* 5*/	new W.Button(() => Call(OnDuplicate),		"duplicate",	iconName: "duplicate"),
+/* 5*/	new W.Button(() => Call(OnDuplicate),		"duplicate",			iconName: "duplicate"),
 /* 6*/	null, // gets replaced with materialitem 
 /* 7*/	new W.Button(() => Call(OnGroup),			"group",				iconName: "group"),
 /* 8*/	new W.Button(() => Call(OnUnGroup),			"ungroup",				iconName: "ungroup"),
 /* 9*/	new W.Button(() => Call(OnCombineGroups),	"combine groups",		iconName: "combine groups"),
 /*10*/	new W.Button(() => Call(OnAddToGroup),		"add to group",			iconName: "add to group"),
 /*11*/	new W.Button(() => Call(OnRemoveFromGroup),	"remove from group",	iconName: "remove from group"),
-// -----------------------------------------------------------------------------------
-	
+// -------------------------------------------------------------------------------------
 			},
 			switchable: true
 		);
 
 		// fill in the material item
 		inWorldUniversalMenu.Items[6] = materialItem(inWorldUniversalMenu, 6); // manual reflection lol
+
+		// add extensions
+		int j = inWorldUniversalMenu.Items.Count;
+		var extensions = RCM_Extensions.PartExtensions;
+		foreach (var extension in extensions) {
+			(W.Item WI, int RCMi)[] items = extension.NewItems;
+
+			for (int I_i = 0; I_i < items.Length; I_i++) {
+				inWorldUniversalMenu.Items.Add(items[I_i].WI);
+				items[I_i].RCMi = j++;
+			}
+		}
 	}
 
 /*	public static class UniversalMasks {

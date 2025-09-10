@@ -90,6 +90,20 @@ public class RightClick : Singleton<RightClick> {
 			_ => null
 		};
 
+		// part extensions (only on ss for now?)
+		if (context is C.SingleSelection ss) {
+			// single selection is also part extended
+			if (RCM_Extensions.PartExtensions
+				.TryFind(pe => pe.AssociatedBasePartID == ss.SelectedBasePartID, out var ex)) {
+				
+				// add indices
+				indices = indices.Concat(ex.NewItems.Select(ni => ni.RCMi)).ToArray();
+
+				// set width
+				width = ex.Width;
+			}
+		}
+
 		customization = new() {
 			Indices = indices,
 			Width = width
