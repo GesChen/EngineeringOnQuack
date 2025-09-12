@@ -100,7 +100,7 @@ public class RightClick : Singleton<RightClick> {
 				indices = indices.Concat(ex.NewItems.Select(ni => ni.RCMi)).ToArray();
 
 				// set width
-				width = ex.Width;
+				width = Mathf.Max(ex.Width, width.Value);
 			}
 		}
 

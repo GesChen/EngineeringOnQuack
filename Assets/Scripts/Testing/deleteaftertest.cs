@@ -5,6 +5,8 @@ using static FileExplorer;
 
 public class deleteaftertest : MonoBehaviour {
 	private void Update() {
+
+		/*
 		if (Input.GetKeyDown("e")) {
 			FileExplorer.SetEntries(
 				new EntryData("test", 5,
@@ -14,6 +16,11 @@ public class deleteaftertest : MonoBehaviour {
 				new EntryData("aeea", 5,
 					("me123t", 2),
 					("m5ea", 3)));
+		}*/
+
+		if (Input.GetKeyDown("e")) {
+			ProceduralScriptEditor
+			WindowManager.Instance.RealiseWindows()
 		}
 	}
 }

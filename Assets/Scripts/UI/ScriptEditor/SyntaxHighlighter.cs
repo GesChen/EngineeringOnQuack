@@ -8,17 +8,6 @@ using System;
 // probably one of the most unmaintainable files ever, good luck and im sorry lol
 
 public class SyntaxHighlighter : MonoBehaviour {
-
-	//[Header("temporary colors")]
-	//[ColorUsage(false)] public Color keywordColor;
-	//[ColorUsage(false)] public Color functionColor;
-	//[ColorUsage(false)] public Color variableColor;
-	//[ColorUsage(false)] public Color unknownColor;
-	//[ColorUsage(false)] public Color symbolColor;
-	//[ColorUsage(false)] public Color literalColor;
-	//[ColorUsage(false)] public Color typeColor;
-	//[ColorUsage(false)] public Color commentColor;
-
 	public enum Types {
 		unassigned,
 		keyword,

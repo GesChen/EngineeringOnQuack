@@ -70,7 +70,7 @@ public class WindowManager : Singleton<WindowManager> {
 	/// stop calling this from individual classes, instead put them all into
 	/// allwindows and windowmanager will do it
 	/// </summary>
-	void RealiseWindows(params CWindow[] torealise) {
+	public void RealiseWindows(params CWindow[] torealise) {
 		Windows ??= new();
 		foreach (var window in torealise) {
 			Realiser.Realise(window);
