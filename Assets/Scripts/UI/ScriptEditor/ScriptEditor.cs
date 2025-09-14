@@ -1,13 +1,14 @@
-using System.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using TMPro;
-using UnityEngine.InputSystem;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+using System.Linq;
 using System.Text;
+using TMPro;
 using UnityEditor;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 // is this too many usings?
 // answer: yea prolly
 
@@ -26,8 +27,10 @@ public class ScriptEditor : MonoBehaviour {
 	public CustomVerticalLayout lineNumbersVerticalLayout;
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
 
+	// modules
 	public SyntaxHighlighter syntaxHighlighter;
-	public History history;
+	public LazyHistory history; // can be interchanged with just
+	// normal history if i decide to fix it someday
 
 	internal List<Caret> carets = new();
 	internal int headCaretI = 0;
@@ -395,6 +398,15 @@ public class ScriptEditor : MonoBehaviour {
 		return updatedLines;
 	}
 
+	internal Line AddLine(string contents) {
+		Line newLine = GenerateNewLine(contents);
+
+		lines.Add(newLine);
+		newLine.Components.LineContent.transform.SetAsLastSibling();
+
+		return newLine;
+	}
+
 	internal Line InsertLine(string contents, int at) {
 		Line newLine = GenerateNewLine(contents);
 
@@ -414,6 +426,29 @@ public class ScriptEditor : MonoBehaviour {
 		// decrement a line number
 		Destroy(lineNumbers[^1].Rect.gameObject);
 		lineNumbers.RemoveAt(lineNumbers.Count - 1);
+	}
+
+	internal void ResetLines() {
+		for (int i = lines.Count - 1; i >= 0; i--) {
+			DeleteLine(i);
+		}
+	}
+
+	internal void SetLines(string[] newLines) {
+		ResetLines();
+
+		foreach (string line in newLines) {
+			AddLine(line);
+		}
+
+		for (int i = 0; i < newLines.Length; i++) {
+			UpdateLine(i, false);
+		}
+
+		for (int i = 0; i < lines.Count; i++) {
+			LineNumber newLN = GenerateNewNumber(i + 1);
+			lineNumbers.Add(newLN);
+		}
 	}
 
 	string ConvertTabsToSpaces(Line line) {
@@ -759,6 +794,8 @@ public class ScriptEditor : MonoBehaviour {
 	bool boxCleared = false;
 	void HandleDrag(Vector2Int pos, Vector2Int posUnclamped) {
 		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) { // down
+			history.RecordChange(); // before cursor moves
+			history.UpdateLastCarets();
 
 			dragging = true;
 
@@ -781,6 +818,8 @@ public class ScriptEditor : MonoBehaviour {
 			}
 		} else
 		if (Conatrols.IM.Mouse.Left.WasReleasedThisFrame()) {
+			history.UpdateLastCarets();
+
 			dragging = false;
 		}
 		if (dragging) {
@@ -788,8 +827,6 @@ public class ScriptEditor : MonoBehaviour {
 				Conatrols.Keyboard.Modifiers.Shift &&
 				Conatrols.Keyboard.Modifiers.Alt)
 				return; // do nothing with all 3 
-
-			history.RecordChange(); // before cursor moves
 
 			bool doubleClickCondition =
 				Conatrols.Keyboard.Modifiers.Ctrl &&
@@ -1336,6 +1373,12 @@ public class ScriptEditor : MonoBehaviour {
 		if (shortcutPressed)
 			return false;
 
+		// standalone shift check
+		if (Conatrols.Keyboard.Modifiers.Shift &&
+			!Conatrols.Keyboard.Presses.Any(
+				k => Conatrols.Keyboard.All.CharacterKeys.Contains(k)))
+			return false;
+
 		return Conatrols.Keyboard.Presses.All(
 			k => 
 				Conatrols.Keyboard.All.TextKeys.Contains(k) || 
@@ -1358,6 +1401,8 @@ public class ScriptEditor : MonoBehaviour {
 		else if (Conatrols.IsUsed(Key.Delete))
 			Delete(c, line);
 
+		line = lines[c.head.y];
+		
 		// adders
 		if (Conatrols.IsUsed(Key.Enter)) {
 			bool splitText = !Conatrols.Keyboard.Modifiers.Shift;
@@ -1366,8 +1411,7 @@ public class ScriptEditor : MonoBehaviour {
 			Enter(c, line, splitText, addDownwards);
 
 			history.RecordChange(); // after adding
-		} else
-
+		} else 
 		if (Conatrols.IsUsed(Key.Tab))
 			Tab(c, line);
 
@@ -1632,12 +1676,29 @@ public class ScriptEditor : MonoBehaviour {
 		string startIndent = IndentToColumnString(0, indentSpaces, c.head.y + 1);
 		endContents = endContents.Insert(0, startIndent);
 
-		if (addDownwards) c.head.y++;
+		bool addIndent = false;
+		if (addDownwards) {
+			c.head.y++;
+
+			// hacky check just to make it work i guess idk.
+			int index = line.Content.IndexOf(':');
+			addIndent =
+				index != -1
+				&& line.ColorsOriginal[index] == SyntaxHighlighter.Types.symbol
+				&& line.ColorsOriginal.Take(index)
+					.Any(t => t == SyntaxHighlighter.Types.func
+					|| t == SyntaxHighlighter.Types.type);
+
+			if (addIndent) {
+				endContents = "\t" + endContents;
+			}
+		}
 
 		Line newLine = InsertLine(endContents, c.head.y);
 
 		// place cursor
 		c.head.x = newLine.Content.Length - endContents.Length + startIndent.Length;
+		if (addIndent) c.head.x++;
 
 		// add ln
 		LineNumber newLN = GenerateNewNumber(lines.Count);

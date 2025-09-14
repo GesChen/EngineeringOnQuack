@@ -17,10 +17,10 @@ public class deleteaftertest : MonoBehaviour {
 					("me123t", 2),
 					("m5ea", 3)));
 		}*/
-
+/*
 		if (Input.GetKeyDown("e")) {
 			ProceduralScriptEditor
 			WindowManager.Instance.RealiseWindows()
-		}
+		}*/
 	}
 }
