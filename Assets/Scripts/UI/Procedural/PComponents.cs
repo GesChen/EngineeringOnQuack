@@ -392,6 +392,9 @@ public class PComponents {
 					fillOwnAxis,
 					matchOtherDimension);
 
+			/// <summary>
+			/// 
+			/// </summary>
 			public Layout Fixed(
 				bool fillOwnAxis,
 				bool matchOtherDimension,

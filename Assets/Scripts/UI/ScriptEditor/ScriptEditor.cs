@@ -21,10 +21,10 @@ public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
 	List<LineNumber> lineNumbers;
 
-	public SEScrollWindow scroll;
-	public CustomVerticalLayout lineContentVerticalLayout;
+	public ScrollRect scroll; // interchangable with SEScrollWindow, comment out handleshiftscrolling tho
+	public RectTransform lineContentVerticalLayout;
 	public RectTransform lineContentContainer;
-	public CustomVerticalLayout lineNumbersVerticalLayout;
+	public VerticalLayoutGroup lineNumbersVerticalLayout; // interchangable with customverticallayout
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
 
 	// modules
@@ -126,6 +126,7 @@ public class ScriptEditor : MonoBehaviour {
 		HandleKeyboardNavgation();
 		UpdateCarets();
 		HandleTyping();
+		UpdateLineNumbersPos();
 	}
 
 	#region Loading/Generation
@@ -541,6 +542,11 @@ public class ScriptEditor : MonoBehaviour {
 	public string[] LinesStringArray =>
 		lines.Select(l => l.Content).ToArray();
 
+	void UpdateLineNumbersPos() {
+		float amount = scroll.CurrentScrollAmount().y;
+		lineNumbersRect.localPosition = new(0, amount);
+	}
+
 	#endregion
 
 	#region Caret Utilities
@@ -690,7 +696,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
-		pos -= scroll.CurrentScrollAmount;
+		pos -= scroll.CurrentScrollAmount();
 
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
@@ -720,6 +726,8 @@ public class ScriptEditor : MonoBehaviour {
 
 		DetectExtraClicks(mousePos.Value);
 		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
+
+		HandleShiftScrolling();
 	}
 
 	float lastClickTime;
@@ -929,6 +937,8 @@ public class ScriptEditor : MonoBehaviour {
 				SetCurrentCaret(start, end);
 			}
 		}
+
+		scroll.enabled = !dragging; // hacky fix to dragging the scrollrect, just stops it. 
 	}
 
 	void SetCurrentCaret(Vector2Int head, Vector2Int tail) {
@@ -993,6 +1003,20 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		return charIndex;
+	}
+
+	void HandleShiftScrolling() {
+		scroll.vertical = !Conatrols.Keyboard.Modifiers.Shift; // hacky prevent vertical
+
+		if (Conatrols.Keyboard.Modifiers.Shift) {
+			float yDelta = Conatrols.Mouse.Scroll.y;
+			if (Mathf.Abs(yDelta) > 0.001) {
+				float width = scroll.GetComponent<RectTransform>().rect.width; 
+				float x = scroll.horizontalScrollbar.value - yDelta * Config.Input.ScrollSensitivity / width;
+				x = Mathf.Clamp01(x);
+				scroll.horizontalScrollbar.value = x;
+			}
+		}
 	}
 
 	#endregion

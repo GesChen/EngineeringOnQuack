@@ -32,7 +32,7 @@ public class LazyHistory : MonoBehaviour {
 	public void Initialize() { } // to match history
 	
 	public void RecordChange() {
-		Debug.Log("try");
+		//Debug.Log("try");
 		// no duplicates
 		if (Versions.Count > 0) {
 			string[] a = SE.LinesStringArray;
@@ -40,7 +40,7 @@ public class LazyHistory : MonoBehaviour {
 			if (a.Length == b.Length && a.SequenceEqual(b))
 				return;
 		}
-		Debug.Log($"recording");
+		//Debug.Log($"recording");
 
 		// recording changes in the middle of undo will prevent redoing
 		// this is the simplest approach i think
@@ -64,7 +64,7 @@ public class LazyHistory : MonoBehaviour {
 	}
 
 	void RememberCarets(Version v) {
-		Debug.Log($"remember carets");
+		//Debug.Log($"remember carets");
 
 		v.Carets = SE.carets.Select(c =>
 			new Version.Caret() {
@@ -83,7 +83,7 @@ public class LazyHistory : MonoBehaviour {
 	}
 	
 	public void Undo() {
-		Debug.Log($"undo {undos}");
+		//Debug.Log($"undo {undos}");
 		if (undos == Versions.Count - 1) return;
 
 		if (undos == 0) {
@@ -96,7 +96,7 @@ public class LazyHistory : MonoBehaviour {
 	}
 
 	public void Redo() {
-		Debug.Log($"redo {undos}");
+		//Debug.Log($"redo {undos}");
 		if (undos == 0) return; // no redo at current
 		undos--;
 
