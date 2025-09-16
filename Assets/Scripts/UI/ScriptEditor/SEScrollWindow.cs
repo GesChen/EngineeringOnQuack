@@ -14,7 +14,7 @@ public class SEScrollWindow : ScrollWindow {
 
 		xScrollableDist = contents.maxWidth - windowWidth 
 			//+ ScriptEditor.lineNumbersVerticalLayout.maxWidth 
-			+ ScriptEditor.numberToContentSpace;
+			+ Config.ScriptEditor.NumberToContentSpace;
 		yScrollableDist = contents.totalHeight - windowHeight; // may be negative
 	}
 }

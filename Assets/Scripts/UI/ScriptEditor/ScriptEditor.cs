@@ -36,15 +36,6 @@ public class ScriptEditor : MonoBehaviour {
 	internal int headCaretI = 0;
 	internal int tailCaretI = 0;
 
-	[Header("temporary local config options, should move to global config soon")]
-	public float numberToContentSpace;
-	public TMP_FontAsset font;
-	public float fontSize;
-	public Color selectionColor;
-	public Color test;
-	public int xCursorScreenMarginChars;
-	public int yCursorScreenMarginLines;
-
 	#region Line Classes
 	public class Line {
 		public string Content;
@@ -114,11 +105,11 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void SubscribeToShortcuts() {
-		Conatrols.IM.Editing.Copy.performed		+= (InputAction.CallbackContext _) => Copy();
-		Conatrols.IM.Editing.Cut.performed		+= (InputAction.CallbackContext _) => Cut();
-		Conatrols.IM.Editing.Paste.performed	+= (InputAction.CallbackContext _) => Paste();
-		Conatrols.IM.Editing.Undo.performed		+= (InputAction.CallbackContext _) => history.Undo();
-		Conatrols.IM.Editing.Redo.performed		+= (InputAction.CallbackContext _) => history.Redo();
+		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
+		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
+		Conatrols.IM.Editing.Paste.performed	+= _ => Paste();
+		Conatrols.IM.Editing.Undo.performed		+= _ => history.Undo();
+		Conatrols.IM.Editing.Redo.performed		+= _ => history.Redo();
 	}
 
 	void Update() {
@@ -142,8 +133,8 @@ public class ScriptEditor : MonoBehaviour {
 
 		// recalculate max line number width
 		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
-		testingText.font = font;
-		testingText.fontSize = fontSize;
+		testingText.font = Config.ScriptEditor.Font;
+		testingText.fontSize = Config.ScriptEditor.FontSize;
 		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
 		Destroy(testingText);
 
@@ -151,7 +142,7 @@ public class ScriptEditor : MonoBehaviour {
 		allLinesHeight = numberSize.y;
 
 		// fix container
-		lineContentContainer.offsetMin = new(lineNumberWidth + numberToContentSpace, 0);
+		lineContentContainer.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 
 		// reset localcontext
 		LC = new() {
@@ -313,7 +304,7 @@ public class ScriptEditor : MonoBehaviour {
 		LCRect.anchorMax = new(0, 1);
 		LCRect.pivot = new(0, 1);
 
-		LCRect.localPosition = new(lineNumberWidth + numberToContentSpace, 0);
+		LCRect.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 
 		line.Components.LineContent = LCRect;
 		line.Components.LineText = LCText;
@@ -521,8 +512,8 @@ public class ScriptEditor : MonoBehaviour {
 		// add text
 		TextMeshProUGUI newText = newObj.AddComponent<TextMeshProUGUI>();
 		newText.text = actualText;
-		newText.font = font;
-		newText.fontSize = fontSize;
+		newText.font = Config.ScriptEditor.Font;
+		newText.fontSize = Config.ScriptEditor.FontSize;
 		newText.alignment = alignment;
 
 		// set up rt properly
@@ -698,20 +689,23 @@ public class ScriptEditor : MonoBehaviour {
 	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
 		pos -= scroll.CurrentScrollAmount();
 
+		float xmarg = Config.ScriptEditor.XCursorScreenMarginChars;
+		float ymarg = Config.ScriptEditor.YCursorScreenMarginLines;
+
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
 		(
-			pos.x < xCursorScreenMarginChars * charWidth
+			pos.x < xmarg * charWidth
 				? -1
 			: (
-			pos.x > lineContentContainer.rect.width - xCursorScreenMarginChars * charWidth
+			pos.x > lineContentContainer.rect.width - xmarg * charWidth
 				? 1
 			: 0)
 		,
-			pos.y < yCursorScreenMarginLines * allLinesHeight
+			pos.y < ymarg * allLinesHeight
 				? -1
 			: (
-			pos.y > lineContentContainer.rect.height - yCursorScreenMarginLines * allLinesHeight
+			pos.y > lineContentContainer.rect.height - ymarg * allLinesHeight
 				? 1
 			: 0)
 		);
@@ -1623,8 +1617,8 @@ public class ScriptEditor : MonoBehaviour {
 			PadToIndex(c.head.x, c.head.y, line);
 
 		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			(int start, int end) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
-			end = c.head.x;
+			(int start, _) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
+			int end = c.head.x;
 			int length = end - start;
 			line.Content = line.Content.Remove(start, length);
 			c.head.x -= length;
@@ -1666,8 +1660,8 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			(int start, int end) = DoubleClickWordAt(c.head);
-			start = c.head.x;
+			(_, int end) = DoubleClickWordAt(c.head);
+			int start = c.head.x;
 			int length = end - start;
 			line.Content = line.Content.Remove(start, length);
 		} else {

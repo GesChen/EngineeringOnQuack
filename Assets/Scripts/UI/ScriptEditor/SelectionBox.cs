@@ -34,7 +34,7 @@ public class SelectionBox {
 	public RectTransform Realise(){
 		GameObject newImage = new("Selection", typeof(RectTransform), typeof(Image));
 		boxObject = newImage.GetComponent<RectTransform>();
-		newImage.GetComponent<Image>().color = main.selectionColor;
+		newImage.GetComponent<Image>().color = Config.ScriptEditor.SelectionColor;
 
 		boxObject.anchorMin = Vector2.zero;
 		boxObject.anchorMax = Vector2.one;
