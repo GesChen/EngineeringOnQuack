@@ -26,6 +26,8 @@ public class ScriptEditor : MonoBehaviour {
 	public RectTransform lineContentContainer;
 	public VerticalLayoutGroup lineNumbersVerticalLayout; // interchangable with customverticallayout
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
+	public RectTransform contentMask; // prevents lines from being drawn under line numbers
+	RectTransform widthSetter; // 0 height line in the line contents, always at the end, sets the width for parent 
 
 	// modules
 	public SyntaxHighlighter syntaxHighlighter;
@@ -132,17 +134,11 @@ public class ScriptEditor : MonoBehaviour {
 		Clear();
 
 		// recalculate max line number width
-		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
-		testingText.font = Config.ScriptEditor.Font;
-		testingText.fontSize = Config.ScriptEditor.FontSize;
-		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
-		Destroy(testingText);
-
-		lineNumberWidth = numberSize.x;
-		allLinesHeight = numberSize.y;
+		CalculateLineSizes(strLines);
 
 		// fix container
-		lineContentContainer.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
+		//lineContentContainer.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
+		lineContentVerticalLayout.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 
 		// reset localcontext
 		LC = new() {
@@ -162,6 +158,13 @@ public class ScriptEditor : MonoBehaviour {
 			lineNumbers.Add(newLN);
 		}
 
+		// generate widthsetter
+		var wsObj = new GameObject("Width Setter");
+		widthSetter = wsObj.AddComponent<RectTransform>();
+		widthSetter.SetParent(lineContentVerticalLayout);
+		widthSetter.sizeDelta = new(0, 0); // width will be set in recalculate
+		wsObj.AddComponent<Image>().color = Color.clear; // dualie
+
 		RecalculateAll();
 
 		SetSingleCaret(new(0, 0), new(0, 0));
@@ -169,11 +172,24 @@ public class ScriptEditor : MonoBehaviour {
 		history.Initialize();
 	}
 
+	private void CalculateLineSizes(string[] strLines) {
+		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
+		testingText.font = Config.ScriptEditor.Font;
+		testingText.fontSize = Config.ScriptEditor.FontSize;
+		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
+		Destroy(testingText);
+
+		lineNumberWidth = numberSize.x;
+		allLinesHeight = numberSize.y;
+	}
+
 	void RecalculateAll() {
 		// scale all containers to max width
 		RecalculateLongest();
 		RecalculateCharUVA();
 		ScaleAllContainersToMax();
+		UpdateContentMask();
+		UpdateWidthSetter();
 
 		// calculate ts (charuv must have a value)
 		CalculateAllTs();
@@ -196,6 +212,11 @@ public class ScriptEditor : MonoBehaviour {
 				Destroy(ln.Rect.gameObject);
 		}
 		lineNumbers.Clear();
+
+		// delete widthsetter
+		if (widthSetter != null)
+			Destroy(widthSetter.gameObject);
+		widthSetter = null;
 	}
 
 	void RecalculateLongest() {
@@ -225,6 +246,14 @@ public class ScriptEditor : MonoBehaviour {
 	void ScaleAllContainersToMax() {
 		lines.ForEach(l => l.Components.LineContent
 			.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, longestLineWidth));
+	}
+
+	void UpdateContentMask() {
+		contentMask.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
+	}
+
+	void UpdateWidthSetter() {
+		widthSetter.sizeDelta = new(longestLineWidth + lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 	}
 
 	void CalculateAllTs() {
@@ -303,8 +332,6 @@ public class ScriptEditor : MonoBehaviour {
 		LCRect.anchorMin = new(0, 1);
 		LCRect.anchorMax = new(0, 1);
 		LCRect.pivot = new(0, 1);
-
-		LCRect.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 
 		line.Components.LineContent = LCRect;
 		line.Components.LineText = LCText;
@@ -720,8 +747,6 @@ public class ScriptEditor : MonoBehaviour {
 
 		DetectExtraClicks(mousePos.Value);
 		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
-
-		HandleShiftScrolling();
 	}
 
 	float lastClickTime;
@@ -997,20 +1022,6 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		return charIndex;
-	}
-
-	void HandleShiftScrolling() {
-		scroll.vertical = !Conatrols.Keyboard.Modifiers.Shift; // hacky prevent vertical
-
-		if (Conatrols.Keyboard.Modifiers.Shift) {
-			float yDelta = Conatrols.Mouse.Scroll.y;
-			if (Mathf.Abs(yDelta) > 0.001) {
-				float width = scroll.GetComponent<RectTransform>().rect.width; 
-				float x = scroll.horizontalScrollbar.value - yDelta * Config.Input.ScrollSensitivity / width;
-				x = Mathf.Clamp01(x);
-				scroll.horizontalScrollbar.value = x;
-			}
-		}
 	}
 
 	#endregion
