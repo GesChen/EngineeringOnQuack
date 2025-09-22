@@ -33,6 +33,7 @@ public struct FourSides { // changed to struct but might break shit so might tur
 	public static FourSides RightConst	=> new(0, 1, 0, 0);
 	public static FourSides DownConst	=> new(0, 0, 1, 0);
 	public static FourSides LeftConst	=> new(0, 0, 0, 1);
+	public static FourSides One			=> new(1, 1, 1, 1);
 	public static FourSides Even(float v) => new(v, v, v, v);
 
 	public override readonly int GetHashCode() {

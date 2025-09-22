@@ -691,7 +691,7 @@ public class PComponents {
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
-			var comp = newObj.AddComponent<ScrollRect>();
+			var comp = newObj.AddComponent<BetterScrollRect>(); // interchangable with normal scrollrect
 			var rt = newObj.GetComponent<RectTransform>();
 
 			// this is gonna be a little fuckin complicated :(

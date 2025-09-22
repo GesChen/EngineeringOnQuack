@@ -1,26 +1,41 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 using static FileExplorer;
+using static ScriptSaveLoad;
+using System.Linq;
 
 public class deleteaftertest : MonoBehaviour {
 	private void Update() {
-
-		/*
 		if (Input.GetKeyDown("e")) {
-			FileExplorer.SetEntries(
-				new EntryData("test", 5,
-					("met", 2),
-					("mea", 3)),
+			var tokenizer = new Tokenizer();
+			string path = "C:\\Users\\gesch\\Tools\\Unity\\EngineeringOnQuack\\Assets\\Scripts\\Testing\\testing.qk";
+			string contents = File.ReadAllText(path);
 
-				new EntryData("aeea", 5,
-					("me123t", 2),
-					("m5ea", 3)));
-		}*/
-/*
-		if (Input.GetKeyDown("e")) {
-			ProceduralScriptEditor
-			WindowManager.Instance.RealiseWindows()
-		}*/
+			(Script scriptOut, T_Data output) = tokenizer.Tokenize(contents);
+
+			var script = scriptOut;
+
+				string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
+				SEProcedural.ScriptEditor.Load(lines);
+		}
+			/*
+			if (Input.GetKeyDown("e")) {
+				FileExplorer.SetEntries(
+					new EntryData("test", 5,
+						("met", 2),
+						("mea", 3)),
+
+					new EntryData("aeea", 5,
+						("me123t", 2),
+						("m5ea", 3)));
+			}*/
+			/*
+					if (Input.GetKeyDown("e")) {
+						ProceduralScriptEditor
+						WindowManager.Instance.RealiseWindows()
+					}*/
 	}
 }

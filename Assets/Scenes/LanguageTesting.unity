@@ -1159,7 +1159,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1432775881}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.27075592
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1257,11 +1257,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scroll: {fileID: 601101587}
-  lineContentVerticalLayout: {fileID: 590380143}
-  lineContentContainer: {fileID: 369400723}
+  contentParent: {fileID: 590380143}
+  contentMask: {fileID: 2044257062}
   lineNumbersVerticalLayout: {fileID: 1270685361}
   lineNumbersRect: {fileID: 0}
-  contentMask: {fileID: 2044257062}
   syntaxHighlighter: {fileID: 1116476324}
   history: {fileID: 1116476326}
   allLinesHeight: 0
@@ -1760,7 +1759,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
+  m_VertexColorAlwaysGammaSpace: 1
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0

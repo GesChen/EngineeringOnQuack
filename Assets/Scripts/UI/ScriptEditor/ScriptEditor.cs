@@ -22,11 +22,10 @@ public class ScriptEditor : MonoBehaviour {
 	List<LineNumber> lineNumbers;
 
 	public ScrollRect scroll; // interchangable with SEScrollWindow, comment out handleshiftscrolling tho
-	public RectTransform lineContentVerticalLayout;
-	public RectTransform lineContentContainer;
+	public RectTransform contentParent;
+	public RectTransform contentMask; // prevents lines from being drawn under line numbers
 	public VerticalLayoutGroup lineNumbersVerticalLayout; // interchangable with customverticallayout
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
-	public RectTransform contentMask; // prevents lines from being drawn under line numbers
 	RectTransform widthSetter; // 0 height line in the line contents, always at the end, sets the width for parent 
 
 	// modules
@@ -37,6 +36,8 @@ public class ScriptEditor : MonoBehaviour {
 	internal List<Caret> carets = new();
 	internal int headCaretI = 0;
 	internal int tailCaretI = 0;
+
+	public event Action<bool> OnDragStateChanged; // custom drag handling
 
 	#region Line Classes
 	public class Line {
@@ -105,7 +106,8 @@ public class ScriptEditor : MonoBehaviour {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
 		SubscribeToShortcuts();
 	}
-
+	
+	#region Setup
 	void SubscribeToShortcuts() {
 		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
 		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
@@ -113,8 +115,11 @@ public class ScriptEditor : MonoBehaviour {
 		Conatrols.IM.Editing.Undo.performed		+= _ => history.Undo();
 		Conatrols.IM.Editing.Redo.performed		+= _ => history.Redo();
 	}
+	#endregion
 
 	void Update() {
+		if (lines == null) return;
+
 		HandleMouseNavigation();
 		HandleKeyboardNavgation();
 		UpdateCarets();
@@ -138,7 +143,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		// fix container
 		//lineContentContainer.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
-		lineContentVerticalLayout.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
+		contentParent.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 
 		// reset localcontext
 		LC = new() {
@@ -161,7 +166,7 @@ public class ScriptEditor : MonoBehaviour {
 		// generate widthsetter
 		var wsObj = new GameObject("Width Setter");
 		widthSetter = wsObj.AddComponent<RectTransform>();
-		widthSetter.SetParent(lineContentVerticalLayout);
+		widthSetter.SetParent(contentParent);
 		widthSetter.sizeDelta = new(0, 0); // width will be set in recalculate
 		wsObj.AddComponent<Image>().color = Color.clear; // dualie
 
@@ -173,7 +178,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	private void CalculateLineSizes(string[] strLines) {
-		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
+		TextMeshProUGUI testingText = contentParent.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
 		testingText.font = Config.ScriptEditor.Font;
 		testingText.fontSize = Config.ScriptEditor.FontSize;
 		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
@@ -324,7 +329,7 @@ public class ScriptEditor : MonoBehaviour {
 			= NewText(
 				"Line Content",
 				$"{processed}",
-				lineContentVerticalLayout.transform,
+				contentParent.transform,
 				TextAlignmentOptions.Left,
 				0); // temp set width to zero, recalculate later
 
@@ -725,14 +730,14 @@ public class ScriptEditor : MonoBehaviour {
 			pos.x < xmarg * charWidth
 				? -1
 			: (
-			pos.x > lineContentContainer.rect.width - xmarg * charWidth
+			pos.x > contentMask.rect.width - xmarg * charWidth
 				? 1
 			: 0)
 		,
 			pos.y < ymarg * allLinesHeight
 				? -1
 			: (
-			pos.y > lineContentContainer.rect.height - ymarg * allLinesHeight
+			pos.y > contentMask.rect.height - ymarg * allLinesHeight
 				? 1
 			: 0)
 		);
@@ -741,12 +746,17 @@ public class ScriptEditor : MonoBehaviour {
 
 	#region Mouse Input
 
+	bool lastDragState = false;
 	void HandleMouseNavigation() {
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
 		if (!mousePos.HasValue) return;
 
 		DetectExtraClicks(mousePos.Value);
 		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
+
+		if (lastDragState != dragging)
+			OnDragStateChanged?.Invoke(dragging);
+		lastDragState = dragging;
 	}
 
 	float lastClickTime;
@@ -992,7 +1002,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		// not sure why this happens but it just does idk
 		// ok this was broken before idk its fixed now??
-		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, lineContentVerticalLayout.transform))
+		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, contentParent.transform))
 			//if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
 			return -1;
 

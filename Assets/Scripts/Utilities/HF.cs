@@ -42,30 +42,14 @@ public static class HF {
 		return false;
 	}
 
+	// these 2 are for parity with custom scroll rect
 	public static void ManuallyScrollX(this ScrollRect scrollRect, float xPixels) {
-		if (scrollRect == null || scrollRect.content == null) return;
-		float contentWidth = scrollRect.content.rect.width;
-		float viewportWidth = scrollRect.viewport.rect.width;
-		if (contentWidth <= viewportWidth) {
-			scrollRect.horizontalNormalizedPosition = 0f;
-			return;
-		}
-		float maxScroll = contentWidth - viewportWidth;
-		scrollRect.horizontalNormalizedPosition = Mathf.Clamp01(xPixels / maxScroll);
+		scrollRect.content.transform.position -= xPixels * Vector3.right;
 		scrollRect.onValueChanged?.Invoke(scrollRect.normalizedPosition);
 	}
 
 	public static void ManuallyScrollY(this ScrollRect scrollRect, float yPixels) {
-		if (scrollRect == null || scrollRect.content == null) return;
-		float contentHeight = scrollRect.content.rect.height;
-		float viewportHeight = scrollRect.viewport.rect.height;
-		if (contentHeight <= viewportHeight) {
-			scrollRect.verticalNormalizedPosition = 1f;
-			return;
-		}
-		float maxScroll = contentHeight - viewportHeight;
-		// verticalNormalizedPosition = 1 at top, 0 at bottom
-		scrollRect.verticalNormalizedPosition = Mathf.Clamp01(1f - yPixels / maxScroll);
+		scrollRect.content.transform.position += yPixels * Vector3.up;
 		scrollRect.onValueChanged?.Invoke(scrollRect.normalizedPosition);
 	}
 
@@ -135,6 +119,30 @@ public static class HF {
 
 	}
 	#endregion
+
+	public static RectTransform CreateRectTransform(
+		string name,
+		Transform parent,
+		Vector2 anchorMin,
+		Vector2 anchorMax,
+		Vector2 pivot,
+		Vector2 offsetMin,
+		Vector2 offsetMax,
+		Vector3 localPosition) {
+
+		var go = new GameObject(name);
+		RectTransform rt = go.AddComponent<RectTransform>();
+
+		rt.SetParent(parent, false);
+		rt.anchorMin = anchorMin;
+		rt.anchorMax = anchorMax;
+		rt.offsetMin = offsetMin;
+		rt.offsetMax = offsetMax;
+		rt.pivot = pivot;
+		rt.localPosition = localPosition;
+
+		return rt;
+	}
 
 	public static string GetPath(this Transform current) {
 		if (current.parent == null)

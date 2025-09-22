@@ -14,7 +14,9 @@ public class Script {
 		Name = "";
 		Contents = contents;
 		OriginalText = originalText;
+		Version = Config.Language.VERSION;
 	}
+
 	public Script() {
 		Name = "";
 		Contents = new();

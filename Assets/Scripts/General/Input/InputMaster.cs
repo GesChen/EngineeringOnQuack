@@ -58,7 +58,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""Precision"",
                     ""type"": ""Button"",
                     ""id"": ""527b2e3a-8525-46a3-b619-d0e180978eb6"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -69,7 +69,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""id"": ""781b16df-b033-4077-94c2-99b98f6636a9"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": ""MultiTap(tapDelay=0.2)"",
+                    ""interactions"": """",
                     ""initialStateCheck"": false
                 },
                 {
@@ -142,7 +142,18 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""f1a6b380-df6a-4ca8-9271-05f3e946aee7"",
                     ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
+                    ""interactions"": ""MultiTap"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Focus"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""dffc1521-75a6-44db-ab46-459b107d6883"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": ""Tap"",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Focus"",
