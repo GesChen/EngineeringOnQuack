@@ -78,6 +78,11 @@ public class ScriptSaveLoad : MonoBehaviour
 		string zipped = CompressionUtil.EncodeGzipBase64(json);
 		return zipped;
 	}
+	public static byte[] ConvertScriptToBytes(Script script) {
+		string json = ConvertScriptToJson(script, false);
+		byte[] bytes = CompressionUtil.EncodeGzipBytes(json);
+		return bytes;
+	}
 
 	public static string ConvertScriptToJson(Script script, bool indent) {
 		sScript structFormatted = ConvertScriptToStruct(script);

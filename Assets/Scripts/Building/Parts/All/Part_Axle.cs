@@ -17,4 +17,10 @@ public class Part_Axle : NonStaticPart {
 	public override void OnStartSimulating() {
 		// nothing for now
 	}
+	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) { }
+	public override void FinalizeSPartReconstruction(
+		Assembly reconstructed,
+		Assembly.SPart originalSPart,
+		Part unfinishedPart,
+		NonStaticPart component) { }
 }

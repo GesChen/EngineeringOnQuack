@@ -30,6 +30,7 @@ public class Part_CPU : NonStaticPart {
 	}
 	
 	public override void OnStartSimulating() {
+		// reset modules
 		Interpreter = new();
 		Evaluator = new();
 		Memory = new(Interpreter, "main");
@@ -70,5 +71,31 @@ public class Part_CPU : NonStaticPart {
 
 		if (hasTick)
 			Interpreter.RunFunction(Memory, tickFunc, null, new());
+	}
+
+	public class SPart_CPU : Assembly.SPart {
+		public string Script; // could use bytearray but dont wanna risk issues w encoding into json
+	}
+
+	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
+		var sp = new SPart_CPU { // did you know you dont actually need the ()
+			basePartID = SPart.basePartID,
+			id = SPart.id,
+			position = SPart.position,
+			rotation = SPart.rotation,
+			scale = SPart.scale,
+			color = SPart.color,
+			compositionID = SPart.compositionID,
+		};
+
+		sp.Script = ScriptSaveLoad.ConvertScriptToString(Script);
+
+		SPart = sp;
+	}
+
+	public override void FinalizeSPartReconstruction(Assembly reconstructed, Assembly.SPart originalSPart, Part unfinishedPart) {
+		var sp = (SPart_CPU)originalSPart; // if this errors then something has gone wrong
+
+		Script = ScriptSaveLoad.ConvertStringToScript(sp.Script);
 	}
 }
