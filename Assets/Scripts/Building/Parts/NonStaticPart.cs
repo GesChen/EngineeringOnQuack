@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,7 +42,10 @@ public abstract void FinalizeSPartConversion(ref Assembly.SPart SPart);
 	/// <param name="unfinishedPart">The unfinished part object</param>
 	/// <param name="component">The NSP component (probably) to setup</param>
 	public abstract void FinalizeSPartReconstruction(
-		Assembly reconstructed, 
 		Assembly.SPart originalSPart,
 		Part unfinishedPart);
+
+	internal void FinalizeSPartReconstruction(object reconstructed, Assembly.SPart origPart, Part newPart) {
+		throw new NotImplementedException();
+	}
 }

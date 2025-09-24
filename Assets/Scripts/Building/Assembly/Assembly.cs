@@ -119,7 +119,7 @@ public class Assembly {
 		return reconstructed;
 	}
 
-	private static SPart ConvertPartToSPart(Part other) {
+	internal static SPart ConvertPartToSPart(Part other) {
 		Vector3 localOrigin = BuildingManager.Instance.MainPartsContainer.transform.position;
 		SPart sp = new() {
 			basePartID = other.basePart.ID,
@@ -160,7 +160,7 @@ public class Assembly {
 		}
 
 		if (newPart.IsNonStaticPart(out var nsp)) {
-			nsp.FinalizeSPartReconstruction(reconstructed, part, newPart);
+			nsp.FinalizeSPartReconstruction(part, newPart);
 		}
 	}
 }

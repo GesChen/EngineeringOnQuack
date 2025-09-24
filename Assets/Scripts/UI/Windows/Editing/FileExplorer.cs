@@ -3,30 +3,46 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class FileExplorer {
-	public enum Option {
-		Cancel,
-		Rename,
-		Delete,
-		Use // may change this schema later
-	}
-
 	static string IconPath = "Icons/add to group";
+	static string UseButtonLabel = "Load"; // to be changed per instance
 
 	// properties will be instance members too
-	static float FooterSize = 30;
+	static float FooterItemsHeights = 30;
 	static float ItemHeight = 30;
 	static float IconNameSpacing = 10;
 	static WindowItem ItemsLayout;
 
+	public static void ClearEvents() {
+		OnUsePressed = null;
+	}
+
+	public void Show() {
+		ExplorerWindow.RealisedWindow.PlaceAtCenter();
+		ExplorerWindow.RealisedWindow.Show();
+	}
+
 	static void Cancel() {
+		// do nothing back and just close
+		ExplorerWindow.RealisedWindow.Hide();
+	}
+
+	// temp, signatures to change
+	static event Action OnRenamePressed;
+	static event Action OnDeletePressed;
+	static event Action OnUsePressed;
+
+	static void Rename() {
 
 	}
-	public static void ClearOnOptionChosen() { OnOptionChosen = null; }
-	static event Action<Option> OnOptionChosen;
-	static void Decide(Option o) {
-		OnOptionChosen?.Invoke(o);
+	static void Delete() {
+
+	}
+	static void Use() {
+
 	}
 
 	static void Select(int i) {
@@ -35,6 +51,9 @@ public class FileExplorer {
 		CurrentlySelected = i;
 	}
 	static int CurrentlySelected = -1;
+	static string CurrentFieldContents = "";
+	static TMP_InputField InputField;
+	static void ClearField() { InputField.text = ""; }
 
 	// temporarily static stuff for now for testing 
 	public static CWindow ExplorerWindow;
@@ -46,14 +65,14 @@ public class FileExplorer {
 				Movable = true,
 				Size = CWindow.Configuration.FreeSizeMinimum(
 					new(500, 500),
-					new(0, FooterSize)),
+					new(0, FooterItemsHeights)),
 				HideOnStart = false
 			},
 			Items = new[] {
 			WindowItem.NewScrollView(
 				new PComponents.ScrollView(horizontalScrolling: false),
 				WindowItem.LayoutConfig.DynamicLayout(
-					FooterSize * FourSides.DownConst),
+					FooterItemsHeights * FourSides.DownConst),
 				new() {
 					WindowItem.NewLayout(
 						PComponents.Layout.Vertical.Fixed(false, true),
@@ -62,12 +81,28 @@ public class FileExplorer {
 					).OnRealized((_, wi) => ItemsLayout = wi)
 				}
 			),
+			WindowItem.NewInputField(
+				new PComponents.InputField(
+					v => CurrentFieldContents = v,
+					"Enter name..."
+				),
+				WindowItem.LayoutConfig.Custom(
+					position: new(0, 0, 1, 0),
+					sizeDelta: new(0, FooterItemsHeights),
+					fixedPosition: UIPosition.AnchoredOffset(
+						UIPosition.BottomCenter,
+						new(0,FooterItemsHeights + Config.UI.Visual.DefaultLayoutSpacing)
+					)
+				)
+			).OnRealized((_, wi) => 
+				InputField = (TMP_InputField)(wi.GetComponent<PComponents.InputField>()
+				.RealComponent)),
 			WindowItem.NewLayout(
 				"Buttons",
 				PComponents.Layout.Horizontal.Fixed(true, true),
 				WindowItem.LayoutConfig.Custom(
 					position: new(0, 0, 1, 0),
-					sizeDelta: new(0, FooterSize),
+					sizeDelta: new(0, FooterItemsHeights),
 					fixedPosition: new() {
 						Pivot = UIPosition.BottomCenter
 						}
@@ -75,26 +110,26 @@ public class FileExplorer {
 				new() {
 					WindowItem.NewButtonCustomText(
 						"Cancel",
-						new PComponents.Button(() => Decide(Option.Cancel)),
+						new PComponents.Button(() => Cancel()),
 						new("Cancel", alignment: TMPro.TextAlignmentOptions.Center),
 						WindowItem.LayoutConfig.LayoutElementDynamic()
 					),
 					WindowItem.NewButtonCustomText(
 						"Rename",
-						new PComponents.Button(() => Decide(Option.Rename)),
+						new PComponents.Button(() => Rename()),
 						new("Rename", alignment: TMPro.TextAlignmentOptions.Center),
 						WindowItem.LayoutConfig.LayoutElementDynamic()
 					),
 					WindowItem.NewButtonCustomText(
 						"Delete",
-						new PComponents.Button(() => Decide(Option.Delete)),
+						new PComponents.Button(() => Delete()),
 						new("Delete", alignment: TMPro.TextAlignmentOptions.Center),
 						WindowItem.LayoutConfig.LayoutElementDynamic()
 					),
 					WindowItem.NewButtonCustomText(
 						"Use", // naming will be changed later to more specific
-						new PComponents.Button(() => Decide(Option.Use)),
-						new("Use", alignment: TMPro.TextAlignmentOptions.Center), 
+						new PComponents.Button(() => Use()),
+						new(UseButtonLabel, alignment: TMPro.TextAlignmentOptions.Center), 
 						WindowItem.LayoutConfig.LayoutElementDynamic()
 					)
 				}

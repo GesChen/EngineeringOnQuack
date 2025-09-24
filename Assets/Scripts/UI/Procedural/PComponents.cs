@@ -193,7 +193,10 @@ public class PComponents {
 		}
 	}
 
+
 	public class InputField : Component {
+		// RealComponent uses TMP_InputField, dont cast wrong!
+
 		public Config.UI.ColorBlock Colors		= Config.UI.ColorBlock.DefaultBlock;
 
 		public string			PlaceholderText	= Config.UI.InputField.PlaceholderDefaultText;

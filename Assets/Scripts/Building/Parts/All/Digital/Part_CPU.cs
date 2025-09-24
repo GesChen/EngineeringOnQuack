@@ -93,7 +93,7 @@ public class Part_CPU : NonStaticPart {
 		SPart = sp;
 	}
 
-	public override void FinalizeSPartReconstruction(Assembly reconstructed, Assembly.SPart originalSPart, Part unfinishedPart) {
+	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart) {
 		var sp = (SPart_CPU)originalSPart; // if this errors then something has gone wrong
 
 		Script = ScriptSaveLoad.ConvertStringToScript(sp.Script);

@@ -212,6 +212,10 @@ public class WindowSizeNode : MonoBehaviour {
 	}
 
 	void Close() {
+		main.dragging = false;
+		dragging = false;
+		main.anyNodesDragging = false;
+
 		main.gameObject.SetActive(false);
 	}
 

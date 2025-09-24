@@ -18,9 +18,7 @@ public class Part_Axle : NonStaticPart {
 		// nothing for now
 	}
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) { }
-	public override void FinalizeSPartReconstruction(
-		Assembly reconstructed,
-		Assembly.SPart originalSPart,
-		Part unfinishedPart,
-		NonStaticPart component) { }
+	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart) {
+		
+	}
 }
