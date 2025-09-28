@@ -72,8 +72,8 @@ public static class ContextWindows {
 			OutputsMenu.Windows,
 			BottomBar.Windows,
 			UnsavedWorkMenu.Windows,
-			FileExplorer.Windows,
-			SEProcedural.Windows
+			FileExplorer.Windows
+			//SEProcedural.Windows
 		),
 		Conglomerate(
 			RightClickMenus.Menus,

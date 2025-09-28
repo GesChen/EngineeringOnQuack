@@ -153,6 +153,7 @@ public class PComponents {
 		public float				FontSize	= Config.UI.Visual.FontSize;
 		public Color				Color		= Config.UI.Visual.TextColor;
 		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.Left;
+		public bool					Wrap		= false;
 
 		public Text(
 				string					content,
@@ -161,7 +162,8 @@ public class PComponents {
 				FontWeight?				weight		= null,
 				float?					fontSize	= null,
 				Color?					color		= null,
-				TextAlignmentOptions?	alignment	= null) {
+				TextAlignmentOptions?	alignment	= null,
+				bool					wrap		= false) {
 			Content = content;
 
 			Font		= font != null ? font : Config.UI.Visual.DefaultFont;
@@ -170,6 +172,7 @@ public class PComponents {
 			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
 			Color		= color		?? Config.UI.Visual.TextColor;
 			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
+			Wrap = wrap;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -183,7 +186,12 @@ public class PComponents {
 			text.color		= Color;
 			text.alignment	= Alignment;
 
-			text.overflowMode = TextOverflowModes.Ellipsis;
+			if (!Wrap)
+				text.overflowMode = TextOverflowModes.Ellipsis;
+			else {
+				text.enableWordWrapping = true;
+				text.overflowMode = TextOverflowModes.Overflow;
+			}
 			text.isTextObjectScaleStatic = true;
 
 			if (!originalItem.Layout.IsFixed)
@@ -192,7 +200,6 @@ public class PComponents {
 			RealComponent = text;
 		}
 	}
-
 
 	public class InputField : Component {
 		// RealComponent uses TMP_InputField, dont cast wrong!
@@ -396,7 +403,7 @@ public class PComponents {
 					matchOtherDimension);
 
 			/// <summary>
-			/// 
+			/// Fixed size, items scale
 			/// </summary>
 			public Layout Fixed(
 				bool fillOwnAxis,

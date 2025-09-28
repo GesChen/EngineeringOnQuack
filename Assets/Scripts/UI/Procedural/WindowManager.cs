@@ -89,6 +89,18 @@ public class WindowManager : Singleton<WindowManager> {
 		WindowRealiser.Instance.DestroyAllGroupObjects();
 	}
 
+	internal void DestroyWindow(CWindow window) {
+		int i = Windows.IndexOf(window);
+
+		if (i == -1) {
+			Debug.LogWarning($"deletion attempt of cw {window.Name} failed, not registered in windows list");
+			return;
+		}
+
+		Windows.RemoveAt(i);
+		Destroy(window.RealisedWindow.gameObject);
+	}
+
 	void ResetAllMenus() {
 		foreach (var menu in Menus) {
 			menu.Reset();

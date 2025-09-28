@@ -18,8 +18,8 @@ public class deleteaftertest : MonoBehaviour {
 
 			var script = scriptOut;
 
-				string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
-				SEProcedural.ScriptEditor.Load(lines);
+			string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
+			SEProcedural.ScriptEditor.Load(lines);
 		}
 
 		if (Input.GetKeyDown("w")) {
@@ -31,6 +31,13 @@ public class deleteaftertest : MonoBehaviour {
 				new EntryData("aeea", 5,
 					("me123t", 2),
 					("m5ea", 3)));
+		}
+		if (Input.GetKeyDown("q")) {
+			FileExplorer.LoadDirectory(
+				"C:\\Users\\gesch\\Pictures",
+				new[] {".png"},
+				null
+				);
 		}
 		/*
 				if (Input.GetKeyDown("e")) {

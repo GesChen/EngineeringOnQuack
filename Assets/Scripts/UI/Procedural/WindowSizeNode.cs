@@ -216,7 +216,7 @@ public class WindowSizeNode : MonoBehaviour {
 		dragging = false;
 		main.anyNodesDragging = false;
 
-		main.gameObject.SetActive(false);
+		main.Hide();
 	}
 
 	Vector2 otherCornerPos;

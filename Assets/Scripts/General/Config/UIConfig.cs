@@ -144,6 +144,12 @@ public static partial class Config {
 				}
 			}
 		}
+
+		public static class PDialog {
+			public static readonly float MessageFlexHeight = 5;
+			public static readonly float ExtraItemsFlexHeight = 4;
+			public static readonly float OptionsFlexHeight = 3;
+		}
 	}
 	/*
 		public static class UI {

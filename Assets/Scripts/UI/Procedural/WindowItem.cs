@@ -84,6 +84,19 @@ public class WindowItem {
 			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
 		};
 
+		public static LayoutConfig LayoutToWidth(
+			float anchory,
+			float pivoty,
+			float offsety,
+			float height,
+			FourSides padding = default) => FixedLayout(
+				new UIPosition(
+					new(0, anchory), new(1, anchory), new(.5f, pivoty), new(0, offsety)
+				),
+				new(0, height),
+				padding
+				);
+
 		public static LayoutConfig Custom(
 			Vector2? sizeDelta = null,
 			UIPosition fixedPosition = null,
@@ -132,8 +145,18 @@ public class WindowItem {
 		Construction.Add(new PComponents.Description(description));
 		return this;
 	}
+
+	/// <summary>
+	/// Adds a list of components to this WI. Any duplicately typed components will be ignored.
+	/// </summary>
 	public WindowItem AddComponents(params PComponents.Component[] comps) {
-		Construction.AddRange(comps);
+		// hashset construction faster still O(n+m) vs O(n*m)
+		var typesSeen = new HashSet<Type>(Construction.Select(c => c.GetType()));
+
+		foreach (var comp in comps)
+			if (typesSeen.Add(comp.GetType()))
+				Construction.Add(comp);
+
 		return this;
 	}
 

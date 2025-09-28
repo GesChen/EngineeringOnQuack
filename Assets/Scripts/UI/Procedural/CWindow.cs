@@ -55,8 +55,8 @@ public class CWindow {
 		/// <summary>
 		/// Free sizing with a minimum size
 		/// </summary>
-		public static SizeData FreeSizeMinimum(Vector2 @default, Vector2 minSize) =>
-			new(@default, minSize, Vector2.positiveInfinity);
+		public static SizeData FreeSizeMinimum(Vector2 @default, Vector2? minSize = null) =>
+			new(@default, minSize ?? @default, Vector2.positiveInfinity);
 		
 		/// <summary>
 		/// Free sizing with limits on minimum and maximum
