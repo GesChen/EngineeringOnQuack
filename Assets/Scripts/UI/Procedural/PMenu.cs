@@ -260,7 +260,7 @@ public class PMenu {
 					Label,
 					new PComponents.InputField(
 						InputFieldChanged,
-						Label,
+						placeholderText: Label,
 						fontSize: M.FontSize),
 					WindowItemLayout(width)
 					).SetSubItems(subs);

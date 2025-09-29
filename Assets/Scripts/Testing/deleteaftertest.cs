@@ -22,21 +22,13 @@ public class deleteaftertest : MonoBehaviour {
 			SEProcedural.ScriptEditor.Load(lines);
 		}
 
-		if (Input.GetKeyDown("w")) {
-			FileExplorer.SetEntries(
-				new EntryData("test", 5,
-					("met", 2),
-					("mea", 3)),
-
-				new EntryData("aeea", 5,
-					("me123t", 2),
-					("m5ea", 3)));
-		}
 		if (Input.GetKeyDown("q")) {
+			FileExplorer.ResetHistory();
 			FileExplorer.LoadDirectory(
 				"C:\\Users\\gesch\\Pictures",
 				new[] {".png"},
-				null
+				null,
+				false
 				);
 		}
 		/*

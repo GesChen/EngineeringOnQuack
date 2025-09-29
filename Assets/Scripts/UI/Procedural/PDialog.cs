@@ -89,9 +89,11 @@ public class PDialog {
 							new PComponents.LayoutElement(
 								Config.UI.PDialog.MessageFlexHeight
 						))
+						.Wrap()
 					}.Concat(
 						ExtraItems.Select(i => i.AddComponents(
-							new PComponents.LayoutElement(Config.UI.PDialog.ExtraItemsFlexHeight)))
+							new PComponents.LayoutElement(Config.UI.PDialog.ExtraItemsFlexHeight)
+							).Wrap())
 					).Concat(
 						new[] {
 						WindowItem.NewLayout(
@@ -102,6 +104,7 @@ public class PDialog {
 							new PComponents.LayoutElement(
 								Config.UI.PDialog.OptionsFlexHeight
 						))
+						.Wrap()
 					}).ToList()
 				)
 			}

@@ -17,6 +17,19 @@ public class PComponents {
 		public abstract void RealiseComponent(
 			GameObject newObj,
 			WindowItem originalItem);
+
+		public event Action<UnityEngine.Component> RealisedEvent;
+		protected void FinaliseRealise() {
+			RealisedEvent?.Invoke(RealComponent);
+		}
+		public ComponentType OnRealised<ComponentType>(
+			Action<UnityEngine.Component> realComponentCallback
+			) where ComponentType : Component {
+
+			RealisedEvent += realComponentCallback;
+
+			return (ComponentType)this;
+		}
 	}
 
 	public class Image : Component {
@@ -79,6 +92,7 @@ public class PComponents {
 			}
 
 			RealComponent = image;
+			FinaliseRealise();
 		}
 	}
 
@@ -142,6 +156,7 @@ public class PComponents {
 			button.onClick.AddListener(TriggerClick);
 
 			RealComponent = button;
+			FinaliseRealise();
 		}
 	}
 
@@ -198,6 +213,7 @@ public class PComponents {
 				text.margin = originalItem.Layout.Padding.ToTMProType();
 
 			RealComponent = text;
+			FinaliseRealise();
 		}
 	}
 
@@ -222,13 +238,15 @@ public class PComponents {
 		public FourSides MaskPadding			= new(2);
 
 		public event Action<string> OnValueChanged;
+		public event Action<string> OnEndEdit;
 
 		/// <summary>
 		/// its probably best you just look at the source for 
 		/// this constructor tbh.
 		/// </summary>
 		public InputField(
-			Action<string>			onValueChanged,
+			Action<string>			onValueChanged = null,
+			Action<string>			onEndEdit = null,
 			string					placeholderText = null,
 			Color?					textColor = null,
 			Color?					placeholderColor = null,
@@ -243,6 +261,7 @@ public class PComponents {
 			) {
 
 			OnValueChanged = onValueChanged;
+			OnEndEdit = onEndEdit;
 
 			PlaceholderText = placeholderText ?? Config.UI.InputField.PlaceholderDefaultText;
 
@@ -263,6 +282,10 @@ public class PComponents {
 
 		public void ValueChanged(string newValue) {
 			OnValueChanged?.Invoke(newValue);
+		}
+
+		public void EndEdit(string value) {
+			OnEndEdit?.Invoke(value);
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -325,6 +348,7 @@ public class PComponents {
 			field.fontAsset = Font;
 			field.pointSize = FontSize;
 			field.onValueChanged.AddListener(ValueChanged);
+			field.onEndEdit.AddListener(EndEdit);
 
 			// caret and small fix
 			field.customCaretColor = true;
@@ -334,6 +358,7 @@ public class PComponents {
 			field.enabled = true;
 
 			RealComponent = field;
+			FinaliseRealise();
 		}
 	}
 
@@ -510,6 +535,7 @@ public class PComponents {
 			}
 
 			RealComponent = layout;
+			FinaliseRealise();
 		}
 	}
 
@@ -526,6 +552,7 @@ public class PComponents {
 			element.flexibleHeight = SizeMultiplier;
 
 			RealComponent = element;
+			FinaliseRealise();
 		}
 	}
 
@@ -556,6 +583,7 @@ public class PComponents {
 			htComp.Colors = Colors;
 
 			RealComponent = htComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -626,6 +654,7 @@ public class PComponents {
 			}
 
 			RealComponent = ftComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -641,6 +670,7 @@ public class PComponents {
 			dsComp.Text = Text;
 
 			RealComponent = dsComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -657,6 +687,7 @@ public class PComponents {
 			var fhComp = newObj.AddComponent<global::FlyoutHider>();
 
 			RealComponent = fhComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -671,6 +702,7 @@ public class PComponents {
 			var comp = newObj.AddComponent<global::ScaleToContents>();
 			comp.padding = Padding;
 			RealComponent = comp;
+			FinaliseRealise();
 		}
 	}
 
@@ -776,6 +808,7 @@ public class PComponents {
 			scaler.IgnoreVertical = !VerticalScrolling;
 
 			RealComponent = comp;
+			FinaliseRealise();
 		}
 
 		// unity's scrollbar

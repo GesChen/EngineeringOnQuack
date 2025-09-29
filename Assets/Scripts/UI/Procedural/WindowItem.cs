@@ -179,7 +179,7 @@ public class WindowItem {
 		RealizationEvent += action;
 		return this;
 	}
-	public void BecomeRealised(RectTransform rt, WindowItem self) {
+	internal void BecomeRealised(RectTransform rt, WindowItem self) {
 		m_realObject = rt;
 		RealizationEvent?.Invoke(rt, self);
 	}
@@ -375,8 +375,15 @@ public class WindowItem {
 		WindowItem wrapper = NewEmpty(
 			$"Wrapper for {Name}",
 			Layout);
+
 		Layout = LayoutConfig.FillLayout;
 		wrapper.SetSubItems(this);
+		
+		if (Construction.TryFind(c => c is PComponents.LayoutElement, out var comp)) {
+			Construction.Remove(comp);
+			wrapper.AddComponents(comp);
+		}
+		
 		return wrapper;
 	}
 

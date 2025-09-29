@@ -22,7 +22,6 @@ public static partial class Config {
 
 		public static readonly Color SelectionColor	= new Color(242, 58, 58, 39) / 255f;
 
-
 		public static class SyntaxColors {
 			public static readonly Color Keyword	= new Color(206	, 23	, 23	) / 255f;
 			public static readonly Color Function	= new Color(230	, 121	, 255	) / 255f;

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using TMPro;
 
 /// <remarks>
 /// Don't store references to LiveWindows themselves
@@ -153,7 +154,8 @@ public class LiveWindow : MonoBehaviour {
 
 	// check if anythings stopping dragging from occuring
 	bool DragAllowed() {
-		if (UIHovers.hovers.Any(h => h.GetComponent<Scrollbar>() != null)) return false;
+		if (UIHovers.HasComponent<Scrollbar>() || UIHovers.HasComponent<TMP_InputField>())
+			return false;
 
 		return true;
 	}

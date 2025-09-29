@@ -4,7 +4,6 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 public class FileExplorer {
@@ -15,24 +14,32 @@ public class FileExplorer {
 	static float NameWidth = 5;
 
 	// properties will be instance members too
-	static float FooterItemsHeights = 30;
-	static float ItemHeight = 30;
-	static float IconNameSpacing = 10;
+	static readonly float NavgationHeight = 30;
+	static readonly float FooterItemsHeights = 30;
+	static readonly float ItemHeight = 30;
+	static readonly float IconNameSpacing = 10;
 	static WindowItem ItemsLayout;
 
 	// state
 	static string CurrentDirectory;
-	static EntryData[] CurrentEntries;
+	static Entry[] CurrentEntries;
 
 	static string[] LastLoadExtensions;
 	static Func<string, (string data, float width)[]> LastLoadMetadataGetter;
 
-	// temp, signatures to change
+	// 0 is most recent
+	static List<string> DirectoryHistory = new();
+	static int HistoryPosition;
+
 	static event Action OnUsePressed;
 
-	static int CurrentlySelected = -1;
+	static int CurrentlySelectedI = -1;
 	static string CurrentFieldContents = "";
 	static TMP_InputField InputField;
+	static float LastSelectTime;
+	static TMP_InputField AddressBar;
+
+	static Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
 
 	public static void ClearEvents() {
 		OnUsePressed = null;
@@ -43,6 +50,112 @@ public class FileExplorer {
 		ExplorerWindow.RealisedWindow.Show();
 	}
 
+	#region Top Bar Options
+	public static void ResetHistory() {
+		HistoryPosition = 0;
+		DirectoryHistory.Clear();
+	}
+
+	// remember the current location in history, break it if needed
+	public static void HistoryRemember() {
+		DirectoryHistory.RemoveRange(0, HistoryPosition);
+
+		DirectoryHistory.Insert(0, CurrentDirectory);
+
+		HistoryPosition = 0;
+	}
+
+	static void Back() {
+		if (HistoryPosition == DirectoryHistory.Count) return;
+
+		LoadDirectory(
+			DirectoryHistory[HistoryPosition++], // increment after
+			LastLoadExtensions,
+			LastLoadMetadataGetter,
+			false
+		);
+	}
+
+	static void Forward() {
+		if (HistoryPosition == -1) return;
+
+		HistoryPosition--;
+
+		LoadDirectory(
+			DirectoryHistory[HistoryPosition],
+			LastLoadExtensions,
+			LastLoadMetadataGetter,
+			false
+		);
+	}
+
+	static void Up() {
+		var path = CurrentDirectory;
+		string clean = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		var parent = Directory.GetParent(path).FullName;
+
+		bool isRoot = 
+			parent.TrimEnd('\\')
+			.Equals(clean.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
+
+		if (isRoot) return;
+
+		LoadDirectory(
+			parent,
+			LastLoadExtensions,
+			LastLoadMetadataGetter
+		);
+	}
+
+	static void NewFolder() {
+
+	}
+
+	static void TryChangeDirectories(string newDir) {
+
+		if (!IsDirectoryAccessible(newDir)) {
+			ExplorerWindow.RealisedWindow.StartCoroutine(DelayBadAddress());
+			return;
+		}
+
+		LoadDirectory(
+			newDir,
+			LastLoadExtensions,
+			LastLoadMetadataGetter
+		);
+	}
+	static bool IsDirectoryAccessible(string path) {
+		try {
+			if (Directory.Exists(path)) {
+				Directory.EnumerateFileSystemEntries(path).GetEnumerator().MoveNext();
+				return true;
+			}
+		} catch {
+			return false;
+		}
+		return false;
+	}
+	static IEnumerator DelayBadAddress() {
+		yield return null;
+		AddressBar.interactable = false; // disable until ok 
+
+		PDialog.GenerateDialog(
+			new(
+"Invalid path. This path does not exist, or you do not have sufficient permissions to view it.",
+				new PDialog.Option[] {
+					new("Ok", UpdateAddressBar)
+				},
+				new(500, 100)
+		));
+	}
+	static void UpdateAddressBar() {
+		AddressBar.text = CurrentDirectory;
+		AddressBar.interactable = true;
+	}
+
+	#endregion
+
+	#region Bottom Bar Options
 	static void Cancel() {
 		// do nothing back and just close
 		ExplorerWindow.RealisedWindow.Hide();
@@ -57,21 +170,21 @@ public class FileExplorer {
 					new("Cancel", null),
 					new("Confirm", TryRename)
 				},
-				new(200, 100),
+				new(200, 125),
 				WindowItem.NewInputField(
-					new PComponents.InputField(null, "New name for this file..."),
+					new PComponents.InputField(placeholderText: "New name for this file..."),
 					WindowItem.LayoutConfig.LayoutElementDynamic()
 				)
 			)
 		);
 		// get renamefield
-		dialog.Items[0].SubItems[1].OnRealized(
+		dialog.Items[0].SubItems[1].SubItems[0].OnRealized(
 			(rt, _) => RenameField = rt.GetComponent<TMP_InputField>());
 
 		WindowRealiser.Instance.UpdateWindow(dialog); // force call to onrealised
 
 		// set field for renaming
-		string curname = CurrentEntries[CurrentlySelected].Name;
+		string curname = CurrentlySelected.Name;
 		RenameField.text = curname;
 
 		// have to use the monobehaviour
@@ -82,7 +195,7 @@ public class FileExplorer {
 	static IEnumerator DelaySelect() {
 		yield return null;
 
-		string curname = CurrentEntries[CurrentlySelected].Name;
+		string curname = CurrentlySelected.Name;
 
 		int doti = curname.LastIndexOf('.');
 		if (doti == -1) doti = curname.Length - 1;
@@ -105,7 +218,7 @@ public class FileExplorer {
 			Rename(name);
 	}
 	static void Rename(string newName) {
-		string src = Path.Join(CurrentDirectory, CurrentEntries[CurrentlySelected].Name);
+		string src = Path.Join(CurrentDirectory, CurrentlySelected.Name);
 		string dst = Path.Combine(CurrentDirectory, newName);
 
 		File.Move(src, dst);
@@ -114,7 +227,7 @@ public class FileExplorer {
 	}
 
 	static void RequestDelete() {
-		if (CurrentlySelected == -1) return;
+		if (CurrentlySelectedI == -1) return;
 
 		// show confirmation
 		PDialog.GenerateDialog(
@@ -127,7 +240,7 @@ public class FileExplorer {
 				new(400, 100),
 				WindowItem.NewText(
 					new PComponents.Text(
-						CurrentEntries[CurrentlySelected].Name,
+						CurrentlySelected.Name,
 						alignment:TextAlignmentOptions.Center),
 					WindowItem.LayoutConfig.LayoutElementDynamic()
 				)
@@ -135,7 +248,7 @@ public class FileExplorer {
 		);
 	}
 	static void Delete() {
-		string path = Path.Join(CurrentDirectory, CurrentEntries[CurrentlySelected].Name);
+		string path = Path.Join(CurrentDirectory, CurrentlySelected.Name);
 
 		File.Delete(path);
 
@@ -158,12 +271,27 @@ public class FileExplorer {
 	}
 
 	static void Select(int i) {
+		if (Time.time - LastSelectTime < Config.Input.doubleClickMaxTimeMs / 1000f) {
+			// use
+			if (CurrentlySelected.Type == Entry.EntryType.File)
+				Use();
+			else
+				LoadDirectory(
+					Path.Join(CurrentDirectory, CurrentlySelected.Name),
+					LastLoadExtensions,
+					LastLoadMetadataGetter
+				);
+		}
+
+		LastSelectTime = Time.time;
+
 		OptionSelectionUIHelper.SetColors(ItemsLayout.SubItems.ToArray(), i);
 
-		CurrentlySelected = i;
+		CurrentlySelectedI = i;
 	}
 	
 	static void ClearField() { InputField.text = ""; }
+	#endregion
 
 	// temporarily static stuff for now for testing 
 	public static CWindow ExplorerWindow;
@@ -175,15 +303,112 @@ public class FileExplorer {
 				Movable = true,
 				Size = CWindow.Configuration.FreeSizeMinimum(
 					new(500, 500),
-					new(0, FooterItemsHeights)),
+					new(200, 100)),
 				HideOnStart = false
 			},
 			Items = new[] {
+				WindowItem.NewEmpty(
+					"Navagation",
+					WindowItem.LayoutConfig.Custom(
+						position: new(1, 0, 0, 0),
+						sizeDelta: new(0, FooterItemsHeights),
+						fixedPosition: new() {
+							Pivot = UIPosition.TopCenter
+						}
+					),
+					new() {
+	WindowItem.NewButtonCustomImageOverlay( // back
+		"Back",
+		new PComponents.Button(Back),
+		new PComponents.Image(
+			Config.Locations.IconsFolder + Config.FileExplorer.BackIconName
+		),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredOffset(
+				UIPosition.MiddleLeft, 
+				Vector2.right * 0
+			),
+			NavgationHeight * Vector2.one
+		)
+	),
+	WindowItem.NewButtonCustomImageOverlay( // forward
+		"Forward",
+		new PComponents.Button(Forward),
+		new PComponents.Image(
+			Config.Locations.IconsFolder + Config.FileExplorer.ForwardIconName
+		),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredOffset(
+				UIPosition.MiddleLeft, 
+				Vector2.right * NavgationHeight
+			),
+			NavgationHeight * Vector2.one
+		)
+	),
+	WindowItem.NewButtonCustomImageOverlay( // up
+		"Up",
+		new PComponents.Button(Up),
+		new PComponents.Image(
+			Config.Locations.IconsFolder + Config.FileExplorer.UpIconName
+		),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredOffset(
+				UIPosition.MiddleLeft, 
+				Vector2.right * NavgationHeight * 2
+			),
+			NavgationHeight * Vector2.one
+		)
+	),
+	WindowItem.NewButtonCustomImageOverlay( // refresh
+		"Refresh",
+		new PComponents.Button(Refresh),
+		new PComponents.Image(
+			Config.Locations.IconsFolder + Config.FileExplorer.RefreshIconName
+		),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredOffset(
+				UIPosition.MiddleLeft, 
+				Vector2.right * (NavgationHeight * 3 + Config.UI.Visual.DefaultLayoutSpacing)
+			),
+			NavgationHeight * Vector2.one
+		)
+	),
+	WindowItem.NewButtonCustomImageOverlay( // new folder
+		"New Folder",
+		new PComponents.Button(NewFolder),
+		new PComponents.Image(
+			Config.Locations.IconsFolder + Config.FileExplorer.NewFolderIconName
+		),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredOffset(
+				UIPosition.MiddleLeft, 
+				Vector2.right * (NavgationHeight * 4 + Config.UI.Visual.DefaultLayoutSpacing * 2)
+			),
+			NavgationHeight * Vector2.one
+		)
+	),
+	WindowItem.NewInputField( // address bar
+		"Address Bar",
+		new PComponents.InputField(
+			onEndEdit: TryChangeDirectories,
+			placeholderText: "",
+			alignment: TextAlignmentOptions.Left
+			).OnRealised<PComponents.InputField>(c => AddressBar = (TMP_InputField)c),
+		WindowItem.LayoutConfig.DynamicLayout(
+			FourSides.LeftConst * (NavgationHeight * 5 + Config.UI.Visual.DefaultLayoutSpacing * 3)
+		)
+	)
+
+					}
+				),
 				WindowItem.NewScrollView(
 					new PComponents.ScrollView(horizontalScrolling: false),
 					WindowItem.LayoutConfig.DynamicLayout(
-						(FooterItemsHeights * 2 + Config.UI.Visual.DefaultLayoutSpacing) 
-						* FourSides.DownConst),
+						margin: new(
+							NavgationHeight + Config.UI.Visual.DefaultLayoutSpacing, 0,
+							FooterItemsHeights + Config.UI.Visual.DefaultLayoutSpacing, 0
+						)
+					),
 					new() {
 						WindowItem.NewLayout(
 							PComponents.Layout.Vertical.Fixed(false, true),
@@ -216,7 +441,7 @@ public class FileExplorer {
 						sizeDelta: new(0, FooterItemsHeights),
 						fixedPosition: new() {
 							Pivot = UIPosition.BottomCenter
-							}
+						}
 					),
 					new() {
 						WindowItem.NewButtonCustomText(
@@ -249,28 +474,42 @@ public class FileExplorer {
 		};
 	}
 
-	public struct EntryData {
+	public struct Entry {
+		public enum EntryType { File, Folder };
+		public EntryType Type;
 		public string Name;
 		public float NameWidth;
 		public (string label, float width)[] Metadata;
 
-		public EntryData(string name, float namewidth, params (string label, float width)[] metadata) {
+		public Entry(
+			EntryType type,
+			string name,
+			float namewidth,
+			params (string label, float width)[] metadata) {
+
+			Type = type;
 			Name = name;
 			NameWidth = namewidth;
 			Metadata = metadata;
 		}
 	}
-	static WindowItem FileEntry(int id, EntryData entry) =>
-		WindowItem.NewButton(
+	static WindowItem FileEntry(int id, Entry entry) {
+		PComponents.Image icon = 
+			entry.Type == Entry.EntryType.File 
+			? new(IconPath)
+			: new(Config.Locations.IconsFolder + Config.FileExplorer.FolderEntryIconName);
+
+		return WindowItem.NewButton(
 			"File Entry",
 			new PComponents.Button(() => Select(id)),
 			WindowItem.LayoutConfig.LayoutElement(new(0, ItemHeight))
 		).SetSubItems(
-			WindowItem.NewLayout(
+			WindowItem.NewLayout( // primary layout
 				PComponents.Layout.Horizontal.Fixed(true, true),
 				WindowItem.LayoutConfig.FillLayout,
 				new WindowItem[] {
-					WindowItem.NewEmpty(
+
+					WindowItem.NewEmpty( // 
 						WindowItem.LayoutConfig.LayoutElementDynamic(),
 						new() {
 							WindowItem.NewText(
@@ -281,7 +520,7 @@ public class FileExplorer {
 						),
 						WindowItem.NewImage(
 							"Icon",
-							new PComponents.Image(IconPath),
+							icon,
 							WindowItem.LayoutConfig.FixedLayout(
 								UIPosition.AnchoredOffset(
 									UIPosition.MiddleLeft,
@@ -292,7 +531,8 @@ public class FileExplorer {
 						)
 						}
 					).AddComponents(new PComponents.LayoutElement(entry.NameWidth))
-					.Wrap()
+					.Wrap() // preserve layout ignore items owns layout wants 
+
 				}.Concat(entry.Metadata.Select(md =>
 					WindowItem.NewText(
 						new PComponents.Text(md.label),
@@ -302,8 +542,9 @@ public class FileExplorer {
 				)).ToList()
 			)
 		);
+	}
 
-	public static void SetEntries(params EntryData[] entries) {
+	public static void SetEntries(params Entry[] entries) {
 		ItemsLayout.SetSubItems(entries.Select((e, i) => FileEntry(i, e)).ToArray());
 		 
 		CurrentEntries = entries;
@@ -320,7 +561,11 @@ public class FileExplorer {
 	public static void LoadDirectory(
 		string path,
 		string[] extensions,
-		Func<string, (string data, float width)[]> metadataGetter) {
+		Func<string, (string data, float width)[]> metadataGetter,
+		bool rememberHistory = true) {
+
+		if (rememberHistory)
+			HistoryRemember();
 
 		CurrentDirectory = path;
 		LastLoadExtensions = extensions;
@@ -328,43 +573,97 @@ public class FileExplorer {
 
 		extensions = extensions?.Select(e => e.ToLowerInvariant()).ToArray();
 
-		string[] fps = 
-			Directory.GetFiles(path)
-			.Where(f => {
+		// get files
+		string[] fps = GetFilesSafe(path, extensions);
 
-				// ignore hidden & system files
-				var attr = File.GetAttributes(f);
-				if ((attr & (FileAttributes.Hidden | FileAttributes.System)) != 0)
-					return false;
+		// get folders
+		string[] dps = GetDirectoriesSafe(path);
 
-				if (extensions == null || extensions.Length == 0)
-					return true;
 
-				// only return correct extension
-				var ext = Path.GetExtension(f).ToLowerInvariant();
-				return extensions.Contains(ext);
-			})
-			.ToArray();
+		var entries =
+			fps.Select(fp => {
+				string name = Path.GetFileName(fp);
 
-		EntryData[] entries = new EntryData[fps.Length];
-
-		for (int i = 0; i < fps.Length; i++) {
-			string fp = fps[i];
-			string name = Path.GetFileName(fp);
-
-			var metadata =
+				var metadata =
 				metadataGetter?.Invoke(fp) ??
 				Array.Empty<(string, float)>();
 
-			entries[i] = new(
-				name,
-				NameWidth,
-				metadata
-			);
+				return new Entry(
+					Entry.EntryType.File,
+					name,
+					NameWidth,
+					metadata
+				);
+			}).Concat(
+			dps.Select(dp => {
+				string name = Path.GetFileName(dp.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+
+				return new Entry(
+					Entry.EntryType.Folder,
+					name,
+					NameWidth,
+					Array.Empty<(string, float)>()
+				);
+			}));
+
+		// add files
+		for (int i = 0; i < fps.Length; i++) {
+			
 		}
 
-		SetEntries(entries);
+		SetEntries(entries.ToArray());
+
+		UpdateAddressBar();
 	}
+
+	static string[] GetFilesSafe(string path, string[] extensions = null) {
+		try {
+			if (!Directory.Exists(path)) return Array.Empty<string>();
+
+			return Directory.GetFiles(path)
+				.Where(f => {
+					try {
+						var attr = File.GetAttributes(f);
+						if ((attr & (FileAttributes.Hidden | FileAttributes.System)) != 0)
+							return false;
+
+						if (extensions == null || extensions.Length == 0)
+							return true;
+
+						var ext = Path.GetExtension(f).ToLowerInvariant();
+						return extensions.Contains(ext);
+					} catch (UnauthorizedAccessException) {
+						return false;
+					}
+				})
+				.ToArray();
+		} catch (UnauthorizedAccessException) {
+			return Array.Empty<string>();
+		}
+	}
+
+	static string[] GetDirectoriesSafe(string path) {
+		try {
+			if (!Directory.Exists(path)) return Array.Empty<string>();
+
+			return Directory.GetDirectories(path)
+				.Where(d => {
+					try {
+						var attr = File.GetAttributes(d);
+						if ((attr & (FileAttributes.Hidden | FileAttributes.System)) != 0)
+							return false;
+
+						return true;
+					} catch (UnauthorizedAccessException) {
+						return false;
+					}
+				})
+				.ToArray();
+		} catch (UnauthorizedAccessException) {
+			return Array.Empty<string>();
+		}
+	}
+
 
 	public static void Refresh() {
 		LoadDirectory(
@@ -382,5 +681,4 @@ public class FileExplorer {
 	public static CWindow[] Windows => new[] {
 		ExplorerWindow
 	};
-	
 }

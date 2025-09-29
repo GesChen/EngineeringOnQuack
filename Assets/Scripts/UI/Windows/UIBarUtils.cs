@@ -73,7 +73,7 @@ public static class UIBarUtils {
 			WindowItem.NewInputField(
 				new PComponents.InputField(
 					onValueChanged,
-					placeholder,
+					placeholderText: placeholder,
 					alignment: TextAlignmentOptions.Center
 				),
 				WindowItem.LayoutConfig.FillLayout
