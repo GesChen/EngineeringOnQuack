@@ -9,7 +9,7 @@ using TMPro;
 public class FileExplorer {
 	
 	// config
-	static string IconPath = "Icons/add to group";
+	static string IconPath = "Icons/File Explorer/defaultfile";
 	static string UseButtonLabel = "Load"; // to be changed per instance
 	static float NameWidth = 5;
 
@@ -41,6 +41,8 @@ public class FileExplorer {
 
 	static Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
 
+	static string FixPathForTMP(string path) => path.Replace("\\", "\\\\");
+
 	public static void ClearEvents() {
 		OnUsePressed = null;
 	}
@@ -48,6 +50,26 @@ public class FileExplorer {
 	public void Show() {
 		ExplorerWindow.RealisedWindow.PlaceAtCenter();
 		ExplorerWindow.RealisedWindow.Show();
+	}
+
+	static void Select(int i) {
+		if (Time.time - LastSelectTime < Config.Input.doubleClickMaxTimeMs / 1000f) {
+			// use
+			if (CurrentlySelected.Type == Entry.EntryType.File)
+				Use();
+			else
+				LoadDirectory(
+					Path.Join(CurrentDirectory, CurrentlySelected.Name),
+					LastLoadExtensions,
+					LastLoadMetadataGetter
+				);
+		}
+
+		LastSelectTime = Time.time;
+
+		OptionSelectionUIHelper.SetColors(ItemsLayout.SubItems.ToArray(), i);
+
+		CurrentlySelectedI = i;
 	}
 
 	#region Top Bar Options
@@ -61,6 +83,9 @@ public class FileExplorer {
 		DirectoryHistory.RemoveRange(0, HistoryPosition);
 
 		DirectoryHistory.Insert(0, CurrentDirectory);
+
+		if (DirectoryHistory.Count > Config.FileExplorer.MaxHistoryLength)
+			DirectoryHistory.RemoveAt(DirectoryHistory.Count - 1);
 
 		HistoryPosition = 0;
 	}
@@ -198,7 +223,7 @@ public class FileExplorer {
 		string curname = CurrentlySelected.Name;
 
 		int doti = curname.LastIndexOf('.');
-		if (doti == -1) doti = curname.Length - 1;
+		if (doti == -1) doti = curname.Length;
 
 		int start = 0;
 
@@ -212,16 +237,63 @@ public class FileExplorer {
 	static void TryRename() {
 		string name = RenameField.text;
 
+		if (!IsValidFileName(name, out var message)) {
+			PDialog.GenerateDialog(new(
+				message,
+				new PDialog.Option[0],
+				new(400, 200)
+			));
+			return;
+		}
+
 		if (CurrentEntries.Any(e => e.Name == name))
 			OverwriteConfirmation(() => Rename(name));
 		else
 			Rename(name);
 	}
+	static bool IsValidFileName(string name, out string message) {
+		if (string.IsNullOrWhiteSpace(name)) {
+			message = "Name is blank or whitespace.";
+			return false;
+		}
+
+		if (name.EndsWith(" ") || name.EndsWith(".")) {
+			message = "Name cannot end with a space or period.";
+			return false;
+		}
+
+		char[] invalidChars = Path.GetInvalidFileNameChars();
+		int idx = name.IndexOfAny(invalidChars);
+		if (idx != -1) {
+			message = $"Invalid character '{name[idx]}' in name.";
+			return false;
+		}
+
+		string upper = name.ToUpperInvariant();
+		if (upper is "CON" or "PRN" or "AUX" or "NUL") {
+			message = "Name is a reserved device identifier.";
+			return false;
+		}
+
+		if (upper.StartsWith("COM") || upper.StartsWith("LPT")) {
+			if (upper.Length == 4 && char.IsDigit(upper[3])) {
+				message = "Name matches a reserved device pattern.";
+				return false;
+			}
+		}
+
+		message = null;
+		return true;
+	}
+
 	static void Rename(string newName) {
 		string src = Path.Join(CurrentDirectory, CurrentlySelected.Name);
 		string dst = Path.Combine(CurrentDirectory, newName);
 
-		File.Move(src, dst);
+		if (CurrentlySelected.Type == Entry.EntryType.File)
+			File.Move(src, dst);
+		else
+			Directory.Move(src, dst);
 
 		Refresh();
 	}
@@ -270,26 +342,6 @@ public class FileExplorer {
 		));
 	}
 
-	static void Select(int i) {
-		if (Time.time - LastSelectTime < Config.Input.doubleClickMaxTimeMs / 1000f) {
-			// use
-			if (CurrentlySelected.Type == Entry.EntryType.File)
-				Use();
-			else
-				LoadDirectory(
-					Path.Join(CurrentDirectory, CurrentlySelected.Name),
-					LastLoadExtensions,
-					LastLoadMetadataGetter
-				);
-		}
-
-		LastSelectTime = Time.time;
-
-		OptionSelectionUIHelper.SetColors(ItemsLayout.SubItems.ToArray(), i);
-
-		CurrentlySelectedI = i;
-	}
-	
 	static void ClearField() { InputField.text = ""; }
 	#endregion
 
@@ -321,7 +373,7 @@ public class FileExplorer {
 		"Back",
 		new PComponents.Button(Back),
 		new PComponents.Image(
-			Config.Locations.IconsFolder + Config.FileExplorer.BackIconName
+			 Config.FileExplorer.BackIcon
 		),
 		WindowItem.LayoutConfig.FixedLayout(
 			UIPosition.AnchoredOffset(
@@ -335,7 +387,7 @@ public class FileExplorer {
 		"Forward",
 		new PComponents.Button(Forward),
 		new PComponents.Image(
-			Config.Locations.IconsFolder + Config.FileExplorer.ForwardIconName
+			 Config.FileExplorer.ForwardIcon
 		),
 		WindowItem.LayoutConfig.FixedLayout(
 			UIPosition.AnchoredOffset(
@@ -349,7 +401,7 @@ public class FileExplorer {
 		"Up",
 		new PComponents.Button(Up),
 		new PComponents.Image(
-			Config.Locations.IconsFolder + Config.FileExplorer.UpIconName
+			 Config.FileExplorer.UpIcon
 		),
 		WindowItem.LayoutConfig.FixedLayout(
 			UIPosition.AnchoredOffset(
@@ -363,7 +415,7 @@ public class FileExplorer {
 		"Refresh",
 		new PComponents.Button(Refresh),
 		new PComponents.Image(
-			Config.Locations.IconsFolder + Config.FileExplorer.RefreshIconName
+			 Config.FileExplorer.RefreshIcon
 		),
 		WindowItem.LayoutConfig.FixedLayout(
 			UIPosition.AnchoredOffset(
@@ -377,7 +429,7 @@ public class FileExplorer {
 		"New Folder",
 		new PComponents.Button(NewFolder),
 		new PComponents.Image(
-			Config.Locations.IconsFolder + Config.FileExplorer.NewFolderIconName
+			 Config.FileExplorer.NewFolderIcon
 		),
 		WindowItem.LayoutConfig.FixedLayout(
 			UIPosition.AnchoredOffset(
@@ -497,7 +549,7 @@ public class FileExplorer {
 		PComponents.Image icon = 
 			entry.Type == Entry.EntryType.File 
 			? new(IconPath)
-			: new(Config.Locations.IconsFolder + Config.FileExplorer.FolderEntryIconName);
+			: new(Config.FileExplorer.FolderEntryIcon);
 
 		return WindowItem.NewButton(
 			"File Entry",
@@ -581,6 +633,16 @@ public class FileExplorer {
 
 
 		var entries =
+			dps.Select(dp => {
+				string name = Path.GetFileName(dp.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+
+				return new Entry(
+					Entry.EntryType.Folder,
+					name,
+					NameWidth,
+					Array.Empty<(string, float)>()
+				);
+			}).Concat(
 			fps.Select(fp => {
 				string name = Path.GetFileName(fp);
 
@@ -593,16 +655,6 @@ public class FileExplorer {
 					name,
 					NameWidth,
 					metadata
-				);
-			}).Concat(
-			dps.Select(dp => {
-				string name = Path.GetFileName(dp.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-
-				return new Entry(
-					Entry.EntryType.Folder,
-					name,
-					NameWidth,
-					Array.Empty<(string, float)>()
 				);
 			}));
 

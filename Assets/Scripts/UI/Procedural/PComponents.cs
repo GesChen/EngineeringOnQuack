@@ -325,6 +325,9 @@ public class PComponents {
 			phtext.fontWeight = Weight;
 			phtext.alignment = Alignment;
 
+			// sdtill breaks TMP 
+			//phtext.overflowMode = TextOverflowModes.Ellipsis;
+
 			phtext.text = PlaceholderText;
 
 			GameObject to = new("Text");
@@ -340,6 +343,8 @@ public class PComponents {
 			ttext.color = TextColor;
 			ttext.fontWeight = Weight;
 			ttext.alignment = Alignment;
+
+			//ttext.overflowMode = TextOverflowModes.Ellipsis;
 
 			field.textViewport = taRT;
 			field.textComponent = ttext;
