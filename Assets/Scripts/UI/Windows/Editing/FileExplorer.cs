@@ -4,6 +4,7 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class FileExplorer {
@@ -38,6 +39,9 @@ public class FileExplorer {
 	static TMP_InputField InputField;
 	static float LastSelectTime;
 	static TMP_InputField AddressBar;
+
+	static Button NewFolderButton;
+	static string NewFolderFieldContents;
 
 	static Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
 
@@ -133,7 +137,52 @@ public class FileExplorer {
 	}
 
 	static void NewFolder() {
+		NewFolderButton.interactable = false;
 
+		PDialog.GenerateDialog(new(
+			"New Folder Name",
+			new PDialog.Option[] {
+				new("Cancel", null),
+				new("Confirm", TryNewFolder)
+			},
+			new(300, 150),
+			WindowItem.NewInputField(
+				new PComponents.InputField(
+					n => NewFolderFieldContents = n,
+					placeholderText: "Name..."
+				),
+				WindowItem.LayoutConfig.LayoutElementDynamic()
+			)
+		));
+	}
+	static void TryNewFolder() {
+		NewFolderButton.interactable = true;
+
+		if (!IsValidFileName(NewFolderFieldContents, out var message)) {
+			PDialog.GenerateDialog(new(
+				message,
+				new PDialog.Option[0],
+				new(400, 200)
+			));
+			return;
+		}
+
+		var path = Path.Join(CurrentDirectory, NewFolderFieldContents);
+		if (Directory.Exists(path)) {
+			PDialog.GenerateDialog(new(
+				$"A folder named {NewFolderFieldContents} already exists here.",
+				new PDialog.Option[] {
+					new("Ok", null),
+				},
+				new(400, 200)
+			));
+			return;
+		}
+
+		// then do it
+		Directory.CreateDirectory(path);
+
+		Refresh();
 	}
 
 	static void TryChangeDirectories(string newDir) {
@@ -181,6 +230,7 @@ public class FileExplorer {
 	#endregion
 
 	#region Bottom Bar Options
+	
 	static void Cancel() {
 		// do nothing back and just close
 		ExplorerWindow.RealisedWindow.Hide();
@@ -301,15 +351,20 @@ public class FileExplorer {
 	static void RequestDelete() {
 		if (CurrentlySelectedI == -1) return;
 
+		string type =
+			CurrentlySelected.Type == Entry.EntryType.File
+			? "File"
+			: "Folder";
+
 		// show confirmation
 		PDialog.GenerateDialog(
 			new(
-				"Are you sure you want to delete this file?",
+				$"Are you sure you want to delete this {type}?",
 				new PDialog.Option[] {
 					new("No", null),
 					new("Yes", Delete),
 				},
-				new(400, 100),
+				new(500, 150),
 				WindowItem.NewText(
 					new PComponents.Text(
 						CurrentlySelected.Name,
@@ -322,7 +377,18 @@ public class FileExplorer {
 	static void Delete() {
 		string path = Path.Join(CurrentDirectory, CurrentlySelected.Name);
 
-		File.Delete(path);
+		try {
+			if (CurrentlySelected.Type == Entry.EntryType.File)
+				File.Delete(path);
+			else
+				Directory.Delete(path, recursive: true); // safely delete non-empty directories
+		} catch (Exception ex) {
+			PDialog.GenerateDialog(new(
+				$"Failed to delete: {ex.Message}",
+				new PDialog.Option[] { new("Ok", null) },
+				new(400, 200)
+			));
+		}
 
 		Refresh();
 	}
@@ -427,7 +493,9 @@ public class FileExplorer {
 	),
 	WindowItem.NewButtonCustomImageOverlay( // new folder
 		"New Folder",
-		new PComponents.Button(NewFolder),
+		new PComponents.Button(NewFolder)
+			.OnRealised<PComponents.Button>(
+			c => NewFolderButton = (Button)c),
 		new PComponents.Image(
 			 Config.FileExplorer.NewFolderIcon
 		),

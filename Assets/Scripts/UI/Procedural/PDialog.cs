@@ -31,6 +31,13 @@ public class PDialog {
 		Destroy();
 	}
 
+	/// <summary>
+	/// Create a new PDialog object
+	/// </summary>
+	/// <param name="dialogMessage"></param>
+	/// <param name="dialogOptions"></param>
+	/// <param name="size"></param>
+	/// <param name="extra">layout: LED</param>
 	public PDialog(
 		string dialogMessage,
 		Option[] dialogOptions,

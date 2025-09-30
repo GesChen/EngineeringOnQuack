@@ -22,13 +22,13 @@ public class PComponents {
 		protected void FinaliseRealise() {
 			RealisedEvent?.Invoke(RealComponent);
 		}
-		public ComponentType OnRealised<ComponentType>(
+		public SelfComponentType OnRealised<SelfComponentType>(
 			Action<UnityEngine.Component> realComponentCallback
-			) where ComponentType : Component {
+			) where SelfComponentType : Component {
 
 			RealisedEvent += realComponentCallback;
 
-			return (ComponentType)this;
+			return (SelfComponentType)this;
 		}
 	}
 
