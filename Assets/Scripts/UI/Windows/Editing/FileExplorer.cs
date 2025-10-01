@@ -121,16 +121,12 @@ public class FileExplorer {
 	static void Up() {
 		var path = CurrentDirectory;
 		string clean = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-		var parent = Directory.GetParent(path).FullName;
+		var parent = Directory.GetParent(path);
 
-		bool isRoot = 
-			parent.TrimEnd('\\')
-			.Equals(clean.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
-
-		if (isRoot) return;
+		if (parent == null) return;
 
 		LoadDirectory(
-			parent,
+			parent.FullName,
 			LastLoadExtensions,
 			LastLoadMetadataGetter
 		);

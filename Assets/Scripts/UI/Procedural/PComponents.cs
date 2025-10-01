@@ -201,9 +201,10 @@ public class PComponents {
 			text.color		= Color;
 			text.alignment	= Alignment;
 
-			if (!Wrap)
-				text.overflowMode = TextOverflowModes.Ellipsis;
-			else {
+			if (!Wrap) {
+				// :( its so fucky
+				//text.overflowMode = TextOverflowModes.Ellipsis;
+			} else {
 				text.enableWordWrapping = true;
 				text.overflowMode = TextOverflowModes.Overflow;
 			}
