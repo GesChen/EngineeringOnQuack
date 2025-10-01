@@ -115,10 +115,10 @@ public class TransformTools : Singleton<TransformTools> {
 
 	void SubscribeToBottomBar() {
 		BottomBar.ClearTransform();
-		BottomBar.OnTransformOpened += () => SetToolsState(true);
+		BottomBar.OnTransformOpened += () => SetUIState(true);
 	}
 
-	public void SetToolsState(bool state) {
+	public void SetUIState(bool state) {
 		if (state)
 			TransformToolsMenu.MainWindow.RealisedWindow.Show();
 		else

@@ -1,13 +1,14 @@
-using System.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using TMPro;
-using UnityEngine.InputSystem;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+using System.Linq;
 using System.Text;
+using TMPro;
 using UnityEditor;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 // is this too many usings?
 // answer: yea prolly
 
@@ -20,27 +21,23 @@ public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
 	List<LineNumber> lineNumbers;
 
-	public SEScrollWindow scroll;
-	public CustomVerticalLayout lineContentVerticalLayout;
-	public RectTransform lineContentContainer;
-	public CustomVerticalLayout lineNumbersVerticalLayout;
+	public ScrollRect scroll; // interchangable with SEScrollWindow, comment out handleshiftscrolling tho
+	public RectTransform contentParent;
+	public RectTransform contentMask; // prevents lines from being drawn under line numbers
+	public VerticalLayoutGroup lineNumbersVerticalLayout; // interchangable with customverticallayout
 	[HideInNormalInspector] public RectTransform lineNumbersRect;
+	RectTransform widthSetter; // 0 height line in the line contents, always at the end, sets the width for parent 
 
+	// modules
 	public SyntaxHighlighter syntaxHighlighter;
-	public History history;
+	public LazyHistory history; // can be interchanged with just
+	// normal history if i decide to fix it someday
 
 	internal List<Caret> carets = new();
 	internal int headCaretI = 0;
 	internal int tailCaretI = 0;
 
-	[Header("temporary local config options, should move to global config soon")]
-	public float numberToContentSpace;
-	public TMP_FontAsset font;
-	public float fontSize;
-	public Color selectionColor;
-	public Color test;
-	public int xCursorScreenMarginChars;
-	public int yCursorScreenMarginLines;
+	public event Action<bool> OnDragStateChanged; // custom drag handling
 
 	#region Line Classes
 	public class Line {
@@ -109,20 +106,25 @@ public class ScriptEditor : MonoBehaviour {
 		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
 		SubscribeToShortcuts();
 	}
-
+	
+	#region Setup
 	void SubscribeToShortcuts() {
-		Conatrols.IM.Editing.Copy.performed		+= (InputAction.CallbackContext _) => Copy();
-		Conatrols.IM.Editing.Cut.performed		+= (InputAction.CallbackContext _) => Cut();
-		Conatrols.IM.Editing.Paste.performed	+= (InputAction.CallbackContext _) => Paste();
-		Conatrols.IM.Editing.Undo.performed		+= (InputAction.CallbackContext _) => history.Undo();
-		Conatrols.IM.Editing.Redo.performed		+= (InputAction.CallbackContext _) => history.Redo();
+		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
+		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
+		Conatrols.IM.Editing.Paste.performed	+= _ => Paste();
+		Conatrols.IM.Editing.Undo.performed		+= _ => history.Undo();
+		Conatrols.IM.Editing.Redo.performed		+= _ => history.Redo();
 	}
+	#endregion
 
 	void Update() {
+		if (lines == null) return;
+
 		HandleMouseNavigation();
 		HandleKeyboardNavgation();
 		UpdateCarets();
 		HandleTyping();
+		UpdateLineNumbersPos();
 	}
 
 	#region Loading/Generation
@@ -137,17 +139,11 @@ public class ScriptEditor : MonoBehaviour {
 		Clear();
 
 		// recalculate max line number width
-		TextMeshProUGUI testingText = lineContentVerticalLayout.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
-		testingText.font = font;
-		testingText.fontSize = fontSize;
-		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
-		Destroy(testingText);
-
-		lineNumberWidth = numberSize.x;
-		allLinesHeight = numberSize.y;
+		CalculateLineSizes(strLines);
 
 		// fix container
-		lineContentContainer.offsetMin = new(lineNumberWidth + numberToContentSpace, 0);
+		//lineContentContainer.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
+		contentParent.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 
 		// reset localcontext
 		LC = new() {
@@ -167,6 +163,13 @@ public class ScriptEditor : MonoBehaviour {
 			lineNumbers.Add(newLN);
 		}
 
+		// generate widthsetter
+		var wsObj = new GameObject("Width Setter");
+		widthSetter = wsObj.AddComponent<RectTransform>();
+		widthSetter.SetParent(contentParent);
+		widthSetter.sizeDelta = new(0, 0); // width will be set in recalculate
+		wsObj.AddComponent<Image>().color = Color.clear; // dualie
+
 		RecalculateAll();
 
 		SetSingleCaret(new(0, 0), new(0, 0));
@@ -174,11 +177,24 @@ public class ScriptEditor : MonoBehaviour {
 		history.Initialize();
 	}
 
+	private void CalculateLineSizes(string[] strLines) {
+		TextMeshProUGUI testingText = contentParent.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
+		testingText.font = Config.ScriptEditor.Font;
+		testingText.fontSize = Config.ScriptEditor.FontSize;
+		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
+		Destroy(testingText);
+
+		lineNumberWidth = numberSize.x;
+		allLinesHeight = numberSize.y;
+	}
+
 	void RecalculateAll() {
 		// scale all containers to max width
 		RecalculateLongest();
 		RecalculateCharUVA();
 		ScaleAllContainersToMax();
+		UpdateContentMask();
+		UpdateWidthSetter();
 
 		// calculate ts (charuv must have a value)
 		CalculateAllTs();
@@ -201,6 +217,11 @@ public class ScriptEditor : MonoBehaviour {
 				Destroy(ln.Rect.gameObject);
 		}
 		lineNumbers.Clear();
+
+		// delete widthsetter
+		if (widthSetter != null)
+			Destroy(widthSetter.gameObject);
+		widthSetter = null;
 	}
 
 	void RecalculateLongest() {
@@ -230,6 +251,14 @@ public class ScriptEditor : MonoBehaviour {
 	void ScaleAllContainersToMax() {
 		lines.ForEach(l => l.Components.LineContent
 			.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, longestLineWidth));
+	}
+
+	void UpdateContentMask() {
+		contentMask.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
+	}
+
+	void UpdateWidthSetter() {
+		widthSetter.sizeDelta = new(longestLineWidth + lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
 	}
 
 	void CalculateAllTs() {
@@ -300,7 +329,7 @@ public class ScriptEditor : MonoBehaviour {
 			= NewText(
 				"Line Content",
 				$"{processed}",
-				lineContentVerticalLayout.transform,
+				contentParent.transform,
 				TextAlignmentOptions.Left,
 				0); // temp set width to zero, recalculate later
 
@@ -308,8 +337,6 @@ public class ScriptEditor : MonoBehaviour {
 		LCRect.anchorMin = new(0, 1);
 		LCRect.anchorMax = new(0, 1);
 		LCRect.pivot = new(0, 1);
-
-		LCRect.localPosition = new(lineNumberWidth + numberToContentSpace, 0);
 
 		line.Components.LineContent = LCRect;
 		line.Components.LineText = LCText;
@@ -395,6 +422,15 @@ public class ScriptEditor : MonoBehaviour {
 		return updatedLines;
 	}
 
+	internal Line AddLine(string contents) {
+		Line newLine = GenerateNewLine(contents);
+
+		lines.Add(newLine);
+		newLine.Components.LineContent.transform.SetAsLastSibling();
+
+		return newLine;
+	}
+
 	internal Line InsertLine(string contents, int at) {
 		Line newLine = GenerateNewLine(contents);
 
@@ -414,6 +450,29 @@ public class ScriptEditor : MonoBehaviour {
 		// decrement a line number
 		Destroy(lineNumbers[^1].Rect.gameObject);
 		lineNumbers.RemoveAt(lineNumbers.Count - 1);
+	}
+
+	internal void ResetLines() {
+		for (int i = lines.Count - 1; i >= 0; i--) {
+			DeleteLine(i);
+		}
+	}
+
+	internal void SetLines(string[] newLines) {
+		ResetLines();
+
+		foreach (string line in newLines) {
+			AddLine(line);
+		}
+
+		for (int i = 0; i < newLines.Length; i++) {
+			UpdateLine(i, false);
+		}
+
+		for (int i = 0; i < lines.Count; i++) {
+			LineNumber newLN = GenerateNewNumber(i + 1);
+			lineNumbers.Add(newLN);
+		}
 	}
 
 	string ConvertTabsToSpaces(Line line) {
@@ -485,8 +544,8 @@ public class ScriptEditor : MonoBehaviour {
 		// add text
 		TextMeshProUGUI newText = newObj.AddComponent<TextMeshProUGUI>();
 		newText.text = actualText;
-		newText.font = font;
-		newText.fontSize = fontSize;
+		newText.font = Config.ScriptEditor.Font;
+		newText.fontSize = Config.ScriptEditor.FontSize;
 		newText.alignment = alignment;
 
 		// set up rt properly
@@ -505,6 +564,11 @@ public class ScriptEditor : MonoBehaviour {
 
 	public string[] LinesStringArray =>
 		lines.Select(l => l.Content).ToArray();
+
+	void UpdateLineNumbersPos() {
+		float amount = scroll.CurrentScrollAmount().y;
+		lineNumbersRect.localPosition = new(0, amount);
+	}
 
 	#endregion
 
@@ -655,22 +719,25 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
-		pos -= scroll.CurrentScrollAmount;
+		pos -= scroll.CurrentScrollAmount();
+
+		float xmarg = Config.ScriptEditor.XCursorScreenMarginChars;
+		float ymarg = Config.ScriptEditor.YCursorScreenMarginLines;
 
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
 		(
-			pos.x < xCursorScreenMarginChars * charWidth
+			pos.x < xmarg * charWidth
 				? -1
 			: (
-			pos.x > lineContentContainer.rect.width - xCursorScreenMarginChars * charWidth
+			pos.x > contentMask.rect.width - xmarg * charWidth
 				? 1
 			: 0)
 		,
-			pos.y < yCursorScreenMarginLines * allLinesHeight
+			pos.y < ymarg * allLinesHeight
 				? -1
 			: (
-			pos.y > lineContentContainer.rect.height - yCursorScreenMarginLines * allLinesHeight
+			pos.y > contentMask.rect.height - ymarg * allLinesHeight
 				? 1
 			: 0)
 		);
@@ -679,12 +746,17 @@ public class ScriptEditor : MonoBehaviour {
 
 	#region Mouse Input
 
+	bool lastDragState = false;
 	void HandleMouseNavigation() {
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
 		if (!mousePos.HasValue) return;
 
 		DetectExtraClicks(mousePos.Value);
 		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
+
+		if (lastDragState != dragging)
+			OnDragStateChanged?.Invoke(dragging);
+		lastDragState = dragging;
 	}
 
 	float lastClickTime;
@@ -759,6 +831,8 @@ public class ScriptEditor : MonoBehaviour {
 	bool boxCleared = false;
 	void HandleDrag(Vector2Int pos, Vector2Int posUnclamped) {
 		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) { // down
+			history.RecordChange(); // before cursor moves
+			history.UpdateLastCarets();
 
 			dragging = true;
 
@@ -781,6 +855,8 @@ public class ScriptEditor : MonoBehaviour {
 			}
 		} else
 		if (Conatrols.IM.Mouse.Left.WasReleasedThisFrame()) {
+			history.UpdateLastCarets();
+
 			dragging = false;
 		}
 		if (dragging) {
@@ -788,8 +864,6 @@ public class ScriptEditor : MonoBehaviour {
 				Conatrols.Keyboard.Modifiers.Shift &&
 				Conatrols.Keyboard.Modifiers.Alt)
 				return; // do nothing with all 3 
-
-			history.RecordChange(); // before cursor moves
 
 			bool doubleClickCondition =
 				Conatrols.Keyboard.Modifiers.Ctrl &&
@@ -892,6 +966,8 @@ public class ScriptEditor : MonoBehaviour {
 				SetCurrentCaret(start, end);
 			}
 		}
+
+		scroll.enabled = !dragging; // hacky fix to dragging the scrollrect, just stops it. 
 	}
 
 	void SetCurrentCaret(Vector2Int head, Vector2Int tail) {
@@ -926,7 +1002,7 @@ public class ScriptEditor : MonoBehaviour {
 
 		// not sure why this happens but it just does idk
 		// ok this was broken before idk its fixed now??
-		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, lineContentVerticalLayout.transform))
+		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, contentParent.transform))
 			//if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
 			return -1;
 
@@ -1336,6 +1412,12 @@ public class ScriptEditor : MonoBehaviour {
 		if (shortcutPressed)
 			return false;
 
+		// standalone shift check
+		if (Conatrols.Keyboard.Modifiers.Shift &&
+			!Conatrols.Keyboard.Presses.Any(
+				k => Conatrols.Keyboard.All.CharacterKeys.Contains(k)))
+			return false;
+
 		return Conatrols.Keyboard.Presses.All(
 			k => 
 				Conatrols.Keyboard.All.TextKeys.Contains(k) || 
@@ -1358,6 +1440,8 @@ public class ScriptEditor : MonoBehaviour {
 		else if (Conatrols.IsUsed(Key.Delete))
 			Delete(c, line);
 
+		line = lines[c.head.y];
+		
 		// adders
 		if (Conatrols.IsUsed(Key.Enter)) {
 			bool splitText = !Conatrols.Keyboard.Modifiers.Shift;
@@ -1366,8 +1450,7 @@ public class ScriptEditor : MonoBehaviour {
 			Enter(c, line, splitText, addDownwards);
 
 			history.RecordChange(); // after adding
-		} else
-
+		} else 
 		if (Conatrols.IsUsed(Key.Tab))
 			Tab(c, line);
 
@@ -1555,8 +1638,8 @@ public class ScriptEditor : MonoBehaviour {
 			PadToIndex(c.head.x, c.head.y, line);
 
 		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			(int start, int end) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
-			end = c.head.x;
+			(int start, _) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
+			int end = c.head.x;
 			int length = end - start;
 			line.Content = line.Content.Remove(start, length);
 			c.head.x -= length;
@@ -1598,8 +1681,8 @@ public class ScriptEditor : MonoBehaviour {
 		}
 
 		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			(int start, int end) = DoubleClickWordAt(c.head);
-			start = c.head.x;
+			(_, int end) = DoubleClickWordAt(c.head);
+			int start = c.head.x;
 			int length = end - start;
 			line.Content = line.Content.Remove(start, length);
 		} else {
@@ -1632,12 +1715,29 @@ public class ScriptEditor : MonoBehaviour {
 		string startIndent = IndentToColumnString(0, indentSpaces, c.head.y + 1);
 		endContents = endContents.Insert(0, startIndent);
 
-		if (addDownwards) c.head.y++;
+		bool addIndent = false;
+		if (addDownwards) {
+			c.head.y++;
+
+			// hacky check just to make it work i guess idk.
+			int index = line.Content.IndexOf(':');
+			addIndent =
+				index != -1
+				&& line.ColorsOriginal[index] == SyntaxHighlighter.Types.symbol
+				&& line.ColorsOriginal.Take(index)
+					.Any(t => t == SyntaxHighlighter.Types.func
+					|| t == SyntaxHighlighter.Types.type);
+
+			if (addIndent) {
+				endContents = "\t" + endContents;
+			}
+		}
 
 		Line newLine = InsertLine(endContents, c.head.y);
 
 		// place cursor
 		c.head.x = newLine.Content.Length - endContents.Length + startIndent.Length;
+		if (addIndent) c.head.x++;
 
 		// add ln
 		LineNumber newLN = GenerateNewNumber(lines.Count);

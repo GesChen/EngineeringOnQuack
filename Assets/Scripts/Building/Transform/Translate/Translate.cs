@@ -317,6 +317,8 @@ public class Translate : MonoBehaviour
 					break;
 			}
 		}
+
+		BuildingManager.SetDirty();
 	}
 	void UseAxisIndicator()
 	{

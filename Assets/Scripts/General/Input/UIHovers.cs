@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -104,6 +105,10 @@ public class UIHovers : Singleton<UIHovers> {
 		hoversDebug = new List<Transform>(hovers);
 	}
 
+	void LateUpdate() {
+		componentCache.Clear();
+	}
+
 	void CheckUIRaycast() {
 		pointerEventData = new PointerEventData(eventSystem) {
 			position = Input.mousePosition
@@ -122,5 +127,23 @@ public class UIHovers : Singleton<UIHovers> {
 		} else {
 			hovers.Clear();
 		}
+	}
+
+	static readonly Dictionary<Type,bool> componentCache = new();
+
+	public static bool HasComponent<T>() where T : Component {
+		var type = typeof(T);
+		if (componentCache.TryGetValue(type, out var cached))
+			return cached;
+
+		for (int i = 0; i < UIHovers.hovers.Count; i++) {
+			if (UIHovers.hovers[i].GetComponent(type) != null) {
+				componentCache[type] = true;
+				return true;
+			}
+		}
+
+		componentCache[type] = false;
+		return false;
 	}
 }

@@ -58,7 +58,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": ""Precision"",
                     ""type"": ""Button"",
                     ""id"": ""527b2e3a-8525-46a3-b619-d0e180978eb6"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -69,7 +69,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""id"": ""781b16df-b033-4077-94c2-99b98f6636a9"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": ""MultiTap(tapDelay=0.2)"",
+                    ""interactions"": """",
                     ""initialStateCheck"": false
                 },
                 {
@@ -142,7 +142,18 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""f1a6b380-df6a-4ca8-9271-05f3e946aee7"",
                     ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
+                    ""interactions"": ""MultiTap"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Focus"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""dffc1521-75a6-44db-ab46-459b107d6883"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": ""Tap"",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Focus"",
@@ -865,7 +876,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""One Modifier"",
                     ""id"": ""dd2d43f8-bb29-4696-8d33-30c3faa8855b"",
-                    ""path"": ""OneModifier"",
+                    ""path"": ""OneModifier(overrideModifiersNeedToBePressedFirst=true)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -874,18 +885,18 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""modifier"",
+                    ""name"": ""Modifier"",
                     ""id"": ""88600de7-62c2-4126-be0e-981adcbc338b"",
                     ""path"": ""<Keyboard>/ctrl"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Undo"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""binding"",
+                    ""name"": ""Binding"",
                     ""id"": ""4437b5ff-ee3f-488a-bc81-9ac52424b907"",
                     ""path"": ""<Keyboard>/z"",
                     ""interactions"": """",
@@ -898,7 +909,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""One Modifier"",
                     ""id"": ""8fdc3b62-8f0a-44dd-bdb7-716a6e03db16"",
-                    ""path"": ""OneModifier"",
+                    ""path"": ""OneModifier(overrideModifiersNeedToBePressedFirst=true)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -931,7 +942,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""Two Modifiers"",
                     ""id"": ""2c9c887b-d5c5-4bfc-80b6-f41d64590c99"",
-                    ""path"": ""TwoModifiers"",
+                    ""path"": ""TwoModifiers(overrideModifiersNeedToBePressedFirst=true)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",

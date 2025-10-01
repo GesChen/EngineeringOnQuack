@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using TMPro;
 
 /// <remarks>
 /// Don't store references to LiveWindows themselves
@@ -72,7 +73,6 @@ public class LiveWindow : MonoBehaviour {
 		if (Config.Resizable)
 			CheckNodes();
 
-		CheckSize();
 		if (Config.Movable) {
 			HandleDrag();
 		}
@@ -103,10 +103,6 @@ public class LiveWindow : MonoBehaviour {
 		BL.rt.anchorMax = new(0, 0);
 		BR.rt.anchorMin = new(1, 0);
 		BR.rt.anchorMax = new(1, 0);
-	}
-
-	void CheckSize() {
-		rt.sizeDelta = Vector2.Min(Vector2.Max(rt.sizeDelta, Config.Size.Minimum), Config.Size.Maximum);
 	}
 
 	Vector2 dragOffset;
@@ -158,7 +154,8 @@ public class LiveWindow : MonoBehaviour {
 
 	// check if anythings stopping dragging from occuring
 	bool DragAllowed() {
-		if (UIHovers.hovers.Any(h => h.GetComponent<Scrollbar>() != null)) return false;
+		if (UIHovers.HasComponent<Scrollbar>() || UIHovers.HasComponent<TMP_InputField>())
+			return false;
 
 		return true;
 	}
@@ -258,7 +255,7 @@ public class LiveWindow : MonoBehaviour {
 		SetWorldCorner(rt, pos, targetCorner);
 	}*/
 
-
+	/* old placeats, might need them as reference
 	public void PlaceAt(Vector3 point, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
 		PlaceAt(
 			new[] { point, point, point, point }, 
@@ -333,6 +330,116 @@ public class LiveWindow : MonoBehaviour {
 
 		SetWorldCorner(pos, targetCorner);
 	}
+	*/
+
+	/// <summary>
+	/// Place this LW at a point given edge and priorities, 
+	/// without going out of bounds. Edge will modify which side of the point
+	/// it is placed on in this case
+	/// </summary>
+	/// <param name="targetCorners">Corners of the target object to align to</param>
+	/// <param name="targetEdge">0-Top 1-Right 2-Bottom 3-Left</param>
+	/// <param name="alignment">How this LW is  aligned against the edge. <br></br><b>T</b> - up or right, <b>F</b> - left or down</param>
+	public void PlaceAt(Vector3 target, int targetEdge, bool alignment) {
+		PlaceAt(new[] { target, target, target, target }, targetEdge, alignment);
+	}
+
+	/// <summary>
+	/// Place this LW aligned to a RT given edge and priorities, 
+	/// without going out of bounds
+	/// </summary>
+	/// <param name="targetCorners">Corners of the target object to align to</param>
+	/// <param name="targetEdge">0-Top 1-Right 2-Bottom 3-Left</param>
+	/// <param name="alignment">How this LW is  aligned against the edge. <br></br><b>T</b> - up or right, <b>F</b> - left or down</param>
+	public void PlaceAt(RectTransform target, int targetEdge, bool alignment) {
+		Vector3[] corners = new Vector3[4];
+		target.GetWorldCorners(corners);
+
+		PlaceAt(corners, targetEdge, alignment);
+	}
+
+	/// <summary>
+	/// Place this LW at some corners given edge and priorities, 
+	/// without going out of bounds
+	/// </summary>
+	/// <param name="targetCorners">Corners of the target object to align to</param>
+	/// <param name="targetEdge">0-Top 1-Right 2-Bottom 3-Left</param>
+	/// <param name="alignment">How this LW is  aligned against the edge. <br></br><b>T</b> - up or right, <b>F</b> - left or down</param>
+	public void PlaceAt(Vector3[] targetCorners, int targetEdge, bool alignment) {
+		(bool horizontal, bool placement) =
+			targetEdge switch {
+				0 => (false, true),
+				1 => (true, true),
+				2 => (false, false),
+				3 => (true, false),
+				_ => throw new System.ArgumentException($"invalid targetEdge: {targetEdge}")
+			};
+
+		(int thisC, int testTargetC) = PlacementCorners(horizontal, placement, alignment);
+
+		static int opposite(int corner) =>
+			corner switch {
+				0 => 2,
+				1 => 3,
+				2 => 0,
+				3 => 1,
+				_ => -1
+			};
+
+		int testCorner = opposite(thisC);
+
+		var targetPos = targetCorners[testTargetC];
+		SetWorldCorner(targetPos, thisC);
+
+		Vector2 test = GetWorldCorner(testCorner);
+		(bool testX, bool testY) = InBounds(test);
+
+		if (!testX) {
+			if (horizontal) placement = !placement;
+			else alignment = !alignment;
+		}
+		if (!testY) {
+			if (horizontal) alignment = !alignment;
+			else placement = !placement;
+		}
+
+		int targetC;
+		(thisC, targetC) = PlacementCorners(horizontal, placement, alignment);
+
+		targetPos = targetCorners[targetC];
+		SetWorldCorner(targetPos, thisC);
+	}
+
+	// convert positioning to corner placements
+	// it makes a bit more sense in the brainstorming
+	private (int thisC, int targetC) PlacementCorners(
+		bool horizontal, bool placeUR, bool alignUR) =>
+		(horizontal, placeUR) switch {
+			(false, true)	=> alignUR ? (0, 1) : (3, 2),
+			(true, true)	=> alignUR ? (0, 3) : (1, 2),
+			(false, false)	=> alignUR ? (1, 0) : (2, 3),
+			(true, false)	=> alignUR ? (3, 0) : (2, 1)
+		};
+
+	public Vector2 GetWorldCorner(int corner) {
+		Vector3[] corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+		return corners[corner];
+	}
+
+	// i really shoudltn have made this a global function
+	// bools for if that axis is in bounds
+	public (bool x, bool y) InBounds(Vector2 p) {
+		Vector2 canvasSize = manager.CanvasRect.sizeDelta;
+		FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
+
+		Vector2 min = new(padding.Left, padding.Down);
+		Vector2 max = canvasSize - new Vector2(padding.Right, padding.Up);
+
+		return (
+			p.x > min.x && p.x < max.x,
+			p.y > min.y && p.y < max.y);
+	}
 
 	// 0-BL 1-TL 2-TR 3-BR
 	// this is kinda dumb but im lazy
@@ -357,6 +464,10 @@ public class LiveWindow : MonoBehaviour {
 		Vector3 offset = targetWorldPosition - currentCornerPos;
 
 		rt.position += offset;
+	}
+	public void PlaceAtCenter() {
+		Vector2 center = canvas.renderingDisplaySize / 2;
+		SetWorldCorner(center, 4);
 	}
 	#endregion
 }

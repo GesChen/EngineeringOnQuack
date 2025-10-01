@@ -108,6 +108,10 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		GenerateGroup(cw, sub, path, i + 1);
 	}*/
 
+	/// <summary>
+	/// dont call this except from windowmanager, otherwise generated windows
+	/// wont get cleaned up properly
+	/// </summary>
 	public LiveWindow Realise(CWindow window) {
 		GenerateGroup(window);
 
@@ -198,6 +202,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		newRT.position = oldRT.position;
 		newRT.rotation = oldRT.rotation;
 		newRT.localScale = oldRT.localScale;
+		newRT.sizeDelta = oldRT.sizeDelta;
 		// any other properties to copy 
 
 		Destroy(oldRT.gameObject);

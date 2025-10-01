@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class SaveLoadManager : Singleton<SaveLoadManager> {
@@ -31,41 +32,40 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.OnLoad += Load;
 	}
 
-	void Save() {
+	public void Save() {
 		string name = BuildingManager.Instance.Assembly.Name;
-		if (string.IsNullOrWhiteSpace(name)) {
-			SaveLoadMenus.ShowNamePrompt((newName) => {
-				BuildingManager.Instance.Assembly.Name = newName;
-				SaveFile(newName);
-				}
-			);
-		} else {
-			SaveFile(name);
-		}
+		bool nameUnset = string.IsNullOrWhiteSpace(name);
+		if (nameUnset)
+			SaveAs();
+		else
+			SaveFile();
 	}
 
 	void SaveAs() {
 		SaveLoadMenus.ShowNamePrompt((newName) => {
-			BuildingManager.Instance.Assembly.Name = newName;
-			SaveFile(newName);
+			BuildingManager.Instance.ChangeName(newName);
+			SaveFile();
 			}
 		);
 	}
 
-	void SaveFile(string name) {
+	void SaveFile() {
 		SaveLoadMenus.HideNamePrompt();
 		SaveLoadMenus.ShowSaveIcon();
 		SaveLoadMenus.SetSaveText("Saving...");
 
+		//await Task.Run(() => SaveLoadHelper.SaveCurrentBuild());
 		SaveLoadHelper.SaveCurrentBuild();
 
 		SaveLoadMenus.SetSaveText("Saved!");
 		StartCoroutine(SaveTextDelay());
+
+		BuildingManager.Instance.Dirty = false;
 	}
 
 	IEnumerator SaveTextDelay() {
 		yield return new WaitForSeconds(SaveTextHideDelay);
-		SaveLoadMenus.HideSaveIcon(); 
+		SaveLoadMenus.HideSaveIcon();
 	}
 
 	void UpdateLoadMenu() {

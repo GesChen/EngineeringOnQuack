@@ -7,6 +7,10 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 public static class SaveLoadHelper {
+	public static readonly JsonSerializerSettings Settings = new() {
+		TypeNameHandling = TypeNameHandling.Auto
+	};
+
 	static string Pathify(string name) => // turns name into full path
 		Path.Combine(
 		Config.Building.Saving.AssembliesLocation,
@@ -20,6 +24,7 @@ public static class SaveLoadHelper {
 		public int Parts;
 	}
 
+	// collapse this
 	public class HeaderHelper {
 		public class HeaderItem {
 			public System.Type Type;
@@ -254,7 +259,7 @@ public static class SaveLoadHelper {
 
 		BuildingManager.Instance.ResetPartsAndGroups();
 
-		var assembly = JsonConvert.DeserializeObject<Assembly.SAssembly>(json);
+		var assembly = JsonConvert.DeserializeObject<Assembly.SAssembly>(json, Settings);
 
 		var reconstructed = Assembly.Reconstruct(assembly);
 

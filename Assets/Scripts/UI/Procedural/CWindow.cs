@@ -9,6 +9,9 @@ public class CWindow {
 	public string Name;
 	public WindowItem[] Items;
 
+	// dunno if this should be turned into a struct, the class init
+	// overhead feels a tad possibly long for the fact that it will never
+	// be changed or copied? 
 	/// <summary>
 	/// Configuration for CWindows. 
 	/// </summary>
@@ -17,20 +20,14 @@ public class CWindow {
 		/// <summary>
 		/// <para>Resizable (T), Movable (T)</para>
 		/// <para>Color, Outline (float, color)</para>
-		/// <para>Size (free 100x100), Position (anchored center)</para>
+		/// <para>Size &lt;cw.config.__size&gt;(free 100x100), Position (anchored center)</para>
 		/// <para>ContentDynamic (F), DynamicPadding (0)</para>
 		/// <para>IsFlyout (F), Closable (T), HideOnStart (T)</para>
 		/// </summary>
 		public Configuration() { }
 
-		public static SizeData FixedSize(Vector2 oneSize) => 
-			new(oneSize, oneSize, oneSize);
-		public static SizeData FreeSize(Vector2 defaultSize) => 
-			new(defaultSize, Vector2.zero, Vector2.positiveInfinity);
-		public static SizeData BoundedSize(Vector2 @default, Vector2 min, Vector2 max) => 
-			new(@default, min, max);
-
-		public class SizeData {
+		[Serializable]
+		public struct SizeData {
 			public Vector2 Default;
 			public Vector2 Minimum;
 			public Vector2 Maximum;
@@ -38,9 +35,34 @@ public class CWindow {
 			public SizeData(Vector2 @default, Vector2 minimum, Vector2 maximum) {
 				Default = @default;
 				Minimum = minimum;
+				//Minimum = Vector2.Max(minimum, global::Config.UI.Behaviour.WindowUniversalMinSize);
 				Maximum = maximum;
 			}
 		}
+
+		/// <summary>
+		/// Fixed and unchanging size
+		/// </summary>
+		public static SizeData FixedSize(Vector2 oneSize) => 
+			new(oneSize, oneSize, oneSize);
+
+		/// <summary>
+		/// Free sizing with no limits
+		/// </summary>
+		public static SizeData FreeSize(Vector2 defaultSize) => 
+			new(defaultSize, Vector2.zero, Vector2.positiveInfinity);
+
+		/// <summary>
+		/// Free sizing with a minimum size
+		/// </summary>
+		public static SizeData FreeSizeMinimum(Vector2 @default, Vector2? minSize = null) =>
+			new(@default, minSize ?? @default, Vector2.positiveInfinity);
+		
+		/// <summary>
+		/// Free sizing with limits on minimum and maximum
+		/// </summary>
+		public static SizeData BoundedSize(Vector2 @default, Vector2 min, Vector2 max) => 
+			new(@default, min, max);
 
 		public bool Resizable				= true;
 		public bool Movable					= true;
@@ -100,6 +122,12 @@ public class CWindow {
 		m_realisedWindow = live;
 	}
 
+	/// <summary>
+	/// Adds an Event with a Timing
+	/// </summary>
+	/// <param name="timing"></param>
+	/// <param name="action">(timedeventinvoker source)</param>
+	/// <returns></returns>
 	public CWindow AddEvent(
 		TimedEventInvoker.Timing timing, 
 		TimedEventInvoker.TimedEventCall action) {

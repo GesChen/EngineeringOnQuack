@@ -5,9 +5,13 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
+	[HideInNormalInspector] public bool Dirty;
+	/// <summary>
+	/// Call this method whenever a change to the assembly is made! ANY CHANGE!
+	/// </summary>
+	public static void SetDirty() { Instance.Dirty = true; }
 
 	public Transform MainPartsContainer;
-	public TransformTools TransformTools;
 	public Transform SimulationContainer;
 
 	#region Setup
@@ -25,15 +29,20 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.ClearEvents();
 		MaterialEditingMenu.ClearEvents();
 
-		RightClickMenus.OnNewPartMade += 
-			name => MakeNewPart(name, true);
-		RightClickMenus.OnDelete += DeleteSelection;
-		RightClickMenus.OnCopy += Copy;
-		RightClickMenus.OnPaste += Paste;
-		RightClickMenus.OnDuplicate += Duplicate;
+		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
+		RightClickMenus.OnNewPartMade	+= _ => SetDirty();
+		RightClickMenus.OnDelete		+= DeleteSelection;
+		RightClickMenus.OnDelete		+= SetDirty;
+		RightClickMenus.OnCopy			+= Copy;
+		RightClickMenus.OnPaste			+= Paste;
+		RightClickMenus.OnDuplicate		+= Duplicate;
+		RightClickMenus.OnDuplicate		+= SetDirty;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
+
+		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
+		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
 
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
@@ -41,7 +50,16 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearAssemble();
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
+
+		SimulatingMainUI.TopBar.ClearReturnToEditing();
 		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
+
+		BottomBar.ClearNameChanged();
+		BottomBar.OnNameChanged += ChangeName;
+		BottomBar.OnNameChanged += _ => SetDirty();
+
+		BottomBar.ClearNewPressed();
+		BottomBar.OnNewPressed += New;
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -60,7 +78,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void Update() {
 		HandleInput();
-		
+
 		// set selection state of parts
 		foreach (Part part in Assembly.Parts) {
 			part.Selected = SelectionManager.Instance.PartSelection.Contains(part);
@@ -85,7 +103,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		// place part
 		// the container provides all the functionality i need already
-		
+
 		newpart.transform.position = PlacePos();
 
 		if (select)
@@ -107,15 +125,23 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return pos;
 	}
 
-	public void NewAssembly() {
+	void NewAssembly() {
 		ResetPartsAndGroups();
 		Assembly = new();
+
+		OutputManager.Instance.UpdateMenu();
+		OutputsMenu.HideMenu();
+
+		BottomBar.UpdateNameText("");
+
+		SelectionManager.Instance.ManuallySelect();
+		SelectionManager.Instance.UpdateContainer();
 	}
 	public void ResetPartsAndGroups() {
 		foreach (Part part in Assembly.Parts) {
 			Destroy(part.gameObject);
 		}
-		
+
 		Assembly.Parts.Clear();
 
 		Assembly.Groups.Clear();
@@ -156,20 +182,18 @@ public class BuildingManager : Singleton<BuildingManager> {
 	public void StartSimulating() {
 		SelectionManager.Instance.Clear();
 		SelectionManager.Instance.enabled = false;
-		TransformTools.active = false;
+		TransformTools.Instance.active = false;
 		//TransformTools.enabled = false;
 
 		DeselectAllParts();
 		ReturnAllPartsToMain();
 		HideAllPartsForSimulation();
-		SimulationManager.Instance.StartSimulating();
 	}
 
 	public void StopSimulating() {
 		SelectionManager.Instance.enabled = true;
 		//TransformTools.enabled = true;
 
-		SimulationManager.Instance.StopSimulating();
 		ShowAllPartsAfterSimulation();
 	}
 
@@ -178,16 +202,38 @@ public class BuildingManager : Singleton<BuildingManager> {
 			part.transform.parent = MainPartsContainer;
 		}
 	}
-	
+
 	void HideAllPartsForSimulation() {
 		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(false);
 		}
 	}
-	
+
 	void ShowAllPartsAfterSimulation() {
 		foreach (Part part in Assembly.Parts) {
 			part.gameObject.SetActive(true);
+		}
+	}
+
+	/// <summary>
+	/// Find and trigger all parts with nonstatic components, call the functions based on the state
+	/// </summary>
+	/// <param name="state">0-start simulating 1-stop simulating</param>
+	void TriggerNonStaticFunctions(int state) {
+		NonStaticPart[] nonStaticParts = Assembly.Parts
+			.Where(p => p.GetComponent<NonStaticPart>() != null) // optimize this
+			.Select(p => p.GetComponent<NonStaticPart>())
+			.ToArray();
+
+		switch (state) {
+		case 0: //start
+			foreach (var part in nonStaticParts)
+				part.OnStartSimulating();
+			break;
+		case 1:
+			foreach (var part in nonStaticParts)
+				part.OnStopSimulating();
+			break;
 		}
 	}
 	#endregion
@@ -212,6 +258,25 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 	#endregion
 
+	public void New() {
+		if (!Dirty) NewAssembly();
+		else {
+			UnsavedWorkMenu.Notify((choice) => {
+				switch (choice) {
+					case UnsavedWorkMenu.Choice.Save:
+						SaveLoadManager.Instance.Save();
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Discard:
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Cancel:
+						break; // do nothing
+				}
+			});
+		}
+	}
+
 	void Copy() {
 		Assembly.Clipboard.Copy(); // uses the most current version of assembly
 	}
@@ -228,5 +293,11 @@ public class BuildingManager : Singleton<BuildingManager> {
 	void Duplicate() {
 		Assembly.Clipboard.Copy();
 		Paste();
+	}
+
+	public void ChangeName(string name) {
+		Assembly.Name = name;
+
+		BottomBar.UpdateNameText(name);
 	}
 }

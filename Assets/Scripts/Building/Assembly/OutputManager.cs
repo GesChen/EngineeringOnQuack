@@ -44,14 +44,14 @@ public class OutputManager : Singleton<OutputManager> {
 
 	public void OnRenamePressed() {
 		bool exists = Outputs().Contains(currentName);
-		if (currentName != null && currentlySelectedI != -1 && !exists) {
+		if (!string.IsNullOrWhiteSpace(currentName) && currentlySelectedI != -1 && !exists) {
 			RenameOutput(currentlySelectedI, currentName);
 		}
 	}
 
 	public void OnAddPressed() {
 		bool exists = Outputs().Contains(currentName);
-		if (currentName != null && !exists) {
+		if (!string.IsNullOrWhiteSpace(currentName) && !exists) {
 			AddNewOutput(currentName);
 		}
 	}
@@ -76,6 +76,8 @@ public class OutputManager : Singleton<OutputManager> {
 
 	public void UpdateMenu() {
 		OutputsMenu.UpdateMenu(Outputs());
+
+		BuildingManager.SetDirty();
 	}
 
 	private static List<string> Outputs() {

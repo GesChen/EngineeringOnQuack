@@ -84,6 +84,19 @@ public class WindowItem {
 			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
 		};
 
+		public static LayoutConfig LayoutToWidth(
+			float anchory,
+			float pivoty,
+			float offsety,
+			float height,
+			FourSides padding = default) => FixedLayout(
+				new UIPosition(
+					new(0, anchory), new(1, anchory), new(.5f, pivoty), new(0, offsety)
+				),
+				new(0, height),
+				padding
+				);
+
 		public static LayoutConfig Custom(
 			Vector2? sizeDelta = null,
 			UIPosition fixedPosition = null,
@@ -132,8 +145,18 @@ public class WindowItem {
 		Construction.Add(new PComponents.Description(description));
 		return this;
 	}
+
+	/// <summary>
+	/// Adds a list of components to this WI. Any duplicately typed components will be ignored.
+	/// </summary>
 	public WindowItem AddComponents(params PComponents.Component[] comps) {
-		Construction.AddRange(comps);
+		// hashset construction faster still O(n+m) vs O(n*m)
+		var typesSeen = new HashSet<Type>(Construction.Select(c => c.GetType()));
+
+		foreach (var comp in comps)
+			if (typesSeen.Add(comp.GetType()))
+				Construction.Add(comp);
+
 		return this;
 	}
 
@@ -156,7 +179,7 @@ public class WindowItem {
 		RealizationEvent += action;
 		return this;
 	}
-	public void BecomeRealised(RectTransform rt, WindowItem self) {
+	internal void BecomeRealised(RectTransform rt, WindowItem self) {
 		m_realObject = rt;
 		RealizationEvent?.Invoke(rt, self);
 	}
@@ -341,6 +364,29 @@ public class WindowItem {
 		);
 	public static WindowItem NewScrollView(PComponents.ScrollView scroll, LayoutConfig layout, List<WindowItem> items) =>
 		NewScrollView("Scroll View", scroll, layout, items);
+
+	/// <summary>
+	/// Wraps this WI in a parent wrapper, useful to bypass layoutelement scaling
+	/// </summary>
+	/// <remarks>
+	/// This method should be placed at the end of a chain
+	/// </remarks>
+	public WindowItem Wrap() {
+		WindowItem wrapper = NewEmpty(
+			$"Wrapper for {Name}",
+			Layout);
+
+		Layout = LayoutConfig.FillLayout;
+		wrapper.SetSubItems(this);
+		
+		if (Construction.TryFind(c => c is PComponents.LayoutElement, out var comp)) {
+			Construction.Remove(comp);
+			wrapper.AddComponents(comp);
+		}
+		
+		return wrapper;
+	}
+
 	#endregion
 
 	public override string ToString() {

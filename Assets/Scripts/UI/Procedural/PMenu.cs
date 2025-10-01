@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -96,13 +97,14 @@ public class PMenu {
 			public float? Width;
 		}
 		#endregion
+
 		public Window(
 			string title, 
 			float width, 
+			bool isFlyout,
 			List<Item> items, 
 			bool showTitle = true, 
 			bool movable = false,
-			bool isFlyout = true,
 			bool closable = false,
 			bool hideOnStart = true,
 			bool switchable = false,
@@ -122,11 +124,10 @@ public class PMenu {
 			ExtraSpacing = extraSpacing;
 		}
 
-		public Window AddEventToCW(
-			TimedEventInvoker.Timing timing, 
-			TimedEventInvoker.TimedEventCall action) {
+		public TimedEventInvoker.TimedEvent[] CWEvents;
 
-			CWindow.AddEvent(timing, action);
+		public Window SetCWEvents(params TimedEventInvoker.TimedEvent[] events) {
+			CWEvents = events;
 			return this;
 		}
 
@@ -199,12 +200,8 @@ public class PMenu {
 				: base(label, description, iconName, iconPath, iconSprite) { }
 
 			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
-				return WindowItem.NewText(
+				return WindowItem.NewEmpty(
 					Label,
-					new(
-						Label,
-						fontSize: M.FontSize
-						),
 					WindowItemLayout(width)
 				).SetSubItems(subs);
 			}
@@ -263,7 +260,7 @@ public class PMenu {
 					Label,
 					new PComponents.InputField(
 						InputFieldChanged,
-						Label,
+						placeholderText: Label,
 						fontSize: M.FontSize),
 					WindowItemLayout(width)
 					).SetSubItems(subs);
@@ -441,19 +438,22 @@ public class PMenu {
 					rcw.CustomizationComponent.items.RemoveAt(0);
 			});
 		}
+
+		if (rcw.CWEvents != null) cw.CustomEvents = rcw.CWEvents.ToList();
 	}
 
 	static WindowItem GenerateItem(Window.Item item, Window rcw) {
 		List<WindowItem> subList = new();
 
 		// add label if its not empty or null or input field
-		if (!(item.Label == null || item.Label == "" || item is Window.InputField)) {
+		if (!(item.Label == null
+			|| item.Label == ""
+			|| item is Window.InputField)) {
 			var label = WindowItem.NewText(
 				"Label",
 				new(
 					item.Label,
-					fontSize: M.FontSize,
-					alignment : TextAlignmentOptions.Left
+					fontSize: M.FontSize
 				),
 				WindowItem.LayoutConfig.DynamicLayout(
 					margin: new FourSides(0, 0, 0, M.IconSize + M.IconLabelSpacing)

@@ -1,4 +1,4 @@
-#define DEBUGMODE
+//#define DEBUGMODE
 
 using UnityEditor;
 using UnityEngine;
@@ -252,5 +252,7 @@ public class RotateAxis : MonoBehaviour
 		main.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angleDelta, Quaternion.Inverse(targetStartRotation) * planeNormal);
 		
 		firstFrameAfterStartDrag = false;
+
+		BuildingManager.SetDirty();
 	}
 }

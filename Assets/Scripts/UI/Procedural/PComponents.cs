@@ -17,6 +17,19 @@ public class PComponents {
 		public abstract void RealiseComponent(
 			GameObject newObj,
 			WindowItem originalItem);
+
+		public event Action<UnityEngine.Component> RealisedEvent;
+		protected void FinaliseRealise() {
+			RealisedEvent?.Invoke(RealComponent);
+		}
+		public SelfComponentType OnRealised<SelfComponentType>(
+			Action<UnityEngine.Component> realComponentCallback
+			) where SelfComponentType : Component {
+
+			RealisedEvent += realComponentCallback;
+
+			return (SelfComponentType)this;
+		}
 	}
 
 	public class Image : Component {
@@ -79,6 +92,7 @@ public class PComponents {
 			}
 
 			RealComponent = image;
+			FinaliseRealise();
 		}
 	}
 
@@ -142,6 +156,7 @@ public class PComponents {
 			button.onClick.AddListener(TriggerClick);
 
 			RealComponent = button;
+			FinaliseRealise();
 		}
 	}
 
@@ -152,7 +167,8 @@ public class PComponents {
 		public FontWeight			Weight		= Config.UI.Visual.DefaultWeight;
 		public float				FontSize	= Config.UI.Visual.FontSize;
 		public Color				Color		= Config.UI.Visual.TextColor;
-		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.TopLeft;
+		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.Left;
+		public bool					Wrap		= false;
 
 		public Text(
 				string					content,
@@ -161,7 +177,8 @@ public class PComponents {
 				FontWeight?				weight		= null,
 				float?					fontSize	= null,
 				Color?					color		= null,
-				TextAlignmentOptions?	alignment	= null) {
+				TextAlignmentOptions?	alignment	= null,
+				bool					wrap		= false) {
 			Content = content;
 
 			Font		= font != null ? font : Config.UI.Visual.DefaultFont;
@@ -170,6 +187,7 @@ public class PComponents {
 			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
 			Color		= color		?? Config.UI.Visual.TextColor;
 			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
+			Wrap = wrap;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -183,14 +201,26 @@ public class PComponents {
 			text.color		= Color;
 			text.alignment	= Alignment;
 
+			if (!Wrap) {
+				// :( its so fucky
+				//text.overflowMode = TextOverflowModes.Ellipsis;
+			} else {
+				text.enableWordWrapping = true;
+				text.overflowMode = TextOverflowModes.Overflow;
+			}
+			text.isTextObjectScaleStatic = true;
+
 			if (!originalItem.Layout.IsFixed)
 				text.margin = originalItem.Layout.Padding.ToTMProType();
 
 			RealComponent = text;
+			FinaliseRealise();
 		}
 	}
 
 	public class InputField : Component {
+		// RealComponent uses TMP_InputField, dont cast wrong!
+
 		public Config.UI.ColorBlock Colors		= Config.UI.ColorBlock.DefaultBlock;
 
 		public string			PlaceholderText	= Config.UI.InputField.PlaceholderDefaultText;
@@ -209,13 +239,15 @@ public class PComponents {
 		public FourSides MaskPadding			= new(2);
 
 		public event Action<string> OnValueChanged;
+		public event Action<string> OnEndEdit;
 
 		/// <summary>
 		/// its probably best you just look at the source for 
 		/// this constructor tbh.
 		/// </summary>
 		public InputField(
-			Action<string>			onValueChanged,
+			Action<string>			onValueChanged = null,
+			Action<string>			onEndEdit = null,
 			string					placeholderText = null,
 			Color?					textColor = null,
 			Color?					placeholderColor = null,
@@ -230,6 +262,7 @@ public class PComponents {
 			) {
 
 			OnValueChanged = onValueChanged;
+			OnEndEdit = onEndEdit;
 
 			PlaceholderText = placeholderText ?? Config.UI.InputField.PlaceholderDefaultText;
 
@@ -250,6 +283,10 @@ public class PComponents {
 
 		public void ValueChanged(string newValue) {
 			OnValueChanged?.Invoke(newValue);
+		}
+
+		public void EndEdit(string value) {
+			OnEndEdit?.Invoke(value);
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -289,6 +326,9 @@ public class PComponents {
 			phtext.fontWeight = Weight;
 			phtext.alignment = Alignment;
 
+			// sdtill breaks TMP 
+			//phtext.overflowMode = TextOverflowModes.Ellipsis;
+
 			phtext.text = PlaceholderText;
 
 			GameObject to = new("Text");
@@ -305,6 +345,8 @@ public class PComponents {
 			ttext.fontWeight = Weight;
 			ttext.alignment = Alignment;
 
+			//ttext.overflowMode = TextOverflowModes.Ellipsis;
+
 			field.textViewport = taRT;
 			field.textComponent = ttext;
 			field.placeholder = phtext;
@@ -312,6 +354,7 @@ public class PComponents {
 			field.fontAsset = Font;
 			field.pointSize = FontSize;
 			field.onValueChanged.AddListener(ValueChanged);
+			field.onEndEdit.AddListener(EndEdit);
 
 			// caret and small fix
 			field.customCaretColor = true;
@@ -321,6 +364,7 @@ public class PComponents {
 			field.enabled = true;
 
 			RealComponent = field;
+			FinaliseRealise();
 		}
 	}
 
@@ -389,6 +433,9 @@ public class PComponents {
 					fillOwnAxis,
 					matchOtherDimension);
 
+			/// <summary>
+			/// Fixed size, items scale
+			/// </summary>
 			public Layout Fixed(
 				bool fillOwnAxis,
 				bool matchOtherDimension,
@@ -494,6 +541,7 @@ public class PComponents {
 			}
 
 			RealComponent = layout;
+			FinaliseRealise();
 		}
 	}
 
@@ -510,6 +558,7 @@ public class PComponents {
 			element.flexibleHeight = SizeMultiplier;
 
 			RealComponent = element;
+			FinaliseRealise();
 		}
 	}
 
@@ -540,33 +589,32 @@ public class PComponents {
 			htComp.Colors = Colors;
 
 			RealComponent = htComp;
+			FinaliseRealise();
 		}
 	}
 
 	public class FlyoutTrigger : Component {
 		public CWindow TargetWindow;
 		public WindowItem IndicatorImage;
-		public bool OpenHorizontally;
-		public bool OpenPrioritizingRight;
-		public bool OpenPrioritizingUp;
+		public int OpenTargetEdge;
+		public bool OpenAlignment;
+
 		public string OpenSpriteLocation = Config.UI.Locations.FlyoutTriggerOpenSprite;
 		public string ClosedSpriteLocation = Config.UI.Locations.FlyoutTriggerClosedSprite;
 
 		public FlyoutTrigger(
 			CWindow targetFlyout,
 			WindowItem indicatorImage = null,
-			bool openHorizontally = true,
-			bool openPrioritizingRight = true,
-			bool openPrioritizingUp = false,
+			int openTargetEdge = 1,
+			bool openAlignment = false,
 			string openSpriteLocation = null,
 			string closedSpriteLocation = null) {
 
 			TargetWindow = targetFlyout;
 			IndicatorImage = indicatorImage;
 
-			OpenHorizontally = openHorizontally;
-			OpenPrioritizingUp = openPrioritizingUp;
-			OpenPrioritizingRight = openPrioritizingRight;
+			OpenTargetEdge = openTargetEdge;
+			OpenAlignment = openAlignment;
 			
 			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Locations.FlyoutTriggerOpenSprite;
 			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Locations.FlyoutTriggerClosedSprite;
@@ -575,9 +623,8 @@ public class PComponents {
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
 			var ftComp = newObj.AddComponent<global::FlyoutTrigger>();
 
-			ftComp.openHorizontally			= OpenHorizontally;
-			ftComp.openPrioritizingUp		= OpenPrioritizingUp;
-			ftComp.openPrioritizingRight	= OpenPrioritizingRight;
+			ftComp.openTargetEdge	= OpenTargetEdge;
+			ftComp.openAlignment	= OpenAlignment;
 
 			// find hovertarget component
 			if (!newObj.TryGetComponent<global::HoverTarget>(out var htInstance)) {
@@ -613,6 +660,7 @@ public class PComponents {
 			}
 
 			RealComponent = ftComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -628,6 +676,7 @@ public class PComponents {
 			dsComp.Text = Text;
 
 			RealComponent = dsComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -644,6 +693,7 @@ public class PComponents {
 			var fhComp = newObj.AddComponent<global::FlyoutHider>();
 
 			RealComponent = fhComp;
+			FinaliseRealise();
 		}
 	}
 
@@ -658,6 +708,7 @@ public class PComponents {
 			var comp = newObj.AddComponent<global::ScaleToContents>();
 			comp.padding = Padding;
 			RealComponent = comp;
+			FinaliseRealise();
 		}
 	}
 
@@ -688,7 +739,7 @@ public class PComponents {
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
-			var comp = newObj.AddComponent<ScrollRect>();
+			var comp = newObj.AddComponent<BetterScrollRect>(); // interchangable with normal scrollrect
 			var rt = newObj.GetComponent<RectTransform>();
 
 			// this is gonna be a little fuckin complicated :(
@@ -763,6 +814,7 @@ public class PComponents {
 			scaler.IgnoreVertical = !VerticalScrolling;
 
 			RealComponent = comp;
+			FinaliseRealise();
 		}
 
 		// unity's scrollbar

@@ -48,7 +48,7 @@ public class Assembler : Singleton<Assembler> {
 	// needs special checking, been abstracted so can modify this
 	// method to account for that
 	bool PartIsAxle(Part part) {
-		return part.GetComponent<Axle>() != null; // also this check will be changed later 
+		return part.GetComponent<Part_Axle>() != null; // also this check will be changed later 
 	}
 
 	public List<Connection> FindAllConnections(List<Part> parts) {
@@ -94,7 +94,7 @@ public class Assembler : Singleton<Assembler> {
 			Part normPart = aIsAxle ? B : A;
 
 			// only connect if either end of axle is inside the normal
-			Axle axle = axlePart.GetComponent<Axle>();
+			Part_Axle axle = axlePart.GetComponent<Part_Axle>();
 			Triangle[] partTris = PartUtil.PartToWSTriList(normPart);
 
 			Vector3 pointA = axle.endA.position;
@@ -270,7 +270,7 @@ public class Assembler : Singleton<Assembler> {
 			int assemblyofpart = assembleds
 				.First(a => a.Source.Parts.Contains(api)).Source.ID;
 
-			Axle axle = parts[api].GetComponent<Axle>();
+			Part_Axle axle = parts[api].GetComponent<Part_Axle>();
 
 			for (int connectionI = 0; connectionI < assembleds.Count; connectionI++) {
 				Assembled assembled = assembleds[connectionI];

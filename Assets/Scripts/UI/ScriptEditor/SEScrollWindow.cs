@@ -6,7 +6,6 @@ public class SEScrollWindow : ScrollWindow {
 
 	public override void UpdateContentsPosition() {
 		contentsRect.localPosition = new(-xScrollAmount, yScrollAmount);
-		ScriptEditor.lineNumbersRect.localPosition = new(0, yScrollAmount);
 	}
 
 	public override void Recalculate() {
@@ -14,8 +13,8 @@ public class SEScrollWindow : ScrollWindow {
 		windowHeight = thisRect.rect.height;
 
 		xScrollableDist = contents.maxWidth - windowWidth 
-			+ ScriptEditor.lineNumbersVerticalLayout.maxWidth 
-			+ ScriptEditor.numberToContentSpace;
+			//+ ScriptEditor.lineNumbersVerticalLayout.maxWidth 
+			+ Config.ScriptEditor.NumberToContentSpace;
 		yScrollableDist = contents.totalHeight - windowHeight; // may be negative
 	}
 }

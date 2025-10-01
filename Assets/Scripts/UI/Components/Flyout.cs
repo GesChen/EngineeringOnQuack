@@ -13,6 +13,7 @@ public class Flyout : MonoBehaviour {
 	LiveWindow lw;
 	
 	CWindow[] childFlyouts;
+	FlyoutTrigger[] childTriggers;
 
 	void Start() {
 		rt = GetComponent<RectTransform>();
@@ -53,8 +54,8 @@ public class Flyout : MonoBehaviour {
 	}
 
 	void FindChildren() {
-		var triggers = GetComponentsInChildren<FlyoutTrigger>();
-		childFlyouts = triggers.Select(t => t.targetCWindow).ToArray();
+		childTriggers = GetComponentsInChildren<FlyoutTrigger>();
+		childFlyouts = childTriggers.Select(t => t.targetCWindow).ToArray();
 	}
 
 	public bool CheckMouseValidity(float margin) {
@@ -72,23 +73,23 @@ public class Flyout : MonoBehaviour {
 		return mousePos.x < max.x && mousePos.y < max.y && mousePos.x > min.x && mousePos.y > min.y;
 	}
 
-	public void Show(FlyoutTrigger trigger, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
+	public void Show(FlyoutTrigger trigger, int targetEdge, bool alignment) {
 		transform.SetAsLastSibling(); // might change this idk
 
 		lw.Show();
-		lw.PlaceAt(trigger.rt, horizontal, prioritizeRight, prioritizeUp);
+		lw.PlaceAt(trigger.rt, targetEdge, alignment);
 	}
 
-	public void Show(Vector3 at, bool horizontal, bool prioritizeRight, bool prioritizeUp) {
+	public void Show(Vector3 at, int targetEdge, bool alignment) {
 		gameObject.SetActive(true);
 		transform.SetAsLastSibling();
 
-		lw.PlaceAt(at, horizontal, prioritizeRight, prioritizeUp);
+		lw.PlaceAt(at, targetEdge, alignment);
 	}
 
 	public void Hide() {
-		foreach (var child in childFlyouts)
-			child.RealisedWindow.Hide();
+		foreach (var child in childTriggers)
+			child.targetFlyout.Hide();
 
 		gameObject.SetActive(false);
 	}

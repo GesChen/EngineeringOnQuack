@@ -21,6 +21,12 @@ public class Part : MonoBehaviour {
 	[HideInNormalInspector] public Material material;
 	[HideInNormalInspector] public PhysicMaterial physicMaterial;
 
+	public bool IsNonStaticPart(out NonStaticPart NSPComponent) {
+		NSPComponent = gameObject.GetComponent<NonStaticPart>();
+
+		return NSPComponent != null;
+	}
+
 	void Start() {
 		renderers = GetComponentsInChildren<MeshRenderer>(); // includes self
 		colliders = GetComponentsInChildren<Collider>();

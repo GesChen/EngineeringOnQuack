@@ -70,7 +70,7 @@ public class WindowManager : Singleton<WindowManager> {
 	/// stop calling this from individual classes, instead put them all into
 	/// allwindows and windowmanager will do it
 	/// </summary>
-	void RealiseWindows(params CWindow[] torealise) {
+	public void RealiseWindows(params CWindow[] torealise) {
 		Windows ??= new();
 		foreach (var window in torealise) {
 			Realiser.Realise(window);
@@ -87,6 +87,18 @@ public class WindowManager : Singleton<WindowManager> {
 
 		// destroy the groups too
 		WindowRealiser.Instance.DestroyAllGroupObjects();
+	}
+
+	internal void DestroyWindow(CWindow window) {
+		int i = Windows.IndexOf(window);
+
+		if (i == -1) {
+			Debug.LogWarning($"deletion attempt of cw {window.Name} failed, not registered in windows list");
+			return;
+		}
+
+		Windows.RemoveAt(i);
+		Destroy(window.RealisedWindow.gameObject);
 	}
 
 	void ResetAllMenus() {

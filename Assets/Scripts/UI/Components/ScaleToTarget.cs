@@ -10,7 +10,7 @@ public class ScaleToTarget : MonoBehaviour {
 		rt = GetComponent<RectTransform>();
 	}
 
-	void Update() {
+	void LateUpdate() {
 		rt.sizeDelta = target.sizeDelta; 
 	}
 }

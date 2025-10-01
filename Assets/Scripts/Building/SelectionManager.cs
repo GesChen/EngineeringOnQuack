@@ -7,7 +7,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	public bool selectionBoxDragging;
 
 	public List<Transform> Selection { get; private set; }
-	public Part[] PartSelection { get; private set; }
+	public Part[] PartSelection { get; private set; } // always in sync with selection
 
 	public Transform selectionContainer;
 
@@ -44,6 +44,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Subscribe() {
 		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
+
+		ContextObserver.Instance.GetCurrentSSBasePartID += () => PartSelection[0].basePart.ID;
 	}
 
 	bool UpdateGroupContext() {
@@ -99,14 +101,15 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void HandleInput() {
-		if (ContextManager.IsInContext<Contexts.OverUI>(out _)) return;
+		//if (ContextManager.IsInContext<Contexts.OverUI>(out _)) return;
+		if (UIHovers.results.Count > 0) return;
 		CheckCancel();
 
 		mousePos = Conatrols.Mouse.Position;
 
 		// detect mouse down
 		if (Conatrols.Mouse.Left.PressedThisFrame) {
-			dragging = !(BuildingManager.Instance.TransformTools.dragging || BuildingManager.Instance.TransformTools.hovering);
+			dragging = !(TransformTools.Instance.dragging || TransformTools.Instance.hovering);
 
 			dragStart = mousePos;
 			dragStartSelections = Selection;
@@ -122,7 +125,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 			ClickCheck();
 
 		// detect mouse up
-		if (!Conatrols.Mouse.Left.Pressed && !BuildingManager.Instance.TransformTools.hovering) {
+		if (!Conatrols.Mouse.Left.Pressed && !TransformTools.Instance.hovering) {
 			if (dragging) {
 				if (Vector2.Distance(mousePos, dragStartPos) < Config.Input.clickMaxMovement)
 					ClickCheck();
@@ -342,13 +345,13 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		// then break if the selection is empty
 		if (Selection.Count == 0) {
-			BuildingManager.Instance.TransformTools.active = false;
+			TransformTools.Instance.active = false;
 			selectionContainer.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 			selectionContainer.transform.localScale = Vector3.one;
 
 			return;
 		} else {
-			BuildingManager.Instance.TransformTools.active = true;
+			TransformTools.Instance.active = true;
 		}
 
 		// handle position
@@ -359,10 +362,10 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 
 		selectionContainer.position = totalPosition / Selection.Count;
-		BuildingManager.Instance.TransformTools.UpdatePosition();
+		TransformTools.Instance.UpdatePosition();
 
 		// handle rotation (local, single selection, otherwise will act globally)
-		if (Selection.Count == 1 && BuildingManager.Instance.TransformTools.local)
+		if (Selection.Count == 1 && TransformTools.Instance.local)
 			selectionContainer.rotation = Selection[0].transform.rotation;
 		else
 			selectionContainer.rotation = Quaternion.identity;

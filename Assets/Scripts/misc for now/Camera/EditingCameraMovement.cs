@@ -75,6 +75,10 @@ public class EditingCameraMovement : MonoBehaviour
 			moveSmoothness = moveDrift;
 		}
 
+		if (Conatrols.IM.Camera.Focus.WasPerformedThisFrame()) {
+			Focus();
+		}
+
 		focus = Vector3.Lerp(focus, target, moveSmoothness);// Vector3.SmoothDamp(focus, target, ref smoothTargetVel, focusTime);
 		Quaternion r = Quaternion.Euler(pitch, yaw, 0);
 		transform.SetPositionAndRotation(r * Vector3.forward * dist + focus, r);

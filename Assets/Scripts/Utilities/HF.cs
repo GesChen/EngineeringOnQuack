@@ -1,15 +1,73 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using UnityEngine;
+using System.Linq;
+using System.Text;
 using TMPro;
-using UnityEngine.UI;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public static class HF {
 	#region Base Class Extensions
+	public static string ToBetterString<T>(this IEnumerable<T> collection) {
+		if (collection == null) return "[]";
+
+		var sb = new StringBuilder();
+		sb.Append("[");
+
+		bool first = true;
+		foreach (var item in collection) {
+			if (!first) sb.Append(", ");
+			first = false;
+
+			if (item == null) sb.Append("null");
+			else if (item is string) sb.Append($"'{item}'");
+			else sb.Append(item.ToString());
+		}
+
+		sb.Append("]");
+		return sb.ToString();
+	}
+	
+	public static bool TryFind<T>(this IEnumerable<T> source, Func<T, bool> predicate, out T result) {
+		foreach (var item in source) {
+			if (predicate(item)) {
+				result = item;
+				return true;
+			}
+		}
+		result = default!;
+		return false;
+	}
+
+	// these 2 are for parity with custom scroll rect
+	public static void ManuallyScrollX(this ScrollRect scrollRect, float xPixels) {
+		scrollRect.content.transform.position -= xPixels * Vector3.right;
+		scrollRect.onValueChanged?.Invoke(scrollRect.normalizedPosition);
+	}
+
+	public static void ManuallyScrollY(this ScrollRect scrollRect, float yPixels) {
+		scrollRect.content.transform.position += yPixels * Vector3.up;
+		scrollRect.onValueChanged?.Invoke(scrollRect.normalizedPosition);
+	}
+
+	public static Vector2 CurrentScrollAmount(this ScrollRect scrollRect) {
+		if (scrollRect == null || scrollRect.content == null) return Vector2.zero;
+		float contentWidth = scrollRect.content.rect.width;
+		float contentHeight = scrollRect.content.rect.height;
+		float viewportWidth = scrollRect.viewport.rect.width;
+		float viewportHeight = scrollRect.viewport.rect.height;
+
+		float xMax = Mathf.Max(0, contentWidth - viewportWidth);
+		float yMax = Mathf.Max(0, contentHeight - viewportHeight);
+
+		float xPixels = scrollRect.horizontalNormalizedPosition * xMax;
+		float yPixels = (1f - scrollRect.verticalNormalizedPosition) * yMax; // top=0
+		return new Vector2(xPixels, yPixels);
+	}
+
 	public static Color MultiplyColorByVector(Vector3 vector, Color color) {
 		return new Color(color.r * vector.x, color.g * vector.y, color.b * vector.z, color.a);
 	}
@@ -61,6 +119,30 @@ public static class HF {
 
 	}
 	#endregion
+
+	public static RectTransform CreateRectTransform(
+		string name,
+		Transform parent,
+		Vector2 anchorMin,
+		Vector2 anchorMax,
+		Vector2 pivot,
+		Vector2 offsetMin,
+		Vector2 offsetMax,
+		Vector3 localPosition) {
+
+		var go = new GameObject(name);
+		RectTransform rt = go.AddComponent<RectTransform>();
+
+		rt.SetParent(parent, false);
+		rt.anchorMin = anchorMin;
+		rt.anchorMax = anchorMax;
+		rt.offsetMin = offsetMin;
+		rt.offsetMax = offsetMax;
+		rt.pivot = pivot;
+		rt.localPosition = localPosition;
+
+		return rt;
+	}
 
 	public static string GetPath(this Transform current) {
 		if (current.parent == null)
@@ -469,6 +551,7 @@ public static class HF {
 	/// <summary>
 	/// Loads a resource of type T from Resources at the given path,
 	/// caches it in the provided field, and logs an error if load fails.
+	/// Should be used with => 
 	/// </summary>
 	public static T LoadResource<T>(ref T cacheField, string path) where T : UnityEngine.Object {
 		if (cacheField == null) {

@@ -9,7 +9,7 @@ public static class ContextWindows {
 	public struct WindowCollection {
 		public Type Context;
 		public CWindow[] Windows;
-		public PMenu.Window[] Menus;
+		public PMenu.Window[] Menus; 
 		public Action[] Sets;
 
 		public WindowCollection(
@@ -25,6 +25,10 @@ public static class ContextWindows {
 		}
 	}
 
+	// possibly the most cursed thing ever written. however? it works? 
+	// because the issue is that the custom setters need to be called
+	// before the things can be accessed and like at all accessed
+	// kinda complicated yeah but it works so
 	public static WindowCollection MakeCollection(
 		Type context,
 		Action[] sets,
@@ -54,7 +58,10 @@ public static class ContextWindows {
 			MaterialEditingMenu.Set,
 			SaveLoadMenus.Set,
 			OutputsMenu.Set,
-			BottomBar.Set
+			BottomBar.Set,
+			UnsavedWorkMenu.Set,
+			FileExplorer.Set,
+			SEProcedural.Set
 		},
 		() => (
 		Conglomerate(
@@ -63,14 +70,18 @@ public static class ContextWindows {
 			MaterialEditingMenu.Windows,
 			SaveLoadMenus.Windows,
 			OutputsMenu.Windows,
-			BottomBar.Windows
+			BottomBar.Windows,
+			UnsavedWorkMenu.Windows,
+			FileExplorer.Windows
+			//SEProcedural.Windows
 		),
 		Conglomerate(
 			RightClickMenus.Menus,
 			MaterialEditingMenu.Menus,
 			SaveLoadMenus.Menus,
 			OutputsMenu.Menus,
-			BottomBar.Menus
+			BottomBar.Menus,
+			UnsavedWorkMenu.Menus
 		))
 	);
 

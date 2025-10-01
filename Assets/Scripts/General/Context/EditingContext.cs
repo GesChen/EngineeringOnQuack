@@ -33,6 +33,7 @@ namespace Contexts {
 		public Type ParentType => typeof(InWorld);
 		public SingleSelection(IContext parent) => ((IContext)this).SetParent(parent);
 		public SingleSelection() { }
+		public int SelectedBasePartID;
 	}
 
 	public class MultiSelection : IContext {

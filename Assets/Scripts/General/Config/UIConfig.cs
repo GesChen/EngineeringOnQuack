@@ -32,6 +32,8 @@ public static partial class Config {
 			public static readonly float	MaxMouseMovementForClick	= 5;
 			public static readonly int		TimeForDescriptionChangeMs	= 100;
 			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 50, 10);
+
+			public static readonly Vector2  WindowUniversalMinSize = new(50, 50);
 		}
 
 		// experimental design change
@@ -141,6 +143,12 @@ public static partial class Config {
 					return powStart / (powStart + Mathf.Pow(1 - x, b));
 				}
 			}
+		}
+
+		public static class PDialog {
+			public static readonly float MessageFlexHeight = 5;
+			public static readonly float ExtraItemsFlexHeight = 4;
+			public static readonly float OptionsFlexHeight = 3;
 		}
 	}
 	/*

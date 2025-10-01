@@ -47,7 +47,7 @@ public static partial class Config {
 			public static readonly bool SaveAsText = true;
 			public static readonly string SaveExtension = ".assembly";
 
-			public static readonly bool SaveClipboard;
+			public static readonly bool SaveClipboard = true;
 			
 			public static string SavingLocation =>
 				HF.GuaranteePath(

@@ -17,7 +17,7 @@ public class BuildingClipboard {
 
 		var parts = SelectionManager.Instance.PartSelection;
 
-		clip.Parts = parts.Select(p => (SPart)p).ToArray();
+		clip.Parts = parts.Select(p => ConvertPartToSPart(p)).ToArray();
 
 		/*
 		// below code is hella unreadable i wrote it while half asleep
@@ -85,7 +85,13 @@ public class BuildingClipboard {
 			transform.localScale = origPart.scale;
 
 			newTransforms[i] = transform;
+			
+			if (newPart.IsNonStaticPart(out var nsp)) {
+				nsp.FinalizeSPartReconstruction(origPart, newPart);
+			}
 		}
+
+
 
 		return (newParts, newTransforms);
 	}
