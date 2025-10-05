@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 // this file will probably not be used in final but here for temporary 
 // this is being used alot more than im expecting man im ngl
+// alr i think we keeping this tbh lmao 
 public class WindowManager : Singleton<WindowManager> {
 	public List<CWindow> Windows = new();
 	public List<PMenu.Window> Menus = new();

@@ -22,15 +22,7 @@ public class deleteaftertest : MonoBehaviour {
 			SEProcedural.ScriptEditor.Load(lines);
 		}
 
-		if (Input.GetKeyDown("q")) {
-			FileExplorer.ResetHistory();
-			FileExplorer.LoadDirectory(
-				"C:\\Users\\gesch\\Pictures",
-				new[] {".png"},
-				null,
-				false
-				);
-		}
+		
 		/*
 				if (Input.GetKeyDown("e")) {
 					ProceduralScriptEditor

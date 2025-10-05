@@ -46,6 +46,10 @@ public class SelectionManager : Singleton<SelectionManager> {
 		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
 
 		ContextObserver.Instance.GetCurrentSSBasePartID += () => PartSelection[0].basePart.ID;
+	
+		CPU_UI.GetCurrentScript += () => 
+		PartSelection[0].GetComponent<Part_CPU>().Script.Contents.Lines.Select(l => l.OriginalString).ToArray();
+		;
 	}
 
 	bool UpdateGroupContext() {

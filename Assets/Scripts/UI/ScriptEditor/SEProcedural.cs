@@ -12,6 +12,14 @@ public static class SEProcedural {
 
 	static float viewportMargins = 50;
 
+	public static void Show() {
+		SEWindow.RealisedWindow.PlaceAtCenter();
+		SEWindow.RealisedWindow.Show();
+	}
+	public static void Hide() {
+		SEWindow.RealisedWindow.Hide();
+	}
+
 	static void Setup(TimedEventInvoker iv) {
 		// set things up from the deepest upwards
 
@@ -115,7 +123,7 @@ public static class SEProcedural {
 				Resizable = true,
 				Movable = true,
 				Size = CWindow.Configuration.FreeSize(new(1000, 500)),
-				HideOnStart = false,
+				HideOnStart = true,
 			},
 			Items = new WindowItem[] {
 				WindowItem.NewImage(

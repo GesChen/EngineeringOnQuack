@@ -60,7 +60,6 @@ public static class ContextWindows {
 			OutputsMenu.Set,
 			BottomBar.Set,
 			UnsavedWorkMenu.Set,
-			FileExplorer.Set,
 			SEProcedural.Set
 		},
 		() => (
@@ -72,8 +71,7 @@ public static class ContextWindows {
 			OutputsMenu.Windows,
 			BottomBar.Windows,
 			UnsavedWorkMenu.Windows,
-			FileExplorer.Windows
-			//SEProcedural.Windows
+			SEProcedural.Windows
 		),
 		Conglomerate(
 			RightClickMenus.Menus,
