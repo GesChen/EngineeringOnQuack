@@ -61,6 +61,8 @@ public class Memory {
 		Interpreter = interpreter;
 		Nick = nick;
 	}
+	
+	// potential to be really fucking slow by the way
 	public Memory(Memory original) {
 		Data = new Dictionary<string, T_Data>(original.Data);
 		Types = new Dictionary<string, Type>(original.Types);

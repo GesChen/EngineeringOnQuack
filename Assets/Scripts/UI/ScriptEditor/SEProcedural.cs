@@ -1,16 +1,21 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UI;
+using W = PMenu.Window;
+using TMPro;
 
 // static for now, can figure out howt o make it into object form later
 public static class SEProcedural {
 	public static ScriptEditor ScriptEditor;
 
+	static float menuHeight = 30;
 	static float viewportMargins = 50;
+	static int menuButtonRelWidth = 1;
+	static int menuNameRelWidth = 7;
 
 	public static void Show() {
 		SEWindow.RealisedWindow.PlaceAtCenter();
@@ -20,6 +25,7 @@ public static class SEProcedural {
 		SEWindow.RealisedWindow.Hide();
 	}
 
+	public static Action OnSetup;
 	static void Setup(TimedEventInvoker iv) {
 		// set things up from the deepest upwards
 
@@ -58,7 +64,7 @@ public static class SEProcedural {
 		contentmask.gameObject.AddComponent<RectMask2D>();
 		content.SetParent(contentmask);
 
-		Object.Destroy(content.GetComponent<ScaleToContents>());
+		UnityEngine.Object.Destroy(content.GetComponent<ScaleToContents>());
 		content.gameObject.AddComponent<ScaleToTarget>().target = contentparent;
 
 		var contentrt = content.GetComponent<RectTransform>();
@@ -68,7 +74,7 @@ public static class SEProcedural {
 		contentrt.localPosition = Vector2.zero;
 
 		// destroy the temporary empty object
-		Object.Destroy(content.transform.GetChild(0).gameObject);
+		UnityEngine.Object.Destroy(content.transform.GetChild(0).gameObject);
 
 		setupvlg(contentparent);
 
@@ -80,7 +86,7 @@ public static class SEProcedural {
 		var history = g.AddComponent<LazyHistory>(); // interchangable with history if fix it
 		history.SE = ScriptEditor;
 
-		Object.Destroy(ScrollView.GetComponent<Image>());
+		UnityEngine.Object.Destroy(ScrollView.GetComponent<Image>());
 		ScriptEditor.scroll = ScrollView.GetComponent<ScrollRect>(); // returns betterscrollrect hopefully
 		ScriptEditor.contentParent = contentparent;
 		ScriptEditor.contentMask = contentmask;
@@ -89,6 +95,11 @@ public static class SEProcedural {
 		ScriptEditor.history = history;
 
 		ScriptEditor.OnDragStateChanged += DragStateChanged;
+
+		// subscribe to the close event to update cpu script
+		//SEWindow.RealisedWindow.
+
+		OnSetup?.Invoke();
 	}
 
 	static void DragStateChanged(bool state) {
@@ -114,6 +125,105 @@ public static class SEProcedural {
 	}
 
 	static RectTransform ScrollView;
+	static TMP_InputField FileNameField;
+
+	public static void SetFileName(string name) {
+		if (FileNameField != null)
+			FileNameField.text = name;
+	}
+
+	public static void ClearEvents() {
+		OnNewPressed = null;
+		OnOpenPressed = null;
+		OnSavePressed = null;
+		OnSaveAsPressed = null;
+
+		OnUndoPressed = null;
+		OnRedoPressed = null;
+		OnCutPressed = null;
+		OnCopyPressed = null;
+		OnPastePressed = null;
+		OnDuplicatePressed = null;
+	}
+
+	public static Action<string> OnFileNameChanged;
+
+	public static event Action OnNewPressed;
+	public static event Action OnOpenPressed;
+	public static event Action OnSavePressed;
+	public static event Action OnSaveAsPressed;
+
+	static W FileMenu;
+	static void SetFileMenu() {
+		FileMenu = new(
+			"File",
+			150,
+			true,
+			new() {
+				new W.Button(
+					() => OnNewPressed?.Invoke(),
+					"New"
+				),
+				new W.Button(
+					() => OnOpenPressed?.Invoke(),
+					"Open"
+				),
+				new W.Button(
+					() => OnSavePressed?.Invoke(),
+					"Save"
+				),
+				new W.Button(
+					() => OnSaveAsPressed?.Invoke(),
+					"Save As"
+				),
+			},
+			showTitle: false
+		);
+	}
+
+	public static event Action OnUndoPressed;
+	public static event Action OnRedoPressed;
+	public static event Action OnCutPressed;
+	public static event Action OnCopyPressed;
+	public static event Action OnPastePressed;
+	public static event Action OnDuplicatePressed;
+
+	static W EditMenu;
+	static void SetEditMenu() {
+		EditMenu = new(
+			"Edit",
+			150,
+			true,
+			new() {
+				new W.Button(
+					() => OnUndoPressed?.Invoke(),
+					"Undo"
+				),
+				new W.Button(
+					() => OnRedoPressed?.Invoke(),
+					"Redo"
+				),
+				new W.Button(
+					() => OnCutPressed?.Invoke(),
+					"Cut"
+				),
+				new W.Button(
+					() => OnCopyPressed?.Invoke(),
+					"Copy"
+				),
+				new W.Button(
+					() => OnPastePressed?.Invoke(),
+					"Paste"
+				),
+				new W.Button(
+					() => OnDuplicatePressed?.Invoke(),
+					"Duplicate"
+				),
+			},
+			showTitle: false
+		);
+	}
+	
 
 	static CWindow SEWindow;
 	static void SetSEWindow() {
@@ -131,6 +241,61 @@ public static class SEProcedural {
 					new PComponents.Image(Config.UI.Visual.BackgroundColor),
 					WindowItem.LayoutConfig.FillLayout
 				),
+				WindowItem.NewLayout(
+					PComponents.Layout.Horizontal.Fixed(true, true),
+					WindowItem.LayoutConfig.Custom(
+						position: new(1, 0, 0, 0),
+						sizeDelta: new(0, menuHeight),
+						fixedPosition: new() {
+							Pivot = UIPosition.TopCenter
+						}
+					),
+					new() {
+						WindowItem.NewFlyoutTriggerWithLabel(
+							"File",
+							new PComponents.FlyoutTrigger(
+								FileMenu.CWindow,
+								openTargetEdge: 2,
+								openAlignment: true
+							),
+							new PComponents.Text(
+								"File",
+								alignment: TextAlignmentOptions.Center
+							),
+							WindowItem.LayoutConfig.LayoutElementDynamic()
+						).AddComponents(
+							new PComponents.LayoutElement(menuButtonRelWidth)
+						),
+						WindowItem.NewFlyoutTriggerWithLabel(
+							"Edit",
+							new PComponents.FlyoutTrigger(
+								EditMenu.CWindow,
+								openTargetEdge: 2,
+								openAlignment: true
+							),
+							new PComponents.Text(
+								"Edit",
+								alignment: TextAlignmentOptions.Center
+							),
+							WindowItem.LayoutConfig.LayoutElementDynamic()
+						).AddComponents(
+							new PComponents.LayoutElement(menuButtonRelWidth)
+						),
+						WindowItem.NewInputField(
+							new PComponents.InputField(
+								null,
+								n => OnFileNameChanged?.Invoke(n),
+								placeholderText: "File Name",
+								alignment: TextAlignmentOptions.Center
+							).OnRealised<PComponents.InputField>(c =>
+								FileNameField = (TMP_InputField)c
+							),
+							WindowItem.LayoutConfig.LayoutElementDynamic()
+						).AddComponents(
+							new PComponents.LayoutElement(menuNameRelWidth)
+						)
+					}
+				),
 				// this thing gets heavily modified in setup lol most of the work is actually done there
 				WindowItem.NewScrollView(
 					new PComponents.ScrollView(),
@@ -147,9 +312,18 @@ public static class SEProcedural {
 	}
 
 	public static void Set() {
+		SetFileMenu();
+		SetEditMenu();
+
 		SetSEWindow();
 	}
 	public static CWindow[] Windows => new[] {
-		SEWindow
+		SEWindow.SetGroup("script editor"),
+		FileMenu.CWindow.SetGroup("script editor"),
+		EditMenu.CWindow.SetGroup("script editor")
+	};
+	public static W[] Menus => new[] {
+		FileMenu,
+		EditMenu
 	};
 }

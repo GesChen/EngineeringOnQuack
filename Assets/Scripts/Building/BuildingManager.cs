@@ -60,6 +60,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearNewPressed();
 		BottomBar.OnNewPressed += New;
+
+		Part_CPU.SetupStatic();
 	}
 
 	WindowItem[] GenerateWindowItems() {

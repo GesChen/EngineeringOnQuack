@@ -1,4 +1,4 @@
-//#define DEBUG
+//#define DEBUGMODE
 
 using System.Collections;
 using System.Collections.Generic;
@@ -115,7 +115,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 	/// wont get cleaned up properly
 	/// </summary>
 	public LiveWindow Realise(CWindow window) {
-#if DEBUG
+#if DEBUGMODE
 		var sw = new System.Diagnostics.Stopwatch();
 		sw.Start();
 #endif
@@ -196,7 +196,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		RealiseGroups();
 		windowRT.SetParent(window.RealGroup.Transform);
 
-#if DEBUG
+#if DEBUGMODE
 		sw.Stop();
 		Debug.Log($"Realised window {window.Name} in {sw.Elapsed.TotalMilliseconds}ms");
 #endif

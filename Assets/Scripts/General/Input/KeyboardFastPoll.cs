@@ -41,24 +41,21 @@ public class KeyboardFastPoll : Singleton<KeyboardFastPoll> {
 		var interval = 1f / samplingRate;
 
 		while (true) {
-			try {
-				if (kb == null) {
-					Debug.LogWarning("Keyboard not found.");
-					continue;
-				}
+			yield return new WaitForSecondsRealtime(interval);
 
-				foreach (KeyControl kc in kb.allKeys) {
-					if (kc.isPressed) {
-						lock (lockObject) {
-							pressedKeys.Add(kc.keyCode);
-						}
-					}
-				}
-			} catch (System.Exception ex) {
-				Debug.LogError($"Key sampling error: {ex.Message}");
+			if (kb == null) {
+				Debug.LogWarning("Keyboard not found.");
+				continue;
 			}
 
-			yield return new WaitForSecondsRealtime(interval);
+			foreach (KeyControl kc in kb.allKeys) {
+				// dont know why need the null check but kc is null sometimes
+				if (kc != null && kc.isPressed) {
+					lock (lockObject) {
+						pressedKeys.Add(kc.keyCode);
+					}
+				}
+			}
 		}
 	}
 

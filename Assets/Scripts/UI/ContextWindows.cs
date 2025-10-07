@@ -79,7 +79,8 @@ public static class ContextWindows {
 			SaveLoadMenus.Menus,
 			OutputsMenu.Menus,
 			BottomBar.Menus,
-			UnsavedWorkMenu.Menus
+			UnsavedWorkMenu.Menus,
+			SEProcedural.Menus
 		))
 	);
 

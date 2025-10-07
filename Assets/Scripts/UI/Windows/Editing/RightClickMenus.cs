@@ -42,8 +42,6 @@ public class RightClickMenus : MonoBehaviour {
 		OnAddToGroup			= null;
 		OnRemoveFromGroup		= null;
 		OnMaterial				= null;
-
-		RCM_Extensions.ClearEvents();
 	}
 
 	static void MakeNewPart(string name) {

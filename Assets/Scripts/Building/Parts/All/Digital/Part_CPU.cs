@@ -1,11 +1,63 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Part_CPU : NonStaticPart {
 
+	static Script currentlyEditingScript;
+	public static void SetupStatic() {
+
+		CPU_UI.GetCurrentScript = null;
+		CPU_UI.GetCurrentScript += () => {
+			Part_CPU cpu = SelectionManager.Instance.PartSelection[0].GetComponent<Part_CPU>();
+			var script = cpu.Script;
+
+			if (script == null) {
+				Tokenizer tokenizer = new();
+
+				// should always tokenize properly??
+				(Script newScript, _) = tokenizer.Tokenize(
+					"setup():\n\t\n\ntick():\n\t\n");
+
+				newScript.Name = "New Script";
+
+				script = newScript;
+				cpu.Script = script;
+			}
+
+			currentlyEditingScript = script;
+
+			return (
+				script.OriginalText.Split('\n'),
+				script.Name
+			);
+		};
+
+		// probably will be changed cuz this is kinda spaghetti
+		SEProcedural.OnFileNameChanged = null;
+		SEProcedural.OnFileNameChanged +=
+			name => currentlyEditingScript.Name = name;
+
+		SEProcedural.OnSetup = null;
+		SEProcedural.OnSetup += () => {
+			SEProcedural.ScriptEditor.OnScriptUpdated = null;
+			SEProcedural.ScriptEditor.OnScriptUpdated += content => {
+				currentlyEditingScript.OriginalText = string.Join('\n', content);
+			};
+		};
+
+	}
+
 	public Script Script;
+	public string DEBUG_CurrentScriptText; // for debugging purposes
+	void Update() {
+		if (Script != null)
+			DEBUG_CurrentScriptText = Script.OriginalText;
+		else
+			DEBUG_CurrentScriptText = "null";
+	}
 
 	bool running = false; // not sure if this is the best way of doing this
 						  // might instead have override onsimulatingupdate or something like that instead
@@ -19,9 +71,6 @@ public class Part_CPU : NonStaticPart {
 	bool hasTick;
 	Primitive.Function tickFunc;
 
-	// call tokenization where this is called
-	public void UpdateScript(Script script) { Script = script; }
-
 	public override void OnStopSimulating() {
 		running = false;
 
@@ -30,6 +79,34 @@ public class Part_CPU : NonStaticPart {
 	}
 	
 	public override void OnStartSimulating() {
+		if (Script == null) {
+			Debug.Log($"script is null, no run");
+			return;
+		}
+
+		var tokenizer = new Tokenizer();
+		var tryTokenize = tokenizer.Tokenize(Script.OriginalText);
+
+		if (tryTokenize.Item2 is Error err) {
+			PDialog.GenerateDialog(new(
+				"An error occurred while tokenizing the script",
+				new PDialog.Option[] {
+					new("Ok", null)
+				},
+				new(300, 200),
+				WindowItem.NewText(
+					new PComponents.Text(
+						'\"'+err.Value+'\"',
+						color: Config.ScriptEditor.SyntaxColors.Literal
+					),
+					WindowItem.LayoutConfig.LayoutElementDynamic()
+				)
+			));
+
+			return;
+		}
+		Script = tryTokenize.Item1;
+
 		// reset modules
 		Interpreter = new();
 		Evaluator = new();
@@ -67,10 +144,9 @@ public class Part_CPU : NonStaticPart {
 
 	// for script run rate consistency, run this in fixedupdate
 	void FixedUpdate() {
-		if (!running) return;
-
-		if (hasTick)
+		if (hasTick && running)
 			Interpreter.RunFunction(Memory, tickFunc, null, new());
+			// dont copy memory, persistent memory to allow state persistence between ticks
 	}
 
 	public class SPart_CPU : Assembly.SPart {

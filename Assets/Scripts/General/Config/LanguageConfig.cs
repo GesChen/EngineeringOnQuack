@@ -5,7 +5,7 @@ using UnityEngine;
 public static partial class Config {
 	public static class Language {
 		public static readonly string VERSION = "01";
-		public static readonly bool DEBUG = true;
+		public static readonly bool DEBUG = false;
 		public static readonly int MaxContainerSerializeLength = 128;
 		public static readonly int SpacesPerTab = 4;
 		public static readonly bool IndentWithTabs = true;
