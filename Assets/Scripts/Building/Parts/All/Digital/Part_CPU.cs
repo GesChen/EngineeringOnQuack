@@ -19,7 +19,7 @@ public class Part_CPU : NonStaticPart {
 
 				// should always tokenize properly??
 				(Script newScript, _) = tokenizer.Tokenize(
-					"setup():\n\t\n\ntick():\n\t\n");
+					"setup():\n\t\n\treturn 0\n\ntick():\n\t\n\treturn 0");
 
 				newScript.Name = "New Script";
 
@@ -88,21 +88,7 @@ public class Part_CPU : NonStaticPart {
 		var tryTokenize = tokenizer.Tokenize(Script.OriginalText);
 
 		if (tryTokenize.Item2 is Error err) {
-			PDialog.GenerateDialog(new(
-				"An error occurred while tokenizing the script",
-				new PDialog.Option[] {
-					new("Ok", null)
-				},
-				new(300, 200),
-				WindowItem.NewText(
-					new PComponents.Text(
-						'\"'+err.Value+'\"',
-						color: Config.ScriptEditor.SyntaxColors.Literal
-					),
-					WindowItem.LayoutConfig.LayoutElementDynamic()
-				)
-			));
-
+			StartCoroutine(DelayError(err));
 			return;
 		}
 		Script = tryTokenize.Item1;
@@ -130,6 +116,39 @@ public class Part_CPU : NonStaticPart {
 		running = true; // dont run if no script present
 		Debug.Log($"run");
 
+	}
+
+	public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
+
+		newCPU.Script = Script;
+		newCPU.running = running;
+		newCPU.Interpreter = Interpreter;
+		newCPU.Memory = Memory;
+		newCPU.Evaluator = Evaluator;
+		newCPU.hasTick = hasTick;
+		newCPU.tickFunc = tickFunc;
+	}
+
+	static IEnumerator DelayError(Error err) {
+		// wait until simulating ui has been made or this will get cleared
+		yield return null;
+		// ? i think? idrk. its hard to get ts
+
+		PDialog.GenerateDialog(new(
+				"An error occurred while tokenizing the script",
+				new PDialog.Option[] {
+					new("Ok", null)
+				},
+				new(300, 200),
+				WindowItem.NewText(
+					new PComponents.Text(
+						'\"' + err.Value + '\"',
+						color: Config.ScriptEditor.SyntaxColors.Literal
+					),
+					WindowItem.LayoutConfig.LayoutElementDynamic()
+				)
+			));
 	}
 
 	bool hasFunction(string name, int paramcount, out Primitive.Function func) {

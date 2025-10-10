@@ -9,6 +9,7 @@ public abstract class NonStaticPart : MonoBehaviour {
 	
 	public abstract void OnStartSimulating();
 
+	#region Serialization
 	/// <summary>
 	/// <para>Method that converts an SP object into a type deriving from SP for more specificity in 
 	/// serialization/saving and vice versa.</para>
@@ -30,7 +31,7 @@ public abstract class NonStaticPart : MonoBehaviour {
 	/// };
 	/// </code>
 	/// </example>
-public abstract void FinalizeSPartConversion(ref Assembly.SPart SPart);
+	public abstract void FinalizeSPartConversion(ref Assembly.SPart SPart);
 	
 	/// <summary>
 	/// Method that completes reconstruction of an SP back into a part. The rest of the part has 
@@ -48,4 +49,15 @@ public abstract void FinalizeSPartConversion(ref Assembly.SPart SPart);
 	internal void FinalizeSPartReconstruction(object reconstructed, Assembly.SPart origPart, Part newPart) {
 		throw new NotImplementedException();
 	}
+	#endregion
+
+	#region Assembly
+	/// <summary>
+	/// The caller for this is still the original object from building. 
+	/// Copy over private fields (its allowed?) and finish instantiating.
+	/// Purpose: copy nonserializable and private fields that instantiate 
+	/// cant get
+	/// </summary>
+	public abstract void FinalizeInstantiation(GameObject instantiatedPart);
+	#endregion
 }

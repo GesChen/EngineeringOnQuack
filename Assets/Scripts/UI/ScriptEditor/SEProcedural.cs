@@ -134,7 +134,7 @@ public static class SEProcedural {
 
 	public static void ClearEvents() {
 		OnNewPressed = null;
-		OnOpenPressed = null;
+		OnLoadPressed = null;
 		OnSavePressed = null;
 		OnSaveAsPressed = null;
 
@@ -149,7 +149,7 @@ public static class SEProcedural {
 	public static Action<string> OnFileNameChanged;
 
 	public static event Action OnNewPressed;
-	public static event Action OnOpenPressed;
+	public static event Action OnLoadPressed;
 	public static event Action OnSavePressed;
 	public static event Action OnSaveAsPressed;
 
@@ -165,8 +165,8 @@ public static class SEProcedural {
 					"New"
 				),
 				new W.Button(
-					() => OnOpenPressed?.Invoke(),
-					"Open"
+					() => OnLoadPressed?.Invoke(),
+					"Load"
 				),
 				new W.Button(
 					() => OnSavePressed?.Invoke(),

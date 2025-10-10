@@ -21,4 +21,7 @@ public class Part_Axle : NonStaticPart {
 	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart) {
 		
 	}
+	public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		// dont need
+	}
 }

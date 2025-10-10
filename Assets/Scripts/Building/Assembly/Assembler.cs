@@ -177,6 +177,10 @@ public class Assembler : Singleton<Assembler> {
 
 				Transform newObject = Instantiate(part.gameObject).transform;
 
+				if (part.TryGetComponent<NonStaticPart>(out var origNSP)) {
+					origNSP.FinalizeInstantiation(newObject.gameObject);
+				}
+
 				newObject.gameObject.SetActive(true);
 				var partComp = newObject.GetComponent<Part>();
 				partComp.enabled = false;
