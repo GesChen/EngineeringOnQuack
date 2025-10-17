@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 public class PComponents {
 	public abstract class Component {
@@ -221,6 +222,9 @@ public class PComponents {
 	public class InputField : Component {
 		// RealComponent uses TMP_InputField, dont cast wrong!
 
+		public string						InitialText			= "";
+		public (int startInc, int endExc)?	InitialSelection	= null;
+
 		public Config.UI.ColorBlock Colors		= Config.UI.ColorBlock.DefaultBlock;
 
 		public string			PlaceholderText	= Config.UI.InputField.PlaceholderDefaultText;
@@ -249,6 +253,8 @@ public class PComponents {
 			Action<string>			onValueChanged = null,
 			Action<string>			onEndEdit = null,
 			string					placeholderText = null,
+			string					initialText = null,
+			(int startInc, int endExc)? initialSelection = null,
 			Color?					textColor = null,
 			Color?					placeholderColor = null,
 			FourSides?				contentPadding = null,
@@ -265,6 +271,9 @@ public class PComponents {
 			OnEndEdit = onEndEdit;
 
 			PlaceholderText = placeholderText ?? Config.UI.InputField.PlaceholderDefaultText;
+
+			InitialText = initialText;
+			InitialSelection = initialSelection;
 
 			Font				= font != null ? font : Config.UI.Visual.DefaultFont;
 			Style				= style				?? FontStyles.Normal;
@@ -363,8 +372,28 @@ public class PComponents {
 			field.enabled = false;
 			field.enabled = true;
 
+			// select
+			if (InitialText != null) {
+				field.text = InitialText;
+			
+				if (InitialSelection != null) {
+					var runner = newObj.AddComponent<TempCoroutineRunner>();
+					runner.StartCoroutine(DelaySelect(field)); // need a monobehaviour
+				}
+			}
+
 			RealComponent = field;
 			FinaliseRealise();
+		}
+
+		IEnumerator DelaySelect(TMP_InputField field) {
+			yield return null; // wait a frame
+
+			field.ActivateInputField();
+			field.caretPosition = InitialSelection.Value.startInc;
+			field.selectionAnchorPosition = InitialSelection.Value.startInc;
+			field.selectionFocusPosition = InitialSelection.Value.endExc;
+			field.ForceLabelUpdate();
 		}
 	}
 

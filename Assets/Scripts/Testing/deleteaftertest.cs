@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using static FileExplorer;
-using static ScriptSaveLoad;
 using System.Linq;
 
 public class deleteaftertest : MonoBehaviour {
@@ -20,6 +18,27 @@ public class deleteaftertest : MonoBehaviour {
 
 			string[] lines = script.OriginalText.Split('\n').Select(l => l.TrimEnd()).ToArray();
 			SEProcedural.ScriptEditor.Load(lines);
+		}
+		if (Input.GetKeyDown("q")) {
+			FileExplorer.CreateNewFE(
+				HF.GuaranteePath(
+					Config.Path.LocalPath("Scripts").ToString()
+				),
+				new(
+					FileExplorer.Type.SaveFile,
+					null,
+					path => {
+						FileInfo info = new FileInfo(path);
+						long sizeBytes = info.Length;
+						return new[] {
+							($"{sizeBytes} bytes", .5f)
+						};
+					},
+					"Save",
+					null,
+					5
+				)
+			);
 		}
 
 		

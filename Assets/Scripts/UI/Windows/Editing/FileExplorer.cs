@@ -1,77 +1,126 @@
 using System;
-using System.Linq;
-using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using static PlasticGui.WorkspaceWindow.Merge.MergeInProgress;
 
 public class FileExplorer {
-	
-	public FileExplorer() {
-		
+
+	public static void CreateNewFE(
+		string initialDirectory,
+		FileExplorer fe
+		) {
+
+		fe.SetEW();
+		WindowManager.Instance.RealiseWindows(fe.ExplorerWindow);
+		fe.LoadDirectory(initialDirectory, false);
+		fe.Show();
+	}
+
+	/// <summary>
+	/// Primary constructor. A directory must be manually loaded after creation.
+	/// </summary>
+	/// <param name="extensions">Include the . Null for all</param>
+	/// <param name="metadataGetter">
+	/// <example>
+	/// <code>
+	/// // example metadata getter for bytes
+	/// path => {
+	/// 	FileInfo info = new FileInfo(path);
+	/// 	long sizeBytes = info.Length;
+	/// 	return new[] {
+	/// 		($"{sizeBytes} bytes", .5f)
+	/// 	};
+	/// }
+	/// </code>
+	/// </example>
+	/// </param>
+	public FileExplorer(
+		Type type,
+		string[] extensions,
+		Func<string, (string data, float width)[]> metadataGetter,
+		string useButtonLabel,
+		Action<string> onUsePressed,
+		float nameWidth,
+		string initialFileName = null,
+		int initialNameSelectionEndExc = -1
+		) {
+
+		ExplorerType = type;
+		Extensions = extensions?.Select(e => e.ToLowerInvariant()).ToArray();
+		MetadataGetter = metadataGetter;
+		UseButtonLabel = useButtonLabel;
+		OnUsePressed = onUsePressed;
+		NameWidth = nameWidth;
+
+		InitialFileName = (initialFileName, initialNameSelectionEndExc);
 	}
 
 	// config
-	string UseButtonLabel = "Load"; // to be changed per instance
-	float NameWidth = 5;
-
-	WindowItem ItemsLayout;
+	public string UseButtonLabel = "Load"; // to be changed per instance
+	public event Action<string> OnUsePressed; // returns the file full path
+	public float NameWidth = 5;
+	public string[] Extensions; // include the . null for all
+	public Func<string, (string data, float width)[]> MetadataGetter;
+	public enum Type { OpenFile, SaveFile, SelectFolder }
+	// intellisense added select folder but maybe probably wont use
+	public Type ExplorerType;
+	public (string name, int selectionEndExc) InitialFileName; // for save file dialog
 
 	// state
+	TMP_InputField AddressBar;
+	WindowItem ItemsLayout;
+	Button NewFolderButton;
 	string CurrentDirectory;
 	Entry[] CurrentEntries;
+	TMP_InputField NameField;
 
-	string[] LastLoadExtensions;
-	Func<string, (string data, float width)[]> LastLoadMetadataGetter;
+	float LastSelectTime;
+	int LastSelectedI = -1;
+	int CurrentlySelectedI = -1;
+	string NewFolderFieldContents;
+	Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
 
 	// 0 is most recent
 	List<string> DirectoryHistory = new();
 	int HistoryPosition;
 
-	event Action OnUsePressed;
-
-	int CurrentlySelectedI = -1;
-	string CurrentFieldContents = "";
-	TMP_InputField InputField;
-	float LastSelectTime;
-	TMP_InputField AddressBar;
-
-	Button NewFolderButton;
-	string NewFolderFieldContents;
-
-	Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
-
-	string FixPathForTMP(string path) => path.Replace("\\", "\\\\");
-
-	public void ClearEvents() {
-		OnUsePressed = null;
-	}
+	//string FixPathForTMP(string path) => path.Replace("\\", "\\\\");
 
 	public void Show() {
 		ExplorerWindow.RealisedWindow.PlaceAtCenter();
 		ExplorerWindow.RealisedWindow.Show();
 	}
 
+	public void Close() {
+		WindowManager.Instance.DestroyWindow(ExplorerWindow);
+	}
+
 	void Select(int i) {
+
+		// double click check
 		if (Time.time - LastSelectTime < Config.Input.doubleClickMaxTimeMs / 1000f) {
-			// use
-			if (CurrentlySelected.Type == Entry.EntryType.File)
-				Use();
+			if (CurrentlySelected.Type == Entry.EntryType.File 
+				&& ExplorerType == Type.OpenFile
+				&& i == LastSelectedI)
+				UseButton();
 			else
 				LoadDirectory(
-					Path.Join(CurrentDirectory, CurrentlySelected.Name),
-					LastLoadExtensions,
-					LastLoadMetadataGetter
-				);
+					Path.Join(CurrentDirectory, CurrentlySelected.Name));
 		}
 
 		LastSelectTime = Time.time;
+		LastSelectedI = i;
 
 		OptionSelectionUIHelper.SetColors(ItemsLayout.SubItems.ToArray(), i);
 
 		CurrentlySelectedI = i;
+
+		NameField.text = CurrentlySelected.Name;
 	}
 
 	#region Top Bar Options
@@ -81,7 +130,7 @@ public class FileExplorer {
 	}
 
 	// remember the current location in history, break it if needed
-	public void HistoryRemember() {
+	void HistoryRemember() {
 		DirectoryHistory.RemoveRange(0, HistoryPosition);
 
 		DirectoryHistory.Insert(0, CurrentDirectory);
@@ -97,8 +146,6 @@ public class FileExplorer {
 
 		LoadDirectory(
 			DirectoryHistory[HistoryPosition++], // increment after
-			LastLoadExtensions,
-			LastLoadMetadataGetter,
 			false
 		);
 	}
@@ -110,8 +157,6 @@ public class FileExplorer {
 
 		LoadDirectory(
 			DirectoryHistory[HistoryPosition],
-			LastLoadExtensions,
-			LastLoadMetadataGetter,
 			false
 		);
 	}
@@ -124,10 +169,7 @@ public class FileExplorer {
 		if (parent == null) return;
 
 		LoadDirectory(
-			parent.FullName,
-			LastLoadExtensions,
-			LastLoadMetadataGetter
-		);
+			parent.FullName);
 	}
 
 	void NewFolder() {
@@ -153,11 +195,7 @@ public class FileExplorer {
 		NewFolderButton.interactable = true;
 
 		if (!IsValidFileName(NewFolderFieldContents, out var message)) {
-			PDialog.GenerateDialog(new(
-				message,
-				new PDialog.Option[0],
-				new(400, 200)
-			));
+			PDialog.GenerateDialog(FileNameError(message));
 			return;
 		}
 
@@ -187,10 +225,7 @@ public class FileExplorer {
 		}
 
 		LoadDirectory(
-			newDir,
-			LastLoadExtensions,
-			LastLoadMetadataGetter
-		);
+			newDir);
 	}
 	bool IsDirectoryAccessible(string path) {
 		try {
@@ -282,11 +317,7 @@ public class FileExplorer {
 		string name = RenameField.text;
 
 		if (!IsValidFileName(name, out var message)) {
-			PDialog.GenerateDialog(new(
-				message,
-				new PDialog.Option[0],
-				new(400, 200)
-			));
+			PDialog.GenerateDialog(FileNameError(message));
 			return;
 		}
 
@@ -329,6 +360,13 @@ public class FileExplorer {
 		message = null;
 		return true;
 	}
+
+	PDialog FileNameError(string message) => 
+		new(
+			$"Invalid file name:\n{message}",
+			new PDialog.Option[] { new("Ok", null) },
+			new(400, 150)
+		);
 
 	void Rename(string newName) {
 		string src = Path.Join(CurrentDirectory, CurrentlySelected.Name);
@@ -387,8 +425,49 @@ public class FileExplorer {
 		Refresh();
 	}
 
-	void Use() {
+	void UseButton() {
+		if (CurrentlySelectedI == -1)
+			Use(NameField.text);
+		else
+			Use(CurrentlySelected.Name);
+	}
 
+	void ManuallyUse(string name) {
+		Use(name);
+	}
+
+	void Use(string name) {
+		var path = Path.Combine(CurrentDirectory, name);
+
+		if (ExplorerType == Type.OpenFile) {
+			if (!File.Exists(path)) {
+				PDialog.GenerateDialog(new(
+					$"File not found at path: {path}",
+					new PDialog.Option[] { new("Ok", null) },
+					new(500, 300)
+				));
+
+				// dont close if fail
+				return;
+			}
+		} else
+		if (ExplorerType == Type.SaveFile) {
+			if (File.Exists(path)) {
+				OverwriteConfirmation(() => InvokeUse(path));
+				return;
+			}
+			if (!IsValidFileName(name, out var message)) {
+				PDialog.GenerateDialog(FileNameError(message));
+				return;
+			}
+		}
+
+		InvokeUse(path);
+	}
+
+	void InvokeUse(string path) {
+		OnUsePressed?.Invoke(path);
+		Close();
 	}
 
 	void OverwriteConfirmation(Action onConfirm) {
@@ -401,11 +480,8 @@ public class FileExplorer {
 			new(500, 150)
 		));
 	}
-
-	void ClearField() { InputField.text = ""; }
 	#endregion
 
-	// temporarily stuff for now for testing 
 	public CWindow ExplorerWindow;
 	void SetEW() {
 		ExplorerWindow = new() {
@@ -416,7 +492,13 @@ public class FileExplorer {
 				Size = CWindow.Configuration.FreeSizeMinimum(
 					new(500, 500),
 					new(200, 100)),
-				HideOnStart = false
+				HideOnStart = true
+			},
+			CustomEvents = new() {
+				new(
+					TimedEventInvoker.Timing.Close,
+					_ => Close()
+				)
 			},
 			Items = new[] {
 				WindowItem.NewEmpty(
@@ -520,7 +602,7 @@ public class FileExplorer {
 					WindowItem.LayoutConfig.DynamicLayout(
 						margin: new(
 							Config.FileExplorer.NavgationHeight + Config.UI.Visual.DefaultLayoutSpacing, 0,
-							Config.FileExplorer.FooterItemsHeights + Config.UI.Visual.DefaultLayoutSpacing, 0
+							Config.FileExplorer.FooterItemsHeights * 2 + Config.UI.Visual.DefaultLayoutSpacing * 2, 0
 						)
 					),
 					new() {
@@ -531,22 +613,28 @@ public class FileExplorer {
 						).OnRealized((_, wi) => ItemsLayout = wi)
 					}
 				),
-				/*WindowItem.NewInputField(
+				WindowItem.NewInputField(
 					new PComponents.InputField(
-						v => CurrentFieldContents = v,
-						"Enter name..."
+						initialText: InitialFileName.name,
+						initialSelection: 
+							InitialFileName.selectionEndExc == -1
+							? null 
+							: (0, InitialFileName.selectionEndExc),
+						onValueChanged: null,
+						//onEndEdit: n => ManuallyUse(n), // why was this added?? someday ill figure out why
+						placeholderText: ""
 					),
 					WindowItem.LayoutConfig.Custom(
 						position: new(0, 0, 1, 0),
-						sizeDelta: new(0, FooterItemsHeights),
+						sizeDelta: new(0, Config.FileExplorer.FooterItemsHeights),
 						fixedPosition: UIPosition.AnchoredOffset(
 							UIPosition.BottomCenter,
-							new(0,FooterItemsHeights + Config.UI.Visual.DefaultLayoutSpacing)
+							new(0, Config.FileExplorer.FooterItemsHeights + Config.UI.Visual.DefaultLayoutSpacing)
 						)
 					)
-				).OnRealized((_, wi) => 
-					InputField = (TMP_InputField)(wi.GetComponent<PComponents.InputField>()
-					.RealComponent)),*/
+				).OnRealized((_, wi) =>
+					NameField = (TMP_InputField)(wi.GetComponent<PComponents.InputField>()
+					.RealComponent)),
 				WindowItem.NewLayout(
 					"Buttons",
 					PComponents.Layout.Horizontal.Fixed(true, true),
@@ -578,7 +666,7 @@ public class FileExplorer {
 						),
 						WindowItem.NewButtonCustomText(
 							"Use", // naming will be changed later to more specific
-							new PComponents.Button(() => Use()),
+							new PComponents.Button(() => UseButton()),
 							new(UseButtonLabel, alignment: TextAlignmentOptions.Center), 
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						)
@@ -662,7 +750,9 @@ public class FileExplorer {
 		);
 	}
 
-	public void SetEntries(params Entry[] entries) {
+	void SetEntries(params Entry[] entries) {
+		if (entries.Length == 0) return;
+
 		ItemsLayout.SetSubItems(entries.Select((e, i) => FileEntry(i, e)).ToArray());
 		 
 		CurrentEntries = entries;
@@ -678,21 +768,15 @@ public class FileExplorer {
 	/// <param name="metadataGetter">Functions to take filename and return metadata as string, provide width</param>
 	public void LoadDirectory(
 		string path,
-		string[] extensions,
-		Func<string, (string data, float width)[]> metadataGetter,
 		bool rememberHistory = true) {
 
 		if (rememberHistory)
 			HistoryRemember();
 
 		CurrentDirectory = path;
-		LastLoadExtensions = extensions;
-		LastLoadMetadataGetter = metadataGetter;
-
-		extensions = extensions?.Select(e => e.ToLowerInvariant()).ToArray();
 
 		// get files
-		string[] fps = GetFilesSafe(path, extensions);
+		string[] fps = GetFilesSafe(path, Extensions);
 
 		// get folders
 		string[] dps = GetDirectoriesSafe(path);
@@ -713,7 +797,7 @@ public class FileExplorer {
 				string name = Path.GetFileName(fp);
 
 				var metadata =
-				metadataGetter?.Invoke(fp) ??
+				MetadataGetter?.Invoke(fp) ??
 				Array.Empty<(string, float)>();
 
 				return new Entry(
@@ -723,11 +807,6 @@ public class FileExplorer {
 					metadata
 				);
 			}));
-
-		// add files
-		for (int i = 0; i < fps.Length; i++) {
-			
-		}
 
 		SetEntries(entries.ToArray());
 
@@ -782,21 +861,8 @@ public class FileExplorer {
 		}
 	}
 
-
 	public void Refresh() {
 		LoadDirectory(
-			CurrentDirectory,
-			LastLoadExtensions,
-			LastLoadMetadataGetter
-		);
+			CurrentDirectory);
 	}
-
-	public void Set() {
-		SetEW();
-
-		
-	}
-	public CWindow[] Windows => new[] {
-		ExplorerWindow
-	};
 }

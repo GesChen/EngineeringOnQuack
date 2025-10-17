@@ -26,6 +26,7 @@ public static class SEProcedural {
 	}
 
 	public static Action OnSetup;
+	// set up the gameobject in the hierarchy 
 	static void Setup(TimedEventInvoker iv) {
 		// set things up from the deepest upwards
 
@@ -132,26 +133,12 @@ public static class SEProcedural {
 			FileNameField.text = name;
 	}
 
-	public static void ClearEvents() {
-		OnNewPressed = null;
-		OnLoadPressed = null;
-		OnSavePressed = null;
-		OnSaveAsPressed = null;
-
-		OnUndoPressed = null;
-		OnRedoPressed = null;
-		OnCutPressed = null;
-		OnCopyPressed = null;
-		OnPastePressed = null;
-		OnDuplicatePressed = null;
-	}
-
 	public static Action<string> OnFileNameChanged;
 
-	public static event Action OnNewPressed;
-	public static event Action OnLoadPressed;
-	public static event Action OnSavePressed;
-	public static event Action OnSaveAsPressed;
+	public static Action OnNewPressed;
+	public static Action OnLoadPressed;
+	public static Action OnSavePressed;
+	public static Action OnSaveAsPressed;
 
 	static W FileMenu;
 	static void SetFileMenu() {
@@ -181,12 +168,12 @@ public static class SEProcedural {
 		);
 	}
 
-	public static event Action OnUndoPressed;
-	public static event Action OnRedoPressed;
-	public static event Action OnCutPressed;
-	public static event Action OnCopyPressed;
-	public static event Action OnPastePressed;
-	public static event Action OnDuplicatePressed;
+	public static Action OnUndoPressed;
+	public static Action OnRedoPressed;
+	public static Action OnCutPressed;
+	public static Action OnCopyPressed;
+	public static Action OnPastePressed;
+	public static Action OnDuplicatePressed;
 
 	static W EditMenu;
 	static void SetEditMenu() {

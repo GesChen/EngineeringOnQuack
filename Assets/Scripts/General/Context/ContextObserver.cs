@@ -29,10 +29,13 @@ public class ContextObserver : Singleton<ContextObserver> {
 	public void StartEditing() { ContextManager.EnterContext<Editing>(); }
 	public void StartSimulating() { ContextManager.EnterContext<Simulating>(); }
 
-	[HideInNormalInspector] public int selectionCount;
+	public Func<int> RequestSelectionCount;
+	private int selectionCount;
 	public Func<bool> GroupCheck;
 	public Func<int> GetCurrentSSBasePartID;
 	void CheckEditing() {
+		selectionCount = RequestSelectionCount?.Invoke() ?? throw new("RequestSelectionCount not subscribed to");
+
 		if (UIHovers.AnyHovers()) {
 			ContextManager.EnterContext<OverUI>();
 		} else {

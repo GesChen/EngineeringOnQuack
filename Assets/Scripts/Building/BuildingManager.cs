@@ -61,7 +61,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.ClearNewPressed();
 		BottomBar.OnNewPressed += New;
 
-		Part_CPU.SetupStatic();
+		CPU_SESetup.Setup();
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -89,7 +89,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void HandleInput() {
 
-		if (Conatrols.IM.Building.Delete.WasPressedThisFrame()) {
+		if (Conatrols.IM.Building.Delete.WasPressedThisFrame() &&
+			ContextManager.IsInContext<Contexts.InWorld>(out _)) {
+
 			DeleteSelection();
 			RightClick.Instance.Hide();
 		}

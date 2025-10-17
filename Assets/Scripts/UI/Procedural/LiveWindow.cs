@@ -47,8 +47,10 @@ public class LiveWindow : MonoBehaviour {
 		BR.position = WindowSizeNode.Positions.BottomLeft;
 	}
 
+	bool hideOnStartInterrupt = false;
 	public void Show() {
 		gameObject.SetActive(true);
+		hideOnStartInterrupt = true;
 	}
 	public void Hide() {
 		gameObject.SetActive(false);
@@ -56,7 +58,9 @@ public class LiveWindow : MonoBehaviour {
 
 	void Update() {
 		if (Config.HideOnStart) {
-			if (Time.frameCount - Source.CreationFrame == global::Config.UI.Behaviour.MaxFramesForRealization)
+			if (Time.frameCount - Source.CreationFrame 
+				== global::Config.UI.Behaviour.MaxFramesForRealization
+				&& !hideOnStartInterrupt)
 				gameObject.SetActive(false);
 			if (Time.frameCount - Source.CreationFrame <= global::Config.UI.Behaviour.MaxFramesForRealization) {
 				//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load

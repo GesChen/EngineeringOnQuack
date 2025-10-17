@@ -44,7 +44,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Subscribe() {
 		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
-
+		ContextObserver.Instance.RequestSelectionCount += () => Selection.Count;
 		ContextObserver.Instance.GetCurrentSSBasePartID += () => PartSelection[0].basePart.ID;
 
 		// do processing in here since ui doesnt depend on language
@@ -100,7 +100,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 		CheckForGroups();
 		HandleContainer(); // selection might have changed from groups
 
-		UpdateContext();
 	}
 
 	void HandleInput() {
@@ -377,10 +376,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 			t.SetParent(selectionContainer, true);
 		}
 
-	}
-
-	void UpdateContext() {
-		ContextObserver.Instance.selectionCount = Selection.Count;
 	}
 
 	public void Clear() {

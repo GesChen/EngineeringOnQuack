@@ -217,6 +217,10 @@ public class WindowSizeNode : MonoBehaviour {
 		main.anyNodesDragging = false;
 
 		main.Hide();
+
+		if (main.TryGetComponent<TimedEventInvoker>(out var invoker)) {
+			invoker.Close();
+		}
 	}
 
 	Vector2 otherCornerPos;

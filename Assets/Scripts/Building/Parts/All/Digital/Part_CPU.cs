@@ -6,49 +6,7 @@ using UnityEngine;
 
 public class Part_CPU : NonStaticPart {
 
-	static Script currentlyEditingScript;
-	public static void SetupStatic() {
-
-		CPU_UI.GetCurrentScript = null;
-		CPU_UI.GetCurrentScript += () => {
-			Part_CPU cpu = SelectionManager.Instance.PartSelection[0].GetComponent<Part_CPU>();
-			var script = cpu.Script;
-
-			if (script == null) {
-				Tokenizer tokenizer = new();
-
-				// should always tokenize properly??
-				(Script newScript, _) = tokenizer.Tokenize(
-					"setup():\n\t\n\treturn 0\n\ntick():\n\t\n\treturn 0");
-
-				newScript.Name = "New Script";
-
-				script = newScript;
-				cpu.Script = script;
-			}
-
-			currentlyEditingScript = script;
-
-			return (
-				script.OriginalText.Split('\n'),
-				script.Name
-			);
-		};
-
-		// probably will be changed cuz this is kinda spaghetti
-		SEProcedural.OnFileNameChanged = null;
-		SEProcedural.OnFileNameChanged +=
-			name => currentlyEditingScript.Name = name;
-
-		SEProcedural.OnSetup = null;
-		SEProcedural.OnSetup += () => {
-			SEProcedural.ScriptEditor.OnScriptUpdated = null;
-			SEProcedural.ScriptEditor.OnScriptUpdated += content => {
-				currentlyEditingScript.OriginalText = string.Join('\n', content);
-			};
-		};
-
-	}
+	internal static Script currentlyEditingScript;
 
 	public Script Script;
 	public string DEBUG_CurrentScriptText; // for debugging purposes
@@ -101,7 +59,6 @@ public class Part_CPU : NonStaticPart {
 		Interpreter.Evaluator = Evaluator;
 		Interpreter.Memory = Memory;
 		Evaluator.Interpreter = Interpreter;
-		Debug.Log($"start running");
 
 		if (Script == null) return;
 
@@ -114,8 +71,6 @@ public class Part_CPU : NonStaticPart {
 		hasTick = hasFunction("tick", 0, out tickFunc);
 
 		running = true; // dont run if no script present
-		Debug.Log($"run");
-
 	}
 
 	public override void FinalizeInstantiation(GameObject instantiatedPart) {
@@ -163,9 +118,13 @@ public class Part_CPU : NonStaticPart {
 
 	// for script run rate consistency, run this in fixedupdate
 	void FixedUpdate() {
-		if (hasTick && running)
-			Interpreter.RunFunction(Memory, tickFunc, null, new());
+		if (hasTick && running) {
 			// dont copy memory, persistent memory to allow state persistence between ticks
+			
+			HF.Test(
+			() => Interpreter.RunFunction(Memory, tickFunc, null, new())
+			);
+		}
 	}
 
 	public class SPart_CPU : Assembly.SPart {

@@ -49,15 +49,10 @@ public static partial class Config {
 
 			public static readonly bool SaveClipboard = true;
 			
-			public static string SavingLocation =>
-				HF.GuaranteePath(
-					Path.Combine(
-						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-						"EOQ")
-					);
+			
 			public static string AssembliesLocation =>
 				HF.GuaranteePath(
-					Path.Combine(SavingLocation, "Assemblies")
+					Path.LocalPath("Assemblies").ToString()
 					);
 		}
 	}

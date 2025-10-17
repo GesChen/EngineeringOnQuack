@@ -170,6 +170,12 @@ public static class ScriptSaveLoad {
 		return ConvertJsonToScript(json);
 	}
 
+	public static Script ConvertBytesToScript(byte[] bytes) {
+		string json = CompressionUtil.DecodeGzipBytes(bytes);
+
+		return ConvertJsonToScript(json);
+	}
+
 	public static Script ConvertJsonToScript(string json) {
 		sScript deserialized = JsonConvert.DeserializeObject<sScript>(json);
 
