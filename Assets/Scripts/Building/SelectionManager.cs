@@ -99,7 +99,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		CheckForGroups();
 		HandleContainer(); // selection might have changed from groups
-
 	}
 
 	void HandleInput() {

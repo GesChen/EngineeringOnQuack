@@ -1972,7 +1972,7 @@ public class ScriptEditor : MonoBehaviour {
 
 	private readonly Clipboard clipboard = new();
 
-	void Copy() {
+	public void Copy() {
 		if (carets.Count > 1) {
 			CopyMultiCaret();
 			return;
@@ -2009,7 +2009,7 @@ public class ScriptEditor : MonoBehaviour {
 		});
 	}
 
-	void Cut() {
+	public void Cut() {
 		history.RecordChange();
 
 		DebugLines();
@@ -2020,7 +2020,7 @@ public class ScriptEditor : MonoBehaviour {
 		}
 	}
 
-	void Paste() {
+	public void Paste() {
 		PasteIndex(0);
 	}
 

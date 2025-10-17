@@ -67,9 +67,8 @@ public class TimedEventInvokerEditor : Editor {
 
 		var invoker = (TimedEventInvoker)target;
 		var field = typeof(TimedEventInvoker).GetField("m_customEvents", BindingFlags.NonPublic | BindingFlags.Instance);
-		var events = field?.GetValue(invoker) as System.Collections.IEnumerable;
 
-		if (events == null) {
+		if (field?.GetValue(invoker) is not IEnumerable events) {
 			EditorGUILayout.HelpBox("No CustomEvents assigned.", MessageType.Info);
 			return;
 		}

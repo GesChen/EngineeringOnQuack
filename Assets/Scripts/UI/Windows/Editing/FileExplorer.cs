@@ -164,7 +164,7 @@ public class FileExplorer {
 	void Up() {
 		var path = CurrentDirectory;
 		string clean = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-		var parent = Directory.GetParent(path);
+		var parent = Directory.GetParent(clean);
 
 		if (parent == null) return;
 

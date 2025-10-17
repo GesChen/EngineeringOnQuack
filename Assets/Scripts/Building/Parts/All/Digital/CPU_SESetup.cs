@@ -58,6 +58,13 @@ public static class CPU_SESetup {
 		SEProcedural.OnSavePressed = TrySaveNotAs;
 
 		SEProcedural.OnLoadPressed = RequestLoad;
+
+		// edit
+		SEProcedural.OnUndoPressed = SEProcedural.ScriptEditor.history.Undo;
+		SEProcedural.OnRedoPressed = SEProcedural.ScriptEditor.history.Redo;
+		SEProcedural.OnCopyPressed = SEProcedural.ScriptEditor.Copy;
+		SEProcedural.OnCutPressed = SEProcedural.ScriptEditor.Cut;
+		SEProcedural.OnPastePressed = SEProcedural.ScriptEditor.Paste;
 	}
 
 	static void UnsavedNotification(Action intendedAction) {

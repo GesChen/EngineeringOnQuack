@@ -173,7 +173,6 @@ public static class SEProcedural {
 	public static Action OnCutPressed;
 	public static Action OnCopyPressed;
 	public static Action OnPastePressed;
-	public static Action OnDuplicatePressed;
 
 	static W EditMenu;
 	static void SetEditMenu() {
@@ -201,10 +200,6 @@ public static class SEProcedural {
 				new W.Button(
 					() => OnPastePressed?.Invoke(),
 					"Paste"
-				),
-				new W.Button(
-					() => OnDuplicatePressed?.Invoke(),
-					"Duplicate"
 				),
 			},
 			showTitle: false
