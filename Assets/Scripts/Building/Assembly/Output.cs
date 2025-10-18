@@ -8,4 +8,5 @@ using UnityEngine;
 // more specific output handling and ui code later to do i guess
 public class Output {
 	public string Name;
+	public bool Visible; // might rename to enabled but visible is more clear
 }

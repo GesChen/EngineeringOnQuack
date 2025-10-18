@@ -15,7 +15,7 @@ public class SimulationManager : Singleton<SimulationManager> {
 		SimulatingMainUI.TopBar.ClearBarCreated();
 		SimulatingMainUI.TopBar.OnBarCreated += SetupTopBar;
 
-		SimulatingMainUI.TopBar.OnRequestOutputs += UpdateOutputs;
+		SimulatingMainUI.TopBar.Outputs.OnRequestOutputs += UpdateOutputs;
 	}
 
 	public void StartSimulating() {
@@ -31,7 +31,7 @@ public class SimulationManager : Singleton<SimulationManager> {
 	void UpdateOutputs() {
 		var outputNames = BuildingManager.Instance.Assembly.Outputs.Select(o => o.Name).ToArray();
 
-		SimulatingMainUI.TopBar.UpdateOutputs(outputNames);
+		SimulatingMainUI.TopBar.Outputs.UpdateOutputs(outputNames);
 	}
 
 	public void StopSimulating() {

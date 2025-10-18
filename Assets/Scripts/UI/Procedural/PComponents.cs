@@ -153,6 +153,7 @@ public class PComponents {
 
 			var bnav = button.navigation;
 			bnav.mode = Navigation.Mode.None;
+			button.navigation = bnav;
 
 			button.onClick.AddListener(TriggerClick);
 
@@ -628,8 +629,8 @@ public class PComponents {
 		public int OpenTargetEdge;
 		public bool OpenAlignment;
 
-		public string OpenSpriteLocation = Config.UI.Locations.FlyoutTriggerOpenSprite;
-		public string ClosedSpriteLocation = Config.UI.Locations.FlyoutTriggerClosedSprite;
+		public string OpenSpriteLocation = Config.UI.Sprites.FlyoutTriggerOpenSprite;
+		public string ClosedSpriteLocation = Config.UI.Sprites.FlyoutTriggerClosedSprite;
 
 		public FlyoutTrigger(
 			CWindow targetFlyout,
@@ -645,8 +646,8 @@ public class PComponents {
 			OpenTargetEdge = openTargetEdge;
 			OpenAlignment = openAlignment;
 			
-			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Locations.FlyoutTriggerOpenSprite;
-			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Locations.FlyoutTriggerClosedSprite;
+			OpenSpriteLocation = openSpriteLocation ?? Config.UI.Sprites.FlyoutTriggerOpenSprite;
+			ClosedSpriteLocation = closedSpriteLocation ?? Config.UI.Sprites.FlyoutTriggerClosedSprite;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {

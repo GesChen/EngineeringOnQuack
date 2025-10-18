@@ -788,7 +788,14 @@ public class ScriptEditor : MonoBehaviour {
 	bool lastDragState = false;
 	void HandleMouseNavigation() {
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
-		if (!mousePos.HasValue) return;
+		if (!mousePos.HasValue) {
+			if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
+				// deselect if click outside
+				ResetCarets();
+			}
+
+			return;
+		}
 
 		DetectExtraClicks(mousePos.Value);
 		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
@@ -1079,6 +1086,8 @@ public class ScriptEditor : MonoBehaviour {
 
 	bool boxEditing = false;
 	void HandleKeyboardNavgation() {
+		if (carets.Count == 0) return;
+
 		if (Conatrols.IsPressed(Key.Escape))
 			Escape();
 
@@ -1439,6 +1448,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	bool GoodToType() {
+		if (carets.Count == 0) return false;
 		if (Conatrols.Keyboard.Presses.Count == 0) return false;
 
 		bool shortcutPressed =
@@ -1973,6 +1983,8 @@ public class ScriptEditor : MonoBehaviour {
 	private readonly Clipboard clipboard = new();
 
 	public void Copy() {
+		if (carets.Count == 0) return;
+
 		if (carets.Count > 1) {
 			CopyMultiCaret();
 			return;
@@ -2010,6 +2022,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public void Cut() {
+		if (carets.Count == 0) return;
+
 		history.RecordChange();
 
 		DebugLines();
@@ -2025,6 +2039,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void PasteIndex(int i) {
+		if (carets.Count == 0) return;
+
 		history.RecordChange();
 
 		var entry = clipboard.Get(i);

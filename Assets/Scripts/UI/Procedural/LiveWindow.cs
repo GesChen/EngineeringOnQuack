@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -398,6 +400,11 @@ public class LiveWindow : MonoBehaviour {
 		Vector2 test = GetWorldCorner(testCorner);
 		(bool testX, bool testY) = InBounds(test);
 
+#if DEBUGMODE
+		DebugExtra.DrawPoint(targetPos, 10, Color.green);
+		DebugExtra.DrawPoint(test, 10, Color.cyan);
+#endif
+
 		if (!testX) {
 			if (horizontal) placement = !placement;
 			else alignment = !alignment;
@@ -412,6 +419,12 @@ public class LiveWindow : MonoBehaviour {
 
 		targetPos = targetCorners[targetC];
 		SetWorldCorner(targetPos, thisC);
+
+#if DEBUGMODE
+		DebugExtra.DrawPoint(targetPos, 10, Color.red);
+		Debug.Log(thisC);
+		Debug.Break();
+#endif
 	}
 
 	// convert positioning to corner placements
@@ -419,10 +432,10 @@ public class LiveWindow : MonoBehaviour {
 	private (int thisC, int targetC) PlacementCorners(
 		bool horizontal, bool placeUR, bool alignUR) =>
 		(horizontal, placeUR) switch {
-			(false, true)	=> alignUR ? (0, 1) : (3, 2),
-			(true, true)	=> alignUR ? (0, 3) : (1, 2),
-			(false, false)	=> alignUR ? (1, 0) : (2, 3),
-			(true, false)	=> alignUR ? (3, 0) : (2, 1)
+			(false, true)	=> alignUR ? (0, 1) : (3, 2), // up
+			(true, true)	=> alignUR ? (0, 3) : (1, 2), // right
+			(false, false)	=> alignUR ? (1, 0) : (2, 3), // down
+			(true, false)	=> alignUR ? (3, 0) : (2, 1)  // left
 		};
 
 	public Vector2 GetWorldCorner(int corner) {
@@ -473,5 +486,5 @@ public class LiveWindow : MonoBehaviour {
 		Vector2 center = canvas.renderingDisplaySize / 2;
 		SetWorldCorner(center, 4);
 	}
-	#endregion
+#endregion
 }

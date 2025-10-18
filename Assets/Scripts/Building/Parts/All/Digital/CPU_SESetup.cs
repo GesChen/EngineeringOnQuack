@@ -60,11 +60,12 @@ public static class CPU_SESetup {
 		SEProcedural.OnLoadPressed = RequestLoad;
 
 		// edit
-		SEProcedural.OnUndoPressed = SEProcedural.ScriptEditor.history.Undo;
-		SEProcedural.OnRedoPressed = SEProcedural.ScriptEditor.history.Redo;
-		SEProcedural.OnCopyPressed = SEProcedural.ScriptEditor.Copy;
-		SEProcedural.OnCutPressed = SEProcedural.ScriptEditor.Cut;
-		SEProcedural.OnPastePressed = SEProcedural.ScriptEditor.Paste;
+		// might move into seprodcedural setup later
+		SEProcedural.OnUndoPressed	= () => SEProcedural.ScriptEditor.history.Undo();
+		SEProcedural.OnRedoPressed	= () => SEProcedural.ScriptEditor.history.Redo();
+		SEProcedural.OnCopyPressed	= () => SEProcedural.ScriptEditor.Copy();
+		SEProcedural.OnCutPressed	= () => SEProcedural.ScriptEditor.Cut();
+		SEProcedural.OnPastePressed	= () => SEProcedural.ScriptEditor.Paste();
 	}
 
 	static void UnsavedNotification(Action intendedAction) {
@@ -135,13 +136,6 @@ public static class CPU_SESetup {
 			Part_CPU.currentlyEditingScript.SaveLocation = filePath;
 
 			SEProcedural.SetFileName(Path.GetFileNameWithoutExtension(filePath));
-			PDialog.GenerateDialog(new(
-				"File saved successfully!",
-				new PDialog.Option[] {
-					new("OK", null)
-				},
-				new(250, 150)
-			));
 		} catch (Exception e) {
 			PDialog.GenerateDialog(new(
 				$"An error occurred while saving the file:\n{e}",
