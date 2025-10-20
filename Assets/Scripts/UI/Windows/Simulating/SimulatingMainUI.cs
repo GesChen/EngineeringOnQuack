@@ -29,11 +29,13 @@ public static class SimulatingMainUI {
 		public static event Action OnBarCreated;
 
 		public static class Outputs {
+			static readonly Vector2 OutputDefaultSize = new(200, 300);
+			static readonly Vector2 OutputMinSize = new(100, 50);
+
 			public static Action OnHideAll;
 			public static Action OnShowAll;
 
-			public static void ClearRequestOutputs() { OnRequestOutputs = null; }
-			public static event Action OnRequestOutputs;
+			public static Action OnRequestOutputs;
 			internal static bool outputsUpdated = false;
 
 			public static void UpdateOutputs(string[] names) {
@@ -57,9 +59,13 @@ public static class SimulatingMainUI {
 			static Sprite HiddenIcon => HF.LoadResource(ref m_HiddenIcon, Config.UI.Sprites.OutputHidden);
 
 			public static void UpdateOutputStates((int i, bool state)[] states) {
-				foreach (var (i, state) in states)
-					if (ToggleIcons.TryGetValue(i, out var img)) 
+				foreach (var (i, state) in states) {
+					if (ToggleIcons.TryGetValue(i, out var img))
 						img.sprite = state ? VisibleIcon : HiddenIcon;
+					
+					if (OutputWindows.Values.TryFind(w => w.Index == i, out var window)) 
+						window.Window.RealisedWindow.SetState(state);
+				}
 			}
 
 			public static WindowItem OutputsLayoutItem;
@@ -124,6 +130,7 @@ public static class SimulatingMainUI {
 							if (!outputsUpdated) {
 								outputsUpdated = true;
 								OnRequestOutputs?.Invoke();
+								RequestOutputWindowsGeneration?.Invoke();
 							}
 						}
 					)
@@ -156,6 +163,96 @@ public static class SimulatingMainUI {
 						)
 					)
 				);
+
+			public class OutputWindow {
+				public int Index;
+				public CWindow Window;
+				public RectTransform ContentsRect;
+
+				public void AddLine(string data) {
+					WindowRealiser.Instance.RealiseItem(
+						WindowItem.NewText(
+							new PComponents.Text(
+								data,
+								alignment: TextAlignmentOptions.Left
+							),
+							WindowItem.LayoutConfig.FixedLayout(
+								UIPosition.AnchoredAt(UIPosition.TopLeft),
+								new(1000, Config.UI.Menu.ItemHeight) // any big x will work
+							)
+						),
+						ContentsRect
+					);
+				}
+			}
+			public static Dictionary<string, OutputWindow> OutputWindows = new();
+
+			public static Action RequestOutputWindowsGeneration;
+			// uses menu config sizes
+			public static void GenerateOutputWindow(int i, string name, int uses) {
+				var window = new CWindow {
+					Name = $"Output {name} ({uses} uses)",
+					Config = new() {
+						Resizable = true,
+						Movable = true,
+						Size = CWindow.Configuration.FreeSizeMinimum(
+							OutputDefaultSize,
+							OutputMinSize
+						),
+						Position = UIPosition.AnchoredAt(UIPosition.MiddleCenter),
+						Closable = true
+					},
+					Items = new WindowItem[] {
+						WindowItem.NewEmpty(
+							WindowItem.LayoutConfig.DynamicLayout(
+								padding: FourSides.Even(5) // too much work to turn this into a config
+							),
+							new() {
+								WindowItem.NewText(
+									"Name",
+									new PComponents.Text(
+										$"{name} <sub>{uses} uses</sub>", // may be changed
+										alignment: TextAlignmentOptions.Left
+									),
+									WindowItem.LayoutConfig.Custom(
+										position: new(1, 0, 0, 0),
+										sizeDelta: new(0, Config.UI.Menu.TitleHeight),
+										fixedPosition: new() {
+											Pivot = UIPosition.TopCenter
+										}
+									)
+								),
+								WindowItem.NewScrollView(
+									new PComponents.ScrollView(
+										horizontalScrolling: false
+									),
+									WindowItem.LayoutConfig.DynamicLayout(
+										margin:
+								(Config.UI.Menu.TitleHeight + Config.UI.Menu.ItemSpacing) * FourSides.UpConst
+									),
+									new(){
+										WindowItem.NewLayout(
+											PComponents.Layout.Vertical.Dynamic(),
+											WindowItem.LayoutConfig.FillLayout,
+											new()
+										).OnRealized((rt, _) =>
+											OutputWindows[name].ContentsRect = rt
+										)
+									}
+								)
+							})
+					}
+				};
+
+				OutputWindows[name] = new() {
+					Index = i,
+					Window = window,
+					ContentsRect = null // set later
+				};
+
+				window.SetGroup("Outputs");
+				WindowManager.Instance.RealiseWindows(window);
+			}
 		}
 
 		public static CWindow Bar;

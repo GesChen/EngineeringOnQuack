@@ -180,14 +180,14 @@ public class RotateView : MonoBehaviour
 
 		if (firstFrameAfterStartDrag)
 		{
-			targetStartRotation = main.selectionContainer.rotation;
+			targetStartRotation = SelectionManager.Instance.selectionContainer.rotation;
 			angleOffset = angle;
 		}
 
 		if (main.snapping)
 			angle = Mathf.Round(angle / main.rotateSnappingIncrement) * main.rotateSnappingIncrement;
 
-		main.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
+		SelectionManager.Instance.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angle - angleOffset, Quaternion.Inverse(targetStartRotation) * normal);
 		firstFrameAfterStartDrag = false;
 
 		BuildingManager.SetDirty();

@@ -57,6 +57,10 @@ public class LiveWindow : MonoBehaviour {
 	public void Hide() {
 		gameObject.SetActive(false);
 	}
+	public void SetState(bool active) {
+		if (active) Show();
+		else Hide();
+	}
 
 	void Update() {
 		if (Config.HideOnStart) {

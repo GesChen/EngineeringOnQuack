@@ -383,8 +383,17 @@ public class SelectionManager : Singleton<SelectionManager> {
 		selectionChanged = true;
 	}
 
-	public void ManuallySelect(params Transform[] transforms) {
+	public void SetSelection(params Transform[] transforms) {
 		Selection = transforms.ToList();
+
+		selectionChanged = true;
+	}
+
+	public void AddSelection(params Transform[] transforms) {
+		foreach (var t in transforms) {
+			if (!Selection.Contains(t))
+				Selection.Add(t);
+		}
 
 		selectionChanged = true;
 	}

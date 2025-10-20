@@ -226,7 +226,7 @@ public class RotateAxis : MonoBehaviour
 		if (firstFrameAfterStartDrag)
 		{
 			startAngle = angle;
-			targetStartRotation = main.selectionContainer.rotation;
+			targetStartRotation = SelectionManager.Instance.selectionContainer.rotation;
 			//main.rotateSnapIndicator.startAngle = startAngle;
 		}
 
@@ -249,7 +249,7 @@ public class RotateAxis : MonoBehaviour
 #endif
 
 		transform.localRotation = Quaternion.AngleAxis(angleDelta, axis);
-		main.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angleDelta, Quaternion.Inverse(targetStartRotation) * planeNormal);
+		SelectionManager.Instance.selectionContainer.rotation = targetStartRotation * Quaternion.AngleAxis(angleDelta, Quaternion.Inverse(targetStartRotation) * planeNormal);
 		
 		firstFrameAfterStartDrag = false;
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,6 +14,9 @@ public class Part : MonoBehaviour {
 	// unnity's material class
 	public Color color;
 	public Composition composition;
+
+	public Port[] Ports;
+	public Action<string, object[]> OnCommandCalled;
 
 	// tentative, may change this method
 	MeshRenderer[] renderers;
@@ -81,5 +85,14 @@ public class Part : MonoBehaviour {
 		foreach (var collider in colliders) {
 			collider.material = composition.PhysicsMaterial;
 		}
+	}
+
+	public virtual void CallCommand(string name, object[] args) {
+		if (OnCommandCalled == null) {
+			Debug.LogError($"Part {transform.name} does not handle commands");
+			return;
+		}
+
+		OnCommandCalled.Invoke(name, args);
 	}
 }

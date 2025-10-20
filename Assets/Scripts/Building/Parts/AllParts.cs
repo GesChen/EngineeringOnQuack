@@ -11,5 +11,7 @@ public static class AllParts {
 		new(1,	"sphere",	"Sphere",	"Sphere",	"Sphere"),
 		new(2,	"axle",		"Axle",		"Axle",		"Axle"),
 		new(3,	"cpu",		"CPU",		"CPU",		"CPU"),
+		new(4,	"cable",	"Cable",	"Cable",	"Cable"),
+		new(5,	"cc",		"Sphere",	"Sphere",	"CableConnection")
 	};
 }

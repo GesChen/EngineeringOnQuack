@@ -57,7 +57,7 @@ public class BuildingClipboard {
 
 		// select
 		if (selectNew)
-			SelectionManager.Instance.ManuallySelect(newTransforms);
+			SelectionManager.Instance.SetSelection(newTransforms);
 
 		return newParts;
 	}

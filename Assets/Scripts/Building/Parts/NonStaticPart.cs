@@ -4,10 +4,26 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class NonStaticPart : MonoBehaviour {
+	public abstract string PartName { get; }
 
-	public abstract void OnStopSimulating();
-	
-	public abstract void OnStartSimulating();
+	// dont forget to call base.awake in derived classes
+	protected void Awake() {
+		var mainPart = GetComponent<Part>();
+
+		SetupPart(mainPart);
+	}
+
+	// throw unknowncommand at the end of this function
+	public abstract void HandleCommand(string command, object[] parameters);
+	protected Exception UnknownCommand(string command) => 
+		new($"Unknown command '{command}' sent to {PartName}");
+	protected Exception BadParameterCount(string command, int expected, int got) =>
+		new($"Command '{command}' sent to {PartName} expected {expected} parameters, got {got}");
+
+	public virtual void SetupPart(Part main) { }
+	public virtual void OnStopSimulating() { }
+	public virtual void OnStartSimulating() { }
+	public virtual void OnPartCreation() { } // this codebase gets worse by the minute
 
 	#region Serialization
 	/// <summary>
@@ -31,7 +47,7 @@ public abstract class NonStaticPart : MonoBehaviour {
 	/// };
 	/// </code>
 	/// </example>
-	public abstract void FinalizeSPartConversion(ref Assembly.SPart SPart);
+	public virtual void FinalizeSPartConversion(ref Assembly.SPart SPart) { }
 	
 	/// <summary>
 	/// Method that completes reconstruction of an SP back into a part. The rest of the part has 
@@ -42,22 +58,19 @@ public abstract class NonStaticPart : MonoBehaviour {
 	/// <param name="originalSPart">The original SPart part was created from</param>
 	/// <param name="unfinishedPart">The unfinished part object</param>
 	/// <param name="component">The NSP component (probably) to setup</param>
-	public abstract void FinalizeSPartReconstruction(
+	public virtual void FinalizeSPartReconstruction(
 		Assembly.SPart originalSPart,
-		Part unfinishedPart);
-
-	internal void FinalizeSPartReconstruction(object reconstructed, Assembly.SPart origPart, Part newPart) {
-		throw new NotImplementedException();
-	}
+		Part unfinishedPart) { }
 	#endregion
 
 	#region Assembly
 	/// <summary>
+	/// Called after all parts have been instantiated, no 1 frame wait needed
 	/// The caller for this is still the original object from building. 
 	/// Copy over private fields (its allowed?) and finish instantiating.
 	/// Purpose: copy nonserializable and private fields that instantiate 
 	/// cant get
 	/// </summary>
-	public abstract void FinalizeInstantiation(GameObject instantiatedPart);
+	public virtual void FinalizeInstantiation(GameObject instantiatedPart) { }
 	#endregion
 }

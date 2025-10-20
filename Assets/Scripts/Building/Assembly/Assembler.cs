@@ -177,10 +177,6 @@ public class Assembler : Singleton<Assembler> {
 
 				Transform newObject = Instantiate(part.gameObject).transform;
 
-				if (part.TryGetComponent<NonStaticPart>(out var origNSP)) {
-					origNSP.FinalizeInstantiation(newObject.gameObject);
-				}
-
 				newObject.gameObject.SetActive(true);
 				var partComp = newObject.GetComponent<Part>();
 				partComp.enabled = false;
@@ -192,9 +188,15 @@ public class Assembler : Singleton<Assembler> {
 
 				accumPos += newObject.transform.position;
 			}
+
 			subParent.position = accumPos / sub.Parts.Count;
 			foreach (Transform part in parts)
 				part.parent = subParent;
+
+			// finalize all
+			foreach (Transform newPart in parts)
+				if (newPart.TryGetComponent<NonStaticPart>(out var origNSP))
+					origNSP.FinalizeInstantiation(newPart.gameObject);
 
 			assembleds.Add(new() {
 				Parent = subParent,

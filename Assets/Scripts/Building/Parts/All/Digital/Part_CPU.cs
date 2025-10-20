@@ -5,6 +5,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Part_CPU : NonStaticPart {
+	public override string PartName => "CPU";
+	public List<Port> Ports; // assign in inspector
+
+	public override void SetupPart(Part main) {
+		main.Ports = Ports.ToArray();
+	}
 
 	internal static Script currentlyEditingScript;
 
@@ -37,10 +43,8 @@ public class Part_CPU : NonStaticPart {
 	}
 	
 	public override void OnStartSimulating() {
-		if (Script == null) {
-			Debug.Log($"script is null, no run");
+		if (Script == null) 
 			return;
-		}
 
 		var tokenizer = new Tokenizer();
 		var tryTokenize = tokenizer.Tokenize(Script.OriginalText);
@@ -151,5 +155,10 @@ public class Part_CPU : NonStaticPart {
 		var sp = (SPart_CPU)originalSPart; // if this errors then something has gone wrong
 
 		Script = ScriptSaveLoad.ConvertStringToScript(sp.Script);
+	}
+
+	public override void HandleCommand(string command, object[] parameters) {
+		
+		throw UnknownCommand(command);
 	}
 }

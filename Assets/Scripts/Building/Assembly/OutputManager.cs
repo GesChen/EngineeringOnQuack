@@ -29,6 +29,8 @@ public class OutputManager : Singleton<OutputManager> {
 		OutputsMenu.ClearAdd();
 		OutputsMenu.OnAdd += OnAddPressed;
 
+		// ----------simulating------
+		
 		static void UpdateAllOutputStates() {
 			SimulatingMainUI.TopBar.Outputs.UpdateOutputStates(
 				BuildingManager.Instance.Assembly.Outputs.Select(
@@ -36,6 +38,8 @@ public class OutputManager : Singleton<OutputManager> {
 				).ToArray()
 			);
 		}
+
+		SimulatingMainUI.TopBar.Outputs.OnRequestOutputs = UpdateOutputs;
 
 		// accessing is a bit long lmao
 		SimulatingMainUI.TopBar.Outputs.OnItemToggled = (i) => {
@@ -58,9 +62,11 @@ public class OutputManager : Singleton<OutputManager> {
 			
 			UpdateAllOutputStates();
 		};
+	
+		SimulatingMainUI.TopBar.Outputs.RequestOutputWindowsGeneration = GenerateAllOutputWindows;
 	}
 
-
+	#region Editing
 	public void OpenModifyOutputs() {
 		OutputsMenu.ShowMenu(BottomBar.OutputButton.RealObject());
 
@@ -110,6 +116,21 @@ public class OutputManager : Singleton<OutputManager> {
 
 		BuildingManager.SetDirty();
 	}
+	#endregion
+
+	#region Simulating
+	void UpdateOutputs() {
+		SimulatingMainUI.TopBar.Outputs.UpdateOutputs(GetOutputNames().ToArray());
+	}
+	
+	void GenerateAllOutputWindows() {
+		for (int i = 0; i < BuildingManager.Instance.Assembly.Outputs.Count; i++) {
+			Output output = BuildingManager.Instance.Assembly.Outputs[i];
+			SimulatingMainUI.TopBar.Outputs.GenerateOutputWindow(i, output.Name, 0);
+		}
+	}
+
+	#endregion
 
 	private static List<string> GetOutputNames() => 
 		BuildingManager.Instance.Assembly.Outputs.Select(o => o.Name).ToList();
