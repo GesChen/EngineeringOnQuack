@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class Part : MonoBehaviour {
@@ -87,12 +89,25 @@ public class Part : MonoBehaviour {
 		}
 	}
 
-	public virtual void CallCommand(string name, object[] args) {
+	public void HandleCommand(string command, object[] args) {
 		if (OnCommandCalled == null) {
 			Debug.LogError($"Part {transform.name} does not handle commands");
 			return;
 		}
 
-		OnCommandCalled.Invoke(name, args);
+		OnCommandCalled.Invoke(command, args);
+	}
+
+	public Port GetPort(int portI) {
+		if (portI < 0 || portI >= Ports.Length)
+			throw new ArgumentOutOfRangeException($"Port {portI} is out of range for available ports on part {basePart.Name}");
+
+		return Ports[portI];
+	}
+	public Port GetPort(string portAlias) {
+		if (!Ports.TryFind(p => p.Alias == portAlias, out var port))
+			throw new($"No port found on part {basePart.Name} with alias \"{portAlias}\"");
+
+		return port;
 	}
 }

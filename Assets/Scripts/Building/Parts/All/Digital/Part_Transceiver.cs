@@ -2,17 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Part_Transceiver : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+public class Part_Transceiver : NonStaticPart {
+	public override string PartName => "Transceiver";
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+	public override void HandleCommand(string command, object[] args) {
+		if (command == "print") {
+			if (args.Length != 1) {
+				Debug.LogError(BadArgumentCount(command, 1, args.Length));
+				return;
+			}
+
+			Debug.Log(args[0]?.ToString() ?? "null");
+			return;
+		}
+
+		Debug.LogError(UnknownCommand(command));
+	}
 }

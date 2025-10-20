@@ -12,10 +12,10 @@ using TMPro;
 public static class SEProcedural {
 	public static ScriptEditor ScriptEditor;
 
-	static float menuHeight = 30;
-	static float viewportMargins = 50;
-	static int menuButtonRelWidth = 1;
-	static int menuNameRelWidth = 7;
+	static readonly float menuHeight = 30;
+	static readonly float viewportMargins = 50;
+	static readonly int menuButtonRelWidth = 1;
+	static readonly int menuNameRelWidth = 7;
 
 	public static void Show() {
 		SEWindow.RealisedWindow.PlaceAtCenter();

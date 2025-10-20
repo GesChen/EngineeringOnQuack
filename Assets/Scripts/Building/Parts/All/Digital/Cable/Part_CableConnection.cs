@@ -10,14 +10,14 @@ public class Part_CableConnection : NonStaticPart {
 	public int CCID = -1; // needed for cable to reconnect on simulation start
 
 	public Part_Cable Cable;
-	public Part Part;
+	public Port Port;
 
-	public Part_CableConnection(Part_Cable cable, Part part) {
+	public Part_CableConnection(Part_Cable cable, Port port) {
 		Cable = cable;
-		Part = part;
+		Port = port;
 	}
 
-	public Part ConnectedPart => Cable.OtherCC(this).Part; // may change this
+	public Part ConnectedPart => Cable.OtherCC(this).Port.MainPart; // may change this
 
 	// no extra processing needed
 	public override void FinalizeInstantiation(GameObject instantiatedPart) {
@@ -30,14 +30,17 @@ public class Part_CableConnection : NonStaticPart {
 			float dist = (transform.position - port.transform.position).magnitude;
 			if (dist < Config.Building.CCConnectionDistance) {
 				// connect up
-				port.Connectors.Add(this);
+				var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
 
-				Part = port.GetComponentInParent<Part>();
+				port.Connectors.Add(newCC); 
+				newCC.Port = port;
 			}
 		}
+
+		// Cable moves its own reference in the cable field over to new
 	}
 
-	public override void HandleCommand(string command, object[] parameters) {
-		throw UnknownCommand(command);
+	public override void HandleCommand(string command, object[] args) {
+		Debug.LogError(UnknownCommand(command));
 	}
 }

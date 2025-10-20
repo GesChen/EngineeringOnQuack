@@ -35,46 +35,13 @@ public class Part_CPU : NonStaticPart {
 	bool hasTick;
 	Primitive.Function tickFunc;
 
+	Part partComponent;
+
 	public override void OnStopSimulating() {
 		running = false;
 
 		hasTick = false;
 		tickFunc = null;
-	}
-	
-	public override void OnStartSimulating() {
-		if (Script == null) 
-			return;
-
-		var tokenizer = new Tokenizer();
-		var tryTokenize = tokenizer.Tokenize(Script.OriginalText);
-
-		if (tryTokenize.Item2 is Error err) {
-			StartCoroutine(DelayError(err));
-			return;
-		}
-		Script = tryTokenize.Item1;
-
-		// reset modules
-		Interpreter = new();
-		Evaluator = new();
-		Memory = new(Interpreter, "main");
-
-		Interpreter.Evaluator = Evaluator;
-		Interpreter.Memory = Memory;
-		Evaluator.Interpreter = Interpreter;
-
-		if (Script == null) return;
-
-		Interpreter.Run(Memory, Script);
-
-		// check for functions
-		if (hasFunction("setup", 0, out var setupfunc)) // may change name later
-			Interpreter.RunFunction(Memory, setupfunc, null, new()); // no args 
-
-		hasTick = hasFunction("tick", 0, out tickFunc);
-
-		running = true; // dont run if no script present
 	}
 
 	public override void FinalizeInstantiation(GameObject instantiatedPart) {
@@ -87,6 +54,68 @@ public class Part_CPU : NonStaticPart {
 		newCPU.Evaluator = Evaluator;
 		newCPU.hasTick = hasTick;
 		newCPU.tickFunc = tickFunc;
+
+		// subscribe to print on a delay
+		// need to delay so internalfunctions.onprint is guaranteed
+		// to have been nulled
+		// cuz it all runs off the same onstartsimulating event
+		// and the order is random
+		// but the fields can be copied over first so that's what we do here 
+		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
+	}
+
+
+	Port[] TransceiverPorts;
+	IEnumerator DelayScriptSetup() {
+		yield return null;
+
+		// find transceiever ports
+		TransceiverPorts = Ports.Where(
+			p => p.Connectors
+				.Any(c => c.ConnectedPart
+					.TryGetComponent<Part_Transceiver>(out _)))
+			.ToArray(); // ugly
+
+		partComponent = GetComponent<Part>();
+		InternalFunctions.OnPrintCalled += TryPrint;
+
+		if (Script == null)
+			yield break;
+
+		var tokenizer = new Tokenizer();
+		var tryTokenize = tokenizer.Tokenize(Script.OriginalText);
+
+		if (tryTokenize.Item2 is Error err) {
+			StartCoroutine(DelayError(err));
+			yield break;
+		}
+		Script = tryTokenize.Item1;
+
+		// reset modules
+		Interpreter = new();
+		Evaluator = new();
+		Memory = new(Interpreter, "main");
+
+		Interpreter.Evaluator = Evaluator;
+		Interpreter.Memory = Memory;
+		Evaluator.Interpreter = Interpreter;
+
+		if (Script == null) yield break;
+
+		Interpreter.Run(Memory, Script);
+
+		// check for functions
+		if (hasFunction("setup", 0, out var setupfunc)) // may change name later
+			Interpreter.RunFunction(Memory, setupfunc, null, new()); // no args 
+	
+		hasTick = hasFunction("tick", 0, out tickFunc);
+
+		running = true; // dont run if no script present
+	}
+
+	void TryPrint(string message) {
+		foreach (var port in TransceiverPorts)
+			port.CallCommand("print", new[] { message });
 	}
 
 	static IEnumerator DelayError(Error err) {
@@ -124,10 +153,7 @@ public class Part_CPU : NonStaticPart {
 	void FixedUpdate() {
 		if (hasTick && running) {
 			// dont copy memory, persistent memory to allow state persistence between ticks
-			
-			HF.Test(
-			() => Interpreter.RunFunction(Memory, tickFunc, null, new())
-			);
+			Interpreter.RunFunction(Memory, tickFunc, null, new());
 		}
 	}
 
@@ -157,8 +183,8 @@ public class Part_CPU : NonStaticPart {
 		Script = ScriptSaveLoad.ConvertStringToScript(sp.Script);
 	}
 
-	public override void HandleCommand(string command, object[] parameters) {
+	public override void HandleCommand(string command, object[] args) {
 		
-		throw UnknownCommand(command);
+		Debug.LogError(UnknownCommand(command));
 	}
 }

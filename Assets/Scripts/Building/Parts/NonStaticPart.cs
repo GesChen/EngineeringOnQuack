@@ -7,18 +7,21 @@ public abstract class NonStaticPart : MonoBehaviour {
 	public abstract string PartName { get; }
 
 	// dont forget to call base.awake in derived classes
+	// think about how this works with creation during assembly copying
 	protected void Awake() {
 		var mainPart = GetComponent<Part>();
 
 		SetupPart(mainPart);
+		
+		mainPart.OnCommandCalled = HandleCommand;
 	}
 
 	// throw unknowncommand at the end of this function
-	public abstract void HandleCommand(string command, object[] parameters);
-	protected Exception UnknownCommand(string command) => 
-		new($"Unknown command '{command}' sent to {PartName}");
-	protected Exception BadParameterCount(string command, int expected, int got) =>
-		new($"Command '{command}' sent to {PartName} expected {expected} parameters, got {got}");
+	public abstract void HandleCommand(string command, object[] args);
+	protected string UnknownCommand(string command) => 
+		$"Unknown command \"{command}\" sent to {PartName}";
+	protected string BadArgumentCount(string command, int expected, int got) =>
+		$"Command \"{command}\" sent to {PartName} expected {expected} arguments, got {got}";
 
 	public virtual void SetupPart(Part main) { }
 	public virtual void OnStopSimulating() { }

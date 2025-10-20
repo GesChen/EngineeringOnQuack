@@ -11,12 +11,14 @@ public class SimulationManager : Singleton<SimulationManager> {
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
-
 		SimulatingMainUI.TopBar.ClearBarCreated();
 		SimulatingMainUI.TopBar.OnBarCreated += SetupTopBar;
+
 	}
 
 	public void StartSimulating() {
+		InternalFunctions.ClearOnPrintCalled();
+
 		Assembler.Instance.Assemble(out assembledSubassemblies);
 	}
 

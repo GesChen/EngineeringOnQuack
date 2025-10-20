@@ -47,6 +47,9 @@ public class Part_Cable : NonStaticPart {
 
 		connectionA = simA;
 		connectionB = simB;
+
+		connectionA.Cable = this;
+		connectionB.Cable = this;
 	}
 
 	public Part_CableConnection OtherCC(Part_CableConnection cc) {
@@ -55,35 +58,14 @@ public class Part_Cable : NonStaticPart {
 		throw new("requested cc wasn't either A or B");
 	}
 
-	public (Part_CableConnection, Part_CableConnection) Connect(Part a, Part b) {
-		Part_CableConnection aCC = new(this, a);
-		connectionA = aCC;
-
-		Part_CableConnection bCC = new(this, b);
-		connectionB = bCC;
-
-		return (aCC, bCC);
-	}
-
-	public Part_CableConnection MakeSingleConnection(Part other, bool sideB = false) {
-		Part_CableConnection connection = new(this, other);
-
-		if (sideB)
-			connectionB = connection;
-		else
-			connectionA = connection;
-
-		return connection;
-	}
-
 	public override string ToString() {
 		if (connectionA == null) return "Cable, cc A disconnected";
 		if (connectionB == null) return "Cable, cc B disconnected";
 
-		return $"Cable connecting {connectionA.Part.GetType().Name} -- {connectionB.Part.GetType().Name}";
+		return $"Cable connecting {connectionA.Port.MainPart.GetType().Name} -- {connectionB.Port.MainPart.GetType().Name}";
 	}
 
-	public override void HandleCommand(string command, object[] parameters) {
-		throw UnknownCommand(command);
+	public override void HandleCommand(string command, object[] args) {
+		Debug.LogError(UnknownCommand(command));
 	}
 }

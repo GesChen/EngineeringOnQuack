@@ -8,13 +8,19 @@ public static class InternalFunctions
 	// for all internal functions, throwaway the arg at thisref since there is no "this"
 
 	// normal internal methods
+	public static void ClearOnPrintCalled() { OnPrintCalled = null; }
+	public static event Action<string> OnPrintCalled;
 	public static T_Data print(T_Data _, List<T_Data> args) {
 		if (args.Count != 1) return Errors.InvalidArgumentCount("print", 1, args.Count);
 
 		T_Data tryCast = args[0].Cast(Primitive.String.InternalType);
 		if (tryCast is Error) return tryCast;
 
-		Debug.Log((tryCast as Primitive.String).Value); // lol dont delete this debug log LMAO
+		string message = (tryCast as Primitive.String).Value;
+		//Debug.Log(message); // lol dont delete this debug log LMAO
+
+		OnPrintCalled?.Invoke(message);
+		
 		return T_Data.Success;
 	}
 
