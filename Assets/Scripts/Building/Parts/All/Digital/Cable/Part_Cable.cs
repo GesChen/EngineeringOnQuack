@@ -9,7 +9,7 @@ public class Part_Cable : NonStaticPart {
 	public Part_CableConnection connectionA;
 	public Part_CableConnection connectionB;
 	public LineRenderer Line;
-	[HideInInspector] public bool SetUp;
+	[HideInInspector] public bool SetUp = true;
 
 	public void Update() {
 		if (!SetUp) return;
@@ -100,7 +100,10 @@ public class Part_Cable : NonStaticPart {
 	}
 
 	IEnumerator DelaySetup(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var newCable = unfinishedPart.GetComponent<Part_Cable>();
+		newCable.SetUp = false;
 		yield return null;
+		newCable.SetUp = true;
 
 		var part = (SPart_Cable)originalSPart;
 		var cA = unfinishedAssembly.Parts.First(p => {
@@ -113,7 +116,6 @@ public class Part_Cable : NonStaticPart {
 			return nsp is Part_CableConnection cc && cc.CCID == part.BID;
 		}).GetComponent<Part_CableConnection>();
 
-		var newCable = unfinishedPart.GetComponent<Part_Cable>();
 
 		newCable.connectionA = cA;
 		newCable.connectionB = cB;

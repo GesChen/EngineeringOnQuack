@@ -1,3 +1,5 @@
+#define DEBUGMODE
+
 using UnityEngine;
 using UnityEngine.UI;
 using cfg = Config.UI.Window.CornerNode;
@@ -13,7 +15,7 @@ public class WindowSizeNode : MonoBehaviour {
 	private LiveWindow main;
 
 	bool hovered = false;
-	[HideInInspector] public bool dragging = false;
+	[HideInNormalInspector] public bool dragging = false;
 	float curSize;
 	Vector2 dragStartCenter;
 	bool oppositeVert;
@@ -63,9 +65,29 @@ public class WindowSizeNode : MonoBehaviour {
 
 		float size = cfg.EasingFunction(t) * cfg.NormalSize;
 
+#if DEBUGMODE
+		var corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+
+		float outset = 5;
+		float extra = 5;
+		corners[0] += new Vector3(-outset, -outset, 0); // bottom-left
+		corners[1] += new Vector3(-outset, outset, 0);  // top-left
+		corners[2] += new Vector3(outset, outset + extra, 0);   // top-right
+		corners[3] += new Vector3(outset, -outset - extra, 0);  // bottom-right
+
+		DebugExtra.DrawText($"mdist: {mouseDist}", corners[1], 2, Color.white);
+		DebugExtra.DrawText($"t: {t}", corners[0], 2, Color.white);
+		DebugExtra.DrawText($"size: {size}", corners[2], 2, Color.white);
+#endif
+
 		if (hovered) size = cfg.HoverSize;
 		if (dragging) size = cfg.DragSize;
-		if (main.manager.anyDragging && !dragging) size = 0;
+		if (WindowManager.Instance.anyDragging && !dragging) size = 0;
+
+#if DEBUGMODE
+		DebugExtra.DrawText($"post size: {size}", corners[3], 2, Color.yellow);
+#endif
 
 		curSize = Mathf.Lerp(curSize, size, Config.UI.Visual.Smoothness * Time.deltaTime);
 		rt.sizeDelta = curSize * Vector2.one;
@@ -114,7 +136,7 @@ public class WindowSizeNode : MonoBehaviour {
 
 	void HandleMouse() {
 		bool notHoverOrDrag = !(hovered || dragging);
-		bool anyDraggingNotThis = main.manager.anyDragging && !dragging;
+		bool anyDraggingNotThis = WindowManager.Instance.anyDragging && !dragging;
 
 		if (notHoverOrDrag || anyDraggingNotThis) return;
 
@@ -153,7 +175,7 @@ public class WindowSizeNode : MonoBehaviour {
 			pos = HF.Vector2Clamp(
 				pos,
 				new Vector2(pad.Left, pad.Down),
-				main.manager.CanvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
+				WindowManager.Instance.CanvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
 			
 			SetCornerPosition(pos);
 

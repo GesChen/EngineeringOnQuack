@@ -59,10 +59,6 @@ public class DebugExtra {
 		Debug.DrawLine(nx, pz, col);
 		Debug.DrawLine(nx, nz, col);
 
-		//Debug.DrawLine(px, nx, color);
-		//Debug.DrawLine(py, ny, color);
-		//Debug.DrawLine(pz, nz, color);
-
 		Debug.DrawLine(py, pz, col);
 		Debug.DrawLine(py, nz, col);
 		Debug.DrawLine(ny, pz, col);
@@ -418,7 +414,7 @@ public class DebugExtra {
 		{ '?',	330	},
 	};
 
-	public static void DrawString(string text, Vector3 position, float scale, Color color, float duration = 0) {
+	public static void DrawText(string text, Vector3 position, float scale, Color color, float duration = 0) {
 		if (string.IsNullOrEmpty(text)) return;
 
 		float charWidth = .6f * scale;

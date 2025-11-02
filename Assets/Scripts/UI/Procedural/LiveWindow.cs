@@ -16,7 +16,6 @@ public class LiveWindow : MonoBehaviour {
 	public List<WindowSizeNode> cornerNodes = new();
 	public Image backgroundImage;
 	public Transform contentsContainer;
-	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
 	[HideInNormalInspector] public bool dragging = false;
 	[HideInNormalInspector] public bool anyNodesDragging = false;
@@ -30,7 +29,6 @@ public class LiveWindow : MonoBehaviour {
 	public CWindow Source;
 
 	void Awake() {
-		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
 	}
@@ -59,6 +57,9 @@ public class LiveWindow : MonoBehaviour {
 		hideOnStartInterrupt = true;
 	}
 	public void Hide() {
+		dragging = false;
+		anyNodesDragging = false;
+
 		gameObject.SetActive(false);
 	}
 	public void SetState(bool active) {
@@ -149,7 +150,7 @@ public class LiveWindow : MonoBehaviour {
 
 			// prevent going off the sides
 			FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
-			Vector2 canvasSize = manager.CanvasRect.sizeDelta;
+			Vector2 canvasSize = WindowManager.Instance.CanvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
 			float halfHeight = rt.sizeDelta.y / 2;
@@ -455,7 +456,7 @@ public class LiveWindow : MonoBehaviour {
 	// i really shoudltn have made this a global function
 	// bools for if that axis is in bounds
 	public (bool x, bool y) InBounds(Vector2 p) {
-		Vector2 canvasSize = manager.CanvasRect.sizeDelta;
+		Vector2 canvasSize = WindowManager.Instance.CanvasRect.sizeDelta;
 		FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
 
 		Vector2 min = new(padding.Left, padding.Down);
