@@ -28,6 +28,10 @@ public static class RCM_Extensions {
 		new(3, // cpu
 200,
 new W.Button(() => RCM.Call(CPU_UI.OnEditScript), "edit script", iconName: "edit script")
+		),
+		new(6, // transceiver
+200,
+new W.Button(() => RCM.Call(Transceiver_UI.OnSetOutput), "set output", iconName: "set output")
 		)
 	};
 }

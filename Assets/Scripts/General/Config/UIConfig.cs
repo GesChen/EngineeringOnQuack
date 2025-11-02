@@ -100,6 +100,8 @@ public static partial class Config {
 			public static readonly string CloseIcon					= Locations.IconsFolder + "close";
 			public static readonly string OutputVisible				= Locations.IconsFolder + "visible";
 			public static readonly string OutputHidden				= Locations.IconsFolder + "hidden";
+			public static readonly string RadioButtonOn				= Locations.IconsFolder + "radio on";
+			public static readonly string RadioButtonOff			= Locations.IconsFolder + "radio off";
 		}
 
 		public static class Menu {

@@ -12,6 +12,8 @@ public static partial class Config {
 		public static readonly int MaxWhileLoopIters = 1024;
 		public static readonly int RecursionDepthLimit = 1024;
 
+		public static readonly int MaxOutputHistory = 32; // laggy
+
 		public static class Internal {
 			public static readonly HashSet<string> AllMethods = new() {
 				"breakpoint",

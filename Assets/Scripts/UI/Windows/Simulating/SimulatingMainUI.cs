@@ -29,6 +29,8 @@ public static class SimulatingMainUI {
 		public static event Action OnBarCreated;
 
 		public static class Outputs {
+			public static Dictionary<string, OutputWindow> OutputWindows = new();
+			
 			static readonly Vector2 OutputDefaultSize = new(200, 300);
 			static readonly Vector2 OutputMinSize = new(100, 50);
 
@@ -168,28 +170,35 @@ public static class SimulatingMainUI {
 				public int Index;
 				public CWindow Window;
 				public RectTransform ContentsRect;
+				private List<RectTransform> LineObjects = new();
 
 				public void AddLine(string data) {
-					WindowRealiser.Instance.RealiseItem(
+					var newLine = WindowRealiser.Instance.RealiseItem(
 						WindowItem.NewText(
 							new PComponents.Text(
 								data,
 								alignment: TextAlignmentOptions.Left
 							),
-							WindowItem.LayoutConfig.FixedLayout(
-								UIPosition.AnchoredAt(UIPosition.TopLeft),
-								new(1000, Config.UI.Menu.ItemHeight) // any big x will work
+							WindowItem.LayoutConfig.LayoutElement(
+								new(0, Config.UI.Menu.ItemHeight)
 							)
 						),
 						ContentsRect
 					);
+
+					LineObjects.Add(newLine);
+
+					if (LineObjects.Count > Config.Language.MaxOutputHistory) {
+						UnityEngine.Object.Destroy(LineObjects[0].gameObject);
+						LineObjects.RemoveAt(0);
+					}
+					
 				}
 			}
-			public static Dictionary<string, OutputWindow> OutputWindows = new();
 
 			public static Action RequestOutputWindowsGeneration;
 			// uses menu config sizes
-			public static void GenerateOutputWindow(int i, string name, int uses) {
+			public static OutputWindow GenerateOutputWindow(int i, string name, int uses) {
 				var window = new CWindow {
 					Name = $"Output {name} ({uses} uses)",
 					Config = new() {
@@ -232,8 +241,14 @@ public static class SimulatingMainUI {
 									),
 									new(){
 										WindowItem.NewLayout(
-											PComponents.Layout.Vertical.Dynamic(),
-											WindowItem.LayoutConfig.FillLayout,
+											PComponents.Layout.Vertical.Fixed(
+												false,
+												true
+												),
+											WindowItem.LayoutConfig.Custom(
+												position: new(1, 0, 0, 0),
+												sizeDelta: new(0, 0)
+											),
 											new()
 										).OnRealized((rt, _) =>
 											OutputWindows[name].ContentsRect = rt
@@ -252,6 +267,8 @@ public static class SimulatingMainUI {
 
 				window.SetGroup("Outputs");
 				WindowManager.Instance.RealiseWindows(window);
+
+				return OutputWindows[name];
 			}
 		}
 
@@ -308,10 +325,9 @@ UIBarUtils.DynamicBarFlyout(2, "Outputs", Outputs.Window.CWindow, 2, true)
 	}
 
 	public static void Set() {
+		TopBar.Outputs.outputsUpdated = false;
 		TopBar.Outputs.SetWindow();
 		TopBar.SetBar();
-
-		TopBar.Outputs.outputsUpdated = false;
 	}
 	public static CWindow[] Windows => new[] {
 		TopBar.Bar,

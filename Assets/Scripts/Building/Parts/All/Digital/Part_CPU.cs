@@ -172,15 +172,21 @@ public class Part_CPU : NonStaticPart {
 			compositionID = SPart.compositionID,
 		};
 
-		sp.Script = ScriptSaveLoad.ConvertScriptToString(Script);
+		sp.Script =
+			Script != null
+			? ScriptSaveLoad.ConvertScriptToString(Script)
+			: null;
 
 		SPart = sp;
 	}
 
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart) {
+	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
 		var sp = (SPart_CPU)originalSPart; // if this errors then something has gone wrong
 
-		Script = ScriptSaveLoad.ConvertStringToScript(sp.Script);
+		Script = 
+			sp.Script != null
+			? ScriptSaveLoad.ConvertStringToScript(sp.Script)
+			: null;
 	}
 
 	public override void HandleCommand(string command, object[] args) {

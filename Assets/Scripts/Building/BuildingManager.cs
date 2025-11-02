@@ -44,6 +44,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
 		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
 
+		SelectionManager.Instance.ClearSelectionChanged();
+
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
@@ -62,6 +64,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.OnNewPressed += New;
 
 		CPU_SESetup.Setup();
+		Part_Transceiver.Setup();
 	}
 
 	WindowItem[] GenerateWindowItems() {

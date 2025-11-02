@@ -874,7 +874,10 @@ public class PComponents {
 			mainRT.anchorMin = MAmin;
 			mainRT.anchorMax = MAmax;
 
-			mainRT.sizeDelta = size * Vector2.one;
+			Vector2 sizeVec = Vector2.zero;
+			sizeVec[vertical ? 0 : 1] = size;
+
+			mainRT.sizeDelta = sizeVec;
 			mainRT.pivot = pivot;
 
 			mainRT.anchoredPosition = Vector2.zero; // for good measure

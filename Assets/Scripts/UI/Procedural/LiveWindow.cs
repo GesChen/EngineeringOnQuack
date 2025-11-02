@@ -49,6 +49,10 @@ public class LiveWindow : MonoBehaviour {
 		BR.position = WindowSizeNode.Positions.BottomLeft;
 	}
 
+	// may rename later
+	public bool Active =>
+		gameObject.activeSelf && (!Config.HideOnStart || hideOnStartInterrupt);
+
 	bool hideOnStartInterrupt = false;
 	public void Show() {
 		gameObject.SetActive(true);

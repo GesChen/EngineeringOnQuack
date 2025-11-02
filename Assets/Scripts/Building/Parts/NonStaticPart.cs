@@ -4,16 +4,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class NonStaticPart : MonoBehaviour {
+	public Part Part;
+
 	public abstract string PartName { get; }
 
 	// dont forget to call base.awake in derived classes
 	// think about how this works with creation during assembly copying
 	protected void Awake() {
-		var mainPart = GetComponent<Part>();
+		Part = GetComponent<Part>();
 
-		SetupPart(mainPart);
+		SetupPart(Part);
 		
-		mainPart.OnCommandCalled = HandleCommand;
+		Part.OnCommandCalled = HandleCommand;
 	}
 
 	// throw unknowncommand at the end of this function
@@ -63,7 +65,7 @@ public abstract class NonStaticPart : MonoBehaviour {
 	/// <param name="component">The NSP component (probably) to setup</param>
 	public virtual void FinalizeSPartReconstruction(
 		Assembly.SPart originalSPart,
-		Part unfinishedPart) { }
+		Part unfinishedPart, Assembly unfinishedAssembly) { }
 	#endregion
 
 	#region Assembly

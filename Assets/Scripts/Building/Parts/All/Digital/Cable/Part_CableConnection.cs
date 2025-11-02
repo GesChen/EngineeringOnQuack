@@ -7,6 +7,7 @@ using UnityEngine;
 public class Part_CableConnection : NonStaticPart {
 	public override string PartName => "Cable Connection";
 
+	// distinction between part.id 
 	public int CCID = -1; // needed for cable to reconnect on simulation start
 
 	public Part_Cable Cable;
@@ -18,6 +19,11 @@ public class Part_CableConnection : NonStaticPart {
 	}
 
 	public Part ConnectedPart => Cable.OtherCC(this).Port.MainPart; // may change this
+
+	public void RandomizeID() {
+		CCID = HashFunction();
+	}
+	public static int HashFunction() => UnityEngine.Random.value.GetHashCode();
 
 	// no extra processing needed
 	public override void FinalizeInstantiation(GameObject instantiatedPart) {
@@ -42,5 +48,33 @@ public class Part_CableConnection : NonStaticPart {
 
 	public override void HandleCommand(string command, object[] args) {
 		Debug.LogError(UnknownCommand(command));
+	}
+
+	public class SPart_CC : Assembly.SPart {
+		public int CCID;
+	}
+
+	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
+		var sp = new SPart_CC {
+			CCID = CCID,
+
+			basePartID = SPart.basePartID,
+			id = SPart.id,
+			position = SPart.position,
+			rotation = SPart.rotation,
+			scale = SPart.scale,
+			color = SPart.color,
+			compositionID = SPart.compositionID,
+		};
+
+		SPart = sp;
+	}
+
+	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+
+		var cc = unfinishedPart.GetComponent<Part_CableConnection>();
+		var part = (SPart_CC)originalSPart;
+
+		cc.CCID = part.CCID;
 	}
 }

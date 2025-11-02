@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +8,8 @@ public class OutputManager : Singleton<OutputManager> {
 
 	string currentName;
 	int currentlySelectedI = -1;
+
+	public Action OnOutputsChanged;
 
 	protected override void Awake() {
 		base.Awake();
@@ -114,6 +117,8 @@ public class OutputManager : Singleton<OutputManager> {
 	public void UpdateMenu() {
 		OutputsMenu.UpdateMenu(GetOutputNames());
 
+		OnOutputsChanged?.Invoke();
+
 		BuildingManager.SetDirty();
 	}
 	#endregion
@@ -126,7 +131,10 @@ public class OutputManager : Singleton<OutputManager> {
 	void GenerateAllOutputWindows() {
 		for (int i = 0; i < BuildingManager.Instance.Assembly.Outputs.Count; i++) {
 			Output output = BuildingManager.Instance.Assembly.Outputs[i];
-			SimulatingMainUI.TopBar.Outputs.GenerateOutputWindow(i, output.Name, 0);
+			var window = 
+				SimulatingMainUI.TopBar.Outputs.GenerateOutputWindow(i, output.Name, 0);
+
+			output.SetWindow(window);
 		}
 	}
 

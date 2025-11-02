@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using UnityEngine;
 
@@ -8,8 +9,11 @@ public class Part_Cable : NonStaticPart {
 	public Part_CableConnection connectionA;
 	public Part_CableConnection connectionB;
 	public LineRenderer Line;
+	[HideInInspector] public bool SetUp;
 
 	public void Update() {
+		if (!SetUp) return;
+
 		Line.SetPositions(new[] {
 			connectionA.transform.position,
 			connectionB.transform.position
@@ -26,8 +30,8 @@ public class Part_Cable : NonStaticPart {
 		connectionA.Cable = this;
 		connectionB.Cable = this;
 
-		connectionA.CCID = UnityEngine.Random.value.GetHashCode();
-		connectionB.CCID = UnityEngine.Random.value.GetHashCode();
+		connectionA.RandomizeID();
+		connectionB.RandomizeID();
 
 		ccA.transform.position = transform.position;
 		ccB.transform.position = transform.position;
@@ -67,5 +71,51 @@ public class Part_Cable : NonStaticPart {
 
 	public override void HandleCommand(string command, object[] args) {
 		Debug.LogError(UnknownCommand(command));
+	}
+
+	public class SPart_Cable : Assembly.SPart {
+		public int AID;
+		public int BID;
+	}
+	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
+		var sp = new SPart_Cable {
+			AID = connectionA.CCID,
+			BID = connectionB.CCID,
+
+			basePartID = SPart.basePartID,
+			id = SPart.id,
+			position = SPart.position,
+			rotation = SPart.rotation,
+			scale = SPart.scale,
+			color = SPart.color,
+			compositionID = SPart.compositionID,
+		};
+
+		SPart = sp;
+	}
+
+	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var newCable = unfinishedPart.GetComponent<Part_Cable>();
+		newCable.StartCoroutine(DelaySetup(originalSPart, unfinishedPart, unfinishedAssembly));
+	}
+
+	IEnumerator DelaySetup(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		yield return null;
+
+		var part = (SPart_Cable)originalSPart;
+		var cA = unfinishedAssembly.Parts.First(p => {
+			p.IsNonStaticPart(out var nsp);
+			return nsp is Part_CableConnection cc && cc.CCID == part.AID;
+		}).GetComponent<Part_CableConnection>();
+
+		var cB = unfinishedAssembly.Parts.First(p => {
+			p.IsNonStaticPart(out var nsp);
+			return nsp is Part_CableConnection cc && cc.CCID == part.BID;
+		}).GetComponent<Part_CableConnection>();
+
+		var newCable = unfinishedPart.GetComponent<Part_Cable>();
+
+		newCable.connectionA = cA;
+		newCable.connectionB = cB;
 	}
 }

@@ -25,6 +25,7 @@ public class GameManager : Singleton<GameManager> {
 		OnStopSimulating?.Invoke();
 	}
 
-	public event Action OnStartSimulating;
+	// should hopefully call its awake and nulling before everything else
+	public event Action OnStartSimulating; 
 	public event Action OnStopSimulating;
 }

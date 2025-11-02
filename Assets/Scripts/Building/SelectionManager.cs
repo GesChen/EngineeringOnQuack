@@ -33,7 +33,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}*/
 	[HideInNormalInspector] public float dragStartTime;
 
+	/// <summary>
+	/// Subscribe in something called from Buildingmanager after the clear
+	/// should be around line 47
+	/// </summary>
 	public event Action OnSelectionChanged;
+	public void ClearSelectionChanged() { OnSelectionChanged = null; }
 
 	void Start() {
 		Selection = new();

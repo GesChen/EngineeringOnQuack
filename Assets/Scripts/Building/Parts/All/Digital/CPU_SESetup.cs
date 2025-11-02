@@ -91,7 +91,7 @@ public static class CPU_SESetup {
 				File.WriteAllBytes(path, data);
 			} catch (Exception e) {
 				PDialog.GenerateDialog(new(
-					$"An error occurred while saving the file:\n{e}",
+					$"An error occurred while saving the file:\n{e.Message}",
 					new PDialog.Option[] {
 					new("OK", null)
 					},
@@ -138,7 +138,7 @@ public static class CPU_SESetup {
 			SEProcedural.SetFileName(Path.GetFileNameWithoutExtension(filePath));
 		} catch (Exception e) {
 			PDialog.GenerateDialog(new(
-				$"An error occurred while saving the file:\n{e}",
+				$"An error occurred while saving the file:\n{e.Message}",
 				new PDialog.Option[] {
 					new("OK", null)
 				},
@@ -184,7 +184,7 @@ public static class CPU_SESetup {
 
 		} catch(Exception e) {
 			PDialog.GenerateDialog(new(
-				$"An error occurred while loading the file:\n{e}",
+				$"An error occurred while loading the file:\n{e.Message}",
 				new PDialog.Option[] {
 					new("OK", null)
 				},
