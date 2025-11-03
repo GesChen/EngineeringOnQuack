@@ -88,6 +88,9 @@ public static class ContextManager {
 		_current = _current?.Parent;
 	}
 
+	public static bool IsInContext<C>() where C : IContext => 
+		IsInContext<C>(out _);
+
 	public static bool IsInContext<C>(out C instance) where C : IContext {
 		bool isIn = IsInContext(_current, out C tcon);
 		instance = tcon;

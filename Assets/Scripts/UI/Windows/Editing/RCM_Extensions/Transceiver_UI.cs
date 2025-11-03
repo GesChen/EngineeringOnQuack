@@ -20,7 +20,7 @@ public static class Transceiver_UI {
 
 		SelectionsLayout.SetSubItems(outs.Select(OutputItem).ToArray());
 
-		var state = OutputSelectionWindow.RealisedWindow.Active;
+		var state = OutputSelectionWindow.RealisedWindow.Open;
 
 		WindowRealiser.Instance.UpdateWindow(OutputSelectionWindow);
 

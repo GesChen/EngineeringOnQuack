@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
-public class Translate : MonoBehaviour
-{
+public class Translate : MonoBehaviour {
 	public Vector3Int axes;
 	[HideInInspector] public Vector3 localAxes;
 	public bool doDynamicBoundsOffset;
@@ -38,8 +37,7 @@ public class Translate : MonoBehaviour
 
 	SnapTarget snapping;
 
-	void Awake()
-	{
+	void Awake() {
 		main = GetComponentInParent<TransformTools>();
 		parentMain = GetComponentInParent<TranslateMain>();
 
@@ -55,8 +53,7 @@ public class Translate : MonoBehaviour
 		numaxes = axes.x + axes.y + axes.z;
 	}
 
-	void Update()
-	{
+	void Update() {
 		if (axes != Vector3.one)
 			localAxes = main.transform.rotation * axes;
 
@@ -91,16 +88,14 @@ public class Translate : MonoBehaviour
 	void ResetTransform() // reset ALL transforms (except position)
 	{
 		resetting = true;
-		foreach (Transform t in SelectionManager.Instance.Selection)
-		{
+		foreach (Transform t in SelectionManager.Instance.Selection) {
 			t.rotation = Quaternion.identity;
 			t.localScale = Vector3.one;
 		}
 		SelectionManager.Instance.UpdateContainer();
 	}
 
-	bool MouseOver()
-	{
+	bool MouseOver() {
 		// get world bounds and camera
 		Bounds bounds = objectRenderer.bounds;
 		Camera mainCamera = Camera.main;
@@ -120,8 +115,7 @@ public class Translate : MonoBehaviour
 		Vector2 minScreen = Vector2.positiveInfinity;
 		Vector2 maxScreen = Vector2.negativeInfinity;
 
-		foreach (Vector2 corner in boundsCorners)
-		{
+		foreach (Vector2 corner in boundsCorners) {
 			minScreen = Vector2.Min(minScreen, corner);
 			maxScreen = Vector2.Max(maxScreen, corner);
 		}
@@ -130,28 +124,24 @@ public class Translate : MonoBehaviour
 		bool inBounds;
 
 		// dynamic bounds offset
-		if (doDynamicBoundsOffset)
-		{
+		if (doDynamicBoundsOffset) {
 			float dot = Vector3.Dot(Vector3.one - localAxes, Camera.main.transform.forward);
 			float dynamicOffset = -((1 - dot) * 2 - 1) * main.boundsOffset;
 
 			inBounds = mousePos.x >= minScreen.x + dynamicOffset && mousePos.x <= maxScreen.x - dynamicOffset &&
 						mousePos.y >= minScreen.y + dynamicOffset && mousePos.y <= maxScreen.y - dynamicOffset;
-		}
-		else
-		{
+		} else {
 			// determine if mouse is inside ss bounds
 			inBounds = mousePos.x >= minScreen.x + main.boundsOffset && mousePos.x <= maxScreen.x - main.boundsOffset &&
 						mousePos.y >= minScreen.y + main.boundsOffset && mousePos.y <= maxScreen.y - main.boundsOffset;
 		}
 		return inBounds;
 	}
-	void StartOver()
-	{
+	void StartOver() {
 		if (!main.hovering && !dragging)// || axes == Vector3.one)
 		{
 			if (axes == Vector3.one)
-				main.specialCenterCase = true;	
+				main.specialCenterCase = true;
 
 			hovering = true;
 			main.hovering = true;
@@ -162,10 +152,8 @@ public class Translate : MonoBehaviour
 			HDMaterial.ValidateMaterial(mat);
 		}
 	}
-	void StopOver()
-	{
-		if (hovering && !dragging)
-		{
+	void StopOver() {
+		if (hovering && !dragging) {
 			hovering = false;
 			main.hovering = false;
 
@@ -177,10 +165,8 @@ public class Translate : MonoBehaviour
 		if (axes == Vector3.one)
 			main.specialCenterCase = false;
 	}
-	void StartClicking()
-	{
-		if (hovering)
-		{
+	void StartClicking() {
+		if (hovering) {
 			dragging = true;
 			main.dragging = true;
 
@@ -196,8 +182,7 @@ public class Translate : MonoBehaviour
 			dragStartPos = main.transform.position;
 		}
 	}
-	void StopClicking()
-	{
+	void StopClicking() {
 		if (!dragging) return;
 
 		main.UpdatePosition();
@@ -211,15 +196,12 @@ public class Translate : MonoBehaviour
 
 		dragging = false;
 		main.dragging = false;
-		if (over)
-		{
+		if (over) {
 			hovering = true;
 			main.hovering = true;
 			targetIntensity = main.hoverIntensity;
 			targetScale = main.hoverScale;
-		}
-		else
-		{
+		} else {
 			hovering = false;
 			main.hovering = false;
 			targetIntensity = main.defaultIntensity;
@@ -227,8 +209,7 @@ public class Translate : MonoBehaviour
 			main.specialCenterCase = false;
 		}
 	}
-	void UpdateVisuals()
-	{
+	void UpdateVisuals() {
 		if (main.dragging && !dragging) targetAlpha = main.draggingAlpha;
 		else if (main.hovering && !hovering) targetAlpha = main.notHoveredAlpha;
 		else targetAlpha = main.defaultAlpha;
@@ -243,25 +224,39 @@ public class Translate : MonoBehaviour
 		//mat.SetFloat("_Alpha", smoothedAlpha);
 		transform.localScale = smoothedScale * Vector3.one;
 	}
-	void PerformDragging()
-	{
+	void PerformDragging() {
 		if (!dragging) return;
 
 		Camera mainCamera = Camera.main;
-
 		Vector3 mouseScreenSpace = Conatrols.Mouse.Position - mouseOffset;
 		mouseScreenSpace.z = mainCamera.nearClipPlane;
 
 		Vector3 cameraPos = mainCamera.transform.position;
 		Vector3 cameraVec = mainCamera.ScreenToWorldPoint(mouseScreenSpace) - cameraPos;
-		cameraVec.Normalize(); // .normalized calls this anyway
+		cameraVec.Normalize();
 
-		switch (numaxes)
-		{
+		UpdatePosition(cameraPos, cameraVec, mouseScreenSpace);
+		MoveSelectionContainer();
+
+		if (main.snapping)
+			HandleSnapping();
+
+		if (main.aligning 
+			&& ContextManager.IsInContext<Contexts.SingleSelection>()
+			&& numaxes == 3)
+			HandleAligning(cameraPos, cameraVec);
+
+		CheckSnapTarget(cameraPos, cameraVec);
+
+		BuildingManager.SetDirty();
+	}
+
+	void UpdatePosition(Vector3 cameraPos, Vector3 cameraVec, Vector3 mouseScreenSpace) {
+		switch (numaxes) {
 			case 1:
 				transform.position = HF.ClosestPointAOnTwoLines(
 					dragStartPos, localAxes.normalized,
-					cameraPos, cameraVec); //alot of hacky stuff going on here that i dont understand
+					cameraPos, cameraVec);
 				break;
 			case 2:
 				transform.position = HF.RayPlaneIntersect(
@@ -270,84 +265,91 @@ public class Translate : MonoBehaviour
 				break;
 			case 3:
 				mouseScreenSpace.z = distance;
-				transform.position = mainCamera.ScreenToWorldPoint(mouseScreenSpace);
-				
+				transform.position = Camera.main.ScreenToWorldPoint(mouseScreenSpace);
 				if (main.snapping && main.local)
 					transform.position -= dragStartPos;
-
 				break;
-		};
-
-		// move target with direction
-		SelectionManager.Instance.selectionContainer.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
-	
-		if (main.snapping)
-		{
-			switch (numaxes)
-			{
-				case 1:
-					float distanceAlongAxis = HF.DistanceInDirection(SelectionManager.Instance.selectionContainer.position, dragStartPos, localAxes);
-					float snappedDist = Mathf.Round(distanceAlongAxis / main.translateSnappingIncrement) * main.translateSnappingIncrement;
-					SelectionManager.Instance.selectionContainer.position = dragStartPos + localAxes * snappedDist;
-					break;
-				case 2:
-					Vector3 planeXVector = Vector3.zero;
-					Vector3 planeYVector = Vector3.zero;
-
-					if (axes.x != 0)
-						planeXVector = main.transform.rotation * Vector3.right;
-					if (axes.y != 0)
-					{
-						if (planeXVector == Vector3.zero)
-							planeXVector = main.transform.rotation * Vector3.up;
-						else
-							planeYVector = main.transform.rotation * Vector3.up;
-					}
-					if (axes.z != 0)
-						planeYVector = main.transform.rotation * Vector3.forward;
-
-					Vector2 planePoint = HF.CoordinatesOfPointOnPlane(SelectionManager.Instance.selectionContainer.position, dragStartPos, planeXVector, planeYVector);
-					Vector2 snappedPoint = HF.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
-					Vector3 worldSpacePoint = dragStartPos + planeXVector * snappedPoint.x + planeYVector * snappedPoint.y;
-
-					SelectionManager.Instance.selectionContainer.position = worldSpacePoint;
-
-					break;
-				case 3:
-					Vector3 snappedPos = main.local ?
-						  (transform.rotation * (HF.Vector3Round(Quaternion.Inverse(transform.rotation) * SelectionManager.Instance.selectionContainer.position / main.translateSnappingIncrement) * main.translateSnappingIncrement))
-						: (HF.Vector3Round(SelectionManager.Instance.selectionContainer.position / main.translateSnappingIncrement) * main.translateSnappingIncrement);
-
-					SelectionManager.Instance.selectionContainer.position = snappedPos + (main.local ? dragStartPos : Vector3.zero);
-					if(main.local) transform.position += dragStartPos;
-					break;
-			}
 		}
+	}
 
-		// check for snaptarget
-		snapping = null;
-		if (Physics.Raycast(
-			new Ray(cameraPos, cameraVec),
+	void MoveSelectionContainer() {
+		SelectionManager.Instance.selectionContainer.position =
+			transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
+	}
+
+	void HandleSnapping() {
+		switch (numaxes) {
+			case 1:
+				float distanceAlongAxis = HF.DistanceInDirection(SelectionManager.Instance.selectionContainer.position, dragStartPos, localAxes);
+				float snappedDist = Mathf.Round(distanceAlongAxis / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+				SelectionManager.Instance.selectionContainer.position = dragStartPos + localAxes * snappedDist;
+				break;
+
+			case 2:
+				Vector3 planeXVector = Vector3.zero;
+				Vector3 planeYVector = Vector3.zero;
+
+				if (axes.x != 0)
+					planeXVector = main.transform.rotation * Vector3.right;
+				if (axes.y != 0)
+					planeYVector = planeXVector == Vector3.zero ? main.transform.rotation * Vector3.up : main.transform.rotation * Vector3.up;
+				if (axes.z != 0)
+					planeYVector = main.transform.rotation * Vector3.forward;
+
+				Vector2 planePoint = HF.CoordinatesOfPointOnPlane(SelectionManager.Instance.selectionContainer.position, dragStartPos, planeXVector, planeYVector);
+				Vector2 snappedPoint = HF.Vector2Round(planePoint / main.translateSnappingIncrement) * main.translateSnappingIncrement;
+				SelectionManager.Instance.selectionContainer.position = dragStartPos + planeXVector * snappedPoint.x + planeYVector * snappedPoint.y;
+				break;
+
+			case 3:
+				Vector3 snappedPos = main.local ?
+				  (transform.rotation * (HF.Vector3Round(Quaternion.Inverse(transform.rotation) * SelectionManager.Instance.selectionContainer.position / main.translateSnappingIncrement) * main.translateSnappingIncrement))
+				: (HF.Vector3Round(SelectionManager.Instance.selectionContainer.position / main.translateSnappingIncrement) * main.translateSnappingIncrement);
+
+				SelectionManager.Instance.selectionContainer.position = snappedPos + (main.local ? dragStartPos : Vector3.zero);
+				if (main.local) transform.position += dragStartPos;
+				break;
+		}
+	}
+
+	void HandleAligning(Vector3 cameraPos, Vector3 cameraVec) {
+		// find surface
+		if (!Physics.Raycast(
+			new(cameraPos, cameraVec),
 			out var hit,
 			Mathf.Infinity,
-			1 << LayerMask.NameToLayer("Part"))) { // doesnt include selection so no masking needed
+			1 << LayerMask.NameToLayer("Part"))) return;
 
-			// is snaptarget?
+		DebugExtra.DrawArrow(cameraPos, cameraVec);
+
+		ContextManager.IsInContext<Contexts.SingleSelection>(out var ss);
+		var sel = ss.Selected;
+		var selP = sel.GetComponent<Part>();
+
+		sel.up = hit.normal;
+		var lp = sel.localPosition;
+
+		if (Snapping.FastSnap(selP, cameraPos, cameraVec, true)) {
+			SelectionManager.Instance.selectionContainer.SetPositionAndRotation(sel.position, sel.rotation);
+		}
+		sel.localPosition = lp;
+	}
+
+	void CheckSnapTarget(Vector3 cameraPos, Vector3 cameraVec) {
+		snapping = null;
+		if (Physics.Raycast(new Ray(cameraPos, cameraVec), out var hit, Mathf.Infinity, 1 << LayerMask.NameToLayer("Part"))) {
 			if (hit.transform.TryGetComponent<SnapTarget>(out var target)) {
 				transform.position = hit.transform.position;
-				SelectionManager.Instance.selectionContainer.position = transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
-			
+				SelectionManager.Instance.selectionContainer.position =
+					transform.position - (axes == Vector3.one ? Vector3.zero : localAxes * main.transform.localScale.x);
 				snapping = target;
 			}
 		}
-
-		BuildingManager.SetDirty();
 	}
-	void UseAxisIndicator()
-	{
+
+	void UseAxisIndicator() {
 		if (!dragging) return;
-		switch(numaxes)
-		{
+		switch (numaxes) {
 			case 1:
 				axisIndicator.UpdateIndicator(
 					(transform.position + dragStartPos) / 2,
@@ -357,8 +359,8 @@ public class Translate : MonoBehaviour
 				break;
 			case 2:
 				Vector3 axis0 =
-					axes == new Vector3(1, 1, 0) ?	new Vector3(1, 0, 0) : (
-					axes == new Vector3(0, 1, 1) ?	new Vector3(0, 1, 0) :
+					axes == new Vector3(1, 1, 0) ?  new Vector3(1, 0, 0) : (
+					axes == new Vector3(0, 1, 1) ?  new Vector3(0, 1, 0) :
 										/*1,0,1*/	new Vector3(1, 0, 0));
 				Vector3 axis1 = axes - axis0;
 

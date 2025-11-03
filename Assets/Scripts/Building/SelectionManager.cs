@@ -50,7 +50,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 	void Subscribe() {
 		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
 		ContextObserver.Instance.RequestSelectionCount += () => Selection.Count;
-		ContextObserver.Instance.GetCurrentSSBasePartID += () => PartSelection[0].basePart.ID;
+		ContextObserver.Instance.GetCurrentSSInfo += () =>
+			(PartSelection[0].transform, PartSelection[0].basePart.ID);
 
 		// do processing in here since ui doesnt depend on language
 		

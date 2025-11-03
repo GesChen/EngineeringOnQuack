@@ -1,4 +1,4 @@
-#define DEBUGMODE
+//#define DEBUGMODE
 
 using UnityEngine;
 using UnityEngine.UI;

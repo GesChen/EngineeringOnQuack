@@ -529,6 +529,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Align"",
+                    ""type"": ""Button"",
+                    ""id"": ""730faed5-465a-48dd-b17d-c5ffa44722dc"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -595,6 +604,28 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Delete"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""267aa358-ef01-40fa-8d9d-d80c56ccd282"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Align"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a085f16c-3652-45ee-92ef-a54d771a5dc1"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Align"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1651,6 +1682,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Building_Multiselect = m_Building.FindAction("Multiselect", throwIfNotFound: true);
         m_Building_CancelSelection = m_Building.FindAction("CancelSelection", throwIfNotFound: true);
         m_Building_Delete = m_Building.FindAction("Delete", throwIfNotFound: true);
+        m_Building_Align = m_Building.FindAction("Align", throwIfNotFound: true);
         // Mouse
         m_Mouse = asset.FindActionMap("Mouse", throwIfNotFound: true);
         m_Mouse_Left = m_Mouse.FindAction("Left", throwIfNotFound: true);
@@ -2115,6 +2147,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Building_Multiselect;
     private readonly InputAction m_Building_CancelSelection;
     private readonly InputAction m_Building_Delete;
+    private readonly InputAction m_Building_Align;
     /// <summary>
     /// Provides access to input actions defined in input action map "Building".
     /// </summary>
@@ -2146,6 +2179,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Building/Delete".
         /// </summary>
         public InputAction @Delete => m_Wrapper.m_Building_Delete;
+        /// <summary>
+        /// Provides access to the underlying input action "Building/Align".
+        /// </summary>
+        public InputAction @Align => m_Wrapper.m_Building_Align;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2187,6 +2224,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Delete.started += instance.OnDelete;
             @Delete.performed += instance.OnDelete;
             @Delete.canceled += instance.OnDelete;
+            @Align.started += instance.OnAlign;
+            @Align.performed += instance.OnAlign;
+            @Align.canceled += instance.OnAlign;
         }
 
         /// <summary>
@@ -2213,6 +2253,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Delete.started -= instance.OnDelete;
             @Delete.performed -= instance.OnDelete;
             @Delete.canceled -= instance.OnDelete;
+            @Align.started -= instance.OnAlign;
+            @Align.performed -= instance.OnAlign;
+            @Align.canceled -= instance.OnAlign;
         }
 
         /// <summary>
@@ -2952,6 +2995,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnDelete(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Align" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAlign(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Mouse" which allows adding and removing callbacks.

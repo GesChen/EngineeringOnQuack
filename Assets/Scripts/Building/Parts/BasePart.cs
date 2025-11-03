@@ -20,10 +20,16 @@ public class BasePart {
 	public GameObject Prefab => HF.LoadResource(ref m_prefab, PrefabPath);
 
 	private Vector3[] m_allVerts;
+	/// <summary>
+	/// Processing verts
+	/// </summary>
 	public Vector3[] AllVerts => // copy
 		HF.LoadCached(ref m_allVerts, () => ProcessingMesh.vertices.ToArray());
 
 	private int[] m_allTris; 
+	/// <summary>
+	/// Processing triangle indices
+	/// </summary>
 	public int[] AllTris => // copy
 		HF.LoadCached(ref m_allTris, () => ProcessingMesh.triangles.ToArray());
 

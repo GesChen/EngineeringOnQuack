@@ -18,8 +18,10 @@ public class Part_Transceiver : NonStaticPart {
 		Transceiver_UI.OnItemSelected = OnItemSelected;
 
 		SelectionManager.Instance.OnSelectionChanged += () => {
-			OutputsChanged();
-			UpdateUI();
+			if (Transceiver_UI.OutputSelectionWindow.RealisedWindow.Open) {
+				OutputsChanged();
+				UpdateUI();
+			}
 		};
 
 		OutputManager.Instance.OnOutputsChanged = () => {

@@ -48,7 +48,7 @@ public class LiveWindow : MonoBehaviour {
 	}
 
 	// may rename later
-	public bool Active =>
+	public bool Open =>
 		gameObject.activeSelf && (!Config.HideOnStart || hideOnStartInterrupt);
 
 	bool hideOnStartInterrupt = false;
