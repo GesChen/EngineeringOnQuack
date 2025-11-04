@@ -33,7 +33,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}*/
 	[HideInNormalInspector] public float dragStartTime;
 
+	/// <summary>
+	/// Subscribe in something called from Buildingmanager after the clear
+	/// should be around line 47
+	/// </summary>
 	public event Action OnSelectionChanged;
+	public void ClearSelectionChanged() { OnSelectionChanged = null; }
 
 	void Start() {
 		Selection = new();
@@ -44,8 +49,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Subscribe() {
 		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
+		ContextObserver.Instance.RequestSelectionCount += () => Selection.Count;
+		ContextObserver.Instance.GetCurrentSSInfo += () =>
+			(PartSelection[0].transform, PartSelection[0].basePart.ID);
 
-		ContextObserver.Instance.GetCurrentSSBasePartID += () => PartSelection[0].basePart.ID;
+		// do processing in here since ui doesnt depend on language
+		
 	}
 
 	bool UpdateGroupContext() {
@@ -96,8 +105,6 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		CheckForGroups();
 		HandleContainer(); // selection might have changed from groups
-
-		UpdateContext();
 	}
 
 	void HandleInput() {
@@ -376,18 +383,23 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	}
 
-	void UpdateContext() {
-		ContextObserver.Instance.selectionCount = Selection.Count;
-	}
-
 	public void Clear() {
 		Selection.Clear();
 
 		selectionChanged = true;
 	}
 
-	public void ManuallySelect(params Transform[] transforms) {
+	public void SetSelection(params Transform[] transforms) {
 		Selection = transforms.ToList();
+
+		selectionChanged = true;
+	}
+
+	public void AddSelection(params Transform[] transforms) {
+		foreach (var t in transforms) {
+			if (!Selection.Contains(t))
+				Selection.Add(t);
+		}
 
 		selectionChanged = true;
 	}

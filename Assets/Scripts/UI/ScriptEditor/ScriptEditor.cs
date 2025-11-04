@@ -17,6 +17,11 @@ using UnityEngine.UI;
 // main. for every single use of lines or carets or whatever OK
 // "ill fix it later" 4-23-25 
 
+// todo: fix the line width thing where you can only click up to
+// the longset line as it is used to set the uvs and char widths,
+// hint it uses the longestlinewidth variables so figure that
+// out please :(
+
 public class ScriptEditor : MonoBehaviour {
 	public List<Line> lines;
 	List<LineNumber> lineNumbers;
@@ -38,6 +43,7 @@ public class ScriptEditor : MonoBehaviour {
 	internal int tailCaretI = 0;
 
 	public event Action<bool> OnDragStateChanged; // custom drag handling
+	public Action<string[]> OnScriptUpdated; // may change
 
 	#region Line Classes
 	public class Line {
@@ -125,7 +131,29 @@ public class ScriptEditor : MonoBehaviour {
 		UpdateCarets();
 		HandleTyping();
 		UpdateLineNumbersPos();
+		
+		UpdateSubscribers();
 	}
+
+	void UpdateSubscribers() {
+		var content = lines.Select(l => l.Content).ToArray();
+	
+		static bool ArraysEqual(string[] a, string[] b) {
+			if (a == b) return true;
+			if (a == null || b == null) return false;
+			if (a.Length != b.Length) return false;
+			for (int i = 0; i < a.Length; i++)
+				if (a[i] != b[i]) return false;
+			return true;
+		}
+
+		if (!ArraysEqual(content, lastContent)) {
+			OnScriptUpdated?.Invoke(content);
+			lastContent = content;
+		}
+	}
+	string[] lastContent = new string[0];
+
 
 	#region Loading/Generation
 	float longestLineWidth;
@@ -178,11 +206,15 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	private void CalculateLineSizes(string[] strLines) {
-		TextMeshProUGUI testingText = contentParent.gameObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
+		var randomObject = new GameObject();
+		var rort = randomObject.AddComponent<RectTransform>(); // can scale
+		rort.SetParent(contentParent);
+
+		TextMeshProUGUI testingText = randomObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
 		testingText.font = Config.ScriptEditor.Font;
 		testingText.fontSize = Config.ScriptEditor.FontSize;
 		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
-		Destroy(testingText);
+		Destroy(randomObject); // die
 
 		lineNumberWidth = numberSize.x;
 		allLinesHeight = numberSize.y;
@@ -233,6 +265,7 @@ public class ScriptEditor : MonoBehaviour {
 
 			if (width > longestLineWidth) {
 				longestLineWidth = width;
+				//longestLineWidth = contentMask.rect.width;
 				longestLine = i;
 			}
 		}
@@ -244,6 +277,11 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	void RecalculateCharUVA() {
+		if (lines.Count == 0) {
+			Debug.LogWarning($"script lines are empty");
+			return;
+		}
+
 		charUVAmount = 1f / lines[longestLine].ProcessedContent.Length;
 		charWidth = longestLineWidth / lines[longestLine].ProcessedContent.Length;
 	}
@@ -403,6 +441,7 @@ public class ScriptEditor : MonoBehaviour {
 		float width = LineWidth(line);
 		if (width > longestLineWidth) { // update everything if this is new longset
 			longestLine = lineIndex;
+			//longestLineWidth = contentMask.rect.width;
 			longestLineWidth = width;
 
 			RecalculateCharUVA();
@@ -749,7 +788,14 @@ public class ScriptEditor : MonoBehaviour {
 	bool lastDragState = false;
 	void HandleMouseNavigation() {
 		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
-		if (!mousePos.HasValue) return;
+		if (!mousePos.HasValue) {
+			if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
+				// deselect if click outside
+				ResetCarets();
+			}
+
+			return;
+		}
 
 		DetectExtraClicks(mousePos.Value);
 		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
@@ -986,7 +1032,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	int FindLineHoveringOver() {
-		if (lines == null || lines[0].Components.LineContent == null) return -1;
+		if (lines == null || lines.Count == 0 || lines[0].Components.LineContent == null) return -1;
 
 		for (int i = 0; i < lines.Count; i++) {
 			RectTransform contents = lines[i].Components.LineContent;
@@ -1040,6 +1086,8 @@ public class ScriptEditor : MonoBehaviour {
 
 	bool boxEditing = false;
 	void HandleKeyboardNavgation() {
+		if (carets.Count == 0) return;
+
 		if (Conatrols.IsPressed(Key.Escape))
 			Escape();
 
@@ -1400,6 +1448,7 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	bool GoodToType() {
+		if (carets.Count == 0) return false;
 		if (Conatrols.Keyboard.Presses.Count == 0) return false;
 
 		bool shortcutPressed =
@@ -1933,7 +1982,9 @@ public class ScriptEditor : MonoBehaviour {
 
 	private readonly Clipboard clipboard = new();
 
-	void Copy() {
+	public void Copy() {
+		if (carets.Count == 0) return;
+
 		if (carets.Count > 1) {
 			CopyMultiCaret();
 			return;
@@ -1970,7 +2021,9 @@ public class ScriptEditor : MonoBehaviour {
 		});
 	}
 
-	void Cut() {
+	public void Cut() {
+		if (carets.Count == 0) return;
+
 		history.RecordChange();
 
 		DebugLines();
@@ -1981,11 +2034,13 @@ public class ScriptEditor : MonoBehaviour {
 		}
 	}
 
-	void Paste() {
+	public void Paste() {
 		PasteIndex(0);
 	}
 
 	void PasteIndex(int i) {
+		if (carets.Count == 0) return;
+
 		history.RecordChange();
 
 		var entry = clipboard.Get(i);

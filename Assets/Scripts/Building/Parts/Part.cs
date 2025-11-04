@@ -1,11 +1,21 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Part : MonoBehaviour {
 	public int ID;
 	public BasePart basePart;
-	public bool Selected;
+	bool m_Selected = false;
+	public bool Selected {
+		get => m_Selected;
+		set {
+			if (m_Selected == value) return;
+			m_Selected = value;
+			UpdateLayer();
+		}
+	}
 
 	public PartGroup Group;
 
@@ -13,6 +23,9 @@ public class Part : MonoBehaviour {
 	// unnity's material class
 	public Color color;
 	public Composition composition;
+
+	public Port[] Ports;
+	public Action<string, object[]> OnCommandCalled;
 
 	// tentative, may change this method
 	MeshRenderer[] renderers;
@@ -36,12 +49,15 @@ public class Part : MonoBehaviour {
 		UpdateMaterial();
 	}
 
-	void Update() {
-		if (Selected) {
-			gameObject.layer = LayerMask.NameToLayer("Selected");
-		} else {
-			gameObject.layer = LayerMask.NameToLayer("Part");
-		}
+	void UpdateLayer() {
+		var layer =
+			Selected
+			? LayerMask.NameToLayer("Selected")
+			: LayerMask.NameToLayer("Part");
+		
+		gameObject.layer = layer;
+		foreach (Transform child in transform)
+			child.gameObject.layer = layer;
 	}
 
 	public void SetColor(Color newCol) { // retains alpha of material
@@ -81,5 +97,27 @@ public class Part : MonoBehaviour {
 		foreach (var collider in colliders) {
 			collider.material = composition.PhysicsMaterial;
 		}
+	}
+
+	public void HandleCommand(string command, object[] args) {
+		if (OnCommandCalled == null) {
+			Debug.LogError($"Part {transform.name} does not handle commands");
+			return;
+		}
+
+		OnCommandCalled.Invoke(command, args);
+	}
+
+	public Port GetPort(int portI) {
+		if (portI < 0 || portI >= Ports.Length)
+			throw new ArgumentOutOfRangeException($"Port {portI} is out of range for available ports on part {basePart.Name}");
+
+		return Ports[portI];
+	}
+	public Port GetPort(string portAlias) {
+		if (!Ports.TryFind(p => p.Alias == portAlias, out var port))
+			throw new($"No port found on part {basePart.Name} with alias \"{portAlias}\"");
+
+		return port;
 	}
 }

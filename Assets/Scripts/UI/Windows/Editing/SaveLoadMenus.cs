@@ -143,9 +143,20 @@ public class SaveLoadMenus {
 	public static void ClearOnLoad() { OnLoad = null; }
 	public static event Action OnLoad;
 	static void Load() {
-		OnLoad?.Invoke();
+		try {
+			OnLoad?.Invoke();
 
-		LoadOptionsMenu.RealisedWindow.Hide();
+			LoadOptionsMenu.RealisedWindow.Hide();
+		} catch (Exception e) {
+			PDialog.GenerateDialog(
+				new PDialog(
+					$"An error occurred while loading:\n{e.Message}",
+					new PDialog.Option[] {
+						new("Ok", null)
+					},
+					new(300, 200)
+			));
+		}
 	}
 
 	// really should be using a horizontal layout with layoutelements to set the sizes of each bro

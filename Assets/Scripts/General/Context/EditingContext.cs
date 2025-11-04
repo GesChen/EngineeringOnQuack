@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Contexts {
 	public class Main : IContext {
@@ -33,6 +34,7 @@ namespace Contexts {
 		public Type ParentType => typeof(InWorld);
 		public SingleSelection(IContext parent) => ((IContext)this).SetParent(parent);
 		public SingleSelection() { }
+		public Transform Selected;
 		public int SelectedBasePartID;
 	}
 

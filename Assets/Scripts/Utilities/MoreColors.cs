@@ -39,18 +39,19 @@ public static class MoreColors
 	public static Color DeepSkyBlue		=> new(0f, 0.749f, 1f);
 
 	// Pastel Colors
-	public static Color PastelPink		=> new(1.0f, 0.8f, 0.86f, 1.0f);
-	public static Color PastelRed		=> new(1.0f, 0.8f, 0.8f, 1.0f);
-	public static Color PastelOrange	=> new(1.0f, 0.93f, 0.8f, 1.0f);
-	public static Color PastelYellow	=> new(1.0f, 1.0f, 0.8f, 1.0f);
-	public static Color PastelGreen		=> new(0.8f, 1.0f, 0.8f, 1.0f);
-	public static Color PastelAqua		=> new(0.8f, 1.0f, 0.93f, 1.0f);
-	public static Color PastelBlue		=> new(0.8f, 0.87f, 1.0f, 1.0f);
-	public static Color PastelPurple	=> new(0.93f, 0.8f, 1.0f, 1.0f);
-	public static Color PastelLavender	=> new(0.96f, 0.96f, 1.0f, 1.0f);
-	public static Color PastelPeach		=> new(1.0f, 0.92f, 0.94f, 1.0f);
-	public static Color PastelMint		=> new(0.96f, 1.0f, 0.96f, 1.0f);
-	public static Color PastelCream		=> new(1.0f, 0.97f, 0.86f, 1.0f);
+	public static Color PastelPink		=> new(1.0f, 0.65f, 0.80f, 1.0f);
+	public static Color PastelRed		=> new(1.0f, 0.6f, 0.6f, 1.0f);
+	public static Color PastelOrange	=> new(1.0f, 0.83f, 0.6f, 1.0f);
+	public static Color PastelYellow	=> new(1.0f, 1.0f, 0.6f, 1.0f);
+	public static Color PastelGreen		=> new(0.65f, 1.0f, 0.65f, 1.0f);
+	public static Color PastelAqua		=> new(0.6f, 1.0f, 0.85f, 1.0f);
+	public static Color PastelBlue		=> new(0.65f, 0.75f, 1.0f, 1.0f);
+	public static Color PastelPurple	=> new(0.85f, 0.6f, 1.0f, 1.0f);
+	public static Color PastelLavender	=> new(0.90f, 0.90f, 1.0f, 1.0f);
+	public static Color PastelPeach		=> new(1.0f, 0.78f, 0.82f, 1.0f);
+	public static Color PastelMint		=> new(0.85f, 1.0f, 0.85f, 1.0f);
+	public static Color PastelCream		=> new(1.0f, 0.93f, 0.70f, 1.0f);
+
 
 	// Metallic Colors
 	public static Color Silver			=> new(0.753f, 0.753f, 0.753f);

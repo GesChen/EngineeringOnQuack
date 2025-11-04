@@ -5,20 +5,28 @@ using UnityEngine;
 public class SimulationManager : Singleton<SimulationManager> {
 	public List<Assembler.Assembled> assembledSubassemblies = new();
 
+	public static float StartSimulatingTime = -1;
+	public static float SimulatingTime => Time.time - StartSimulatingTime;
+
+
 	protected override void Awake() {
 		base.Awake();
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
-
 		SimulatingMainUI.TopBar.ClearBarCreated();
 		SimulatingMainUI.TopBar.OnBarCreated += SetupTopBar;
 
-		SimulatingMainUI.TopBar.OnRequestOutputs += UpdateOutputs;
 	}
 
 	public void StartSimulating() {
+		StartSimulatingTime = Time.time;
+
+		InternalFunctions.ClearOnPrintCalled();
+		PartInternalFunctions.ClearSubscriptions();
+		Memory.ClearCPUGet();
+
 		Assembler.Instance.Assemble(out assembledSubassemblies);
 	}
 
@@ -26,12 +34,6 @@ public class SimulationManager : Singleton<SimulationManager> {
 		SimulatingMainUI.TopBar.SetName(BuildingManager.Instance.Assembly.Name);
 
 		
-	}
-
-	void UpdateOutputs() {
-		var outputNames = BuildingManager.Instance.Assembly.Outputs.Select(o => o.Name).ToArray();
-
-		SimulatingMainUI.TopBar.UpdateOutputs(outputNames);
 	}
 
 	public void StopSimulating() {

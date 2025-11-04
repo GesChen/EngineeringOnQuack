@@ -1,11 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using Newtonsoft.Json;
 using System.Linq;
+using Newtonsoft.Json;
 
-public class ScriptSaveLoad : MonoBehaviour
-{
+public static class ScriptSaveLoad {
 
 	// commented out ones are ones that tokenizer likely wont init
 	/*public class sData {
@@ -13,13 +10,13 @@ public class ScriptSaveLoad : MonoBehaviour
 	}*/
 	public class sReference {
 
-/*		[JsonProperty("E")] public bool Exists; // ?
-		public bool IsInstanceVariable;
-		public bool IsListItem;
+		/*		[JsonProperty("E")] public bool Exists; // ?
+				public bool IsInstanceVariable;
+				public bool IsListItem;
 
-		[JsonProperty("N")] public string Name;
-		[JsonProperty("TR")] public sData ThisReference;
-*/
+				[JsonProperty("N")] public string Name;
+				[JsonProperty("TR")] public sData ThisReference;
+		*/
 		// ----- ThisReference Section (Data representation, no other values, just put it in here --------
 		[JsonProperty("PT")] public int PrimitiveType; // 0-number, 1-string
 
@@ -32,10 +29,10 @@ public class ScriptSaveLoad : MonoBehaviour
 		public bool ShouldSerializeStringValue() => PrimitiveType == 1;
 
 		// ----------------------------------------------------------------------------------------------
-/*
-		public sData ParentReference;
-		public int ListIndex;
-*/
+		/*
+				public sData ParentReference;
+				public int ListIndex;
+		*/
 	}
 	public class sToken {
 		/* 0 - operator
@@ -44,22 +41,22 @@ public class ScriptSaveLoad : MonoBehaviour
 		 * 3 - reference
 		 */
 		[JsonProperty("T")] public int Type;
-		[JsonProperty("SV")] public string		StringValue; // for op, name, token
-		[JsonProperty("RV")] public sReference	ReferenceValue;
+		[JsonProperty("SV")] public string      StringValue; // for op, name, token
+		[JsonProperty("RV")] public sReference  ReferenceValue;
 
-		public bool ShouldSerializeStringValue()	=> Type == 0 || Type == 1 || Type == 2;
-		public bool ShouldSerializeReferenceValue()	=> Type == 3;
+		public bool ShouldSerializeStringValue() => Type == 0 || Type == 1 || Type == 2;
+		public bool ShouldSerializeReferenceValue() => Type == 3;
 	}
 	public class sLine {
 		[JsonProperty("RLN")] public int RealLineNumber;
-		[JsonProperty("OS")] public string OriginalString; 
-		
+		[JsonProperty("OS")] public string OriginalString;
+
 		[JsonProperty("T")] public int Type; // 0-normal, 1-subsection
 		[JsonProperty("L")] public sToken[] Tokens;
 		[JsonProperty("S")] public sSection Section;
 
-		public bool ShouldSerializeTokens()		=> Type == 0;
-		public bool ShouldSerializeSection()	=> Type == 1;
+		public bool ShouldSerializeTokens() => Type == 0;
+		public bool ShouldSerializeSection() => Type == 1;
 	}
 	public class sSection {
 		public sLine[] Lines;
@@ -87,7 +84,7 @@ public class ScriptSaveLoad : MonoBehaviour
 	public static string ConvertScriptToJson(Script script, bool indent) {
 		sScript structFormatted = ConvertScriptToStruct(script);
 
-		string jsonified = JsonConvert.SerializeObject(structFormatted, 
+		string jsonified = JsonConvert.SerializeObject(structFormatted,
 			indent ? Formatting.Indented : Formatting.None);
 		return jsonified;
 	}
@@ -95,7 +92,7 @@ public class ScriptSaveLoad : MonoBehaviour
 	// consider making these private
 	public static sScript ConvertScriptToStruct(Script original) {
 		sSection structSection = SectionToStruct(original.Contents);
-		
+
 		sScript structScript = new() {
 			Name = original.Name,
 			Contents = structSection,
@@ -109,7 +106,7 @@ public class ScriptSaveLoad : MonoBehaviour
 	public static sSection SectionToStruct(Section original) {
 		List<sLine> lines = new();
 
-		foreach(Line oLine in original.Lines) {
+		foreach (Line oLine in original.Lines) {
 			sLine newLine = new() {
 				RealLineNumber = oLine.RealLineNumber,
 				OriginalString = oLine.OriginalString
@@ -117,31 +114,28 @@ public class ScriptSaveLoad : MonoBehaviour
 
 			if (oLine.LineType == Line.LineTypeEnum.Line) {
 				List<sToken> tokens = new();
-				
+
 				foreach (Token oToken in oLine.Tokens) {
 					sToken newToken = new();
 					if (oToken is Token.T_Operator op) {
 						newToken.Type = 0;
 						newToken.StringValue = op.StringValue;
-					}
-					else if (oToken is Token.T_Name n) {
+					} else if (oToken is Token.T_Name n) {
 						newToken.Type = 1;
 						newToken.StringValue = n.Value;
-					}
-					else if (oToken is Token.T_Keyword kw) {
+					} else if (oToken is Token.T_Keyword kw) {
 						newToken.Type = 2;
 						newToken.StringValue = kw.StringValue;
-					}
-					else if (oToken is T_Data d) {
+					} else if (oToken is T_Data d) {
 						sReference newRef = new();
 						if (d is Primitive.Number num) {
 							newRef.PrimitiveType = 0;
 							newRef.NumberValue = num.Value;
-						}
-						else if (d is Primitive.String str) {
+						} else if (d is Primitive.String str) {
 							newRef.PrimitiveType = 1;
 							newRef.StringValue = str.Value;
-						};
+						}
+						;
 
 						newToken.Type = 3;
 						newToken.ReferenceValue = newRef;
@@ -152,8 +146,7 @@ public class ScriptSaveLoad : MonoBehaviour
 
 				newLine.Type = 0;
 				newLine.Tokens = tokens.ToArray();
-			}
-			else {
+			} else {
 				sSection structSubSection = SectionToStruct(oLine.Section);
 
 				newLine.Type = 1;
@@ -177,6 +170,12 @@ public class ScriptSaveLoad : MonoBehaviour
 		return ConvertJsonToScript(json);
 	}
 
+	public static Script ConvertBytesToScript(byte[] bytes) {
+		string json = CompressionUtil.DecodeGzipBytes(bytes);
+
+		return ConvertJsonToScript(json);
+	}
+
 	public static Script ConvertJsonToScript(string json) {
 		sScript deserialized = JsonConvert.DeserializeObject<sScript>(json);
 
@@ -194,7 +193,7 @@ public class ScriptSaveLoad : MonoBehaviour
 			OriginalText = structed.OriginalText,
 			Version = structed.Version
 		};
-		
+
 		return script;
 	}
 
@@ -226,8 +225,7 @@ public class ScriptSaveLoad : MonoBehaviour
 
 				oLine.LineType = Line.LineTypeEnum.Line;
 				oLine.Tokens = tokens;
-			}
-			else {
+			} else {
 				Section subSection = StructToSection(sLine.Section);
 
 				oLine.LineType = Line.LineTypeEnum.Section;
@@ -264,7 +262,7 @@ public class ScriptSaveLoad : MonoBehaviour
 		foreach (sLine sl in section.Lines) {
 			if (sl.Type == 0) {
 				string line = "";
-				
+
 				for (int s = 0; s < sl.Tokens.Length; s++) {
 					sToken st = sl.Tokens[s];
 
@@ -285,8 +283,7 @@ public class ScriptSaveLoad : MonoBehaviour
 				}
 
 				strings.Add(line);
-			}
-			else {
+			} else {
 				List<string> subSection = ReconstructSection(sl.Section);
 
 				// indent section

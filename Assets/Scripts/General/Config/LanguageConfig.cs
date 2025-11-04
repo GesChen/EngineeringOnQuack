@@ -5,12 +5,14 @@ using UnityEngine;
 public static partial class Config {
 	public static class Language {
 		public static readonly string VERSION = "01";
-		public static readonly bool DEBUG = true;
+		public static readonly bool DEBUG = false;
 		public static readonly int MaxContainerSerializeLength = 128;
 		public static readonly int SpacesPerTab = 4;
 		public static readonly bool IndentWithTabs = true;
 		public static readonly int MaxWhileLoopIters = 1024;
 		public static readonly int RecursionDepthLimit = 1024;
+
+		public static readonly int MaxOutputHistory = 32; // laggy
 
 		public static class Internal {
 			public static readonly HashSet<string> AllMethods = new() {

@@ -160,7 +160,7 @@ public class Assembly {
 		}
 
 		if (newPart.IsNonStaticPart(out var nsp)) {
-			nsp.FinalizeSPartReconstruction(part, newPart);
+			nsp.FinalizeSPartReconstruction(part, newPart, reconstructed);
 		}
 	}
 }

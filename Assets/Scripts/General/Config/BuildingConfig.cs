@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public static partial class Config {
 	public static class Building {
 		public static readonly int ClipboardHistorySize = 10; // might consolidate all clipboard sizes into one
+		public static readonly float CCConnectionDistance = .001f;
 
 		private static readonly float saturation	= .6f; // values for
 		private static readonly float value			= 1f; // colors array
@@ -49,15 +50,10 @@ public static partial class Config {
 
 			public static readonly bool SaveClipboard = true;
 			
-			public static string SavingLocation =>
-				HF.GuaranteePath(
-					Path.Combine(
-						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-						"EOQ")
-					);
+			
 			public static string AssembliesLocation =>
 				HF.GuaranteePath(
-					Path.Combine(SavingLocation, "Assemblies")
+					Path.LocalPath("Assemblies").ToString()
 					);
 		}
 	}

@@ -353,6 +353,27 @@ public class WindowItem {
 	public static WindowItem NewFlyoutTrigger(PComponents.FlyoutTrigger trigger, LayoutConfig layout, PComponents.HoverTarget hover = null) => 
 		NewFlyoutTrigger("Flyout Trigger", trigger, layout, hover);
 
+	public static WindowItem NewFlyoutTriggerWithLabel(string name, PComponents.FlyoutTrigger trigger, PComponents.Text label, LayoutConfig layout, PComponents.HoverTarget hover = null) =>
+		new(
+			name,
+			layout,
+			new() {
+				new PComponents.Image(),
+				hover ?? new PComponents.HoverTarget(),
+				new PComponents.FlyoutHider(),
+				trigger
+			},
+			new() {
+				NewText(
+					label,
+					LayoutConfig.FillLayout
+				)
+			}
+			);
+	public static WindowItem NewFlyoutTriggerWithLabel(PComponents.FlyoutTrigger trigger, PComponents.Text label, LayoutConfig layout, PComponents.HoverTarget hover = null) =>
+		NewFlyoutTriggerWithLabel("Flyout Trigger", trigger, label, layout, hover);
+
+
 	public static WindowItem NewScrollView(string name, PComponents.ScrollView scroll, LayoutConfig layout, List<WindowItem> items) => 
 		new(
 			name,

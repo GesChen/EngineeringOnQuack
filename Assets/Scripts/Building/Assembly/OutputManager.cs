@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +8,8 @@ public class OutputManager : Singleton<OutputManager> {
 
 	string currentName;
 	int currentlySelectedI = -1;
+
+	public Action OnOutputsChanged;
 
 	protected override void Awake() {
 		base.Awake();
@@ -28,8 +31,45 @@ public class OutputManager : Singleton<OutputManager> {
 
 		OutputsMenu.ClearAdd();
 		OutputsMenu.OnAdd += OnAddPressed;
+
+		// ----------simulating------
+		
+		static void UpdateAllOutputStates() {
+			SimulatingMainUI.TopBar.Outputs.UpdateOutputStates(
+				BuildingManager.Instance.Assembly.Outputs.Select(
+					(o, i) => (i, o.Visible)
+				).ToArray()
+			);
+		}
+
+		SimulatingMainUI.TopBar.Outputs.OnRequestOutputs = UpdateOutputs;
+
+		// accessing is a bit long lmao
+		SimulatingMainUI.TopBar.Outputs.OnItemToggled = (i) => {
+			BuildingManager.Instance.Assembly.Outputs[i].Visible =
+			!BuildingManager.Instance.Assembly.Outputs[i].Visible;
+
+			UpdateAllOutputStates();
+		};
+
+		SimulatingMainUI.TopBar.Outputs.OnHideAll = () => {
+			foreach (var output in BuildingManager.Instance.Assembly.Outputs)
+				output.Visible = false;
+			
+			UpdateAllOutputStates();
+		};
+
+		SimulatingMainUI.TopBar.Outputs.OnShowAll = () => {
+			foreach (var output in BuildingManager.Instance.Assembly.Outputs)
+				output.Visible = true;
+			
+			UpdateAllOutputStates();
+		};
+	
+		SimulatingMainUI.TopBar.Outputs.RequestOutputWindowsGeneration = GenerateAllOutputWindows;
 	}
 
+	#region Editing
 	public void OpenModifyOutputs() {
 		OutputsMenu.ShowMenu(BottomBar.OutputButton.RealObject());
 
@@ -43,14 +83,14 @@ public class OutputManager : Singleton<OutputManager> {
 	}
 
 	public void OnRenamePressed() {
-		bool exists = Outputs().Contains(currentName);
+		bool exists = GetOutputNames().Contains(currentName);
 		if (!string.IsNullOrWhiteSpace(currentName) && currentlySelectedI != -1 && !exists) {
 			RenameOutput(currentlySelectedI, currentName);
 		}
 	}
 
 	public void OnAddPressed() {
-		bool exists = Outputs().Contains(currentName);
+		bool exists = GetOutputNames().Contains(currentName);
 		if (!string.IsNullOrWhiteSpace(currentName) && !exists) {
 			AddNewOutput(currentName);
 		}
@@ -75,12 +115,31 @@ public class OutputManager : Singleton<OutputManager> {
 	}
 
 	public void UpdateMenu() {
-		OutputsMenu.UpdateMenu(Outputs());
+		OutputsMenu.UpdateMenu(GetOutputNames());
+
+		OnOutputsChanged?.Invoke();
 
 		BuildingManager.SetDirty();
 	}
+	#endregion
 
-	private static List<string> Outputs() {
-		return BuildingManager.Instance.Assembly.Outputs.Select(o => o.Name).ToList();
+	#region Simulating
+	void UpdateOutputs() {
+		SimulatingMainUI.TopBar.Outputs.UpdateOutputs(GetOutputNames().ToArray());
 	}
+	
+	void GenerateAllOutputWindows() {
+		for (int i = 0; i < BuildingManager.Instance.Assembly.Outputs.Count; i++) {
+			Output output = BuildingManager.Instance.Assembly.Outputs[i];
+			var window = 
+				SimulatingMainUI.TopBar.Outputs.GenerateOutputWindow(i, output.Name, 0);
+
+			output.SetWindow(window);
+		}
+	}
+
+	#endregion
+
+	private static List<string> GetOutputNames() => 
+		BuildingManager.Instance.Assembly.Outputs.Select(o => o.Name).ToList();
 }

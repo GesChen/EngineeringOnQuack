@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,7 +16,6 @@ public class LiveWindow : MonoBehaviour {
 	public List<WindowSizeNode> cornerNodes = new();
 	public Image backgroundImage;
 	public Transform contentsContainer;
-	[HideInInspector] public WindowManager manager;
 	[HideInInspector] public RectTransform rt;
 	[HideInNormalInspector] public bool dragging = false;
 	[HideInNormalInspector] public bool anyNodesDragging = false;
@@ -28,7 +29,6 @@ public class LiveWindow : MonoBehaviour {
 	public CWindow Source;
 
 	void Awake() {
-		manager = GetComponentInParent<WindowManager>();
 		rt = GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
 	}
@@ -47,16 +47,31 @@ public class LiveWindow : MonoBehaviour {
 		BR.position = WindowSizeNode.Positions.BottomLeft;
 	}
 
+	// may rename later
+	public bool Open =>
+		gameObject.activeSelf && (!Config.HideOnStart || hideOnStartInterrupt);
+
+	bool hideOnStartInterrupt = false;
 	public void Show() {
 		gameObject.SetActive(true);
+		hideOnStartInterrupt = true;
 	}
 	public void Hide() {
+		dragging = false;
+		anyNodesDragging = false;
+
 		gameObject.SetActive(false);
+	}
+	public void SetState(bool active) {
+		if (active) Show();
+		else Hide();
 	}
 
 	void Update() {
 		if (Config.HideOnStart) {
-			if (Time.frameCount - Source.CreationFrame == global::Config.UI.Behaviour.MaxFramesForRealization)
+			if (Time.frameCount - Source.CreationFrame 
+				== global::Config.UI.Behaviour.MaxFramesForRealization
+				&& !hideOnStartInterrupt)
 				gameObject.SetActive(false);
 			if (Time.frameCount - Source.CreationFrame <= global::Config.UI.Behaviour.MaxFramesForRealization) {
 				//transform.position = new Vector2(-1000, -1000); // somewhere offscreen to load
@@ -116,7 +131,7 @@ public class LiveWindow : MonoBehaviour {
 			dragging = true;
 			dragOffset = (Vector2)rt.position - Conatrols.Mouse.Position;
 			dragStartPos = Conatrols.Mouse.Position;
-			transform.SetAsLastSibling();
+			PutOnTop();
 
 			goodToStartDragging = false;
 		}
@@ -135,7 +150,7 @@ public class LiveWindow : MonoBehaviour {
 
 			// prevent going off the sides
 			FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
-			Vector2 canvasSize = manager.CanvasRect.sizeDelta;
+			Vector2 canvasSize = WindowManager.Instance.CanvasRect.sizeDelta;
 
 			float halfWidth = rt.sizeDelta.x / 2;
 			float halfHeight = rt.sizeDelta.y / 2;
@@ -149,6 +164,18 @@ public class LiveWindow : MonoBehaviour {
 				- new Vector2(padding.Right, padding.Up));
 
 			rt.SetCenter(clampedPos);
+		}
+	}
+
+	void PutOnTop() {
+		transform.SetAsLastSibling();
+
+		// iterate through groups
+		var parent = transform.parent;
+		while (parent != WindowManager.Instance.transform) {
+			parent.SetAsLastSibling();
+
+			parent = parent.parent;
 		}
 	}
 
@@ -394,6 +421,11 @@ public class LiveWindow : MonoBehaviour {
 		Vector2 test = GetWorldCorner(testCorner);
 		(bool testX, bool testY) = InBounds(test);
 
+#if DEBUGMODE
+		DebugExtra.DrawPoint(targetPos, 10, Color.green);
+		DebugExtra.DrawPoint(test, 10, Color.cyan);
+#endif
+
 		if (!testX) {
 			if (horizontal) placement = !placement;
 			else alignment = !alignment;
@@ -408,6 +440,12 @@ public class LiveWindow : MonoBehaviour {
 
 		targetPos = targetCorners[targetC];
 		SetWorldCorner(targetPos, thisC);
+
+#if DEBUGMODE
+		DebugExtra.DrawPoint(targetPos, 10, Color.red);
+		Debug.Log(thisC);
+		Debug.Break();
+#endif
 	}
 
 	// convert positioning to corner placements
@@ -415,10 +453,10 @@ public class LiveWindow : MonoBehaviour {
 	private (int thisC, int targetC) PlacementCorners(
 		bool horizontal, bool placeUR, bool alignUR) =>
 		(horizontal, placeUR) switch {
-			(false, true)	=> alignUR ? (0, 1) : (3, 2),
-			(true, true)	=> alignUR ? (0, 3) : (1, 2),
-			(false, false)	=> alignUR ? (1, 0) : (2, 3),
-			(true, false)	=> alignUR ? (3, 0) : (2, 1)
+			(false, true)	=> alignUR ? (0, 1) : (3, 2), // up
+			(true, true)	=> alignUR ? (0, 3) : (1, 2), // right
+			(false, false)	=> alignUR ? (1, 0) : (2, 3), // down
+			(true, false)	=> alignUR ? (3, 0) : (2, 1)  // left
 		};
 
 	public Vector2 GetWorldCorner(int corner) {
@@ -430,7 +468,7 @@ public class LiveWindow : MonoBehaviour {
 	// i really shoudltn have made this a global function
 	// bools for if that axis is in bounds
 	public (bool x, bool y) InBounds(Vector2 p) {
-		Vector2 canvasSize = manager.CanvasRect.sizeDelta;
+		Vector2 canvasSize = WindowManager.Instance.CanvasRect.sizeDelta;
 		FourSides padding = global::Config.UI.Behaviour.CanvasInnerWindowsPadding;
 
 		Vector2 min = new(padding.Left, padding.Down);
@@ -469,5 +507,5 @@ public class LiveWindow : MonoBehaviour {
 		Vector2 center = canvas.renderingDisplaySize / 2;
 		SetWorldCorner(center, 4);
 	}
-	#endregion
+#endregion
 }

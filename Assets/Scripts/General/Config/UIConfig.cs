@@ -94,10 +94,14 @@ public static partial class Config {
 			public static readonly Vector2 CursorOffset		= new(0, -30);
 		}
 
-		public static class Locations {
-			public static readonly string FlyoutTriggerOpenSprite	= Config.Locations.IconsFolder + "dropdown open";
-			public static readonly string FlyoutTriggerClosedSprite	= Config.Locations.IconsFolder + "dropdown closed";
-			public static readonly string CloseIcon					= Config.Locations.IconsFolder + "close";
+		public static class Sprites {
+			public static readonly string FlyoutTriggerOpenSprite	= Locations.IconsFolder + "dropdown open";
+			public static readonly string FlyoutTriggerClosedSprite	= Locations.IconsFolder + "dropdown closed";
+			public static readonly string CloseIcon					= Locations.IconsFolder + "close";
+			public static readonly string OutputVisible				= Locations.IconsFolder + "visible";
+			public static readonly string OutputHidden				= Locations.IconsFolder + "hidden";
+			public static readonly string RadioButtonOn				= Locations.IconsFolder + "radio on";
+			public static readonly string RadioButtonOff			= Locations.IconsFolder + "radio off";
 		}
 
 		public static class Menu {
@@ -127,7 +131,7 @@ public static partial class Config {
 
 				private static Sprite m_closeSprite;
 				public static Sprite CloseSprite => 
-					HF.LoadResource(ref m_closeSprite, Locations.CloseIcon);
+					HF.LoadResource(ref m_closeSprite, Sprites.CloseIcon);
 
 				public static float EasingFunction(float x) {
 					//return x;

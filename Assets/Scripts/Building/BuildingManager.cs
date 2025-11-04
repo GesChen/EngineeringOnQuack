@@ -5,11 +5,15 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
+	public event Action OnModified;
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
 	/// Call this method whenever a change to the assembly is made! ANY CHANGE!
 	/// </summary>
-	public static void SetDirty() { Instance.Dirty = true; }
+	public static void SetDirty() { 
+		Instance.Dirty = true;
+		Instance.OnModified?.Invoke();
+	}
 
 	public Transform MainPartsContainer;
 	public Transform SimulationContainer;
@@ -30,19 +34,18 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.ClearEvents();
 
 		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
-		RightClickMenus.OnNewPartMade	+= _ => SetDirty();
 		RightClickMenus.OnDelete		+= DeleteSelection;
-		RightClickMenus.OnDelete		+= SetDirty;
 		RightClickMenus.OnCopy			+= Copy;
 		RightClickMenus.OnPaste			+= Paste;
 		RightClickMenus.OnDuplicate		+= Duplicate;
-		RightClickMenus.OnDuplicate		+= SetDirty;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
 		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
 		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
+
+		SelectionManager.Instance.ClearSelectionChanged();
 
 		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
@@ -60,6 +63,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.ClearNewPressed();
 		BottomBar.OnNewPressed += New;
+
+		CPU_SESetup.Setup();
+		Part_Transceiver.Setup();
 	}
 
 	WindowItem[] GenerateWindowItems() {
@@ -87,7 +93,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void HandleInput() {
 
-		if (Conatrols.IM.Building.Delete.WasPressedThisFrame()) {
+		if (Conatrols.IM.Building.Delete.WasPressedThisFrame() &&
+			ContextManager.IsInContext<Contexts.InWorld>(out _)) {
+
 			DeleteSelection();
 			RightClick.Instance.Hide();
 		}
@@ -98,7 +106,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		// used to update ids but now just a placeholder
 	}
 
-	void MakeNewPart(string name, bool select) {
+	public Part MakeNewPart(string name, bool select, bool addSelection = false) {
 		var newpart = GeneratePart(name);
 
 		// place part
@@ -106,12 +114,23 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		newpart.transform.position = PlacePos();
 
-		if (select)
-			SelectionManager.Instance.ManuallySelect(newpart.transform);
+		if (select) {
+			if (addSelection)
+				SelectionManager.Instance.AddSelection(newpart.transform);
+			else 
+				SelectionManager.Instance.SetSelection(newpart.transform);
+		}
+
+		if (newpart.TryGetComponent<NonStaticPart>(out var nsp))
+			nsp.OnPartCreation();
 
 		Assembly.Parts.Add(newpart);
 
 		UpdateParts();
+
+		SetDirty();
+
+		return newpart;
 	}
 
 	// function for getting a position for placing parts based on selection and mouse position
@@ -134,7 +153,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		BottomBar.UpdateNameText("");
 
-		SelectionManager.Instance.ManuallySelect();
+		SelectionManager.Instance.SetSelection();
 		SelectionManager.Instance.UpdateContainer();
 	}
 	public void ResetPartsAndGroups() {
@@ -147,6 +166,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Groups.Clear();
 	}
 
+	// DO NOT USE THESE FOR MAKING NEW PARTS IN CODE!!
+	// USE MAKENEWPART INSTEAD
 	public Part GeneratePart(int basePartID) {
 		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.ID == basePartID);
 		if (bpIndex == -1)
@@ -167,12 +188,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return GeneratePart(bp);
 	}
 
+	// main generatepart method (notice its private)
 	private Part GeneratePart(BasePart bp) {
 		GameObject newPart = Instantiate(bp.Prefab, MainPartsContainer);
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
-		part.ID = DateTime.UtcNow.GetHashCode(); // may change this
+		part.ID = HF.UIDHashFunction(); // may change this
+		// 10-19-25 changed to random instead of datettime
 
 		return part;
 	}
@@ -255,6 +278,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
+
+		SetDirty();
 	}
 	#endregion
 
@@ -288,6 +313,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Parts.AddRange(newparts);
 
 		UpdateParts();
+
+		SetDirty();
 	}
 
 	void Duplicate() {

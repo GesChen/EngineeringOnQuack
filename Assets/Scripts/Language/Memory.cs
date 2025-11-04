@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
+using UnityEditor.Experimental.GraphView;
+using UnityEngine;
 using static Token;
 
 public class Memory {
@@ -46,6 +48,7 @@ public class Memory {
 		{ "Error",				  Error.	InternalType }
 	};
 
+
 	public void Initialize() {
 		foreach (T_Data d in Data.Values) d.Memory = this;
 	}
@@ -61,6 +64,8 @@ public class Memory {
 		Interpreter = interpreter;
 		Nick = nick;
 	}
+	
+	// potential to be really fucking slow by the way
 	public Memory(Memory original) {
 		Data = new Dictionary<string, T_Data>(original.Data);
 		Types = new Dictionary<string, Type>(original.Types);
@@ -80,28 +85,50 @@ public class Memory {
 		return $"memory dump: \n{string.Join("\n", Data)}";
 	}
 
+	public static void ClearCPUGet() { CPUGet = null; }
+	public static event Func<int, T_Data> CPUGet;
+	private T_Data GetCPU() {
+		var intID = Interpreter.ID;
+
+		foreach (var handler in CPUGet
+			.GetInvocationList().Cast<Func<int, T_Data>>()) {
+
+			var call = handler?.Invoke(intID);
+			if (call != null) return call;
+		}
+		return Errors.BadCode();
+	}
+
 	/// <summary>
 	/// Returns data value if found, otherwise error
 	/// </summary>
-	public T_Data Get(string name) {
+	public T_Data Get(string name, bool memberAccess = false) {
 		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: getting {name}\n{MemoryDump()}", Color.yellow);
 
-		if (StaticData.ContainsKey(name)) {
+		// special handling
+		if (name == "cpu") {
+			return GetCPU();
+		}
+
+		if (!memberAccess && StaticData.ContainsKey(name)) {
 			T_Data staticCopy = StaticData[name].Copy();
 			staticCopy.Memory = this;
 			return staticCopy;
 		}
 		if (Data.ContainsKey(name)) return Data[name];
-		if (StaticTypes.ContainsKey(name) ||
+		if (!memberAccess && StaticTypes.ContainsKey(name) ||
 			Types.ContainsKey(name))
 			return Errors.TypeCannotBeUsedAsVariable(name);
 		return Errors.UnknownName(name);
 	}
 
-	public T_Data Set(string name, T_Data data) {
+	public T_Data Set(string name, T_Data data, bool member = false) {
 		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: name setting {name} {data}\n{MemoryDump()}", Color.yellow);
 
-		if (StaticData.ContainsKey(name))
+		// cant override global members IF this is setting from a global scope
+		// members can override static data names
+		if (!member
+			&& StaticData.ContainsKey(name))
 			return Errors.CannotSetBuiltin("value", name);
 		if (StaticTypes.ContainsKey(name))
 			return Errors.CannotSetBuiltin("type", name);

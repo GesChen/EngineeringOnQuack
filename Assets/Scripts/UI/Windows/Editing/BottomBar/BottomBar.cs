@@ -165,7 +165,6 @@ public static class BottomBar {
 		};
 	}
 
-
 	public static void Set() {
 		SetFileMenu();
 		SetToolsMenu();

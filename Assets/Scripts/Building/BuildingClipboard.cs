@@ -15,9 +15,61 @@ public class BuildingClipboard {
 	public void Copy() {
 		var clip = new Clip();
 
-		var parts = SelectionManager.Instance.PartSelection;
+		var parts = SelectionManager.Instance.PartSelection.ToList();
+		var moreParts = new List<Part>();
+
+		#region cable handling
+		// handle cables
+		// always contain both ccs in the clipboard and also the main cable part
+		HashSet<int> handledIDS = new();
+		foreach (var part in parts) {
+			if (handledIDS.Contains(part.ID)) continue;
+
+			if (part.IsNonStaticPart(out var nsp)) {
+				if (nsp is Part_CableConnection cc) {
+
+					// select other cc if not already
+					var othercc = cc.Cable.OtherCC(cc);
+					if (!(handledIDS.Contains(othercc.Part.ID) ||
+						parts.Contains(othercc.Part))) {
+						moreParts.Add(othercc.Part);
+
+						handledIDS.Add(part.ID);
+						handledIDS.Add(othercc.Part.ID);
+					}
+
+					// select the main cable
+					if (!parts.Contains(cc.Cable.Part)) {
+						moreParts.Add(cc.Cable.Part);
+					}
+				}
+			}
+		}
+
+		parts.AddRange(moreParts);
 
 		clip.Parts = parts.Select(p => ConvertPartToSPart(p)).ToArray();
+
+		// rerandomize the ccs in the board
+		var cbCCs = clip.Parts
+			.Select(p => p as Part_CableConnection.SPart_CC)
+			.Where(cc => cc != null);
+		var cbCables = clip.Parts
+			.Select(p => p as Part_Cable.SPart_Cable)
+			.Where(c => c != null);
+
+		// randomize
+		var CCIDs = cbCCs.Select(cc => cc.CCID);
+		Dictionary<int, int> RemappedCCIDs = 
+			CCIDs.ToDictionary(id => id, _ => HF.UIDHashFunction());
+
+		// remap new ids
+		foreach (var cc in cbCCs) cc.CCID = RemappedCCIDs[cc.CCID];
+		foreach (var c in cbCables) {
+			c.AID = RemappedCCIDs[c.AID];
+			c.BID = RemappedCCIDs[c.BID];
+		}
+		#endregion
 
 		/*
 		// below code is hella unreadable i wrote it while half asleep
@@ -57,7 +109,7 @@ public class BuildingClipboard {
 
 		// select
 		if (selectNew)
-			SelectionManager.Instance.ManuallySelect(newTransforms);
+			SelectionManager.Instance.SetSelection(newTransforms);
 
 		return newParts;
 	}
@@ -87,7 +139,10 @@ public class BuildingClipboard {
 			newTransforms[i] = transform;
 			
 			if (newPart.IsNonStaticPart(out var nsp)) {
-				nsp.FinalizeSPartReconstruction(origPart, newPart);
+				nsp.FinalizeSPartReconstruction(
+					origPart,
+					newPart,
+					BuildingManager.Instance.Assembly);
 			}
 		}
 

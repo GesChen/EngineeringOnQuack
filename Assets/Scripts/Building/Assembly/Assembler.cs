@@ -172,10 +172,12 @@ public class Assembler : Singleton<Assembler> {
 			List<Transform> parts = new();
 			Vector3 accumPos = Vector3.zero;
 
+			Dictionary<Part, Transform> partMap = new();
 			foreach (int partIndex in sub.Parts) {
 				Part part = Parts[partIndex];
 
 				Transform newObject = Instantiate(part.gameObject).transform;
+				partMap[part] = newObject;
 
 				newObject.gameObject.SetActive(true);
 				var partComp = newObject.GetComponent<Part>();
@@ -188,9 +190,20 @@ public class Assembler : Singleton<Assembler> {
 
 				accumPos += newObject.transform.position;
 			}
+
 			subParent.position = accumPos / sub.Parts.Count;
 			foreach (Transform part in parts)
 				part.parent = subParent;
+
+			// finalize all
+			foreach (int origPartI in sub.Parts) {
+				var origPart = Parts[origPartI];
+
+				if (origPart.TryGetComponent<NonStaticPart>(out var origNSP)) {
+					var newPart = partMap[origPart];
+					origNSP.FinalizeInstantiation(newPart.gameObject);
+				}
+			}
 
 			assembleds.Add(new() {
 				Parent = subParent,

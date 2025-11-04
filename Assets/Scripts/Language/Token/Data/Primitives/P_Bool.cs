@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 public abstract partial class Primitive : T_Data {
 	public partial class Bool : Primitive {
@@ -10,7 +11,9 @@ public abstract partial class Primitive : T_Data {
 			{ "eq"			, new Function("eq", eq)			},
 			{ "lt"			, new Function("lt", lt)			},
 			{ "mu"			, new Function("mu", mu)			},
-			{ "tostring"	, new Function("tostring", tostring)	}
+			{ "num"			, new Function("num", num)			},
+			{ "str"			, new Function("str", str)			},
+			{ "list"		, new Function("list", list)		},
 		});
 
 		public bool Value; // internal value
@@ -26,7 +29,7 @@ public abstract partial class Primitive : T_Data {
 		}
 
 		public override string ToString() {
-			return (tostring(this, new()) as String).Value;
+			return (str(this, new()) as String).Value;
 		}
 
 		public override T_Data Copy() {
@@ -59,10 +62,21 @@ public abstract partial class Primitive : T_Data {
 
 			return new Bool((thisRef as Bool).Value && b.Value);
 		}
-		public static T_Data tostring(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
+
+		public static T_Data num(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("num", 0, args.Count);
+
+			return new Number((thisRef as Bool).Value ? 1 : 0);
+		}
+		public static T_Data str(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("str", 0, args.Count);
 
 			return new String((thisRef as Bool).Value ? "true" : "false");
+		}
+		public static T_Data list(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("list", 0, args.Count);
+
+			return new List(new List<T_Data>() { thisRef as Bool });
 		}
 		#endregion
 	}

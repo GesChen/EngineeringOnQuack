@@ -8,17 +8,13 @@ using UnityEngine;
 /// and can just set them as strings idk
 /// </summary>
 public class Part_Axle : NonStaticPart {
+	public override string PartName => "Axle";
+
 	public Transform endA; // scales well i guess? fast way to keep track of this stuff i guess
 	public Transform endB;
 
-	public override void OnStopSimulating() {
-		// nah
-	}
-	public override void OnStartSimulating() {
-		// nothing for now
-	}
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) { }
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart) {
-		
+	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
+	public override void HandleCommand(string command, object[] args) {
+		Debug.LogError(UnknownCommand(command));
 	}
 }

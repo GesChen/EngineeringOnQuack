@@ -69,6 +69,7 @@ public class TransformTools : Singleton<TransformTools> {
 	public bool dragging;
 	public bool specialCenterCase;
 	public bool snapping;
+	public bool aligning;
 	[Space]
 	public bool translating;
 	public bool rotating;
@@ -100,6 +101,11 @@ public class TransformTools : Singleton<TransformTools> {
 			transform.rotation = Quaternion.identity;
 
 		snapping = Conatrols.IM.Building.Snap.IsPressed();
+
+		aligning = Conatrols.IM.Building.Align.IsPressed();
+
+		// may change later
+		if (aligning) snapping = false;
 	}
 	public void UpdatePosition() {
 		transform.position = selectionContainer.position;

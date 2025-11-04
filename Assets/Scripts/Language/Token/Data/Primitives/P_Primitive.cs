@@ -4,7 +4,15 @@ public abstract partial class Primitive : T_Data {
 	protected Primitive(Type type) : base(type) { }
 	protected Primitive(Primitive original) : base(original) { }
 
-	public static List<string> TypeNames = new() {
+	public static readonly List<string> TypeNames = new() {
+		"Number",
+		"String",
+		"Bool",
+		"List",
+		"Dict",
+		"Function"
+	};
+	public static readonly HashSet<string> TypeNamesHS = new(){
 		"Number",
 		"String",
 		"Bool",

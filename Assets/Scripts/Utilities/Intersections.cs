@@ -2,13 +2,14 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 using Geometry;
 
 public static class Intersections {
 	#region Meshes
 	/// <summary>
-	/// Determines if two transforms intersect
+	/// Determines if two transforms intersect, 
 	/// </summary>
 	public static bool MeshesIntersect(Transform obj1, Transform obj2) {
 		Mesh mesh1 = obj1.GetComponent<MeshFilter>().mesh;
@@ -39,7 +40,17 @@ public static class Intersections {
 
 		int numtris1 = mesh1tris.Length / 3;
 		int numtris2 = mesh2tris.Length / 3;
-		
+
+		// hope this optimization works
+		var comparisons = new(
+			int compI, 
+			int i, int j, 
+			float dist,
+			Vector3 p1, Vector3 p2, Vector3 p3,
+			Vector3 q1, Vector3 q2, Vector3 q3
+			)[numtris1 * numtris2];
+
+		int cnt = 0;
 		for (int i = 0; i < numtris1; i++) {
 			for (int j = 0; j < numtris2; j++) {
 				Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
@@ -49,90 +60,30 @@ public static class Intersections {
 				Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
 				Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
 
-#if DEBUGMODE
-				DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
-				DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
-#endif
+				float dist = Vector3.Distance((p1+p2+p3)/3f, (q1+q2+q3)/3f);
 
-				if (TrianglesIntersect(p1, p2, p3, q1, q2, q3))
-					return true;
+				comparisons[cnt] = (cnt, i, j, dist, p1, p2, p3, q1, q2, q3);
+
+				cnt++;
 			}
 		}
 
-		return false;
-	}
-	public static bool MeshesIntersectRawMesh_OldWithOptimizations(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
-		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
-		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
+		int[] compIs = Enumerable.Range(0, comparisons.Length).ToArray();
 
-		int numtris1 = mesh1tris.Length / 3;
-		int numtris2 = mesh2tris.Length / 3;
-		int combinations = numtris1 * numtris2;
-
-		int[] indices = new int[combinations];
-		//float[] distances = new float[combinations];
-		int[] triindex1 = new int[combinations];
-		int[] triindex2 = new int[combinations];
-		int count = 0;
-		for (int i = 0; i < numtris1; i++) {
-			for (int j = 0; j < numtris2; j++) {
-				indices[count] = count;
-				triindex1[count] = i;
-				triindex2[count] = j;
-/*
-				Vector3 avg1 =(
-					mesh1verts[mesh1tris[i * 3]] +
-					mesh1verts[mesh1tris[i * 3 + 1]] +
-					mesh1verts[mesh1tris[i * 3 + 2]]) / 3f;
-
-				Vector3 avg2 =
-					(mesh2verts[mesh2tris[j * 3]] +
-					mesh2verts[mesh2tris[j * 3 + 1]] +
-					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
-
-				float dist = (avg1 - avg2).sqrMagnitude;
-				distances[count] = dist;*/
-
-				count++;
-			}
-		}
-
-		//indices = SortIndicesByDistance(indices, distances);
-
-		float t = 0;
-		foreach (int index in indices) {
-			t++;
-			int i = triindex1[index];
-			int j = triindex2[index];
-
-
-			Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
-			Vector3 p2 = mesh1verts[mesh1tris[i * 3 + 1]];
-			Vector3 p3 = mesh1verts[mesh1tris[i * 3 + 2]];
-			Vector3 q1 = mesh2verts[mesh2tris[j * 3]];
-			Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
-			Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
+		SortIndicesByDistance(compIs, comparisons.Select(c => c.dist).ToArray());
 
 #if DEBUGMODE
-			DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
-			DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
+		Debug.Break();
 #endif
+		foreach (var compI in compIs) {
+			var c = comparisons[compI];
 
-			if (TrianglesIntersect(
-				mesh1verts[mesh1tris[i * 3]],
-				mesh1verts[mesh1tris[i * 3 + 1]],
-				mesh1verts[mesh1tris[i * 3 + 2]],
-				mesh2verts[mesh2tris[j * 3]],
-				mesh2verts[mesh2tris[j * 3 + 1]],
-				mesh2verts[mesh2tris[j * 3 + 2]]
-				)) {
+			if (TrianglesIntersect(c.p1, c.p2, c.p3, c.q1, c.q2, c.q3))
 				return true;
-			}
 		}
 
 		return false;
 	}
-
 	/// <summary>
 	/// Determines if the bounds of two sets of world space points intersect
 	/// </summary>
@@ -161,21 +112,18 @@ public static class Intersections {
 			max1.y >= min2.y &&
 			min1.z <= max2.z &&
 			max1.z >= min2.z;
-
 	}
 
 	/// <summary>
 	/// Determines if two 3D AABBs intersect
 	/// </summary>
-	public static bool BoundsIntersectWorldSpace(Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2) {
-		return
-			min1.x <= max2.x &&
-			max1.x >= min2.x &&
-			min1.y <= max2.y &&
-			max1.y >= min2.y &&
-			min1.z <= max2.z &&
-			max1.z >= min2.z;
-	}
+	public static bool BoundsIntersectWorldSpace(Vector3 min1, Vector3 max1, Vector3 min2, Vector3 max2) => 
+		min1.x <= max2.x &&
+		max1.x >= min2.x &&
+		min1.y <= max2.y &&
+		max1.y >= min2.y &&
+		min1.z <= max2.z &&
+		max1.z >= min2.z;
 
 	/// <summary>
 	/// Quicksort algorithm to order indices based on distance value
@@ -216,26 +164,43 @@ public static class Intersections {
 	/// Triangle-triangle intersection, given by a and b points
 	/// </summary>
 	public static bool TrianglesIntersect(Vector3 a1, Vector3 a2, Vector3 a3, Vector3 b1, Vector3 b2, Vector3 b3) {
+		// potential optimization: aabb check
+		Vector3 aMin = Vector3.Min(Vector3.Min(a1, a2), a3);
+		Vector3 aMax = Vector3.Max(Vector3.Max(a1, a2), a3);
+		Vector3 bMin = Vector3.Min(Vector3.Min(b1, b2), b3);
+		Vector3 bMax = Vector3.Max(Vector3.Max(b1, b2), b3);
+		if (!BoundsIntersectWorldSpace(aMin, aMax, bMin, bMax)) return false;
+
+#if DEBUGMODE
+		DebugExtra.DrawTriangleFilled(a1, a2, a3, color: MoreColors.PastelRed);
+		DebugExtra.DrawTriangleFilled(b1, b2, b3, color: MoreColors.PastelBlue);
+#endif
+
 		// step 1: get the planes of the two triangles
 		Vector3 planeDirA = Vector3.Cross(a2 - a1, a3 - a1).normalized;
 		Vector3 planeDirB = Vector3.Cross(b2 - b1, b3 - b1).normalized;
 		// plane origs will be any point 
 
 		// determine intersections with planes
-		List<Vector3> AIntersects = TriPlaneIntersect(b1, planeDirB, a1, a2, a3);
-		List<Vector3> BIntersects = TriPlaneIntersect(a1, planeDirA, b1, b2, b3);
+		var (aCount, AIntersects) = TriPlaneIntersect(b1, planeDirB, a1, a2, a3);
+		var (bCount, BIntersects) = TriPlaneIntersect(a1, planeDirA, b1, b2, b3);
 
 		// early returns if one tri doesn't intersect
-		if (AIntersects.Count == 0) return false;
-		if (BIntersects.Count == 0) return false;
+		if (aCount == 0 || bCount == 0) return false;
 		// both tris intersect the other plane at some place
 
-		// get to the point on the line to measure from
-		List<Vector3> intersections = AIntersects.Concat(BIntersects).ToList();
+		// gather all intersection points
+		int totalCount = aCount + bCount;
+		Vector3[] intersections = new Vector3[totalCount];
+		int idx = 0;
+		for (int i = 0; i < aCount; i++) intersections[idx++] = AIntersects[i];
+		for (int i = 0; i < bCount; i++) intersections[idx++] = BIntersects[i];
+
+		// midpoint
 		Vector3 midPoint = Vector3.zero;
-		foreach (Vector3 i in intersections)
-			midPoint += i;
-		midPoint /= AIntersects.Count + BIntersects.Count;
+		for (int i = 0; i < totalCount; i++)
+			midPoint += intersections[i];
+		midPoint /= totalCount;
 
 		float maxDistSquared = float.NegativeInfinity;
 		foreach (Vector3 i in intersections) {
@@ -247,11 +212,11 @@ public static class Intersections {
 		Vector3 planeIntersectionVector = (AIntersects[0] - BIntersects[0]).normalized; // 1 from each guaranteed
 		Vector3 measurementPoint = midPoint + 2 * maxDistSquared * planeIntersectionVector; // arbitrary point guarunteed not in 
 
-		float[] aDists = new float[AIntersects.Count];
-		float[] bDists = new float[BIntersects.Count];
-		for (int i = 0; i < AIntersects.Count; i++)
+		float[] aDists = new float[aCount];
+		float[] bDists = new float[bCount];
+		for (int i = 0; i < aCount; i++)
 			aDists[i] = (AIntersects[i] - measurementPoint).sqrMagnitude;
-		for (int i = 0; i < BIntersects.Count; i++)
+		for (int i = 0; i < bCount; i++)
 			bDists[i] = (BIntersects[i] - measurementPoint).sqrMagnitude;
 
 		// check overlapping cases
@@ -280,8 +245,9 @@ public static class Intersections {
 	/// <summary>
 	/// Intersection between a 3D triangle and a plane
 	/// </summary>
-	public static List<Vector3> TriPlaneIntersect(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2, Vector3 p3) {
-		List<Vector3> intersects = new();
+	public static (int count, Vector3[] intersects) TriPlaneIntersect(Vector3 planeOrig, Vector3 planeDir, Vector3 p1, Vector3 p2, Vector3 p3) {
+		var intersects = new Vector3[3];
+		int count = 0;
 
 		Vector3 v;
 		float t;
@@ -289,19 +255,19 @@ public static class Intersections {
 		v = p2 - p1;
 		t = Vector3.Dot(planeDir, planeOrig - p1) / Vector3.Dot(planeDir, v);
 		if (t >= 0 && t <= 1) // intersects
-			intersects.Add(p1 + t * v);
+			intersects[count++] = p1 + t * v;
 
 		v = p3 - p2;
 		t = Vector3.Dot(planeDir, planeOrig - p2) / Vector3.Dot(planeDir, v);
 		if (t >= 0 && t <= 1) // intersects
-			intersects.Add(p2 + t * v);
+			intersects[count++] = p2 + t * v;
 
 		v = p1 - p3;
 		t = Vector3.Dot(planeDir, planeOrig - p3) / Vector3.Dot(planeDir, v);
 		if (t >= 0 && t <= 1) // intersects
-			intersects.Add(p3 + t * v);
+			intersects[count++] = p3 + t * v;
 
-		return intersects;
+		return (count, intersects);
 	}
 
 	/// <summary>

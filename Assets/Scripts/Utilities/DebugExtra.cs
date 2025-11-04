@@ -59,10 +59,6 @@ public class DebugExtra {
 		Debug.DrawLine(nx, pz, col);
 		Debug.DrawLine(nx, nz, col);
 
-		//Debug.DrawLine(px, nx, color);
-		//Debug.DrawLine(py, ny, color);
-		//Debug.DrawLine(pz, nz, color);
-
 		Debug.DrawLine(py, pz, col);
 		Debug.DrawLine(py, nz, col);
 		Debug.DrawLine(ny, pz, col);
@@ -122,7 +118,7 @@ public class DebugExtra {
 	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density = 10, Color? color = null) {
 		Color col = color ?? Color.white;
 
-		for (int i = 0; i < density; i++) {
+		for (int i = 0; i < density + 1; i++) {
 			float t = (float)i / density;
 			Debug.DrawLine(a, Vector3.Lerp(b, c, t), col);
 			Debug.DrawLine(b, Vector3.Lerp(a, c, t), col);
@@ -418,7 +414,7 @@ public class DebugExtra {
 		{ '?',	330	},
 	};
 
-	public static void DrawString(string text, Vector3 position, float scale, Color color, float duration = 0) {
+	public static void DrawText(string text, Vector3 position, float scale, Color color, float duration = 0) {
 		if (string.IsNullOrEmpty(text)) return;
 
 		float charWidth = .6f * scale;

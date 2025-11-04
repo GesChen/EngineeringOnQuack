@@ -60,8 +60,8 @@ public static class ContextWindows {
 			OutputsMenu.Set,
 			BottomBar.Set,
 			UnsavedWorkMenu.Set,
-			FileExplorer.Set,
-			SEProcedural.Set
+			SEProcedural.Set,
+			Transceiver_UI.Set
 		},
 		() => (
 		Conglomerate(
@@ -72,8 +72,8 @@ public static class ContextWindows {
 			OutputsMenu.Windows,
 			BottomBar.Windows,
 			UnsavedWorkMenu.Windows,
-			FileExplorer.Windows
-			//SEProcedural.Windows
+			SEProcedural.Windows,
+			Transceiver_UI.Windows
 		),
 		Conglomerate(
 			RightClickMenus.Menus,
@@ -81,7 +81,8 @@ public static class ContextWindows {
 			SaveLoadMenus.Menus,
 			OutputsMenu.Menus,
 			BottomBar.Menus,
-			UnsavedWorkMenu.Menus
+			UnsavedWorkMenu.Menus,
+			SEProcedural.Menus
 		))
 	);
 

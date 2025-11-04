@@ -1,3 +1,5 @@
+//#define DEBUGMODE
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -214,7 +216,8 @@ public static class SaveLoadHelper {
 	/// <summary>
 	/// Dict containing all of the header definitions based on version
 	/// </summary>
-	public static HeaderHelper GetHeaderVersion(ushort version) => version switch {
+	public static HeaderHelper GetHeaderVersion(ushort version) => 
+		version switch {
 		1 => new HeaderHelper(HeaderHelper.HeaderItem.Int),
 		_ => throw new ArgumentOutOfRangeException(nameof(version), $"Unsupported header version: {version}")
 	};
@@ -258,6 +261,14 @@ public static class SaveLoadHelper {
 		ReadFile(path, out string json, out _);
 
 		BuildingManager.Instance.ResetPartsAndGroups();
+
+#if DEBUGMODE
+		string pretty = JsonConvert.SerializeObject(
+			JsonConvert.DeserializeObject(json),
+			Formatting.Indented
+		);
+		Debug.Log(pretty);
+#endif
 
 		var assembly = JsonConvert.DeserializeObject<Assembly.SAssembly>(json, Settings);
 

@@ -14,6 +14,7 @@ public class Scale : MonoBehaviour
 	private Material mat;
 	private Renderer objectRenderer;
 	private MeshFilter meshFilter;
+	Vector3[] meshVerts;
 
 	bool over;
 	bool lastOver;
@@ -46,6 +47,7 @@ public class Scale : MonoBehaviour
 		main = GetComponentInParent<TransformTools>();
 		objectRenderer = GetComponent<Renderer>();
 		meshFilter = GetComponent<MeshFilter>();
+		meshVerts = meshFilter.sharedMesh.vertices;
 		mat = objectRenderer.material;
 		color = mat.color;
 
@@ -124,9 +126,11 @@ public class Scale : MonoBehaviour
 		Vector2 minScreen = Vector2.positiveInfinity;
 		Vector2 maxScreen = Vector2.negativeInfinity;
 
-		for (int i = 0; i < meshFilter.sharedMesh.vertexCount; i++)
-		{
-			Vector3 vertexPos = transform.position + (Vector3)(transform.localToWorldMatrix * meshFilter.sharedMesh.vertices[i]);
+		var wsVerts = new Vector3[meshVerts.Length];
+		meshVerts.CopyTo(wsVerts, 0);
+		transform.TransformPoints(wsVerts);
+
+		foreach (var vertexPos in wsVerts) { 
 #if DEBUGMODE
 			DebugExtra.DrawPoint(vertexPos, .1f);
 #endif

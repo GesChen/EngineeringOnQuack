@@ -593,5 +593,7 @@ public static class HF {
 		float alpha = 2.0f / (n + 1); // smoothing factor
 		return prevAvg + alpha * (currentValue - prevAvg);
 	}
-
+	
+	// probably insecure but not going for security
+	public static int UIDHashFunction() => UnityEngine.Random.value.GetHashCode();
 }

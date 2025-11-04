@@ -1,7 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 
 public abstract partial class Primitive : T_Data {
 	public partial class String : Primitive {
@@ -13,7 +14,11 @@ public abstract partial class Primitive : T_Data {
 			{ "lt"			, new Function("lt"			, lt)			},
 			{ "ad"			, new Function("ad"			, ad)			},
 			{ "mu"			, new Function("mu"			, mu)			},
-			{ "tostring"	, new Function("tostring"	, tostring)		},
+
+			{ "num"			, new Function("num"		, num)			},
+			{ "bool"		, new Function("bool"		, @bool)		},
+			{ "list"		, new Function("list"		, list)			},
+
 			{ "upper"		, new Function("upper"		, upper)		},
 			{ "lower"		, new Function("lower"		, lower)		},
 			{ "count"		, new Function("count"		, count)		},
@@ -50,7 +55,7 @@ public abstract partial class Primitive : T_Data {
 		}
 
 		public override string ToString() {
-			return (tostring(this, new()) as String).Value;
+			return Value;
 		}
 
 		public override T_Data Copy() {
@@ -68,6 +73,14 @@ public abstract partial class Primitive : T_Data {
 			if (args[0] is not String)
 				return Errors.CannotCompare("String", args[0].Type.Name);
 			return new Bool(LessThan((thisRef as String).Value, (args[0] as String).Value));
+		}
+		private static bool LessThan(string a, string b) {
+			int minLen = Math.Min(a.Length, b.Length);
+			for (int i = 0; i < minLen; i++) {
+				if (a[i] < b[i]) return true;
+				else if (a[i] > b[i]) return false;
+			}
+			return a.Length < b.Length;
 		}
 		public static T_Data ad(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("ad", 1, args.Count);
@@ -95,18 +108,21 @@ public abstract partial class Primitive : T_Data {
 			return new String(repeated);
 		}
 		
-		private static bool LessThan(string a, string b) {
-			int minLen = Math.Min(a.Length, b.Length);
-			for (int i = 0; i < minLen; i++) {
-				if (a[i] < b[i]) return true;
-				else if (a[i] > b[i]) return false;
-			}
-			return a.Length < b.Length;
-		}
-		public static T_Data tostring(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
+		public static T_Data num(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("num", 0, args.Count);
 
-			return new String((thisRef as String).Value); // make sure its copied
+			if (double.TryParse((thisRef as String).Value, out double val)) return new Number(val);
+			return Errors.CannotParseValueAs("String", "Number");
+		}
+		public static T_Data @bool(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("bool", 0, args.Count);
+			
+			return new Bool((thisRef as String).Value != "");
+		}
+		public static T_Data list(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("list", 0, args.Count);
+
+			return new List(new List<T_Data>() { thisRef as String });
 		}
 
 		public static T_Data upper(T_Data thisRef, List<T_Data> args) {

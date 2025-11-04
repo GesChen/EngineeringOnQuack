@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using W = PMenu.Window;
 using RCM = RightClickMenus;
+
 public static class RCM_Extensions {
 	public struct PartExtension {
 		public int AssociatedBasePartID;
@@ -19,16 +20,18 @@ public static class RCM_Extensions {
 		}
 	}
 
-	public static event Action OnEditScript;
-
-	public static void ClearEvents() {
-		OnEditScript = null;
+	public static void Setup() {
+		CPU_UI.Setup();
 	}
 
 	public static readonly PartExtension[] PartExtensions = new PartExtension[] {
 		new(3, // cpu
 200,
-new W.Button(() => RCM.Call(OnEditScript), "edit script", iconName: "edit script")
+new W.Button(() => RCM.Call(CPU_UI.OnEditScript), "edit script", iconName: "edit script")
+		),
+		new(6, // transceiver
+200,
+new W.Button(() => RCM.Call(Transceiver_UI.OnSetOutput), "set output", iconName: "set output")
 		)
 	};
 }

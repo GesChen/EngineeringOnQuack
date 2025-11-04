@@ -1,9 +1,11 @@
+//#define DEBUGMODE
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class WindowRealiser : Singleton<WindowRealiser> {
 	public Canvas canvas;
@@ -113,6 +115,11 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 	/// wont get cleaned up properly
 	/// </summary>
 	public LiveWindow Realise(CWindow window) {
+#if DEBUGMODE
+		var sw = new System.Diagnostics.Stopwatch();
+		sw.Start();
+#endif
+
 		GenerateGroup(window);
 
 		// make new live window
@@ -188,6 +195,11 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 
 		RealiseGroups();
 		windowRT.SetParent(window.RealGroup.Transform);
+
+#if DEBUGMODE
+		sw.Stop();
+		Debug.Log($"Realised window {window.Name} in {sw.Elapsed.TotalMilliseconds}ms");
+#endif
 
 		return component;
 	}

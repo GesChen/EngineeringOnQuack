@@ -14,8 +14,12 @@ public abstract partial class Primitive : T_Data {
 			{ "lt"			, new Function("lt"				, lt)			},
 			{ "ad"			, new Function("ad"				, ad)			},
 			{ "mu"			, new Function("mu"				, mu)			},
-			{ "tostring"	, new Function("tostring"		, tostring)		},
-			{ "todict"		, new Function("todict"			, todict)		},
+
+			{ "num"			, new Function("num"			, num)			},
+			{ "str"			, new Function("str"			, str)			},
+			{ "bool"		, new Function("bool"			, @bool)		},
+
+			{ "dict"		, new Function("dict"			, dict)			},
 			{ "add"			, new Function("add"			, add)			},
 			{ "clear"		, new Function("clear"			, clear)		},
 			{ "contains"	, new Function("contains"		, contains)		},
@@ -43,7 +47,7 @@ public abstract partial class Primitive : T_Data {
 		}
 
 		public override string ToString() {
-			T_Data tryInternal = tostring(this, new());
+			T_Data tryInternal = str(this, new());
 			if (tryInternal is Error)
 				return "List object";
 
@@ -118,8 +122,15 @@ public abstract partial class Primitive : T_Data {
 
 			return new List(repeated);
 		}	
-		public static T_Data tostring(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
+	
+		// casting
+		// num might be changed this implementation is weird
+		public static T_Data num(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("num", 0, args.Count);
+			return new Number((thisRef as List).Value.Count == 0 ? 1 : 0);
+		}
+		public static T_Data str(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("str", 0, args.Count);
 
 			List<T_Data> L = (thisRef as List).Value; // get this list
 
@@ -149,8 +160,13 @@ public abstract partial class Primitive : T_Data {
 
 			return new String(builder.ToString());
 		}
-		public static T_Data todict(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
+		public static T_Data @bool(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("bool", 0, args.Count);
+			
+			return new Bool((thisRef as List).Value.Count != 0);
+		}
+		public static T_Data dict(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("str", 0, args.Count);
 
 			List<T_Data> L = (thisRef as List).Value; // get this list
 

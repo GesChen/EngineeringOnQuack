@@ -34,7 +34,8 @@ public class TimedEventInvoker : MonoBehaviour {
 	public enum Timing {
 		Awake,
 		Start,
-		Update
+		Update,
+		Close
 	}
 
 	void CallEvents(Timing timing) {
@@ -55,8 +56,10 @@ public class TimedEventInvoker : MonoBehaviour {
 
 	void Start() { CallEvents(Timing.Start); }
 	void Update() { CallEvents(Timing.Update); }
+	public void Close() { CallEvents(Timing.Close); }
 }
 
+#if UNITY_EDITOR
 [CustomEditor(typeof(TimedEventInvoker))]
 public class TimedEventInvokerEditor : Editor {
 	public override void OnInspectorGUI() {
@@ -64,9 +67,8 @@ public class TimedEventInvokerEditor : Editor {
 
 		var invoker = (TimedEventInvoker)target;
 		var field = typeof(TimedEventInvoker).GetField("m_customEvents", BindingFlags.NonPublic | BindingFlags.Instance);
-		var events = field?.GetValue(invoker) as System.Collections.IEnumerable;
 
-		if (events == null) {
+		if (field?.GetValue(invoker) is not IEnumerable events) {
 			EditorGUILayout.HelpBox("No CustomEvents assigned.", MessageType.Info);
 			return;
 		}
@@ -97,3 +99,4 @@ public class TimedEventInvokerEditor : Editor {
 		}
 	}
 }
+#endif
