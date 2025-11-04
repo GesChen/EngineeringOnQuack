@@ -131,7 +131,7 @@ public class LiveWindow : MonoBehaviour {
 			dragging = true;
 			dragOffset = (Vector2)rt.position - Conatrols.Mouse.Position;
 			dragStartPos = Conatrols.Mouse.Position;
-			transform.SetAsLastSibling();
+			PutOnTop();
 
 			goodToStartDragging = false;
 		}
@@ -164,6 +164,18 @@ public class LiveWindow : MonoBehaviour {
 				- new Vector2(padding.Right, padding.Up));
 
 			rt.SetCenter(clampedPos);
+		}
+	}
+
+	void PutOnTop() {
+		transform.SetAsLastSibling();
+
+		// iterate through groups
+		var parent = transform.parent;
+		while (parent != WindowManager.Instance.transform) {
+			parent.SetAsLastSibling();
+
+			parent = parent.parent;
 		}
 	}
 

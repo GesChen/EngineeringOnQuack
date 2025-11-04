@@ -2,13 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class Part : MonoBehaviour {
 	public int ID;
 	public BasePart basePart;
-	public bool Selected;
+	bool m_Selected = false;
+	public bool Selected {
+		get => m_Selected;
+		set {
+			if (m_Selected == value) return;
+			m_Selected = value;
+			UpdateLayer();
+		}
+	}
 
 	public PartGroup Group;
 
@@ -42,12 +49,15 @@ public class Part : MonoBehaviour {
 		UpdateMaterial();
 	}
 
-	void Update() {
-		if (Selected) {
-			gameObject.layer = LayerMask.NameToLayer("Selected");
-		} else {
-			gameObject.layer = LayerMask.NameToLayer("Part");
-		}
+	void UpdateLayer() {
+		var layer =
+			Selected
+			? LayerMask.NameToLayer("Selected")
+			: LayerMask.NameToLayer("Part");
+		
+		gameObject.layer = layer;
+		foreach (Transform child in transform)
+			child.gameObject.layer = layer;
 	}
 
 	public void SetColor(Color newCol) { // retains alpha of material

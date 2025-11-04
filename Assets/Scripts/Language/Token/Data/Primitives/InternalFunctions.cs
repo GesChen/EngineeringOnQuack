@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class InternalFunctions
 {
@@ -9,7 +10,7 @@ public static class InternalFunctions
 
 	// normal internal methods
 	public static void ClearOnPrintCalled() { OnPrintCalled = null; }
-	public static event Action<string> OnPrintCalled;
+	public static event Action<int, string> OnPrintCalled;
 	public static T_Data print(T_Data _, List<T_Data> args) {
 		if (args.Count != 1) return Errors.InvalidArgumentCount("print", 1, args.Count);
 
@@ -17,9 +18,14 @@ public static class InternalFunctions
 		if (tryCast is Error) return tryCast;
 
 		string message = (tryCast as Primitive.String).Value;
-		//Debug.Log(message); // lol dont delete this debug log LMAO
 
-		OnPrintCalled?.Invoke(message);
+#if UNITY_EDITOR
+		// :P
+		if (SceneManager.GetActiveScene().name == "LanguageTesting") 
+			Debug.Log(message); // lol dont delete this debug log LMAO
+#endif
+
+		OnPrintCalled?.Invoke(T_Data.currentUseMemory.Interpreter.ID, message);
 		
 		return T_Data.Success;
 	}

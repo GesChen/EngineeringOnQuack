@@ -147,7 +147,6 @@ public class Evaluator {
 		T_Data.currentUseMemory = memory;
 		UpdateAllLineDataWithMemory(ref line, memory);
 		T_Data tryEvaluate = EvaluateInternal(line, memory, depth);
-		T_Data.currentUseMemory = null;
 
 		return tryEvaluate;
 	}
@@ -805,7 +804,7 @@ public class Evaluator {
 		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
 		#endregion
 
-		T_Operator thisOp = (highestToken as T_Operator);
+		T_Operator thisOp = highestToken as T_Operator;
 
 		if (!rightIsRefAndExists)
 			return Errors.InvalidUseOfOperator(thisOp.StringValue);

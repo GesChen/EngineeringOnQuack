@@ -9,9 +9,12 @@ public class Part_CableConnection : NonStaticPart {
 
 	// distinction between part.id 
 	public int CCID = -1; // needed for cable to reconnect on simulation start
+	// might just use part.id?? idk why not
 
 	public Part_Cable Cable;
 	public Port Port;
+
+	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
 
 	public Part_CableConnection(Part_Cable cable, Port port) {
 		Cable = cable;
@@ -21,9 +24,8 @@ public class Part_CableConnection : NonStaticPart {
 	public Part ConnectedPart => Cable.OtherCC(this).Port.MainPart; // may change this
 
 	public void RandomizeID() {
-		CCID = HashFunction();
+		CCID = HF.UIDHashFunction();
 	}
-	public static int HashFunction() => UnityEngine.Random.value.GetHashCode();
 
 	// no extra processing needed
 	public override void FinalizeInstantiation(GameObject instantiatedPart) {
@@ -33,13 +35,14 @@ public class Part_CableConnection : NonStaticPart {
 		var ports = BuildingManager.Instance.SimulationContainer.GetComponentsInChildren<Port>();
 
 		foreach (var port in ports) {
-			float dist = (transform.position - port.transform.position).magnitude;
-			if (dist < Config.Building.CCConnectionDistance) {
+			float dist = (transform.position - port.transform.position).sqrMagnitude;
+			if (dist < Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance) {
 				// connect up
 				var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
 
-				port.Connectors.Add(newCC); 
+				port.Connector = newCC; 
 				newCC.Port = port;
+				break;
 			}
 		}
 

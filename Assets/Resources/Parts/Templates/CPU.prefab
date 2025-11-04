@@ -122,7 +122,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ID: 0
-  Selected: 0
   color: {r: 0, g: 0, b: 0, a: 0}
   Ports: []
   material: {fileID: 0}
@@ -139,6 +138,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e00e6aae663c2164790b09aab3b787f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Part: {fileID: 0}
   Ports:
   - {fileID: 1543214419496202260}
   DEBUG_CurrentScriptText: 

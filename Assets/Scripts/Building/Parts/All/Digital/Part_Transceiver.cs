@@ -99,20 +99,52 @@ public class Part_Transceiver : NonStaticPart {
 		var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
 
 		newTrans.TargetOutput = TargetOutput;
+
+		PartInternalFunctions.Transceiver.OnPrintCalled += PrintInternal;
 	}
+
+	public static Type Type_Transceiver = new(
+		"Transceiver",
+		new Memory(
+			new Dictionary<string, T_Data>(){
+				{ "print", new Primitive.Function("print", PartInternalFunctions.Transceiver.print) }
+			},
+			new Dictionary<string, Type>(),
+			"Transceiver Type Snapshot"
+			)
+		);
+
+	private T_Data m_IDO;
+	public T_Data InternalDataObject =>
+		HF.LoadCached(
+			ref m_IDO,
+			() => new T_Data(Type_Transceiver).SetThisMember("id", new Primitive.Number(Part.ID))
+		);
+
+	public override T_Data InternalLanguageDataObject() => InternalDataObject;
 
 	public override void HandleCommand(string command, object[] args) {
 		if (command == "print") {
-			if (args.Length != 1) {
-				Debug.LogError(BadArgumentCount(command, 1, args.Length));
-				return;
-			}
-
-			//Debug.Log(args[0]?.ToString() ?? "null");
-			TargetOutput?.Print(args[0].ToString()); // should already be a string obj
+			Print(args);
 			return;
 		}
 
 		Debug.LogError(UnknownCommand(command));
+	}
+
+	void PrintInternal(int partID, string message) {
+		if (partID != Part.ID) return;
+
+		Print(new[] { message });
+	}
+
+	void Print(object[] args) {
+		if (args.Length != 1) {
+			Debug.LogError(BadArgumentCount("print", 1, args.Length));
+			return;
+		}
+
+		//Debug.Log(args[0]?.ToString() ?? "null");
+		TargetOutput?.Print(args[0].ToString()); // should already be a string obj
 	}
 }

@@ -3,30 +3,32 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Port : SnapTarget {
+public class Port : MonoBehaviour {
 	public Part MainPart; // name to be changed later
 	public string Alias;
-	public List<Part_CableConnection> Connectors = new();
+	public Part_CableConnection Connector;
+	public SnapTarget SnapTarget;
 
-	public Part[] GetOtherParts() {
-		return Connectors.Select(c => c.ConnectedPart).ToArray();
-	}
-
-	// implement custom build snapping behaviour here later
-	public override void OnSnappedTo() {
-		// ok so were just gonna handle this in cc nonstaticpart 
-		// on simulation start 
-		// its better that way cuz i dont have to 
-	}
-
-	public Part[] GetParts() {
-		var connected = Connectors.Select(c => c.ConnectedPart);
-
-		return connected.Where(p => p != null).ToArray();
-	}
+	public Part OtherPart => Connector.ConnectedPart;
 
 	public void CallCommand(string command, object[] args) {
-		foreach (var part in GetParts())
-			part.HandleCommand(command, args);
+		OtherPart.HandleCommand(command, args);
+	}
+
+	void Start() {
+		BuildingManager.Instance.OnModified += UpdateSnapTarget;
+	}
+
+	void UpdateSnapTarget() {
+		// snap exclusivity
+
+		foreach (var p in BuildingManager.Instance.Assembly.Parts) {
+			if ((transform.position - p.transform.position).sqrMagnitude < 
+				Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance) {
+				SnapTarget.enabled = false;
+				return;
+			}
+		}
+		SnapTarget.enabled = true;
 	}
 }

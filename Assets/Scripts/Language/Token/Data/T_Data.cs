@@ -6,7 +6,7 @@ using static Primitive;
 public class T_Data : Token {
 	public string Name;
 	public Type Type;
-	public Memory Memory;
+	public Memory Memory; // instance data
 	public Flags Flags = Flags.None;
 
 	public static Memory currentUseMemory;
@@ -47,16 +47,16 @@ public class T_Data : Token {
 		return this;
 	}
 	public T_Data CopyWithFlags(Flags flags) {
-		return new T_Data(this).SetFlags(flags);
+		return Copy().SetFlags(flags);
 	}
 
 	public virtual T_Data GetMember(string name) {
 		// instance variables with same name as methods override same name in memory
-		T_Data get = Memory.Get(name);
+		T_Data get = Memory.Get(name, true);
 		if (get is not Error)
 			return get;
 
-		return Type.Snapshot.Get(name);
+		return Type.Snapshot.Get(name, true);
 	}
 
 	public T_Data SetThisMember(string name, T_Data data) {
@@ -67,13 +67,11 @@ public class T_Data : Token {
 		if (thisReference is Primitive)
 			return Errors.CannotSetMemberOfBuiltin(name);
 		
-		thisReference.Memory.Set(name, data);
-		return data;
+		thisReference.Memory.Set(name, data, true);
+		return thisReference;
 	}
 
 	#region Casting
-#pragma warning disable IDE0066 // Convert switch statement to expression
-
 		// self cast
 	public T_Data Cast(Type toType) {
 		return CastFromTo(this, toType);
@@ -90,73 +88,64 @@ public class T_Data : Token {
 		if (FTNC == TTNC) // no casting needed!
 			return fromValue;
 
-		// have to be primitives, no cast (from or to function) or (from dict)
-		if (!Primitive.TypeNames.Contains(FTN) || !Primitive.TypeNames.Contains(TTN))
+		// cannot cast to non primitive
+		if (!Primitive.TypeNamesHS.Contains(TTN))
 			return Errors.InvalidCast(FTN, TTN);
+
+		// no cast (from or to function) or (from dict)
 		if (FTNC == 'F' || TTNC == 'D' || TTNC == 'F')
 			return Errors.InvalidCast(FTN, TTN);
 
-		return FTNC switch {
-			'N' => NumberCast	(fromValue as Number,	TTNC, TTN),
-			'S' => StringCast	(fromValue as String,	TTNC, TTN),
-			'B' => BoolCast		(fromValue as Bool,		TTNC, TTN),
-			'L' => ListCast		(fromValue as List,		TTNC, TTN),
-			'D' => DictCast		(fromValue as Dict,		TTNC, TTN),
-			_ => Errors.InvalidCast(FTN, TTN),
+		// otherwise we chill
+		// just find the custom function or
+		var castFuncName = TTNC switch {
+			'N' => "num",
+			'S' => "str",
+			'B' => "bool",
+			'L' => "list",
+			'D' => "dict",
+			_ => "wtf"
 		};
+		if (castFuncName == "wtf") return Errors.BadCode();
+
+		var tryGetCastFunc = fromValue.GetMember(castFuncName);
+		if (tryGetCastFunc is Error) {
+			// some primitives just cant cast to others
+			if (Primitive.TypeNamesHS.Contains(FTN))
+				return Errors.InvalidCast(FTN, TTN);
+
+			// tostring global override
+			if (TTNC == 'S') {
+				// taking a page from python again
+				return new String($"<{FTN} object>"); // wo mnemory address
+			}
+
+			// user defined, give reason
+			return Errors.InvalidCast(FTN, TTN, $"Type {fromValue.Type.Name} does not contain the required method \"{castFuncName}\"");
+		}
+		if (tryGetCastFunc is not Primitive.Function castfunc)
+			return Errors.InvalidCast(FTN, TTN, $"Member \"{castFuncName}\" from type {fromValue.Type.Name} must be a method to cast");
+
+		var tryCast =
+			fromValue.Memory.Interpreter.RunFunction(
+				fromValue.Memory,
+				castfunc,
+				fromValue,
+				new()
+			);
+		if (tryCast is Error) return tryCast;
+
+		// if the function doesnt return the desired type then error
+		if (tryCast.Type != toType)
+			return Errors.CastMethodWrongType(
+				fromValue.Type.Name,
+				castFuncName,
+				tryCast.Type.Name,
+				toType.Name);
+
+		return tryCast;
 	}
 
-	private static T_Data NumberCast(Number value, char toc, string to) {
-		double v = value.Value;
-		switch (toc) {
-			case 'S' : return Number.tostring(value, new());
-			case 'B' : return new Bool(v != 0);
-			case 'L' : return new List(new List<T_Data>() { value });
-		}
-		return Errors.InvalidCast("Number", to);
-	}
-	private static T_Data StringCast(String value, char toc, string to) {
-		string v = value.Value;
-		switch (toc) {
-			case 'N':
-				if (double.TryParse(v, out double val)) return new Number(val);
-				return Errors.CannotParseValueAs("String", "Number");
-			case 'B': return new Bool(v != "");
-			case 'L': return new List(new List<T_Data>() { value });
-		}
-		return Errors.InvalidCast("String", to);
-	}
-	private static T_Data BoolCast(Bool value, char toc, string to) {
-		bool v = value.Value;
-		switch (toc) {
-			case 'N': return new Number(v ? 1 : 0);
-			case 'S': return Bool.tostring(value, new());
-			case 'L': return new List(new List<T_Data>() { value });
-		}
-		return Errors.InvalidCast("Bool", to);
-	}
-	private static T_Data ListCast(List value, char toc, string to) {
-		List<T_Data> v = value.Value;
-		switch (toc) {
-			case 'N': return new Number(v.Count == 0 ? 1 : 0);
-			case 'S': return List.tostring(value, new());
-			case 'B': return new Bool(v.Count != 0);
-			case 'D': return List.todict(value, new());
-		}
-		return Errors.InvalidCast("List", to);
-	}
-	private static T_Data DictCast(Dict value, char toc, string to) {
-		Dictionary<T_Data, T_Data> v = value.Value;
-		switch (toc) {
-			case 'N': return new Number(v.Count == 0 ? 1 : 0);
-			case 'S': return Dict.tostring(value, new());
-			case 'B': return new Bool(v.Count != 0);
-			case 'L': return Dict.tolist(value, new());
-		}
-		return Errors.InvalidCast("Dict", to);
-	}
-
-#pragma warning restore IDE0066 // Convert switch statement to expression
 	#endregion
 
 	public override string ToString() {

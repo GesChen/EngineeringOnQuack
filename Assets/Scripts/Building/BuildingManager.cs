@@ -5,11 +5,15 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
+	public event Action OnModified;
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
 	/// Call this method whenever a change to the assembly is made! ANY CHANGE!
 	/// </summary>
-	public static void SetDirty() { Instance.Dirty = true; }
+	public static void SetDirty() { 
+		Instance.Dirty = true;
+		Instance.OnModified?.Invoke();
+	}
 
 	public Transform MainPartsContainer;
 	public Transform SimulationContainer;
@@ -30,13 +34,10 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.ClearEvents();
 
 		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
-		RightClickMenus.OnNewPartMade	+= _ => SetDirty();
 		RightClickMenus.OnDelete		+= DeleteSelection;
-		RightClickMenus.OnDelete		+= SetDirty;
 		RightClickMenus.OnCopy			+= Copy;
 		RightClickMenus.OnPaste			+= Paste;
 		RightClickMenus.OnDuplicate		+= Duplicate;
-		RightClickMenus.OnDuplicate		+= SetDirty;
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
@@ -127,6 +128,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		UpdateParts();
 
+		SetDirty();
+
 		return newpart;
 	}
 
@@ -191,7 +194,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
-		part.ID = UnityEngine.Random.value.GetHashCode(); // may change this
+		part.ID = HF.UIDHashFunction(); // may change this
 		// 10-19-25 changed to random instead of datettime
 
 		return part;
@@ -275,6 +278,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
+
+		SetDirty();
 	}
 	#endregion
 
@@ -308,6 +313,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Parts.AddRange(newparts);
 
 		UpdateParts();
+
+		SetDirty();
 	}
 
 	void Duplicate() {

@@ -13,6 +13,7 @@ public class Part_Axle : NonStaticPart {
 	public Transform endA; // scales well i guess? fast way to keep track of this stuff i guess
 	public Transform endB;
 
+	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
 	public override void HandleCommand(string command, object[] args) {
 		Debug.LogError(UnknownCommand(command));
 	}

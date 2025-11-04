@@ -1,7 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
+using System.Text;
 
 public abstract partial class Primitive : T_Data {
 	public partial class Dict : Primitive {
@@ -12,13 +13,17 @@ public abstract partial class Primitive : T_Data {
 			{ "eq"			, new Function("eq"			, eq)			},
 			{ "lt"			, new Function("lt"			, lt)			},
 			{ "ad"			, new Function("ad"			, ad)			},
-			{ "tostring"	, new Function("tostring"	, tostring)		},
+
+			{ "num"			, new Function("num"		, num)			},
+			{ "str"			, new Function("str"		, str)			},
+			{ "bool"		, new Function("bool"		, @bool)		},
+			{ "list"		, new Function("list"		, list)			},
+
 			{ "get"			, new Function("get"		, get)			},
 			{ "clear"		, new Function("clear"		, clear)		},
 			{ "values"		, new Function("values"		, values)		},
 			{ "keys"		, new Function("keys"		, keys)			},
 			{ "removekey"	, new Function("removekey"	, removekey)	},
-			{ "tolist"		, new Function("tolist"		, tolist)		}
 		});
 
 		public Dictionary<T_Data, T_Data> Value; // internal value
@@ -34,7 +39,7 @@ public abstract partial class Primitive : T_Data {
 		}
 
 		public override string ToString() {
-			return (tostring(this, new()) as String).Value;
+			return (str(this, new()) as String).Value;
 		}
 
 		public override T_Data Copy() {
@@ -79,8 +84,14 @@ public abstract partial class Primitive : T_Data {
 
 			return new Dict(newDict);
 		}
-		public static T_Data tostring(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 0) return Errors.InvalidArgumentCount("tostring", 0, args.Count);
+		
+		public static T_Data num(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("num", 0, args.Count);
+
+			return new Number((thisRef as Dict).Value.Count == 0 ? 1 : 0);
+		}
+		public static T_Data str(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("str", 0, args.Count);
 
 			// init
 			Dictionary<T_Data, T_Data> v = (thisRef as Dict).Value;
@@ -109,7 +120,24 @@ public abstract partial class Primitive : T_Data {
 			sb.Append(" }");
 			return new String(sb.ToString());
 		}
+		public static T_Data @bool(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("bool", 0, args.Count);
 
+			return new Bool((thisRef as Dict).Value.Count != 0);
+		}
+		public static T_Data list(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("list", 0, args.Count);
+
+			List<T_Data> newList = new();
+
+			Dictionary<T_Data, T_Data> v = (thisRef as Dict).Value;
+			foreach (KeyValuePair<T_Data, T_Data> kv in v) {
+				List pair = new(new List<T_Data>() { kv.Key, kv.Value });
+				newList.Add(pair);
+			}
+
+			return new List(newList);
+		}
 
 		public static T_Data get(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("getkey", 1, args.Count);
@@ -162,19 +190,6 @@ public abstract partial class Primitive : T_Data {
 
 			(thisRef as Dict).Value = copy;
 			return thisRef;
-		}
-		public static T_Data tolist(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 0) return Errors.InvalidArgumentCount("tolist", 0, args.Count);
-
-			List<T_Data> newList = new();
-
-			Dictionary<T_Data, T_Data> v = (thisRef as Dict).Value;
-			foreach (KeyValuePair<T_Data, T_Data> kv in v) {
-				List pair = new(new List<T_Data>() { kv.Key, kv.Value });
-				newList.Add(pair);
-			}
-
-			return new List(newList);
 		}
 		#endregion
 	}

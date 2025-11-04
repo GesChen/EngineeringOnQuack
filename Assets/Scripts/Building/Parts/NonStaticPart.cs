@@ -25,6 +25,8 @@ public abstract class NonStaticPart : MonoBehaviour {
 	protected string BadArgumentCount(string command, int expected, int got) =>
 		$"Command \"{command}\" sent to {PartName} expected {expected} arguments, got {got}";
 
+	public abstract T_Data InternalLanguageDataObject();
+
 	public virtual void SetupPart(Part main) { }
 	public virtual void OnStopSimulating() { }
 	public virtual void OnStartSimulating() { }

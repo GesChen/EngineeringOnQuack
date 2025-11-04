@@ -38,7 +38,9 @@ public abstract partial class Primitive : T_Data {
 		}
 		#endregion
 
-		#region
+		// constructor function constructor function
+		// get it
+		// constructor for constructor functions
 		public Type TypeFor;
 		public Function(string name, string[] parameters, Section script, Type typeFor) : base(InternalType) {
 			Name = name;
@@ -47,7 +49,6 @@ public abstract partial class Primitive : T_Data {
 			TypeFor = typeFor;
 			FunctionType = FunctionTypeEnum.Constructor;
 		}
-		#endregion
 
 		#region internal
 		public delegate T_Data InternalFunctionDelegate(T_Data thisReference, List<T_Data> args);

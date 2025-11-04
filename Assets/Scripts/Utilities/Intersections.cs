@@ -63,10 +63,8 @@ public static class Intersections {
 				float dist = Vector3.Distance((p1+p2+p3)/3f, (q1+q2+q3)/3f);
 
 				comparisons[cnt] = (cnt, i, j, dist, p1, p2, p3, q1, q2, q3);
-#if DEBUGMODE
-				DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
-				DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
-#endif
+
+				cnt++;
 			}
 		}
 
@@ -74,6 +72,9 @@ public static class Intersections {
 
 		SortIndicesByDistance(compIs, comparisons.Select(c => c.dist).ToArray());
 
+#if DEBUGMODE
+		Debug.Break();
+#endif
 		foreach (var compI in compIs) {
 			var c = comparisons[compI];
 
@@ -83,78 +84,6 @@ public static class Intersections {
 
 		return false;
 	}
-	public static bool MeshesIntersectRawMesh_OldWithOptimizations(Vector3[] mesh1verts, Vector3[] mesh2verts, int[] mesh1tris, int[] mesh2tris) {
-		//Debug.Log($"bounds {BoundsIntersect(m1v, obj1, m2v, obj2)}");
-		if (!BoundsIntersectWorldSpace(mesh1verts, mesh2verts)) return false;
-
-		int numtris1 = mesh1tris.Length / 3;
-		int numtris2 = mesh2tris.Length / 3;
-		int combinations = numtris1 * numtris2;
-
-		int[] indices = new int[combinations];
-		//float[] distances = new float[combinations];
-		int[] triindex1 = new int[combinations];
-		int[] triindex2 = new int[combinations];
-		int count = 0;
-		for (int i = 0; i < numtris1; i++) {
-			for (int j = 0; j < numtris2; j++) {
-				indices[count] = count;
-				triindex1[count] = i;
-				triindex2[count] = j;
-/*
-				Vector3 avg1 =(
-					mesh1verts[mesh1tris[i * 3]] +
-					mesh1verts[mesh1tris[i * 3 + 1]] +
-					mesh1verts[mesh1tris[i * 3 + 2]]) / 3f;
-
-				Vector3 avg2 =
-					(mesh2verts[mesh2tris[j * 3]] +
-					mesh2verts[mesh2tris[j * 3 + 1]] +
-					mesh2verts[mesh2tris[j * 3 + 2]]) / 3f;
-
-				float dist = (avg1 - avg2).sqrMagnitude;
-				distances[count] = dist;*/
-
-				count++;
-			}
-		}
-
-		//indices = SortIndicesByDistance(indices, distances);
-
-		float t = 0;
-		foreach (int index in indices) {
-			t++;
-			int i = triindex1[index];
-			int j = triindex2[index];
-
-
-			Vector3 p1 = mesh1verts[mesh1tris[i * 3]];
-			Vector3 p2 = mesh1verts[mesh1tris[i * 3 + 1]];
-			Vector3 p3 = mesh1verts[mesh1tris[i * 3 + 2]];
-			Vector3 q1 = mesh2verts[mesh2tris[j * 3]];
-			Vector3 q2 = mesh2verts[mesh2tris[j * 3 + 1]];
-			Vector3 q3 = mesh2verts[mesh2tris[j * 3 + 2]];
-
-#if DEBUGMODE
-			DebugExtra.DrawTriangle(p1, p2, p3, Color.red);
-			DebugExtra.DrawTriangle(q1, q2, q3, Color.blue);
-#endif
-
-			if (TrianglesIntersect(
-				mesh1verts[mesh1tris[i * 3]],
-				mesh1verts[mesh1tris[i * 3 + 1]],
-				mesh1verts[mesh1tris[i * 3 + 2]],
-				mesh2verts[mesh2tris[j * 3]],
-				mesh2verts[mesh2tris[j * 3 + 1]],
-				mesh2verts[mesh2tris[j * 3 + 2]]
-				)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	/// <summary>
 	/// Determines if the bounds of two sets of world space points intersect
 	/// </summary>
@@ -242,6 +171,11 @@ public static class Intersections {
 		Vector3 bMax = Vector3.Max(Vector3.Max(b1, b2), b3);
 		if (!BoundsIntersectWorldSpace(aMin, aMax, bMin, bMax)) return false;
 
+#if DEBUGMODE
+		DebugExtra.DrawTriangleFilled(a1, a2, a3, color: MoreColors.PastelRed);
+		DebugExtra.DrawTriangleFilled(b1, b2, b3, color: MoreColors.PastelBlue);
+#endif
+
 		// step 1: get the planes of the two triangles
 		Vector3 planeDirA = Vector3.Cross(a2 - a1, a3 - a1).normalized;
 		Vector3 planeDirB = Vector3.Cross(b2 - b1, b3 - b1).normalized;
@@ -255,15 +189,18 @@ public static class Intersections {
 		if (aCount == 0 || bCount == 0) return false;
 		// both tris intersect the other plane at some place
 
-		// get to the point on the line to measure from
-		var intersections = new Vector3[6];
-		Array.Copy(AIntersects, 0, intersections, 0, 3);
-		Array.Copy(BIntersects, 0, intersections, 3, 3);
+		// gather all intersection points
+		int totalCount = aCount + bCount;
+		Vector3[] intersections = new Vector3[totalCount];
+		int idx = 0;
+		for (int i = 0; i < aCount; i++) intersections[idx++] = AIntersects[i];
+		for (int i = 0; i < bCount; i++) intersections[idx++] = BIntersects[i];
 
+		// midpoint
 		Vector3 midPoint = Vector3.zero;
-		foreach (Vector3 i in intersections)
-			midPoint += i;
-		midPoint /= aCount + bCount;
+		for (int i = 0; i < totalCount; i++)
+			midPoint += intersections[i];
+		midPoint /= totalCount;
 
 		float maxDistSquared = float.NegativeInfinity;
 		foreach (Vector3 i in intersections) {

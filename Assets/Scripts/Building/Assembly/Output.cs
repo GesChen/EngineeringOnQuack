@@ -19,7 +19,7 @@ public class Output {
 
 	public void Print(string message) {
 		// handle formatting in here
-		float t = Time.time; // Time since start in seconds
+		float t = SimulationManager.SimulatingTime;
 
 		int minutes = (int)(t / 60);
 		int seconds = (int)(t % 60);

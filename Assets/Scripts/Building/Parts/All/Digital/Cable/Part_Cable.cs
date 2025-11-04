@@ -20,6 +20,8 @@ public class Part_Cable : NonStaticPart {
 		});
 	}
 
+	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
+
 	public override void OnPartCreation() {
 		var ccA = BuildingManager.Instance.MakeNewPart("cc", true, true);
 		var ccB = BuildingManager.Instance.MakeNewPart("cc", true, true);

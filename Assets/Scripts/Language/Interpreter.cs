@@ -4,9 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Interpreter {
+	public int ID;
 	public Evaluator Evaluator;
 	public Memory Memory;
 
+	public Interpreter() {
+		ID = HF.UIDHashFunction();
+	}
 
 	// need memory so run call can have a copy of it
 	public T_Data RunFunction(
@@ -70,8 +74,52 @@ public class Interpreter {
 		trySet = memoryCopy.Set("this", thisReference);
 		if (trySet is Error) return trySet;
 
+		// handle modified global variables
+		string[] globalVars = memory.Data.Keys.ToArray();
+		var snapshotVars =
+			thisReference != null
+			? new Dictionary<string, T_Data>(
+				thisReference.Type.Snapshot.Data)
+			: null;
+
+		// give reference to this snapshot data 
+		// later only save modified values into this memory
+		if (thisReference != null) {
+			foreach (var dataKVP in thisReference.Type.Snapshot.Data) {
+				// some snapshot vars might be already turned into instance vars
+				if (thisReference.Memory.Get(dataKVP.Key) is not Error) continue;
+				// prevent overwriting the already modified value 
+				// and setting it back to the snapshot's
+
+				// otherwise set it in the copy
+				memoryCopy.Set(dataKVP.Key, dataKVP.Value, true);
+			}
+		}
+
 		// run the script with the memory copy
-		T_Data output = RunSection(memoryCopy, function.Script, depth + 1); // increase depth on function call
+		T_Data output = RunSection(memoryCopy, function.Script, depth + 1, false); // increase depth on function call
+
+		// save modified global values
+		foreach (var dataKVP in memoryCopy.Data) {
+			// only modified not new
+			// or any of the snapshot vars
+			if (!globalVars.Contains(dataKVP.Key)) continue;
+
+			memory.Set(dataKVP.Key, dataKVP.Value);
+		}
+		
+		// new and modified members save as instance variable 
+		// only for members
+		if (thisReference != null) {
+			var newAndModifiedMembers =
+				memoryCopy.Data.Where(dkvp =>
+					!snapshotVars.Keys.Contains(dkvp.Key)
+					|| snapshotVars[dkvp.Key] != dkvp.Value);
+			
+			foreach (var newMember in newAndModifiedMembers) {
+				thisReference.SetThisMember(newMember.Key, newMember.Value);
+			}
+		}
 
 		return output;
 	}
@@ -109,7 +157,7 @@ public class Interpreter {
 	bool CheckFlag(Flags flags, Flags check)
 		=> (flags & check) != 0;
 
-	private T_Data RunSection(Memory memory, Section section, int depth) {
+	private T_Data RunSection(Memory memory, Section section, int depth, bool globalScope = true) {
 		if (depth > Config.Language.RecursionDepthLimit) // check recursion depth
 			return Errors.RecursionLimitReached();
 
@@ -313,7 +361,7 @@ public class Interpreter {
 				}
 				else if (state.MakeFunction) {
 					Primitive.Function newFunction = new(state.NewName, state.NewFuncParams, line.Section);
-					T_Data trySet = memory.Set(state.NewName, newFunction);
+					T_Data trySet = memory.Set(state.NewName, newFunction, !globalScope);
 					if (trySet is Error) return trySet;
 
 					state.MakeFunction = false;
@@ -325,19 +373,28 @@ public class Interpreter {
 					Memory classMemory = new (memory.Interpreter, "class init memory");
 					T_Data.currentUseMemory = classMemory;
 
-					T_Data trySection = RunSection(classMemory, line.Section, depth);
+					T_Data trySection = RunSection(classMemory, line.Section, depth, false);
+					if (trySection is Error) return trySection;
 
 					Type newType = new(state.NewName, classMemory);
-					
+
 					// check if constructor was defined when it ran
+					Primitive.Function constructor;
 					if (classMemory.Get(state.NewName) is Primitive.Function tryGetConstructor) {
-						Primitive.Function constructor = new(
+						constructor = new(
 							state.NewName,
 							tryGetConstructor.Parameters,
 							tryGetConstructor.Script,
 							newType);
-						memory.Set(state.NewName, constructor); // save it 
+					} else {
+						// default constructor
+						constructor = new(
+							state.NewName,
+							Array.Empty<string>(),
+							new Section(), // do NOTHING!
+							newType);
 					}
+					memory.Set(state.NewName, constructor); // save it 
 
 					T_Data makeNewType = memory.NewType(newType);
 					if (Config.Language.DEBUG) HF.WarnColor($"Made new class {state.NewName} with memory\n{classMemory.MemoryDump()}", Color.yellow);

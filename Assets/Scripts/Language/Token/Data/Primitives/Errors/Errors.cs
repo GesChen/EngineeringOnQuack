@@ -15,6 +15,8 @@ public static class Errors {
 		new($"Unknown name \"{name}\"");
 	public static Error InvalidCast(string from, string to) => 
 		new($"Cannot cast a {from} to a {to}");
+	public static Error InvalidCast(string from, string to, string reason) =>
+		new($"Cannot cast a {from} to a {to}: {reason}");
 	public static Error CannotParseValueAs(string value, string @as) => 
 		new($"Cannot parse {value} as {@as}");
 	public static Error CannotCompare(string typeA, string typeB) => 
@@ -83,6 +85,8 @@ public static class Errors {
 		new($"Recursion depth limit reached: {Config.Language.RecursionDepthLimit}");
 	public static Error TypeCannotBeUsedAsVariable(string name) => 
 		new($"Type {name} cannot be used as variable");
+	public static Error CastMethodWrongType(string type, string method, string wrong, string right) =>
+		new($"Cast method of {type} \"{method}\" returned a {wrong} object, expected {right}");
 	public static Error template() => 
 		new($"");
 }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6467037179578057258}
   - component: {fileID: 8626134972179258956}
   - component: {fileID: 6542006339722244386}
+  - component: {fileID: 1605166114562633716}
   m_Layer: 3
   m_Name: Port
   m_TagString: Untagged
@@ -118,5 +119,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e868b429be88aa042a86f33b6ed87c10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MainPart: {fileID: 0}
   Alias: 
-  Connectors: []
+  Connector: {fileID: 0}
+  SnapTarget: {fileID: 1605166114562633716}
+--- !u!114 &1605166114562633716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4144299095279261212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdfea7070394616468c481dbb3dbadfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

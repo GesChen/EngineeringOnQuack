@@ -61,7 +61,7 @@ public class BuildingClipboard {
 		// randomize
 		var CCIDs = cbCCs.Select(cc => cc.CCID);
 		Dictionary<int, int> RemappedCCIDs = 
-			CCIDs.ToDictionary(id => id, _ => Part_CableConnection.HashFunction());
+			CCIDs.ToDictionary(id => id, _ => HF.UIDHashFunction());
 
 		// remap new ids
 		foreach (var cc in cbCCs) cc.CCID = RemappedCCIDs[cc.CCID];

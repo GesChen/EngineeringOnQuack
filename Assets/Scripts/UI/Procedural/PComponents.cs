@@ -204,6 +204,7 @@ public class PComponents {
 			text.alignment	= Alignment;
 
 			if (!Wrap) {
+				text.enableWordWrapping = false;
 				// :( its so fucky
 				//text.overflowMode = TextOverflowModes.Ellipsis;
 			} else {

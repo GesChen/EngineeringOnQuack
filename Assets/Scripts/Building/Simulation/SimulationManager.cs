@@ -5,6 +5,10 @@ using UnityEngine;
 public class SimulationManager : Singleton<SimulationManager> {
 	public List<Assembler.Assembled> assembledSubassemblies = new();
 
+	public static float StartSimulatingTime = -1;
+	public static float SimulatingTime => Time.time - StartSimulatingTime;
+
+
 	protected override void Awake() {
 		base.Awake();
 
@@ -17,7 +21,11 @@ public class SimulationManager : Singleton<SimulationManager> {
 	}
 
 	public void StartSimulating() {
+		StartSimulatingTime = Time.time;
+
 		InternalFunctions.ClearOnPrintCalled();
+		PartInternalFunctions.ClearSubscriptions();
+		Memory.ClearCPUGet();
 
 		Assembler.Instance.Assemble(out assembledSubassemblies);
 	}

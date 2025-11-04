@@ -90,6 +90,8 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	void Load() {
 		if (currentlySelectedI == -1) return;
 
+		SelectionManager.Instance.SetSelection();
+
 		// hope name conflicts arent a thing
 		SaveLoadHelper.LoadFromFile(currentlySelectedName);
 	}

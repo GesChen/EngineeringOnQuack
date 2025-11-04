@@ -118,7 +118,7 @@ public class DebugExtra {
 	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density = 10, Color? color = null) {
 		Color col = color ?? Color.white;
 
-		for (int i = 0; i < density; i++) {
+		for (int i = 0; i < density + 1; i++) {
 			float t = (float)i / density;
 			Debug.DrawLine(a, Vector3.Lerp(b, c, t), col);
 			Debug.DrawLine(b, Vector3.Lerp(a, c, t), col);

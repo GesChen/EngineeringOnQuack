@@ -28,14 +28,26 @@ public class Part_CPU : NonStaticPart {
 						  // but we'll see
 						  // this shouldnt be hard to modify either
 
+	Port[] TransceiverPorts;
+
 	Interpreter Interpreter;
 	Memory Memory;
 	Evaluator Evaluator;
-
 	bool hasTick;
 	Primitive.Function tickFunc;
 
-	Part partComponent;
+	public static Type Type_CPU = new(
+		"CPU",
+		new Memory(
+			new Dictionary<string, T_Data>() {
+				{ "port", new Primitive.Function("port", PartInternalFunctions.CPU.port) }
+			},
+			new Dictionary<string, Type>(),
+			"CPU Type Snapshot"
+			)
+		);
+	public T_Data InternalDataObject = new(Type_CPU);
+	public override T_Data InternalLanguageDataObject() => InternalDataObject;
 
 	public override void OnStopSimulating() {
 		running = false;
@@ -64,20 +76,18 @@ public class Part_CPU : NonStaticPart {
 		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
 	}
 
-
-	Port[] TransceiverPorts;
 	IEnumerator DelayScriptSetup() {
 		yield return null;
 
+		InternalFunctions.OnPrintCalled += TryPrint;
+		PartInternalFunctions.CPU.OnPortCalled += GetPort;
+		Memory.CPUGet += CPUGet;
+
 		// find transceiever ports
 		TransceiverPorts = Ports.Where(
-			p => p.Connectors
-				.Any(c => c.ConnectedPart
-					.TryGetComponent<Part_Transceiver>(out _)))
+			p => p.Connector.ConnectedPart
+				.TryGetComponent<Part_Transceiver>(out _))
 			.ToArray(); // ugly
-
-		partComponent = GetComponent<Part>();
-		InternalFunctions.OnPrintCalled += TryPrint;
 
 		if (Script == null)
 			yield break;
@@ -106,16 +116,50 @@ public class Part_CPU : NonStaticPart {
 
 		// check for functions
 		if (hasFunction("setup", 0, out var setupfunc)) // may change name later
-			Interpreter.RunFunction(Memory, setupfunc, null, new()); // no args 
-	
+			TryRun(setupfunc);
+
 		hasTick = hasFunction("tick", 0, out tickFunc);
+
+		// bit of a meta analysis
+		// for a perchance of performance save
+		if (!string.IsNullOrWhiteSpace(string.Join("",
+			tickFunc.Script.Lines.Select(l => 
+				l.OriginalString.Contains("return")
+				? "" : l.OriginalString)))) {
+			hasTick = false;
+			tickFunc = null;
+		}
 
 		running = true; // dont run if no script present
 	}
 
-	void TryPrint(string message) {
+	void TryRun(Primitive.Function func) {
+		var run = Interpreter.RunFunction(Memory, func, null, new()); // no args 
+
+		if (run is Error e) {
+			TryPrint(Interpreter.ID, e.Value);
+		}
+	}
+	T_Data CPUGet(int intID) =>
+		intID == Interpreter.ID
+		? InternalLanguageDataObject()
+		: null;
+
+	void TryPrint(int interpreterID, string message) {
+		if (interpreterID != Interpreter.ID) return;
+
 		foreach (var port in TransceiverPorts)
 			port.CallCommand("print", new[] { message });
+	}
+
+	T_Data GetPort(int interpreterID, int id) {
+		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
+														  // however illegal this may feel
+
+		Ports[id].OtherPart.IsNonStaticPart(out var connectedPart);
+		var data = connectedPart.InternalLanguageDataObject();
+
+		return data;
 	}
 
 	static IEnumerator DelayError(Error err) {
@@ -153,7 +197,7 @@ public class Part_CPU : NonStaticPart {
 	void FixedUpdate() {
 		if (hasTick && running) {
 			// dont copy memory, persistent memory to allow state persistence between ticks
-			Interpreter.RunFunction(Memory, tickFunc, null, new());
+			TryRun(tickFunc);
 		}
 	}
 
