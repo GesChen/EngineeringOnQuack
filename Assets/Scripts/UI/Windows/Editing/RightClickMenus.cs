@@ -84,7 +84,7 @@ public class RightClickMenus : MonoBehaviour {
 			"Mechanical",
 			120, true,
 			new(){
-				new W.Button(() => MakeNewPart("axle"),			"axle",			iconName: ""), // TODO
+				new W.Button(() => MakeNewPart("axle"),			"axle",			iconName: "parts/axle"), // TODO
 				new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
 				new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
 				new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
