@@ -199,7 +199,7 @@ public class Assembler : Singleton<Assembler> {
 			foreach (int origPartI in sub.Parts) {
 				var origPart = Parts[origPartI];
 
-				if (origPart.TryGetComponent<NonStaticPart>(out var origNSP)) {
+				if (origPart.IsNonStaticPart(out var origNSP)) {
 					var newPart = partMap[origPart];
 					origNSP.FinalizeInstantiation(newPart.gameObject);
 				}

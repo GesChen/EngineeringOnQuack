@@ -1590,6 +1590,7 @@ MonoBehaviour:
   dragging: 0
   specialCenterCase: 0
   snapping: 0
+  aligning: 0
   translating: 1
   rotating: 1
   scaling: 1

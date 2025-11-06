@@ -25,11 +25,11 @@ public class Part : MonoBehaviour {
 	public Composition composition;
 
 	public Port[] Ports;
-	public Action<string, object[]> OnCommandCalled;
 
 	// tentative, may change this method
 	MeshRenderer[] renderers;
 	Collider[] colliders;
+	[HideInNormalInspector] public Transform[] dontUpdateMaterialsFor;
 
 	[HideInNormalInspector] public Material material;
 	[HideInNormalInspector] public PhysicMaterial physicMaterial;
@@ -90,6 +90,8 @@ public class Part : MonoBehaviour {
 
 		material = newMat;
 		foreach (var renderer in renderers) {
+			if (dontUpdateMaterialsFor.Contains(renderer.transform)) continue;
+
 			renderer.material = newMat;  // sets first one, idk if i should use the method
 		}
 
@@ -97,27 +99,5 @@ public class Part : MonoBehaviour {
 		foreach (var collider in colliders) {
 			collider.material = composition.PhysicsMaterial;
 		}
-	}
-
-	public void HandleCommand(string command, object[] args) {
-		if (OnCommandCalled == null) {
-			Debug.LogError($"Part {transform.name} does not handle commands");
-			return;
-		}
-
-		OnCommandCalled.Invoke(command, args);
-	}
-
-	public Port GetPort(int portI) {
-		if (portI < 0 || portI >= Ports.Length)
-			throw new ArgumentOutOfRangeException($"Port {portI} is out of range for available ports on part {basePart.Name}");
-
-		return Ports[portI];
-	}
-	public Port GetPort(string portAlias) {
-		if (!Ports.TryFind(p => p.Alias == portAlias, out var port))
-			throw new($"No port found on part {basePart.Name} with alias \"{portAlias}\"");
-
-		return port;
 	}
 }

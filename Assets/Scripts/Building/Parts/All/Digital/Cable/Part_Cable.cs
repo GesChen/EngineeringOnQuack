@@ -20,9 +20,11 @@ public class Part_Cable : NonStaticPart {
 		});
 	}
 
-	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
+	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
 	public override void OnPartCreation() {
+		if (SaveLoadManager.Loading) return; // dont do this for loading
+
 		var ccA = BuildingManager.Instance.MakeNewPart("cc", true, true);
 		var ccB = BuildingManager.Instance.MakeNewPart("cc", true, true);
 
@@ -69,10 +71,6 @@ public class Part_Cable : NonStaticPart {
 		if (connectionB == null) return "Cable, cc B disconnected";
 
 		return $"Cable connecting {connectionA.Port.MainPart.GetType().Name} -- {connectionB.Port.MainPart.GetType().Name}";
-	}
-
-	public override void HandleCommand(string command, object[] args) {
-		Debug.LogError(UnknownCommand(command));
 	}
 
 	public class SPart_Cable : Assembly.SPart {

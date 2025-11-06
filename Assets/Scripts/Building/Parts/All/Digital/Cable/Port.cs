@@ -9,11 +9,7 @@ public class Port : MonoBehaviour {
 	public Part_CableConnection Connector;
 	public SnapTarget SnapTarget;
 
-	public Part OtherPart => Connector.ConnectedPart;
-
-	public void CallCommand(string command, object[] args) {
-		OtherPart.HandleCommand(command, args);
-	}
+	public Part OtherPart => Connector != null ? Connector.ConnectedPart : null;
 
 	void Start() {
 		BuildingManager.Instance.OnModified += UpdateSnapTarget;

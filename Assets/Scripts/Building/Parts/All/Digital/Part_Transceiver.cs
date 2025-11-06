@@ -95,14 +95,7 @@ public class Part_Transceiver : NonStaticPart {
 		return transceivers;
 	}
 
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
-
-		newTrans.TargetOutput = TargetOutput;
-
-		PartInternalFunctions.Transceiver.OnPrintCalled += PrintInternal;
-	}
-
+	#region language
 	public static Type Type_Transceiver = new(
 		"Transceiver",
 		new Memory(
@@ -113,38 +106,29 @@ public class Part_Transceiver : NonStaticPart {
 			"Transceiver Type Snapshot"
 			)
 		);
-
 	private T_Data m_IDO;
-	public T_Data InternalDataObject =>
+	public override T_Data GetInternalLanguageDataObject() => 
 		HF.LoadCached(
 			ref m_IDO,
 			() => new T_Data(Type_Transceiver).SetThisMember("id", new Primitive.Number(Part.ID))
 		);
 
-	public override T_Data InternalLanguageDataObject() => InternalDataObject;
-
-	public override void HandleCommand(string command, object[] args) {
-		if (command == "print") {
-			Print(args);
-			return;
-		}
-
-		Debug.LogError(UnknownCommand(command));
-	}
-
-	void PrintInternal(int partID, string message) {
-		if (partID != Part.ID) return;
-
-		Print(new[] { message });
-	}
-
-	void Print(object[] args) {
-		if (args.Length != 1) {
-			Debug.LogError(BadArgumentCount("print", 1, args.Length));
-			return;
-		}
+	void Print(int id, string message) {
+		if (id != Part.ID) return;
 
 		//Debug.Log(args[0]?.ToString() ?? "null");
-		TargetOutput?.Print(args[0].ToString()); // should already be a string obj
+		TargetOutput?.Print(message); // should already be a string obj
 	}
+
+	#endregion
+
+	#region overrides
+	public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
+
+		newTrans.TargetOutput = TargetOutput;
+
+		PartInternalFunctions.Transceiver.OnPrintCalled += newTrans.Print;
+	}
+	#endregion
 }

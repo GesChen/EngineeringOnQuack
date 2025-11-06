@@ -121,9 +121,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 				SelectionManager.Instance.SetSelection(newpart.transform);
 		}
 
-		if (newpart.TryGetComponent<NonStaticPart>(out var nsp))
-			nsp.OnPartCreation();
-
 		Assembly.Parts.Add(newpart);
 
 		UpdateParts();
@@ -196,6 +193,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		part.ID = HF.UIDHashFunction(); // may change this
 		// 10-19-25 changed to random instead of datettime
+		
+		if (part.IsNonStaticPart(out var nsp))
+			nsp.OnPartCreation();
 
 		return part;
 	}

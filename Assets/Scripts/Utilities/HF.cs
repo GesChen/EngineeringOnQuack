@@ -563,11 +563,8 @@ public static class HF {
 	}
 
 	public static T LoadCached<T>(ref T cacheField, Func<T> processor) {
-		try { // introduces a sub ns overhead so dw
-			cacheField ??= processor();
-		} catch (Exception e) {
-			throw new("Encountered error while attempting to processes cacheField: " + e.Message);
-		}
+		if (cacheField != null) return cacheField;
+		cacheField = processor(); // not sure diff between no ?? and if vs other way
 		return cacheField;
 	}
 

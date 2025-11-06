@@ -72,7 +72,8 @@ public class RightClickMenus : MonoBehaviour {
 				//new W.Button(() => MakeNewPart("ram"),	"ram",		iconName: "Parts/ram"),
 				new W.Button(() => MakeNewPart("display"),	"display",	iconName: "Parts/display"),
 				//new W.Button(() => MakeNewPart("script"),	"script",	iconName: "Parts/script"),
-				new W.Button(() => MakeNewPart("transceiver"),  "transceiver",  iconName: "Parts/transceiver"),
+				new W.Button(() => MakeNewPart("transceiver"),	"transceiver",	iconName: "Parts/transceiver"),
+				new W.Button(() => MakeNewPart("led"),			"led",			iconName: "Parts/led"),
 			},
 			showTitle: false
 		);

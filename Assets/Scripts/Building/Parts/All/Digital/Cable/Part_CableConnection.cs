@@ -14,14 +14,21 @@ public class Part_CableConnection : NonStaticPart {
 	public Part_Cable Cable;
 	public Port Port;
 
-	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
+	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
 	public Part_CableConnection(Part_Cable cable, Port port) {
 		Cable = cable;
 		Port = port;
 	}
 
-	public Part ConnectedPart => Cable.OtherCC(this).Port.MainPart; // may change this
+	public Part ConnectedPart {
+		get {
+			var other = Cable.OtherCC(this);
+			if (other == null) return null;
+
+			return other.Port.MainPart; // may change this
+		}
+	}
 
 	public void RandomizeID() {
 		CCID = HF.UIDHashFunction();
@@ -47,10 +54,6 @@ public class Part_CableConnection : NonStaticPart {
 		}
 
 		// Cable moves its own reference in the cable field over to new
-	}
-
-	public override void HandleCommand(string command, object[] args) {
-		Debug.LogError(UnknownCommand(command));
 	}
 
 	public class SPart_CC : Assembly.SPart {

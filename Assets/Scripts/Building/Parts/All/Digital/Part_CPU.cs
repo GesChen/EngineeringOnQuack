@@ -6,11 +6,6 @@ using UnityEngine;
 
 public class Part_CPU : NonStaticPart {
 	public override string PartName => "CPU";
-	public List<Port> Ports; // assign in inspector
-
-	public override void SetupPart(Part main) {
-		main.Ports = Ports.ToArray();
-	}
 
 	internal static Script currentlyEditingScript;
 
@@ -28,7 +23,7 @@ public class Part_CPU : NonStaticPart {
 						  // but we'll see
 						  // this shouldnt be hard to modify either
 
-	Port[] TransceiverPorts;
+	int[] TransceiverPorts;
 
 	Interpreter Interpreter;
 	Memory Memory;
@@ -36,6 +31,7 @@ public class Part_CPU : NonStaticPart {
 	bool hasTick;
 	Primitive.Function tickFunc;
 
+	#region Language
 	public static Type Type_CPU = new(
 		"CPU",
 		new Memory(
@@ -47,34 +43,8 @@ public class Part_CPU : NonStaticPart {
 			)
 		);
 	public T_Data InternalDataObject = new(Type_CPU);
-	public override T_Data InternalLanguageDataObject() => InternalDataObject;
-
-	public override void OnStopSimulating() {
-		running = false;
-
-		hasTick = false;
-		tickFunc = null;
-	}
-
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
-
-		newCPU.Script = Script;
-		newCPU.running = running;
-		newCPU.Interpreter = Interpreter;
-		newCPU.Memory = Memory;
-		newCPU.Evaluator = Evaluator;
-		newCPU.hasTick = hasTick;
-		newCPU.tickFunc = tickFunc;
-
-		// subscribe to print on a delay
-		// need to delay so internalfunctions.onprint is guaranteed
-		// to have been nulled
-		// cuz it all runs off the same onstartsimulating event
-		// and the order is random
-		// but the fields can be copied over first so that's what we do here 
-		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
-	}
+	public override T_Data GetInternalLanguageDataObject() => InternalDataObject;
+	#endregion
 
 	IEnumerator DelayScriptSetup() {
 		yield return null;
@@ -84,10 +54,17 @@ public class Part_CPU : NonStaticPart {
 		Memory.CPUGet += CPUGet;
 
 		// find transceiever ports
-		TransceiverPorts = Ports.Where(
-			p => p.Connector.ConnectedPart
-				.TryGetComponent<Part_Transceiver>(out _))
-			.ToArray(); // ugly
+		TransceiverPorts = 
+			Part.Ports
+			.Select((port, i) => (i, port))
+			.Where(
+				ip => {
+					if (ip.port.OtherPart == null) return false;
+					ip.port.OtherPart.IsNonStaticPart(out var nsp);
+					return nsp is Part_Transceiver;
+				})
+			.Select(ip => ip.i)
+			.ToArray();
 
 		if (Script == null)
 			yield break;
@@ -122,12 +99,16 @@ public class Part_CPU : NonStaticPart {
 
 		// bit of a meta analysis
 		// for a perchance of performance save
-		if (!string.IsNullOrWhiteSpace(string.Join("",
-			tickFunc.Script.Lines.Select(l => 
+		if (hasTick) {
+			string totalTickFunc = string.Join("",
+				tickFunc.Script.Lines.Select(l =>
 				l.OriginalString.Contains("return")
-				? "" : l.OriginalString)))) {
-			hasTick = false;
-			tickFunc = null;
+				? "" : l.OriginalString));
+
+			if (string.IsNullOrWhiteSpace(totalTickFunc)) {
+				hasTick = false;
+				tickFunc = null;
+			}
 		}
 
 		running = true; // dont run if no script present
@@ -142,22 +123,35 @@ public class Part_CPU : NonStaticPart {
 	}
 	T_Data CPUGet(int intID) =>
 		intID == Interpreter.ID
-		? InternalLanguageDataObject()
+		? GetInternalLanguageDataObject()
 		: null;
 
 	void TryPrint(int interpreterID, string message) {
 		if (interpreterID != Interpreter.ID) return;
 
-		foreach (var port in TransceiverPorts)
-			port.CallCommand("print", new[] { message });
+		// now do this properly
+		foreach (int port in TransceiverPorts) {
+			var ILPort = GetPort(interpreterID, port);
+
+			// straight up call this lmfao
+			// should work
+			PartInternalFunctions.Transceiver
+				.print(ILPort, new() { new Primitive.String(message) });
+		}
 	}
 
 	T_Data GetPort(int interpreterID, int id) {
 		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
 														  // however illegal this may feel
 
-		Ports[id].OtherPart.IsNonStaticPart(out var connectedPart);
-		var data = connectedPart.InternalLanguageDataObject();
+		if (id < 0 || id >= Part.Ports.Length)
+			return new Error($"Port index out of range: {id}");
+
+		var other = Part.Ports[id].OtherPart;
+		// somehow return null
+
+		other.IsNonStaticPart(out var connectedPart);
+		var data = connectedPart.GetInternalLanguageDataObject();
 
 		return data;
 	}
@@ -201,8 +195,36 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 
+
 	public class SPart_CPU : Assembly.SPart {
 		public string Script; // could use bytearray but dont wanna risk issues w encoding into json
+	}
+
+	public override void OnStopSimulating() {
+		running = false;
+
+		hasTick = false;
+		tickFunc = null;
+	}
+
+	public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
+
+		newCPU.Script = Script;
+		newCPU.running = running;
+		newCPU.Interpreter = Interpreter;
+		newCPU.Memory = Memory;
+		newCPU.Evaluator = Evaluator;
+		newCPU.hasTick = hasTick;
+		newCPU.tickFunc = tickFunc;
+
+		// subscribe to print on a delay
+		// need to delay so internalfunctions.onprint is guaranteed
+		// to have been nulled
+		// cuz it all runs off the same onstartsimulating event
+		// and the order is random
+		// but the fields can be copied over first so that's what we do here 
+		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
 	}
 
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
@@ -231,10 +253,5 @@ public class Part_CPU : NonStaticPart {
 			sp.Script != null
 			? ScriptSaveLoad.ConvertStringToScript(sp.Script)
 			: null;
-	}
-
-	public override void HandleCommand(string command, object[] args) {
-		
-		Debug.LogError(UnknownCommand(command));
 	}
 }

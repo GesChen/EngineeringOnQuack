@@ -7,14 +7,17 @@ public abstract partial class Primitive : T_Data {
 		public static Bool Default = new();
 
 		// defines internal type with name and memory
-		public static Type InternalType = new("Bool", new Dictionary<string, T_Data>() {
+		static Type m_IT;
+		public static Type InternalType =>
+			HF.LoadCached(ref m_IT, 
+			() => new("Bool", new Dictionary<string, T_Data>() {
 			{ "eq"			, new Function("eq", eq)			},
 			{ "lt"			, new Function("lt", lt)			},
 			{ "mu"			, new Function("mu", mu)			},
 			{ "num"			, new Function("num", num)			},
 			{ "str"			, new Function("str", str)			},
 			{ "list"		, new Function("list", list)		},
-		});
+		}));
 
 		public bool Value; // internal value
 
