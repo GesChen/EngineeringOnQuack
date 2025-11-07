@@ -126,11 +126,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: 0
   color: {r: 0, g: 0, b: 0, a: 0}
-  Ports:
-  - {fileID: 1543214419496202260}
-  - {fileID: 1490185585635576092}
-  - {fileID: 8361177586673582725}
-  - {fileID: 4764066726254972582}
   dontUpdateMaterialsFor: []
   material: {fileID: 0}
   physicMaterial: {fileID: 0}
@@ -147,6 +142,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Part: {fileID: 0}
+  Ports:
+  - {fileID: 1543214419496202260}
+  - {fileID: 1490185585635576092}
+  - {fileID: 8361177586673582725}
+  - {fileID: 4764066726254972582}
   DEBUG_CurrentScriptText: 
 --- !u!1001 &1789263208860680068
 PrefabInstance:
@@ -211,6 +211,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Port (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 245828314219756606}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
       propertyPath: MainPart
@@ -304,6 +309,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 245828314219756606}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
       propertyPath: MainPart
       value: 
       objectReference: {fileID: 3498625082508072037}
@@ -395,6 +405,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 245828314219756606}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
       propertyPath: MainPart
       value: 
       objectReference: {fileID: 3498625082508072037}
@@ -484,6 +499,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Port
       objectReference: {fileID: 0}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 245828314219756606}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
       propertyPath: MainPart

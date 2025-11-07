@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Port : MonoBehaviour {
-	public Part MainPart; // name to be changed later
+	public NonStaticPart MainNSP; // name to be changed later
 	public string Alias;
 	public Part_CableConnection Connector;
 	public SnapTarget SnapTarget;

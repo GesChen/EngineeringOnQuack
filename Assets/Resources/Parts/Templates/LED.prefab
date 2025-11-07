@@ -123,8 +123,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: 0
   color: {r: 0, g: 0, b: 0, a: 0}
-  Ports:
-  - {fileID: 6630817028586011379}
   dontUpdateMaterialsFor: []
   material: {fileID: 0}
   physicMaterial: {fileID: 0}
@@ -141,6 +139,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Part: {fileID: 0}
+  Ports:
+  - {fileID: 6630817028586011379}
   On: 0
   Color: {r: 1, g: 0, b: 0, a: 1}
   Intensity: 1
@@ -314,6 +314,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Port
       objectReference: {fileID: 0}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 6266207947741085989}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
       propertyPath: MainPart

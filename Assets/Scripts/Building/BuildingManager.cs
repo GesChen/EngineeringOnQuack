@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
-	public event Action OnModified;
+	public event Action OnModified; // only sub to this in start, its cleared in awake
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
 	/// Call this method whenever a change to the assembly is made! ANY CHANGE!
@@ -21,6 +21,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
+
+		OnModified = null;
 
 		Assembly = new();
 
@@ -106,6 +108,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		// used to update ids but now just a placeholder
 	}
 
+	public Part MakeNewPart(int basePartID, bool select, bool addSelection = false) {
+		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.ID == basePartID);
+		if (bpIndex == -1)
+			throw new($"[INTERNAL] basepart #\"{basePartID}\" doesn't exist");
+
+		BasePart bp = AllParts.BaseParts[bpIndex];
+		return MakeNewPart(bp.Name, select, addSelection);
+	}
+
 	public Part MakeNewPart(string name, bool select, bool addSelection = false) {
 		var newpart = GeneratePart(name);
 
@@ -120,6 +131,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 			else 
 				SelectionManager.Instance.SetSelection(newpart.transform);
 		}
+
+		if (newpart.IsNonStaticPart(out var nsp))
+			nsp.OnPartCreation();
 
 		Assembly.Parts.Add(newpart);
 
@@ -165,7 +179,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	// DO NOT USE THESE FOR MAKING NEW PARTS IN CODE!!
 	// USE MAKENEWPART INSTEAD
-	public Part GeneratePart(int basePartID) {
+	// idk why i didnt just make these private to begin with
+	private Part GeneratePart(int basePartID) {
 		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.ID == basePartID);
 		if (bpIndex == -1)
 			throw new($"[INTERNAL] basepart #\"{basePartID}\" doesn't exist");
@@ -175,7 +190,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return GeneratePart(bp);
 	}
 
-	public Part GeneratePart(string basePartName) {
+	private Part GeneratePart(string basePartName) {
 		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.Name == basePartName);
 		if (bpIndex == -1)
 			throw new($"[INTERNAL] basepart \"{basePartName}\" doesn't exist");
@@ -193,9 +208,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		part.ID = HF.UIDHashFunction(); // may change this
 		// 10-19-25 changed to random instead of datettime
-		
-		if (part.IsNonStaticPart(out var nsp))
-			nsp.OnPartCreation();
 
 		return part;
 	}

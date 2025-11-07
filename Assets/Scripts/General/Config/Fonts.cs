@@ -18,13 +18,16 @@ public static partial class Config {
 		public static void Fetch() {
 			if (Fetched) return;
 
-			I_Roboto = Resources.Load<TMP_FontAsset>("Fonts/Roboto");
-			if (I_Roboto == null) throw new("Unable to load Roboto!");
-
-			I_Consolas = Resources.Load<TMP_FontAsset>("Fonts/Consolas");
-			if (I_Consolas == null) throw new("Unable to load Consolas!");
+			I_Roboto = LoadFont("Fonts/Roboto", "Roboto");
+			I_Consolas = LoadFont("Fonts/Consolas", "Consolas");
 
 			Fetched = true;
+		}
+
+		private static TMP_FontAsset LoadFont(string path, string fontName) {
+			TMP_FontAsset font = Resources.Load<TMP_FontAsset>(path);
+			if (font == null) throw new($"Unable to load {fontName}!");
+			return font;
 		}
 	}
 }

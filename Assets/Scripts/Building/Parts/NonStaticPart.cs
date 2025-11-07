@@ -14,6 +14,8 @@ using UnityEngine;
 public abstract class NonStaticPart : MonoBehaviour {
 	public Part Part;
 
+	public Port[] Ports;
+
 	public abstract string PartName { get; }
 
 	// dont forget to call base.awake in derived classes

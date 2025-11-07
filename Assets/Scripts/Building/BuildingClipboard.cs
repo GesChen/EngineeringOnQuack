@@ -107,10 +107,6 @@ public class BuildingClipboard {
 
 		GroupPastedParts(newParts);
 
-		// select
-		if (selectNew)
-			SelectionManager.Instance.SetSelection(newTransforms);
-
 		return newParts;
 	}
 
@@ -129,7 +125,7 @@ public class BuildingClipboard {
 
 		for (int i = 0; i < Clipboard.Parts.Length; i++) {
 			var origPart = Clipboard.Parts[i];
-			var newPart = BuildingManager.Instance.GeneratePart(origPart.basePartID);
+			var newPart = BuildingManager.Instance.MakeNewPart(origPart.basePartID, selectNew);
 			newParts[i] = newPart;
 
 			var transform = newPart.transform;

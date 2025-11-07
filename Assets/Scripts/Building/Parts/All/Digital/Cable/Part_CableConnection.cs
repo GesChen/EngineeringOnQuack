@@ -26,7 +26,7 @@ public class Part_CableConnection : NonStaticPart {
 			var other = Cable.OtherCC(this);
 			if (other == null) return null;
 
-			return other.Port.MainPart; // may change this
+			return other.Port.MainNSP.Part; // may change this
 		}
 	}
 

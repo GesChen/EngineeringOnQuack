@@ -70,7 +70,7 @@ public class Part_Cable : NonStaticPart {
 		if (connectionA == null) return "Cable, cc A disconnected";
 		if (connectionB == null) return "Cable, cc B disconnected";
 
-		return $"Cable connecting {connectionA.Port.MainPart.GetType().Name} -- {connectionB.Port.MainPart.GetType().Name}";
+		return $"Cable connecting {connectionA.Port.MainNSP.GetType().Name} -- {connectionB.Port.MainNSP.GetType().Name}";
 	}
 
 	public class SPart_Cable : Assembly.SPart {

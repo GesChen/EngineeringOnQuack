@@ -24,8 +24,6 @@ public class Part : MonoBehaviour {
 	public Color color;
 	public Composition composition;
 
-	public Port[] Ports;
-
 	// tentative, may change this method
 	MeshRenderer[] renderers;
 	Collider[] colliders;

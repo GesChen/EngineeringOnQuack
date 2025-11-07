@@ -55,7 +55,7 @@ public class Part_CPU : NonStaticPart {
 
 		// find transceiever ports
 		TransceiverPorts = 
-			Part.Ports
+			Ports
 			.Select((port, i) => (i, port))
 			.Where(
 				ip => {
@@ -144,10 +144,10 @@ public class Part_CPU : NonStaticPart {
 		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
 														  // however illegal this may feel
 
-		if (id < 0 || id >= Part.Ports.Length)
+		if (id < 0 || id >= Ports.Length)
 			return new Error($"Port index out of range: {id}");
 
-		var other = Part.Ports[id].OtherPart;
+		var other = Ports[id].OtherPart;
 		// somehow return null
 
 		other.IsNonStaticPart(out var connectedPart);
