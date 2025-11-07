@@ -52,17 +52,19 @@ public class PortVisualizer : Singleton<PortVisualizer> {
 		foreach (var p in allPorts) {
 			// determine port i
 			int pi = Array.IndexOf(p.MainNSP.Ports, p);
-			var num = CreateNumber(pi, p.transform.position);
+			var num = CreateNumber(pi, p.transform);
 
 			Numbers.Add(num);
 		}
 	}
 
-	Transform CreateNumber(int num, Vector3 pos) {
+	Transform CreateNumber(int num, Transform target) {
 		var obj = Instantiate(NumberPrefab, WSCanvas.transform);
-		obj.transform.position = pos;
-		
-		obj.GetComponent<PortVisualizerNumber>().SetNumber(num);
+
+		var visComp = obj.GetComponent<PortVisualizerNumber>();
+		visComp.SetNumber(num);
+		visComp.target = target;
+
 		obj.GetComponent<RectTransform>().sizeDelta = NumSize * Vector2.one;
 
 		return obj.transform;

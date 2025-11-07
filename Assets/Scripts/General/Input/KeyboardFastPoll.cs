@@ -63,6 +63,9 @@ public class KeyboardFastPoll : Singleton<KeyboardFastPoll> {
 		var _ = Instance;
 
 		lock (lockObject) {
+			return pressedKeys;
+
+			// not sure why it used to do this
 			var copy = new List<Key>(pressedKeys);
 			pressedKeys.Clear();
 			return copy;

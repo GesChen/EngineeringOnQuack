@@ -83,6 +83,8 @@ public class LazyHistory : MonoBehaviour {
 	}
 	
 	public void Undo() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		//Debug.Log($"undo {undos}");
 		if (undos == Versions.Count - 1) return;
 
@@ -96,6 +98,8 @@ public class LazyHistory : MonoBehaviour {
 	}
 
 	public void Redo() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		//Debug.Log($"redo {undos}");
 		if (undos == 0) return; // no redo at current
 		undos--;

@@ -1983,6 +1983,8 @@ public class ScriptEditor : MonoBehaviour {
 	private readonly Clipboard clipboard = new();
 
 	public void Copy() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		if (carets.Count == 0) return;
 
 		if (carets.Count > 1) {
@@ -2022,6 +2024,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public void Cut() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		if (carets.Count == 0) return;
 
 		history.RecordChange();
@@ -2035,6 +2039,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public void Paste() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		PasteIndex(0);
 	}
 

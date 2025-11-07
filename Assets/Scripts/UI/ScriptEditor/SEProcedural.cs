@@ -207,7 +207,7 @@ public static class SEProcedural {
 	}
 	
 
-	static CWindow SEWindow;
+	public static CWindow SEWindow;
 	static void SetSEWindow() {
 		SEWindow = new() {
 			Name = "ScriptEditor",
