@@ -16,6 +16,9 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 	public CaretHandler Carets;
 
+	// coordinates work in screen space
+	// +y is up in the doc, back in the content
+
 	public bool Open => Window.RealisedWindow.Open;
 	void Update() {
 		HandleMouse();
@@ -134,7 +137,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 				Carets.SetSingleCaret(dragStartI, dragEndI);
 			} else {
-
+				Carets.SetSingleCustomCaret(dragStart, Conatrols.Mouse.Position);
 			}
 		}
 	}
@@ -161,7 +164,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 		caretsOn = !caretsOn;
 		
-		Carets.UpdateObjects(caretsOn)
+		Carets.Update(caretsOn);
 	}
 
 	protected void ForceCaretsUpdate(){
@@ -179,10 +182,12 @@ public class ScriptEditorRewritten : MonoBehaviour{
 			public int tail;
 			public int head;
 			public RectTransform rt;
-			public List<RectTransform> selBoxes;
+			public List<RectTransform> selBoxes = new();
 
 			public Vector2? customTail;
 			public Vector2? customHead;
+
+			public bool isCustom => customTail.HasValue || customHead.HasValue;
 
 			public void Init(CaretHandler handler) { this.handler = handler; }
 
@@ -206,6 +211,46 @@ public class ScriptEditorRewritten : MonoBehaviour{
 				customTail = tail;
 				customHead = head;
 			}
+			
+			// trigger redraw in the handler 
+			public void Move(Vector2Int amount, bool moveHead, bool moveTail) {
+				if (!(moveHead || moveTail)) return;
+				var size = handler.Main.CharSize;
+
+				var curTailPos = 
+					isCustom 
+					? customTail.Value
+					: handler.Main.I2SS(tail);
+
+				var curHeadPos = 
+					isCustom 
+					? customHead.Value
+					: handler.Main.I2SS(head);
+
+				var shift = new(
+					amount.x * size.x,
+					amount.y * size.y
+				);
+
+				var newTailPos = curTailPos + shift;
+				var newHeadPos = curHeadPos + shift;
+
+				if (moveHead) {
+					if (customHead.HasValue) customHead = newHeadPos;
+					else head = handler.Main.SS2I(newHeadPos);
+				}
+				if (moveTail) {
+					if (customTail.HasValue) customTail = newTailPos;
+					else tail = handler.Main.SS2I(newTailPos);
+				}
+
+			}
+
+			public void MatchTail() {
+				tail = head;
+			}
+
+			#region Drawing
 
 			public void ReDraw(bool caretOn) {
 				bool isCustom = customTail.HasValue;
@@ -337,10 +382,13 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 				selBoxes.Add(box);
 			}
+			#endregion
 		}
 
 		public ScriptEditorRewritten Main;
 		public List<Caret> Carets = new();
+		public List<Caret> OldCarets = new(); // hold onto a copy of carets
+		// to destroy them if they are no longer used
 
 		public void SetSingleCaret(int tail, int head) {
 			Carets = new() {
@@ -363,6 +411,25 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 			UpdateCaretHandlers();
 		}
+
+		public void MoveAll(Vector2Int amount, bool moveHead, bool moveTail) {
+			foreach (var c in Carets) {
+				c.Move(amount, moveHead, moveTail);
+			}
+		}
+
+		public void MatchAllTails() {
+			foreach (var c in Carets) {
+				c.MatchTail();
+			}
+		}
+
+		// still expecting a manual update from this one's caller
+		public void Move(Vector2Int amount, bool shift) {
+			MoveAll(amount, true, false);
+			
+			if (!shift)
+				MatchAllTails();
 		}
 
 		void UpdateCaretHandlers() {
@@ -374,12 +441,15 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		// call this every frame and redraw all carets
 		// shouldnt be too expensive, if it is we can optimize it
 		// write once optimize never
-		public void UpdateObjects(bool drawCarets) {
-			if (Carets.Count == 0) return;
-
+		public void Update(bool drawCarets) {
 			foreach (var caret in Carets) {
 				caret.ReDraw(drawCarets);
 			}
+
+			var oldNotInCurrent = 
+				OldCarets.Where(c => !Carets.Contains(c)).ToList();
+
+				// -------------------------------------------------------------------------------
 		}
 		
 		protected RectTransform MakeImageInCode(string name, Color color, Vector2 from, Vector2 to) {
