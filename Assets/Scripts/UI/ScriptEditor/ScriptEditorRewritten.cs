@@ -8,6 +8,9 @@ using UnityEngine.UI;
 public class ScriptEditorRewritten : MonoBehaviour{
 	static readonly float NavBarHeight = 50;
 	static float LineNumberWidth = 40; // to be calculated procedurally later
+	public static float CaretWidth = 2;
+	public static float CaretHeightExtra = 2;
+	public static Color CaretColor = new(1, 1, 1);
 
 	public string Content;
 
@@ -17,6 +20,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	void Update() {
 		HandleMouse();
 		HandleKeyboard();
+		UpdateCarets();
 	}
 
 	#region Util functions
@@ -44,15 +48,16 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 	protected int NumLines => Content.Count(c => c == '\n');
 
+	bool layoutChanged = true;
 	Vector2 m_LH;
-	protected Vector2 CharSize =>
-		HF.LoadCached(ref m_LH,
-		() => {
+	protected Vector2 CharSize => {
+		if (layoutChanged) {
 			var info = CodeText.textInfo.characterInfo[0];
-
-			return info.topRight - info.bottomLeft;
+			m_LH = info.topRight - info.bottomLeft;
+			layoutChanged = false;
 		}
-	);
+		return m_LH;
+	};
 
 	// just try not to call this.
 	protected int[] newLineIs => 
@@ -89,7 +94,20 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		return (linenum, before, after, line);
 	}
 
-	
+	// same as before with inc and exc (exc=inc \n)
+	protected (int startIinc, int endIexc, string content) GetLine(int i) {
+		var newlines = newLineIs;
+		
+		var endI = newlines[i];
+		var startI = 
+			i != 0
+			? newlines[i - 1] + 1
+			: 0;
+
+		var line = Content[startI..endI];
+
+		return (startI, endI, line);
+	}
 
 	#endregion
 
@@ -118,8 +136,6 @@ public class ScriptEditorRewritten : MonoBehaviour{
 			} else {
 
 			}
-
-			UpdateCarets();
 		}
 	}
 
@@ -132,8 +148,29 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 	}
 
+	bool updated = false;
+	float lastToggleTime = 0;
+	bool caretsOn = false;
+	bool caretsForceUpdate = false;
 	void UpdateCarets() {
+		if (!((Time.time - lastToggleTime > Config.ScriptEditor.CursorBlinkRateMs / 1000f && !updated)
+			|| caretsForceUpdate)) return;
+		caretsForceUpdate = false;
+		updated = true;
+		lastToggleTime = Time.time;
 
+		caretsOn = !caretsOn;
+		
+		Carets.UpdateObjects(caretsOn)
+	}
+
+	protected void ForceCaretsUpdate(){
+		caretsForceUpdate = true;
+	}
+
+	protected void ForceCaretOnState() {
+		caretsOn = false; // toggles to true
+		ForceCaretsUpdate();
 	}
 
 	public class CaretHandler {
@@ -170,14 +207,62 @@ public class ScriptEditorRewritten : MonoBehaviour{
 				customHead = head;
 			}
 
-			public void ReDraw() {
-				Destroy(rt.gameObject);
+			public void ReDraw(bool caretOn) {
+				bool isCustom = customTail.HasValue;
+				if (isCustom) {
 
-				
+				}
+
+				ReDrawCaret(caretOn);
+
+				ReDrawSelBoxes();
 			}
 
-			void CalculateSelBoxes() {
+			void ReDrawCustom(bool draw) {
 				ClearSelBoxes();
+				MakeSelBox(customTail.Value, customHead.Value);
+
+				DestroyCaret();
+				if (!draw) return;
+
+				DrawCaret(customHead.Value);
+			}
+
+			void ReDrawCaret(bool draw){
+				DestroyCaret();
+
+				if (!draw) return;
+
+				// draw caret at head
+				var corners = handler.Main.I2Corners(head);
+				var center = (corners.bl + corners.tl) / 2;
+				DrawCaret(center);
+			}
+
+			void DrawCaret(Vector2 at) {
+				var corners = handler.Main.I2Corners(head);
+				var height = corners.tl.y - corners.bl.y;
+				var size = new(ScriptEditorRewritten.CaretWidth, height + ScriptEditorRewritten.CaretHeightExtra);
+				
+				rt = handler.MakeImageInCode(
+					"Caret",
+					ScriptEditorRewritten.CaretColor,
+					at - size, 
+					at + size
+				)
+			}
+
+			void DestroyCaret() {
+				if (rt != null) {
+					Destroy(rt.gameObject);
+					rt = null;
+				}
+			}
+
+			void ReDrawSelBoxes() {
+				ClearSelBoxes();
+
+				if (head == tail) return;
 
 				// process assuming tail is behind head
 				bool swap = head < tail;
@@ -189,28 +274,44 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 				if (taily == heady) {
 					var bl = handler.Main.I2Corners(tail).bl;
-					var tr = handler.Main.I2Corners(head).tr;
+					var tl = handler.Main.I2Corners(head).tl;
 
-					MakeSelBox(bl, tr);
+					MakeSelBox(bl, tl);
 				} else {
 					// assuming head is after tail now
-					List<(Vector2 bl, Vector2 tr)> CornerPairs = new();
+					List<(Vector2 bl, Vector2 tl)> CornerPairs = new();
 
 					// add obvious head and tail
 					var tailLineBL = handler.Main.I2Corners(tail).bl;
 					var (tailLine, _, tailLineEndI, _) = handler.Main.GetLineAt(tail);
-					var tailLineTR = handler.Main.I2Corners(tailLineEndI).tr;
-
-					CornerPairs.Add((tailLineBL, tailLineTR));
+					var tailLineTL = handler.Main.I2Corners(tailLineEndI).tl;
+					CornerPairs.Add((tailLineBL, tailLineTL));
 
 					var (headLine, headLineStartI, _, _) = handler.Main.GetLineAt(head);
 					var headLineBL = handler.Main.I2Corners(headLineStartI).bl;
-					var headLineTR = handler.Main.I2Corners(head).tr;
-
-					CornerPairs.Add((headLineBL, headLineTR));
+					var headLineTL = handler.Main.I2Corners(head).tl;
+					CornerPairs.Add((headLineBL, headLineTL));
 
 					// onto tricky ones
-					var linesInBetween = Enumerable.Range(tailLine, headLine);
+					float lEdgeX = headLineBL.x;
+					var linesInBetween = Enumerable.Range(tailLine, headLine); // still assuming tail < head therefore tl < hl
+					foreach (var line in linesInBetween) {
+						// go from left edge to far right 
+						var (ibLineStart, ibLineEnd, _) = handler.Main.GetLine(line);
+						
+						var ibLineBLy = handler.Main.I2Corners(ibLineStart).bl.y;
+						var ibLineTL = handler.Main.I2Corners(ibLineEnd - 1).tl;
+
+						CornerPairs.Add((
+							new(lEdgeX, ibLineBLy),
+							ibLineTL
+						));
+					}
+
+					// HANK!!!! DONT ABBREVIATE CORNER PAIRS!!!! NOOOO
+					foreach (var cp in CornerPairs) {
+						MakeSelBox(cp.bl, cp.tl);
+					}
 				}
 
 				// swap back
@@ -218,6 +319,8 @@ public class ScriptEditorRewritten : MonoBehaviour{
 			}
 			
 			void ClearSelBoxes() {
+				if (selBoxes.Count == 0) return;
+
 				foreach (var box in selBoxes) {
 					Destroy(box.gameObject);
 				}
@@ -249,6 +352,18 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 			UpdateCaretHandlers();
 		}
+		
+		public void SetSingleCustomCaret(Vector2 tail, Vector2 head) {
+			Carets = new() {
+				new() {
+					customTail = tail,
+					customHead = head
+				}
+			};
+
+			UpdateCaretHandlers();
+		}
+		}
 
 		void UpdateCaretHandlers() {
 			foreach (Caret caret in Carets) {
@@ -259,8 +374,12 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		// call this every frame and redraw all carets
 		// shouldnt be too expensive, if it is we can optimize it
 		// write once optimize never
-		public void UpdateObjects() {
-			
+		public void UpdateObjects(bool drawCarets) {
+			if (Carets.Count == 0) return;
+
+			foreach (var caret in Carets) {
+				caret.ReDraw(drawCarets);
+			}
 		}
 		
 		protected RectTransform MakeImageInCode(string name, Color color, Vector2 from, Vector2 to) {
