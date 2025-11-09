@@ -202,6 +202,13 @@ public static class HF {
 		return Vector2.Distance(point, pb);
 	}
 
+	public static Vector3 ClosestPointOnSegment(Vector3 a, Vector3 b, Vector3 point) {
+		Vector3 ab = b - a;
+		float t = Vector3.Dot(point - a, ab) / Vector3.Dot(ab, ab);
+		t = Mathf.Clamp01(t);
+		return a + t * ab;
+	}
+
 	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2) {
 		Vector3 deltaP = linePoint2 - linePoint1;
 		float a = Vector3.Dot(lineVec1, lineVec1);
@@ -449,6 +456,30 @@ public static class HF {
 		return (b0 == b1) && (b1 == b2) && (b2 == b3);
 	}
 
+	public static bool IsPointInBounds(Vector3 point, Vector3 corner1, Vector3 corner2) {
+		float minX = Mathf.Min(corner1.x, corner2.x);
+		float maxX = Mathf.Max(corner1.x, corner2.x);
+		float minY = Mathf.Min(corner1.y, corner2.y);
+		float maxY = Mathf.Max(corner1.y, corner2.y);
+		float minZ = Mathf.Min(corner1.z, corner2.z);
+		float maxZ = Mathf.Max(corner1.z, corner2.z);
+
+		return point.x >= minX && point.x <= maxX &&
+			   point.y >= minY && point.y <= maxY &&
+			   point.z >= minZ && point.z <= maxZ;
+	}
+
+	public static bool IsPointInBounds(Vector2 point, Vector2 corner1, Vector2 corner2) {
+		float minX = Mathf.Min(corner1.x, corner2.x);
+		float maxX = Mathf.Max(corner1.x, corner2.x);
+		float minY = Mathf.Min(corner1.y, corner2.y);
+		float maxY = Mathf.Max(corner1.y, corner2.y);
+
+		return point.x >= minX && point.x <= maxX &&
+			   point.y >= minY && point.y <= maxY;
+	}
+
+
 	public static float CrossProductSign(Vector3 p1, Vector3 p2, Vector3 p3) {
 		return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
 	}
@@ -593,4 +624,18 @@ public static class HF {
 	
 	// probably insecure but not going for security
 	public static int UIDHashFunction() => UnityEngine.Random.value.GetHashCode();
+
+	/// <summary>
+	/// Local space
+	/// </summary>
+	public static Vector2 CenterLeft(this TMP_CharacterInfo info) =>
+		new(
+			info.bottomLeft.x,
+			(info.ascender + info.descender) / 2f
+		);
+
+	/// <summary>
+	/// Local space
+	/// </summary>
+	public static float CenterY(this TMP_LineInfo info) => (info.ascender + info.descender) / 2f;
 }

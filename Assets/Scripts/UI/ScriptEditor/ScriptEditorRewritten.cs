@@ -1,23 +1,51 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class ScriptEditorRewritten : MonoBehaviour{
 	static readonly float NavBarHeight = 50;
 	static float LineNumberWidth = 40; // to be calculated procedurally later
-	public static float CaretWidth = 2;
-	public static float CaretHeightExtra = 2;
+	public static float CaretWidth = 1.5f;
 	public static Color CaretColor = new(1, 1, 1);
 
-	public string Content;
+	public string Content = "";
 
 	public CaretHandler Carets;
 
 	// coordinates work in screen space
 	// +y is up in the doc, back in the content
+
+	void Awake() {
+		Carets = new() {
+			Main = this
+		};
+	}
+
+
+	static Action<Transform> PostRealizationAction;
+	public static void CreateWindow() {
+		var temp = new GameObject("ser");
+		var ser = temp.AddComponent<ScriptEditorRewritten>();
+
+		ser.SetWindow();
+
+		PostRealizationAction = (t) => {
+			var nsr = t.gameObject.AddComponent<ScriptEditorRewritten>();
+			nsr.Window = ser.Window;
+			nsr.CodeText = ser.CodeText;
+			nsr.LineNumbersText = ser.LineNumbersText;
+
+			Destroy(temp);
+			PostRealizationAction = null;
+		};
+
+		WindowManager.Instance.RealiseWindows(ser.Window);
+	}
 
 	public bool Open => Window.RealisedWindow.Open;
 	void Update() {
@@ -27,89 +55,115 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	}
 
 	#region Util functions
-	protected int SS2I(Vector2 SSpos) => // may become bottleneck
-		TMP_TextUtilities.FindNearestCharacter(CodeText, SSpos, Camera.main, true);
+	// uses global coords
+	protected int SS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos);
+	protected int LS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos, false);
 
-	protected Vector2 I2SS(int i) {
-		var info = CodeText.textInfo.characterInfo[i];
-		
-		var point = info.bottomLeft;
 
-		return RectTransformUtility.WorldToScreenPoint(Camera.main, point);
-	}
+	// only checks against left edge
+	// also only check against the nearest line
+	public static int FindNearestCharacterModified(TMP_Text text, Vector2 position, bool global = true) {
+		if (global)
+			position = text.transform.InverseTransformPoint(position);
 
-	protected (Vector2 tl, Vector2 tr, Vector2 br, Vector2 bl) I2Corners(int i) {
-		var info = CodeText.textInfo.characterInfo[i];
+		var LIs = text.textInfo.lineInfo;
 
-		return (
-			RectTransformUtility.WorldToScreenPoint(Camera.main, info.topLeft),
-			RectTransformUtility.WorldToScreenPoint(Camera.main, info.topRight),
-			RectTransformUtility.WorldToScreenPoint(Camera.main, info.bottomRight),
-			RectTransformUtility.WorldToScreenPoint(Camera.main, info.bottomLeft)
-			);
-	}
+		// find closest line
+		float distY = Mathf.Infinity;
+		int closestLineI = -1;
+		for (int i = 0; i < LIs.Length; i++) {
+			TMP_LineInfo line = LIs[i];
 
-	protected int NumLines => Content.Count(c => c == '\n');
-
-	bool layoutChanged = true;
-	Vector2 m_LH;
-	protected Vector2 CharSize => {
-		if (layoutChanged) {
-			var info = CodeText.textInfo.characterInfo[0];
-			m_LH = info.topRight - info.bottomLeft;
-			layoutChanged = false;
-		}
-		return m_LH;
-	};
-
-	// just try not to call this.
-	protected int[] newLineIs => 
-		Content
-		.Select((c, i) => (c, i))
-		.Where(ci => ci.c == '\n')
-		.Select(ci => ci.i)
-		.ToArray();
-
-	// startIinc is the index of the first char
-	// endIexc is the index of the line's newline aka end char i + 1
-	// content does not include \n
-	// try to minimize calls to this
-	protected (int lineNum, int startIinc, int endIexc, string content) GetLineAt(int i) {
-		var newlines = newLineIs;
-
-		int linenum = -1;
-		int before = -1;
-		int after = -1;
-		for (int ni = 0; ni < newlines.Length; ni++) {
-			int nli = newlines[ni];
-			if (nli > i) {
-				linenum = ni;
-				before = 
-					ni != 0
-					? newlines[ni - 1]
-					: 0;
-				after = nli;
+			/*Debug.DrawLine(new(0, line.ascender), new(0, line.descender), MoreColors.SkyBlue);
+			Debug.DrawLine(new(0, line.ascender), new(10, line.ascender), MoreColors.Orange);
+			Debug.DrawLine(new(0, line.descender), new(10, line.descender), MoreColors.Red);
+			DebugExtra.DrawPoint(new(0, (line.ascender + line.descender) / 2), 10, MoreColors.Teal);
+			DebugExtra.DrawPoint(new(0, position.y), 10, MoreColors.Green);
+*/
+			if (position.y < line.ascender && position.y > line.descender) {
+				closestLineI = i;
 				break;
+			}
+
+			// abs dist to the center y
+			float d = Mathf.Abs((line.ascender + line.descender) / 2 - position.y);
+
+			
+			if (d < distY) {
+				distY = d;
+				closestLineI = i;
 			}
 		}
 
-		string line = Content[before..after];
-		return (linenum, before, after, line);
+		if (closestLineI == -1) throw new("bad code!");
+
+		var cLineInfo = LIs[closestLineI];
+
+		float distX = Mathf.Infinity;
+		int closestCharI = -1;
+		// find closest char in that line
+		for (int c = cLineInfo.firstCharacterIndex; c <= cLineInfo.lastCharacterIndex; c++) {
+			var cInfo = text.textInfo.characterInfo[c];
+
+			float d = Mathf.Abs(cInfo.bottomLeft.x - position.x);
+			if (d < distX) {
+				distX = d;
+				closestCharI = c;
+			}
+		}
+
+		return closestCharI;
 	}
 
-	// same as before with inc and exc (exc=inc \n)
-	protected (int startIinc, int endIexc, string content) GetLine(int i) {
-		var newlines = newLineIs;
-		
-		var endI = newlines[i];
-		var startI = 
-			i != 0
-			? newlines[i - 1] + 1
-			: 0;
+	/// <summary>
+	/// <b>RETURNS IN LS</b>
+	/// </summary>
+	protected TMP_CharacterInfo CharInfo(int i) =>
+		CodeText.textInfo.characterInfo[i];
+	
 
-		var line = Content[startI..endI];
+	protected Vector2 L2G(Vector2 localPos) =>
+		CodeText.transform.TransformPoint(localPos);
+	protected Vector2 G2L(Vector2 globalPos) =>
+		CodeText.transform.InverseTransformPoint(globalPos);
 
-		return (startI, endI, line);
+
+	protected TMP_LineInfo LineInfo(int lineNum) =>
+		CodeText.textInfo.lineInfo[lineNum];
+
+	protected int NumLines => CodeText.textInfo.lineCount;
+
+	bool layoutChanged = true;
+	Vector2 m_LH;
+	protected Vector2 CharSize {
+		get {
+			if (layoutChanged) {
+				CodeText.text = 'H' + CodeText.text; // test on H
+				CodeText.ForceMeshUpdate();
+
+				var info = CodeText.textInfo.characterInfo[0];
+				float width = info.bottomRight.x - info.bottomLeft.x;
+				float height = LineInfo(0).ascender - LineInfo(0).descender;
+
+				m_LH = new(width, height);
+
+				CodeText.text = CodeText.text[1..];
+				layoutChanged = false;
+			}
+			return m_LH;
+		} 
+	}
+
+	protected bool MouseInCodeRegion {
+		get {
+			var corners = new Vector3[4];
+			CodeText.rectTransform.GetWorldCorners(corners);
+			return HF.IsPointInBounds(
+				Conatrols.Mouse.Position,
+				(Vector2)corners[2],
+				(Vector2)corners[0]
+			);
+		}
 	}
 
 	#endregion
@@ -119,23 +173,36 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	Vector2 dragStart;
 	void HandleMouse() {
 		if (Conatrols.Mouse.Left.PressedThisFrame) {
-			dragging = true;
-			
-			if (!Conatrols.Keyboard.Modifiers.Shift)
-				dragStart = Conatrols.Mouse.Position;
+			if (MouseInCodeRegion) {
 
-			altDragging = Conatrols.Keyboard.Modifiers.Alt;
+				dragging = true;
+
+				if (!Conatrols.Keyboard.Modifiers.Shift)
+					dragStart = Conatrols.Mouse.Position;
+
+				altDragging = Conatrols.Keyboard.Modifiers.Alt;
+
+				Window.RealisedWindow.Config.Movable = false;
+				Window.RealisedWindow.dragging = false;
+			} else {
+				Carets.ClearCarets();
+			}
 		} else 
 		if (Conatrols.Mouse.Left.ReleasedThisFrame) {
 			dragging = false;
+
+			Window.RealisedWindow.Config.Movable = true;
+			Window.RealisedWindow.dragging = false;
 		}
 
 		if (dragging) {
+			ForceCaretOnState();
 			if (!altDragging) {
 				int dragStartI = SS2I(dragStart);
 				int dragEndI = SS2I(Conatrols.Mouse.Position);
 
 				Carets.SetSingleCaret(dragStartI, dragEndI);
+				Carets.Carets[0].RememberTargetX();
 			} else {
 				Carets.SetSingleCustomCaret(dragStart, Conatrols.Mouse.Position);
 			}
@@ -144,27 +211,89 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 
 	void HandleKeyboard() {
+		HandleTyping();
 
+		HandleKeyboardMovement();
+	}
+
+	void HandleTyping() {
+		var presses = Conatrols.Keyboard.Presses;
+
+		bool modified = false;
+		foreach (var key in presses) {
+			if (Conatrols.Keyboard.All.TextKeys.Contains(key)) {
+				Type(key);
+
+				modified = true;
+			}
+		}
+
+		if (modified) {
+			UpdateText();
+		}
+	}
+
+	void HandleKeyboardMovement() {
+		var presses = Conatrols.Keyboard.Presses;
+
+		Vector2Int movement = new(
+			(presses.Contains(Key.LeftArrow) ? -1 : 0) +
+			(presses.Contains(Key.RightArrow) ? 1 : 0),
+			(presses.Contains(Key.DownArrow) ? -1 : 0) +
+			(presses.Contains(Key.UpArrow) ? 1 : 0)
+		);
+
+		if (movement.sqrMagnitude > 0) {
+			Carets.Move(movement, Conatrols.Keyboard.Modifiers.Shift);
+			ForceCaretOnState();
+		}
+		// todo figure out why calling this function breaks everything 
+	}
+
+	void Type(Key key) {
+		// handle special
+		char c;
+		if (key == Key.Enter) c = '\n';
+		else if (key == Key.Tab) c = '\t';
+		else if (key == Key.Backspace) {
+			if (Content.Length == 0) return;
+
+			if (Conatrols.Keyboard.Modifiers.Ctrl) {
+				// special nuts
+			} else 
+				Content = Content[..^1];
+
+			return;
+		} else
+			c = Conatrols.Keyboard.Modifiers.Shift
+				? Conatrols.Keyboard.All.KeyShiftedMapping[key]
+				: Conatrols.Keyboard.All.KeyCharMapping[key];
+
+		Content += c;
 	}
 
 	void UpdateText() {
+		// do colors later
+		CodeText.text = $"<mspace=.5em>{Content}</mspace>";
 
+		// .5em is 150 tab width
 	}
 
-	bool updated = false;
 	float lastToggleTime = 0;
 	bool caretsOn = false;
 	bool caretsForceUpdate = false;
+	string debugcarets;
 	void UpdateCarets() {
-		if (!((Time.time - lastToggleTime > Config.ScriptEditor.CursorBlinkRateMs / 1000f && !updated)
+		if (!((Time.time - lastToggleTime > Config.ScriptEditor.CursorBlinkRateMs / 1000f)
 			|| caretsForceUpdate)) return;
 		caretsForceUpdate = false;
-		updated = true;
 		lastToggleTime = Time.time;
 
 		caretsOn = !caretsOn;
 		
 		Carets.Update(caretsOn);
+
+		debugcarets = string.Join(", ", Carets.Carets.Select(c => $"c({c.tail}-{c.head}"));
 	}
 
 	protected void ForceCaretsUpdate(){
@@ -179,71 +308,48 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	public class CaretHandler {
 		public class Caret {
 			public CaretHandler handler;
+			public ScriptEditorRewritten main;
+			public int head; // if this == content.length, then it is at the end
 			public int tail;
-			public int head;
 			public RectTransform rt;
 			public List<RectTransform> selBoxes = new();
-
+			
+			// caret centers
 			public Vector2? customTail;
 			public Vector2? customHead;
 
+			float targetX = -1;
+
 			public bool isCustom => customTail.HasValue || customHead.HasValue;
 
-			public void Init(CaretHandler handler) { this.handler = handler; }
-
-			public void Select(int index) {
-				tail = index;
-				head = index;
-
-				customTail = null;
-				customHead = null;
-			}
-
-			public void Select(int from, int to) {
-				tail = from;
-				head = to;
-
-				customTail = null;
-				customHead = null;
-			}
-
-			public void SetCustom(Vector2 tail, Vector2 head) {
-				customTail = tail;
-				customHead = head;
-			}
-			
 			// trigger redraw in the handler 
-			public void Move(Vector2Int amount, bool moveHead, bool moveTail) {
-				if (!(moveHead || moveTail)) return;
-				var size = handler.Main.CharSize;
+			public void Move(Vector2Int amount) {
+				// y movement overrides x
+				if (amount.y != 0) {
+					if (main.CharInfo(head).lineNumber == 0
+						&& amount.y > 0) return;
+					if (main.CharInfo(head).lineNumber == main.NumLines - 1
+						&& amount.y < 0) return;
 
-				var curTailPos = 
-					isCustom 
-					? customTail.Value
-					: handler.Main.I2SS(tail);
+					// attempt to move to target x
+					Vector2 targetPos = new(
+						targetX,
+						main.LineInfo(main.CharInfo(head).lineNumber - amount.y).CenterY()
+					);
 
-				var curHeadPos = 
-					isCustom 
-					? customHead.Value
-					: handler.Main.I2SS(head);
-
-				var shift = new(
-					amount.x * size.x,
-					amount.y * size.y
-				);
-
-				var newTailPos = curTailPos + shift;
-				var newHeadPos = curHeadPos + shift;
-
-				if (moveHead) {
-					if (customHead.HasValue) customHead = newHeadPos;
-					else head = handler.Main.SS2I(newHeadPos);
-				}
-				if (moveTail) {
-					if (customTail.HasValue) customTail = newTailPos;
-					else tail = handler.Main.SS2I(newTailPos);
+					head = main.SS2I(main.L2G(targetPos));
+					return;
 				}
 
+				if (amount.x != 0) {
+					head += amount.x;
+					head = Mathf.Clamp(head, 0, main.Content.Length - 1);
+					RememberTargetX();
+				}
+			}
+
+			public void RememberTargetX() {
+				targetX = main.CharInfo(head).bottomLeft.x;
 			}
 
 			public void MatchTail() {
@@ -252,59 +358,63 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 			#region Drawing
 
-			public void ReDraw(bool caretOn) {
+			public void Draw(bool caretOn) {
 				bool isCustom = customTail.HasValue;
 				if (isCustom) {
-
+					DrawCustom(caretOn);
+					return;
 				}
 
-				ReDrawCaret(caretOn);
+				DrawCaret(caretOn);
 
-				ReDrawSelBoxes();
+				DrawSelBoxes();
 			}
 
-			void ReDrawCustom(bool draw) {
-				ClearSelBoxes();
-				MakeSelBox(customTail.Value, customHead.Value);
+			void DrawCustom(bool draw) {
+				MakeSelBox(
+					main.G2L(customTail.Value),
+					main.G2L(customHead.Value));
 
-				DestroyCaret();
 				if (!draw) return;
 
-				DrawCaret(customHead.Value);
+				DrawCaret(main.G2L(customHead.Value));
 			}
 
-			void ReDrawCaret(bool draw){
-				DestroyCaret();
-
+			void DrawCaret(bool draw){
 				if (!draw) return;
 
 				// draw caret at head
-				var corners = handler.Main.I2Corners(head);
-				var center = (corners.bl + corners.tl) / 2;
-				DrawCaret(center);
+				var LI = main.LineInfo(main.CharInfo(head).lineNumber);
+				Vector2 centerL = new(
+					main.CharInfo(head).bottomLeft.x,
+					(LI.descender + LI.ascender) / 2f);
+
+				DrawCaret(centerL);
 			}
 
-			void DrawCaret(Vector2 at) {
-				var corners = handler.Main.I2Corners(head);
-				var height = corners.tl.y - corners.bl.y;
-				var size = new(ScriptEditorRewritten.CaretWidth, height + ScriptEditorRewritten.CaretHeightExtra);
-				
+			void DrawCaret(Vector2 atLocal) {
+				// assuming theres at least 1 line
+
+				var LI0 = main.LineInfo(0);
+				var height = LI0.ascender - LI0.descender;
+				var size = new Vector2(CaretWidth, height);
+
 				rt = handler.MakeImageInCode(
 					"Caret",
-					ScriptEditorRewritten.CaretColor,
-					at - size, 
-					at + size
-				)
+					CaretColor,
+					atLocal - size / 2f,
+					atLocal + size / 2f
+				);
 			}
 
-			void DestroyCaret() {
+			internal void DestroyCaret() {
 				if (rt != null) {
 					Destroy(rt.gameObject);
 					rt = null;
 				}
 			}
 
-			void ReDrawSelBoxes() {
+			void DrawSelBoxes() {
 				ClearSelBoxes();
 
 				if (head == tail) return;
@@ -314,48 +424,60 @@ public class ScriptEditorRewritten : MonoBehaviour{
 				if (swap) (head, tail) = (tail, head);
 
 				// use ints for rounding and speed
-				int taily = (int)handler.Main.I2SS(tail).y;
-				int heady = (int)handler.Main.I2SS(head).y;
+				int tailLN = main.CharInfo(tail).lineNumber;
+				int headLN = main.CharInfo(head).lineNumber;
 
-				if (taily == heady) {
-					var bl = handler.Main.I2Corners(tail).bl;
-					var tl = handler.Main.I2Corners(head).tl;
-
-					MakeSelBox(bl, tl);
+				if (tailLN == headLN) {
+					var LI = main.LineInfo(headLN);
+					MakeSelBox(
+						new(main.CharInfo(tail).bottomLeft.x, LI.descender), 
+						new(main.CharInfo(head).bottomLeft.x, LI.ascender));
 				} else {
 					// assuming head is after tail now
-					List<(Vector2 bl, Vector2 tl)> CornerPairs = new();
+					List<(Vector2 bl, Vector2 tr)> CornerPairs = new();
 
 					// add obvious head and tail
-					var tailLineBL = handler.Main.I2Corners(tail).bl;
-					var (tailLine, _, tailLineEndI, _) = handler.Main.GetLineAt(tail);
-					var tailLineTL = handler.Main.I2Corners(tailLineEndI).tl;
-					CornerPairs.Add((tailLineBL, tailLineTL));
+					var tailCI = main.CharInfo(tail);
+					var tailLI = main.LineInfo(tailCI.lineNumber);
+					CornerPairs.Add((
+						new(tailCI.bottomLeft.x,
+							tailLI.descender),
+						new(main.CharInfo(tailLI.lastCharacterIndex).topRight.x,
+							tailLI.ascender)));
 
-					var (headLine, headLineStartI, _, _) = handler.Main.GetLineAt(head);
-					var headLineBL = handler.Main.I2Corners(headLineStartI).bl;
-					var headLineTL = handler.Main.I2Corners(head).tl;
-					CornerPairs.Add((headLineBL, headLineTL));
+					var headCI = main.CharInfo(head);
+					var headLI = main.LineInfo(headCI.lineNumber);
+					float headBLx = main.CharInfo(headLI.firstCharacterIndex).bottomLeft.x;
+					CornerPairs.Add((
+						new(headBLx,
+							headLI.descender),
+						new(headCI.bottomLeft.x,
+							headLI.ascender)));
 
 					// onto tricky ones
-					float lEdgeX = headLineBL.x;
-					var linesInBetween = Enumerable.Range(tailLine, headLine); // still assuming tail < head therefore tl < hl
-					foreach (var line in linesInBetween) {
+					float lEdgeX = headBLx;
+					for (int line = tailLN + 1; line < headLN; line++) {
+						// hope i never have to deal with this again
+
 						// go from left edge to far right 
-						var (ibLineStart, ibLineEnd, _) = handler.Main.GetLine(line);
+						var lineinfo = main.LineInfo(line);
+
+						float ibLineBLy = lineinfo.descender;
 						
-						var ibLineBLy = handler.Main.I2Corners(ibLineStart).bl.y;
-						var ibLineTL = handler.Main.I2Corners(ibLineEnd - 1).tl;
+						// i think this is the newline
+						// which is why we take TL
+						float ibLineTLx = main.CharInfo(lineinfo.lastCharacterIndex).topLeft.x;
+						float ibLineTLy = lineinfo.ascender;
 
 						CornerPairs.Add((
 							new(lEdgeX, ibLineBLy),
-							ibLineTL
+							new(ibLineTLx, ibLineTLy)
 						));
 					}
 
 					// HANK!!!! DONT ABBREVIATE CORNER PAIRS!!!! NOOOO
-					foreach (var cp in CornerPairs) {
-						MakeSelBox(cp.bl, cp.tl);
+					foreach (var (bl, tr) in CornerPairs) {
+						MakeSelBox(bl, tr);
 					}
 				}
 
@@ -387,8 +509,11 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 		public ScriptEditorRewritten Main;
 		public List<Caret> Carets = new();
-		public List<Caret> OldCarets = new(); // hold onto a copy of carets
-		// to destroy them if they are no longer used
+		List<Transform> Objects = new();
+
+		public void ClearCarets() {
+			Carets.Clear();
+		}
 
 		public void SetSingleCaret(int tail, int head) {
 			Carets = new() {
@@ -398,7 +523,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 				}
 			};
 
-			UpdateCaretHandlers();
+			InitCarets();
 		}
 		
 		public void SetSingleCustomCaret(Vector2 tail, Vector2 head) {
@@ -409,12 +534,12 @@ public class ScriptEditorRewritten : MonoBehaviour{
 				}
 			};
 
-			UpdateCaretHandlers();
+			InitCarets();
 		}
 
-		public void MoveAll(Vector2Int amount, bool moveHead, bool moveTail) {
+		void MoveAll(Vector2Int amount) {
 			foreach (var c in Carets) {
-				c.Move(amount, moveHead, moveTail);
+				c.Move(amount);
 			}
 		}
 
@@ -426,15 +551,16 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 		// still expecting a manual update from this one's caller
 		public void Move(Vector2Int amount, bool shift) {
-			MoveAll(amount, true, false);
+			MoveAll(amount);
 			
 			if (!shift)
 				MatchAllTails();
 		}
 
-		void UpdateCaretHandlers() {
+		void InitCarets() {
 			foreach (Caret caret in Carets) {
 				caret.handler = this;
+				caret.main = Main;
 			}
 		}
 
@@ -442,29 +568,34 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		// shouldnt be too expensive, if it is we can optimize it
 		// write once optimize never
 		public void Update(bool drawCarets) {
-			foreach (var caret in Carets) {
-				caret.ReDraw(drawCarets);
+
+			// clear everything
+			foreach (var t in Objects) {
+				Destroy(t.gameObject);
 			}
+			Objects.Clear();
 
-			var oldNotInCurrent = 
-				OldCarets.Where(c => !Carets.Contains(c)).ToList();
-
-				// -------------------------------------------------------------------------------
+			// then redraw
+			foreach (var caret in Carets) {
+				caret.Draw(drawCarets);
+			}
 		}
 		
-		protected RectTransform MakeImageInCode(string name, Color color, Vector2 from, Vector2 to) {
+		protected RectTransform MakeImageInCode(string name, Color color, Vector2 fromLocal, Vector2 toLocal) {
 			GameObject obj = new(name);
 			var rt = obj.AddComponent<RectTransform>();
 			rt.SetParent(Main.CodeText.transform);
 
-			Vector2 min = Vector2.Min(from, to);
-			Vector2 max = Vector2.Max(from, to);
+			Vector2 min = Vector2.Min(fromLocal, toLocal);
+			Vector2 max = Vector2.Max(fromLocal, toLocal);
 
 			rt.anchoredPosition = (min + max) / 2f;
 			rt.sizeDelta = max - min;
 
 			var image = obj.AddComponent<Image>();
 			image.color = color;
+
+			Objects.Add(rt);
 
 			return rt;
 		}
@@ -498,8 +629,8 @@ new() {
 			fontSize: Config.ScriptEditor.FontSize
 		),
 		WindowItem.LayoutConfig.Custom(
-			position: new(0, 0, 0, 1),
-			sizeDelta: LineNumberWidth * Vector2.one,
+			position: new(0, 1, 0, 0),
+			sizeDelta: new(LineNumberWidth, 0),
 			fixedPosition: new() {
 				Pivot = UIPosition.MiddleLeft
 			}
@@ -513,12 +644,17 @@ new() {
 			fontSize: Config.ScriptEditor.FontSize
 		),
 		WindowItem.LayoutConfig.DynamicLayout(
-			margin: new(0, 0, LineNumberWidth, 0)
+			margin: LineNumberWidth * FourSides.LeftConst
 		)
 	).OnRealized((rt, _) => CodeText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
 })
 			}
 		};
+
+		Window.AddEvent(
+			TimedEventInvoker.Timing.Awake,
+			(src) => PostRealizationAction?.Invoke(src.transform)
+		);
 	}
 	#endregion
 }

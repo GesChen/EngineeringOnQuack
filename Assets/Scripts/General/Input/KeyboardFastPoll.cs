@@ -59,13 +59,15 @@ public class KeyboardFastPoll : Singleton<KeyboardFastPoll> {
 		}
 	}
 
-	public static List<Key> GetAllPressedKeys() {
+	// only let conatrols use it 
+	internal static List<Key> GetAllPressedKeys() {
 		var _ = Instance;
 
 		lock (lockObject) {
-			return pressedKeys;
+			//return pressedKeys;
 
 			// not sure why it used to do this
+			// it works better this way though?
 			var copy = new List<Key>(pressedKeys);
 			pressedKeys.Clear();
 			return copy;

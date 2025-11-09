@@ -112,7 +112,7 @@
 
 		float4 o = float4(0,0,0,0);
 		
-	float4 innerColor = _InnerColor;
+		float4 innerColor = _InnerColor;
 		
 		innerColor.a *= alphaFactor;
 		
