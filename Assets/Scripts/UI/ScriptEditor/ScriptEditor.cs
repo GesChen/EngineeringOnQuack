@@ -525,7 +525,7 @@ public class ScriptEditor : MonoBehaviour {
 			char c = tabsToSpaces[i];
 			if (c == '\t') {
 				int num = TabIndexToSpaceCount(i);
-				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i, new string(' ', num));
+				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i + 1, new string(' ', num));
 			}
 		}
 

@@ -91,7 +91,7 @@ public static class HF {
 	public static Vector2 Vector2Abs(Vector2 v) =>
 		new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 
-	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) =>
+	public static Vector2 Clamp(this Vector2 v, Vector2 min, Vector2 max) =>
 		new(
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
@@ -267,8 +267,8 @@ public static class HF {
 	/// <summary>
 	/// Replaces section of string with another, chars at start and end index are both replaced too
 	/// </summary>
-	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith) => 
-		original[..startIndex] + replaceWith + original[(endIndex + 1)..];
+	public static string ReplaceSection(string original, int startIndexInc, int endIndexExc, string replaceWith) => 
+		original[..startIndexInc] + replaceWith + original[endIndexExc..];
 
 	public static string RemoveSection(string original, int start, int end) => 
 		original.Remove(start, end - start);

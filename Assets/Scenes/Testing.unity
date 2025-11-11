@@ -2163,7 +2163,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   WSCanvas: {fileID: 456993845}
-  NumBGColor: {r: 0.3207547, g: 0.3207547, b: 0.3207547, a: 0.69411767}
   NumSize: 0.1
   NumberPrefab: {fileID: 2075361020800259565, guid: 998c7966037ca2545821fe152102158c,
     type: 3}
@@ -2856,13 +2855,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1195828426}
   - component: {fileID: 1195828425}
+  - component: {fileID: 1195828427}
   m_Layer: 0
   m_Name: tester
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1195828425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2870,7 +2870,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1195828424}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81e6b4214b7bc4c4a8709870713a7e7a, type: 3}
   m_Name: 
@@ -2890,6 +2890,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1195828427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1195828424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17592f44d065a0040ba5e9e47e17a880, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1196761615
 GameObject:
   m_ObjectHideFlags: 0

@@ -769,6 +769,9 @@ public class PComponents {
 			BarHandleColorBlock	= barHandleColorBlock ?? Config.UI.ColorBlock.DefaultBlock;
 		}
 
+		// to mess around with the content, just access the windowitems contentobject
+		// and re set the components .content field
+
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
 			var comp = newObj.AddComponent<BetterScrollRect>(); // interchangable with normal scrollrect
 			var rt = newObj.GetComponent<RectTransform>();
@@ -922,6 +925,22 @@ public class PComponents {
 
 			// return
 			return comp;
+		}
+	}
+
+	public class RectMask : Component {
+		public FourSides Padding;
+
+		public RectMask(FourSides? padding = null) {
+			Padding = padding ?? FourSides.Zero;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var rmComp = newObj.AddComponent<RectMask2D>();
+			rmComp.padding = Padding.ToRectMask2DType();
+
+			RealComponent = rmComp;
+			FinaliseRealise();
 		}
 	}
 }

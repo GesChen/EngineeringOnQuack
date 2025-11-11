@@ -6,8 +6,6 @@ public static partial class Config {
 		public static readonly TMP_FontAsset Font = Fonts.Consolas;
 		public static readonly float FontSize = 20;
 
-		public static readonly int	RepeatDelayMs = 500;
-		public static readonly int	RepeatRateCPS = 31;
 		public static readonly int	CursorBlinkRateMs = 530;
 		public static readonly int	MultiClickThresholdMs = 500;
 
@@ -16,7 +14,11 @@ public static partial class Config {
 		public static readonly int	MaxHistoryLength = 100;
 		public static readonly int	NewHistoryPauseThresholdMs = 1500;
 
+		public static readonly float NumberDefaultWidth = 20;
 		public static readonly float NumberToContentSpace = 20;
+		public static readonly float NumberExtraWidth = 20;
+		public static readonly float ContentExtraWidth = 100;
+
 		public static readonly int XCursorScreenMarginChars = 2;
 		public static readonly int YCursorScreenMarginLines = 2;
 

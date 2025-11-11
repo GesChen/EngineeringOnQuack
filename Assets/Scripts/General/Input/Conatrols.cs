@@ -187,8 +187,8 @@ public class Conatrols : MonoBehaviour {
 		List<Key> GetRepeats() {
 			List<Key> keys = new();
 			foreach (KeyValuePair<Key, float> keytime in KeyHeldTimes) {
-				if (Time.time - keytime.Value > Config.ScriptEditor.RepeatDelayMs / 1000f && // long enough held
-					Time.time - KeyLastRepeatTime[keytime.Key] > 1f / Config.ScriptEditor.RepeatRateCPS) { // long enough since last repeat
+				if (Time.time - keytime.Value > Config.Input.RepeatDelayMs / 1000f && // long enough held
+					Time.time - KeyLastRepeatTime[keytime.Key] > 1f / Config.Input.RepeatRateCPS) { // long enough since last repeat
 					keys.Add(keytime.Key);
 					KeyLastRepeatTime[keytime.Key] = Time.time;
 				}

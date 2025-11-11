@@ -155,8 +155,7 @@ public class LiveWindow : MonoBehaviour {
 			float halfWidth = rt.sizeDelta.x / 2;
 			float halfHeight = rt.sizeDelta.y / 2;
 
-			Vector2 clampedPos = HF.Vector2Clamp(
-				rt.GetCenter(),
+			Vector2 clampedPos = rt.GetCenter().Clamp(
 				new Vector2(halfWidth, halfHeight) 
 				+ new Vector2(padding.Left, padding.Down),
 				
