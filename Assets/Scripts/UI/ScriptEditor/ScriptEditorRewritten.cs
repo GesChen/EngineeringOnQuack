@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +15,15 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	public static Color CaretColor = new(1, 1, 1);
 
 	public string Content = "";
+	
+	struct LineData {
+		public ScriptEditor.Context postContext;
+		public SyntaxHighlighter.Types colors;
+	}
+	List<LineData> Lines = new();
 
 	public CaretHandler Carets;
+	public SyntaxHighlighter SyntaxHighlighter;
 
 	float LineNumberWidth = 0;
 
@@ -26,6 +34,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		Carets = new() {
 			Main = this
 		};
+		SyntaxHighlighter = new();
 	}
 
 	static Action<Transform> PostRealizationAction;
@@ -43,6 +52,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 			nsr.LineNumbersText = ser.LineNumbersText;
 			nsr.MainEditorScrollRect = ser.MainEditorScrollRect;
 			nsr.CodeText = ser.CodeText;
+			nsr.ExtraRaycastTarget = ser.ExtraRaycastTarget;
 
 			// move numbers into viewport
 			nsr.LineNumbersText.rectTransform.SetParent(
@@ -87,6 +97,10 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		UpdateCarets();
 		HandleMouse();
 		HandleKeyboard();
+	}
+	
+	void LateUpdate() {
+		MoveLineNumbers();
 	}
 
 	#region Util functions
@@ -164,13 +178,13 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	protected TMP_CharacterInfo CharInfo(int i) {
 		if (Content.Length == 0) {
 			Content = "H"; // give it sum to work with
-			UpdateText();
+			UpdateText(false);
 			CodeText.ForceMeshUpdate();
 
 			var info = CharInfo(0);
 
 			Content = "";
-			UpdateText();
+			UpdateText(false);
 			CodeText.ForceMeshUpdate();
 			return info;
 		}
@@ -183,13 +197,13 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		if (Content[^1] == '\n') {
 			// do the content pretend trick from earlier
 			Content += "H";
-			UpdateText();
+			UpdateText(false);
 			CodeText.ForceMeshUpdate();
 
 			var info = CharInfo(Content.Length - 1);
 
 			Content = Content[..^1];
-			UpdateText();
+			UpdateText(true);
 			CodeText.ForceMeshUpdate();
 			return info;
 		}
@@ -279,14 +293,19 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		}
 	}
 
-	protected bool MouseInCodeRegion {
+	protected bool MouseOverCode {
 		get {
 			var corners = CodeTextCorners;
-			return HF.IsPointInBounds(
+			bool inbounds = HF.IsPointInBounds(
 				Conatrols.Mouse.Position,
 				(Vector2)corners[2],
 				(Vector2)corners[0]
 			);
+
+			bool hovered = 
+				UIHovers.CheckStrictlyFirst(CodeText.transform)
+				|| UIHovers.CheckStrictlyFirst(ExtraRaycastTarget);
+			return inbounds && hovered;
 		}
 	}
 
@@ -297,8 +316,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	Vector2 dragStart;
 	void HandleMouse() {
 		if (Conatrols.Mouse.Left.PressedThisFrame) {
-			if (MouseInCodeRegion) {
-
+			if (MouseOverCode) {
 				dragging = true;
 
 				if (!Conatrols.Keyboard.Modifiers.Shift)
@@ -362,7 +380,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		}
 
 		if (modified) {
-			UpdateText();
+			UpdateText(true);
 			ForceCaretOnState_Update();
 		}
 	}
@@ -403,9 +421,44 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		Carets.Type(c.ToString());
 	}
 
-	void UpdateText() {
+	// MAY potentially become laggy. if this does happen then optimize it. otherwise 
+	// keep the naive code cuz it works and its <1ms anyway
+	//string lastContent = "";
+	void UpdateText(bool renderColors) {
 		// do colors later
-		CodeText.text = $"<mspace=.5em>{Content}</mspace>";
+		// great we have to do colors now
+		// identify modified lines
+		var newLines = Content.Split('\n');
+		/*var modifiedLinesI =
+			lastContent.Split('\n')
+			.Select((s, i) => (s, i))
+			.Where(si => newLines[si.i] != si.s)
+			.Select(si => si.i)
+			.ToArray();
+
+		var updatedLines =
+			modifiedLinesI.ToDictionary(i => i, i => false);
+
+		// should be in ascending order already
+		foreach (var line in modifiedLinesI) {
+			if (updatedLines[line]) continue; // already updated
+
+			
+		}*/
+
+		ScriptEditor.Context context = new();
+		StringBuilder builder = new();
+		for (int i = 0; i < newLines.Length; i++) {
+			string line = newLines[i];
+			var colors = SyntaxHighlighter.ParseLineToColorList(line, context);
+
+			string tagged = SyntaxHighlighter.TagLine(line, colors);
+			builder.Append(tagged);
+			if (i != newLines.Length - 1)
+				builder.Append("\n");
+		}
+
+		CodeText.text = $"<mspace=.5em>{builder}</mspace>";
 
 		// .5em is 150 tab width
 
@@ -434,6 +487,11 @@ public class ScriptEditorRewritten : MonoBehaviour{
 		}
 
 		LineNumbersText.text = string.Join('\n', Enumerable.Range(0, NumLines));
+	}
+
+	void MoveLineNumbers() {
+		LineNumbersText.rectTransform.anchoredPosition = 
+			new(0, MainEditorScrollRect.content.anchoredPosition.y);
 	}
 
 	float lastToggleTime = 0;
@@ -693,7 +751,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 
 		public ScriptEditorRewritten Main;
 		public List<Caret> Carets = new();
-		List<Transform> Objects = new();
+		private readonly List<Transform> Objects = new();
 
 		public void ClearCarets() {
 			Carets.Clear();
@@ -808,6 +866,7 @@ public class ScriptEditorRewritten : MonoBehaviour{
 	protected TextMeshProUGUI CodeText;
 	protected RectTransform CodeMask; // parent of content
 	protected TMPAutoScaler ContentAutoScaler;
+	protected RectTransform ExtraRaycastTarget;
 
 	public CWindow Window;
 
@@ -836,16 +895,13 @@ new() {
 			fontSize: cfg.FontSize,
 			alignment: TextAlignmentOptions.TopRight
 		),
-		WindowItem.LayoutConfig.Custom(
-			position: new(0, 1, 0, 0),
-			sizeDelta: new(0, 0), // set by script later
-			fixedPosition: new() {
-				Pivot = UIPosition.MiddleLeft
-			}
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredAt(UIPosition.TopLeft),
+			new(0, 0) // size set by script
 		)
 	).OnRealized((rt, _) => LineNumbersText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
 	WindowItem.NewText(
-		"Code",	
+		"Code",
 		new PComponents.Text(
 			"",
 			cfg.Font,
@@ -858,7 +914,15 @@ new() {
 			// it must be selectable tho so make it big
 		)
 	).OnRealized((rt, _) => CodeText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
-}) 
+	WindowItem.NewImage(
+		"Raycast Target",
+		new PComponents.Image(Color.clear),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredAt(UIPosition.TopLeft),
+			new(100000, 100000) // must be omnipresent
+		)
+	).OnRealized((rt, _) => ExtraRaycastTarget = rt)
+})
 		};
 
 		Window.CustomEvents = new() {

@@ -228,7 +228,7 @@ public class Part_CPU : NonStaticPart {
 	}
 
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CPU { // did you know you dont actually need the ()
+		var sp = new SPart_CPU {
 			basePartID = SPart.basePartID,
 			id = SPart.id,
 			position = SPart.position,
@@ -236,12 +236,11 @@ public class Part_CPU : NonStaticPart {
 			scale = SPart.scale,
 			color = SPart.color,
 			compositionID = SPart.compositionID,
+			Script =
+				Script != null
+				? ScriptSaveLoad.ConvertScriptToString(Script)
+				: null
 		};
-
-		sp.Script =
-			Script != null
-			? ScriptSaveLoad.ConvertScriptToString(Script)
-			: null;
 
 		SPart = sp;
 	}

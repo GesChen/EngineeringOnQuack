@@ -192,7 +192,10 @@ public class Interpreter {
 
 				Line lineCopy = line.DeepCopy();
 				T_Data output = Evaluator.Evaluate(lineCopy, memory, false, depth);
-				if (output is Error) return output;
+				if (output is Error) {
+					if (!state.TryNext) return output;
+					else state.TryErrored = true;
+				}
 				Flags nFlags = output.Flags;
 
 				#region checks

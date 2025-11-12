@@ -83,7 +83,6 @@ public static class SEProcedural {
 		GameObject g = iv.gameObject;
 
 		ScriptEditor = g.AddComponent<ScriptEditor>();
-		var sh = g.AddComponent<SyntaxHighlighter>();
 		var history = g.AddComponent<LazyHistory>(); // interchangable with history if fix it
 		history.SE = ScriptEditor;
 
@@ -92,7 +91,7 @@ public static class SEProcedural {
 		ScriptEditor.contentParent = contentparent;
 		ScriptEditor.contentMask = contentmask;
 		ScriptEditor.lineNumbersVerticalLayout = lnvlg;
-		ScriptEditor.syntaxHighlighter = sh;
+		ScriptEditor.syntaxHighlighter = new();
 		ScriptEditor.history = history;
 
 		ScriptEditor.OnDragStateChanged += DragStateChanged;
