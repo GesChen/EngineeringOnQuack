@@ -139,6 +139,7 @@ public class Conatrols : MonoBehaviour {
 		public static List<Key> Pressed; // held ones stay held, presses repeats held
 		public static List<Key> PressedThisFrame;
 		public static List<Key> ReleasedThisFrame;
+
 		public void UpdateKeyboard() {
 			Pressed = KeyboardFastPoll.GetAllPressedKeys();
 

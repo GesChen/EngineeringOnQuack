@@ -83,8 +83,9 @@ public static class SEProcedural {
 		GameObject g = iv.gameObject;
 
 		ScriptEditor = g.AddComponent<ScriptEditor>();
-		var history = g.AddComponent<LazyHistory>(); // interchangable with history if fix it
-		history.SE = ScriptEditor;
+		var history = new LazyHistory {
+			SE = ScriptEditor
+		}; // interchangable with history if fix it
 
 		UnityEngine.Object.Destroy(ScrollView.GetComponent<Image>());
 		ScriptEditor.scroll = ScrollView.GetComponent<ScrollRect>(); // returns betterscrollrect hopefully

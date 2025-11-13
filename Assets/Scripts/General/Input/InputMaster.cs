@@ -1596,6 +1596,334 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""ScriptEditor"",
+            ""id"": ""12dd0786-a285-43cb-a2b0-667581e2fe2a"",
+            ""actions"": [
+                {
+                    ""name"": ""Copy"",
+                    ""type"": ""Button"",
+                    ""id"": ""51c28fa5-13db-48d0-bbd3-7aed020bb6cc"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Paste"",
+                    ""type"": ""Button"",
+                    ""id"": ""39753036-031f-4f9e-a07a-0fe88abf6f2e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Cut"",
+                    ""type"": ""Button"",
+                    ""id"": ""e81e195b-f70c-4ff2-b2bf-df6efd4c271f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Undo"",
+                    ""type"": ""Button"",
+                    ""id"": ""baf2f8b7-31a9-41ef-b37e-e02eef2b8166"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Redo"",
+                    ""type"": ""Button"",
+                    ""id"": ""f8ebdb0f-7098-42a9-9c41-2a0322668a7b"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""deaf58b2-024d-4fcd-a61c-5f8228362c06"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Copy"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""763665e6-4854-49b2-bf1e-d5053498ce17"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Copy"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""8fc1262a-746b-49fb-8316-f7f84b2ae5d0"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Copy"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""f22242b7-f08b-49fd-acb6-90eb496da875"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Paste"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""a0e4e6d6-3f51-4306-b8a2-2b947eb3c21e"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Paste"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""b9fb9059-9612-4039-9629-726e6d092d8d"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Paste"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""b076a01c-c5b1-4ae5-8f4f-786136e87d19"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cut"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""d5f4ac46-4430-4ee7-91c5-a96351507da4"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cut"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""24167679-b677-4b78-9029-979704d43e97"",
+                    ""path"": ""<Keyboard>/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cut"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""4a81fa91-d060-40b8-8167-f6cf161af89d"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""800166ea-c35e-4234-acb4-99663c5e9e58"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""caedc249-666a-4000-90d7-d40540ac7ca9"",
+                    ""path"": ""<Keyboard>/z"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""e6555b46-cafd-419e-8f7d-d3f12ea99958"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""d253afb6-a650-4655-ab45-23c7d62434cc"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""0c2d1ebf-0b4b-496f-afbd-443108a03adf"",
+                    ""path"": ""<Mouse>/{Back}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Undo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""3f5c92c4-5949-401d-81ad-fb876f7a5146"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""16a759b1-3516-4f2e-a031-66a6112b57c8"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""0836fe1a-a368-45f0-8925-cd2bf1fd7600"",
+                    ""path"": ""<Keyboard>/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""ebc1ac7e-9b89-4487-89d2-89ebb6aff2c9"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""de5731b2-5edc-4030-9c67-2701a14dc282"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""065c44d2-132c-4dec-a8ba-af134af1b39d"",
+                    ""path"": ""<Mouse>/{Forward}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""Two Modifiers"",
+                    ""id"": ""77666405-493d-4591-8bd5-fb7b9d630589"",
+                    ""path"": ""TwoModifiers"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier1"",
+                    ""id"": ""4c068910-31c1-44e3-a80d-6919ffc2df7a"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""modifier2"",
+                    ""id"": ""0a971f30-41e4-4dd4-af14-d7d7cc8f07d8"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""8b1f57c1-956e-4230-ab30-e3411ebf3897"",
+                    ""path"": ""<Keyboard>/z"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -1713,6 +2041,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_original_UI_RightClick = m_original_UI.FindAction("RightClick", throwIfNotFound: true);
         m_original_UI_TrackedDevicePosition = m_original_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_original_UI_TrackedDeviceOrientation = m_original_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
+        // ScriptEditor
+        m_ScriptEditor = asset.FindActionMap("ScriptEditor", throwIfNotFound: true);
+        m_ScriptEditor_Copy = m_ScriptEditor.FindAction("Copy", throwIfNotFound: true);
+        m_ScriptEditor_Paste = m_ScriptEditor.FindAction("Paste", throwIfNotFound: true);
+        m_ScriptEditor_Cut = m_ScriptEditor.FindAction("Cut", throwIfNotFound: true);
+        m_ScriptEditor_Undo = m_ScriptEditor.FindAction("Undo", throwIfNotFound: true);
+        m_ScriptEditor_Redo = m_ScriptEditor.FindAction("Redo", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -1724,6 +2059,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Mouse.enabled, "This will cause a leak and performance issues, InputMaster.Mouse.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Editing.enabled, "This will cause a leak and performance issues, InputMaster.Editing.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_original_UI.enabled, "This will cause a leak and performance issues, InputMaster.original_UI.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_ScriptEditor.enabled, "This will cause a leak and performance issues, InputMaster.ScriptEditor.Disable() has not been called.");
     }
 
     /// <summary>
@@ -2808,6 +3144,146 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="Original_UIActions" /> instance referencing this action map.
     /// </summary>
     public Original_UIActions @original_UI => new Original_UIActions(this);
+
+    // ScriptEditor
+    private readonly InputActionMap m_ScriptEditor;
+    private List<IScriptEditorActions> m_ScriptEditorActionsCallbackInterfaces = new List<IScriptEditorActions>();
+    private readonly InputAction m_ScriptEditor_Copy;
+    private readonly InputAction m_ScriptEditor_Paste;
+    private readonly InputAction m_ScriptEditor_Cut;
+    private readonly InputAction m_ScriptEditor_Undo;
+    private readonly InputAction m_ScriptEditor_Redo;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "ScriptEditor".
+    /// </summary>
+    public struct ScriptEditorActions
+    {
+        private @InputMaster m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public ScriptEditorActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "ScriptEditor/Copy".
+        /// </summary>
+        public InputAction @Copy => m_Wrapper.m_ScriptEditor_Copy;
+        /// <summary>
+        /// Provides access to the underlying input action "ScriptEditor/Paste".
+        /// </summary>
+        public InputAction @Paste => m_Wrapper.m_ScriptEditor_Paste;
+        /// <summary>
+        /// Provides access to the underlying input action "ScriptEditor/Cut".
+        /// </summary>
+        public InputAction @Cut => m_Wrapper.m_ScriptEditor_Cut;
+        /// <summary>
+        /// Provides access to the underlying input action "ScriptEditor/Undo".
+        /// </summary>
+        public InputAction @Undo => m_Wrapper.m_ScriptEditor_Undo;
+        /// <summary>
+        /// Provides access to the underlying input action "ScriptEditor/Redo".
+        /// </summary>
+        public InputAction @Redo => m_Wrapper.m_ScriptEditor_Redo;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_ScriptEditor; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="ScriptEditorActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(ScriptEditorActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="ScriptEditorActions" />
+        public void AddCallbacks(IScriptEditorActions instance)
+        {
+            if (instance == null || m_Wrapper.m_ScriptEditorActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_ScriptEditorActionsCallbackInterfaces.Add(instance);
+            @Copy.started += instance.OnCopy;
+            @Copy.performed += instance.OnCopy;
+            @Copy.canceled += instance.OnCopy;
+            @Paste.started += instance.OnPaste;
+            @Paste.performed += instance.OnPaste;
+            @Paste.canceled += instance.OnPaste;
+            @Cut.started += instance.OnCut;
+            @Cut.performed += instance.OnCut;
+            @Cut.canceled += instance.OnCut;
+            @Undo.started += instance.OnUndo;
+            @Undo.performed += instance.OnUndo;
+            @Undo.canceled += instance.OnUndo;
+            @Redo.started += instance.OnRedo;
+            @Redo.performed += instance.OnRedo;
+            @Redo.canceled += instance.OnRedo;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="ScriptEditorActions" />
+        private void UnregisterCallbacks(IScriptEditorActions instance)
+        {
+            @Copy.started -= instance.OnCopy;
+            @Copy.performed -= instance.OnCopy;
+            @Copy.canceled -= instance.OnCopy;
+            @Paste.started -= instance.OnPaste;
+            @Paste.performed -= instance.OnPaste;
+            @Paste.canceled -= instance.OnPaste;
+            @Cut.started -= instance.OnCut;
+            @Cut.performed -= instance.OnCut;
+            @Cut.canceled -= instance.OnCut;
+            @Undo.started -= instance.OnUndo;
+            @Undo.performed -= instance.OnUndo;
+            @Undo.canceled -= instance.OnUndo;
+            @Redo.started -= instance.OnRedo;
+            @Redo.performed -= instance.OnRedo;
+            @Redo.canceled -= instance.OnRedo;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="ScriptEditorActions.UnregisterCallbacks(IScriptEditorActions)" />.
+        /// </summary>
+        /// <seealso cref="ScriptEditorActions.UnregisterCallbacks(IScriptEditorActions)" />
+        public void RemoveCallbacks(IScriptEditorActions instance)
+        {
+            if (m_Wrapper.m_ScriptEditorActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="ScriptEditorActions.AddCallbacks(IScriptEditorActions)" />
+        /// <seealso cref="ScriptEditorActions.RemoveCallbacks(IScriptEditorActions)" />
+        /// <seealso cref="ScriptEditorActions.UnregisterCallbacks(IScriptEditorActions)" />
+        public void SetCallbacks(IScriptEditorActions instance)
+        {
+            foreach (var item in m_Wrapper.m_ScriptEditorActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_ScriptEditorActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="ScriptEditorActions" /> instance referencing this action map.
+    /// </summary>
+    public ScriptEditorActions @ScriptEditor => new ScriptEditorActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -3194,5 +3670,48 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "ScriptEditor" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="ScriptEditorActions.AddCallbacks(IScriptEditorActions)" />
+    /// <seealso cref="ScriptEditorActions.RemoveCallbacks(IScriptEditorActions)" />
+    public interface IScriptEditorActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Copy" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCopy(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Paste" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPaste(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Cut" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCut(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Undo" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnUndo(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Redo" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRedo(InputAction.CallbackContext context);
     }
 }

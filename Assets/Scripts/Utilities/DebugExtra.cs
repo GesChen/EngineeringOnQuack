@@ -299,6 +299,24 @@ public class DebugExtra {
 			Debug.DrawLine(points[^1], points[0], col, duration);
 	}
 
+	public static void DrawRect2D(
+		Vector2 cornerA,
+		Vector2 cornerB,
+		Color? color = null,
+		float duration = 0) {
+
+		Color col = color ?? Color.white;
+
+		Vector3 a = new Vector3(cornerA.x, cornerA.y, 0);
+		Vector3 b = new Vector3(cornerB.x, cornerA.y, 0);
+		Vector3 c = new Vector3(cornerB.x, cornerB.y, 0);
+		Vector3 d = new Vector3(cornerA.x, cornerB.y, 0);
+
+		Debug.DrawLine(a, b, col, duration);
+		Debug.DrawLine(b, c, col, duration);
+		Debug.DrawLine(c, d, col, duration);
+		Debug.DrawLine(d, a, col, duration);
+	}
 
 	static readonly Dictionary<char, Vector3> GridPoints = new(){
 		{ 'r', new(	.0f, 01f) },

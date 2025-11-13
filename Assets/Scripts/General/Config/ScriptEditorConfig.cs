@@ -17,10 +17,9 @@ public static partial class Config {
 		public static readonly float NumberDefaultWidth = 20;
 		public static readonly float NumberToContentSpace = 20;
 		public static readonly float NumberExtraWidth = 20;
-		public static readonly float ContentExtraWidth = 100;
+		public static readonly float ContentExtraWidth = 50;
 
-		public static readonly int XCursorScreenMarginChars = 2;
-		public static readonly int YCursorScreenMarginLines = 2;
+		public static readonly int CursorScreenMargin = 50;
 
 		public static readonly Color SelectionColor	= new Color(242, 58, 58, 39) / 255f;
 

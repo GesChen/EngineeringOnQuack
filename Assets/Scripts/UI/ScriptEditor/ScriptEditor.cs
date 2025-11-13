@@ -760,8 +760,8 @@ public class ScriptEditor : MonoBehaviour {
 	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
 		pos -= scroll.CurrentScrollAmount();
 
-		float xmarg = Config.ScriptEditor.XCursorScreenMarginChars;
-		float ymarg = Config.ScriptEditor.YCursorScreenMarginLines;
+		float xmarg = Config.ScriptEditor.CursorScreenMargin;
+		float ymarg = Config.ScriptEditor.CursorScreenMargin;
 
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
