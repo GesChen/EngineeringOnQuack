@@ -22,7 +22,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	// modules
 	public CaretHandler Carets;
 	public SyntaxHighlighter SyntaxHighlighter;
-	public LazyHistory History;
+	public LazierHistory History;
 	public Clipboard Clipboard;
 
 	float LineNumberWidth = 0;
@@ -98,6 +98,8 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		Clipboard = new() {
 			SE = this
 		};
+
+		SubscribeToShortcuts();
 	}
 	void Update() {
 		UpdateCarets();
@@ -127,6 +129,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		if (global)
 			position = text.transform.InverseTransformPoint(position);
 
+		bool special = Content[^1] == '\n';
+		if (special) {
+			Content += 'H';
+			UpdateText(false, true);
+		}
 		var LIs = text.textInfo.lineInfo;
 
 		// find closest line
@@ -135,11 +142,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		for (int i = 0; i < LIs.Length; i++) {
 			TMP_LineInfo line = LIs[i];
 
-			/*Debug.DrawLine(new(0, line.ascender), new(0, line.descender), MoreColors.SkyBlue);
-			Debug.DrawLine(new(0, line.ascender), new(10, line.ascender), MoreColors.Orange);
-			Debug.DrawLine(new(0, line.descender), new(10, line.descender), MoreColors.Red);
-			DebugExtra.DrawPoint(new(0, (line.ascender + line.descender) / 2), 10, MoreColors.Teal);
-			DebugExtra.DrawPoint(new(0, position.y), 10, MoreColors.Green);*/
+			DebugExtra.DrawPoly(new[] {
+				new Vector3(0, line.ascender), 
+				new Vector3(0, line.descender),
+				new Vector3(10, line.descender),
+				new Vector3(10, line.ascender),
+			}, color: MoreColors.Green, duration: 1);
+			DebugExtra.DrawPoint(position, 10, color: MoreColors.Red, duration: 1);
 
 			if (position.y < line.ascender && position.y > line.descender) {
 				closestLineI = i;
@@ -177,8 +186,20 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			float lastCharD = Mathf.Abs(
 				text.textInfo.characterInfo[Content.Length - 1].bottomRight.x
 				- position.x);
-			if (lastCharD < distX)
+			
+			if (lastCharD < distX) {
+				if (special) {
+					Content = Content[..^1];
+					UpdateText(false, true);
+				}
+
 				return Content.Length;
+			}
+		}
+
+		if (special) {
+			Content = Content[..^1];
+			UpdateText(false, true);
 		}
 
 		return closestCharI;
@@ -630,7 +651,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		caretsForceUpdate = true;
 	}
 
-	protected void ForceCaretOnState_Update() {
+	internal void ForceCaretOnState_Update() {
 		caretsOn = false; // toggles to true
 		ForceCaretsUpdate();
 	}
@@ -732,7 +753,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					return Enumerable.Range(
 						Mathf.Min(tLine, hLine),
 						Mathf.Max(tLine, hLine) - Mathf.Min(tLine, hLine) + 1
-					);
+					).ToArray();
 				}
 			}
 
@@ -750,6 +771,19 @@ public class ScriptEditorRewritten : MonoBehaviour {
 						targetX,
 						main.LineInfo(main.CharInfo(head).lineNumber - amount.y).CenterY()
 					);
+
+					Debug.DrawLine(
+						new Vector3(0, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).ascender),
+						new Vector3(2000, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).ascender),
+						MoreColors.Orange,
+						1
+						);
+					Debug.DrawLine(
+						new Vector3(0, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).descender),
+						new Vector3(2000, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).descender),
+						MoreColors.Orange,
+						1
+						);
 
 					head = main.SS2I(main.L2G(targetPos));
 					return;
@@ -960,7 +994,10 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					return;
 				}
 
-				if (head == 0) return;
+				if (head == 0) {
+					deletionRange = (head, head);
+					return;
+				}
 
 				if (!ctrl) {
 					main.Content = main.Content.Remove(head - 1, 1);
@@ -1041,18 +1078,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					}
 				}
 
-				if (head > tail) {
-					head -= tabsRemoved;
-					tail--;
-				} else{
-					head--;
-					tail -= tabsRemoved;
-				}
+				head -= tabsDeleted;
+				tail -= tabsDeleted;
 			}
 
 			internal void Delete(bool ctrl) {
 				if (head != tail) {
-					Backspace(false, out _)
+					Backspace(false, out _);
 					return;
 				}
 
@@ -1066,8 +1098,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 					// head == tail
 					tail = deleteTo;
-					Backspace(false, out _)
-
+					Backspace(false, out _);
 				}
 			}
 			#endregion
@@ -1109,7 +1140,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					tail = c.tail,
 					head = c.head
 				}
-			);
+			).ToList();
 
 			InitCarets();
 		} 
@@ -1159,9 +1190,9 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					}
 
 					if (
-						A.sInc >= B.sInc && A.sInc <= B.eInc &&
+						A.sInc >= B.sInc && A.sInc <= B.eInc && 
 						A.eInc >= B.sInc && A.eInc <= B.eInc) {
-						insideOthers = 
+						insideOthers.Add(i);
 					}
 				}
 			}
@@ -1249,16 +1280,16 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 				// hopefully not too expensive
 				bool deleted = DeletedRanges.Any(r =>
-					(c.head >= r.sInc && c.head < s.eExc) || // head in range
-					(c.tail >= r.sInc && c.tail < s.eExc) || // tail in range
+					(c.head >= r.sInc && c.head < r.eExc) || // head in range
+					(c.tail >= r.sInc && c.tail < r.eExc) || // tail in range
 					(r.sInc >= c.head && r.sInc <= c.tail) || // sinc in sel
 					(r.eExc > c.head && r.eExc < c.tail) // eexc in sel
 				);
 
 				if (!deleted) {
 					c.Backspace(ctrl, out var delRange);
-					
-					deleted.Add(delRange);
+
+					DeletedRanges.Add(delRange);
 				} else {
 					InvalidCarets.Add(c);
 				}
@@ -1307,8 +1338,9 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 			List<Caret> LineUniqueCarets = Carets;
 			if (shift) {
-				foreach (var c in Carets)
-					c.MatchTail();
+				// not sure why i added ts
+				//foreach (var c in Carets)
+				//	c.MatchTail();
 
 				// just collapse down to the line's max it really doesnt matter
 

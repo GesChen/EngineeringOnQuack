@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LazierHistory : MonoBehaviour {
+public class LazierHistory {
 	public ScriptEditorRewritten SE;
 
 	// [Serializable]
@@ -26,8 +26,6 @@ public class LazierHistory : MonoBehaviour {
 	// we are at, increment/decremented by undos
 	// 0 is current
 
-	public void Initialize() { } // to match history
-	
 	public void RecordChange() {
 		// no duplicates
 		if (Versions.Count > 0) {
@@ -61,7 +59,7 @@ public class LazierHistory : MonoBehaviour {
 	void RememberCarets(Version v) {
 		//Debug.Log($"remember carets");
 
-		v.Carets = SE.carets.Select(c =>
+		v.Carets = SE.Carets.Carets.Select(c =>
 			new Version.Caret() {
 				head = c.head,
 				tail = c.tail
@@ -102,7 +100,7 @@ public class LazierHistory : MonoBehaviour {
 		// set carets
 		SE.Carets.SetMultipleCarets(
 			version.Carets.Select(c =>
-				(c.head, c.tail)).ToList()
+				(c.head, c.tail)).ToArray()
 			);
 		SE.ForceCaretOnState_Update();
 
