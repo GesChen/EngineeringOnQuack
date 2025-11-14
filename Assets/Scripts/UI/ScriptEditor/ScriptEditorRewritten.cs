@@ -1,12 +1,12 @@
 using System;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using cfg = Config.ScriptEditor;
 
 // coordinates work in screen space
@@ -105,7 +105,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 	// only checks against left edge
 	// also only check against the nearest line
-	public static int FindNearestCharacterModified(TextMeshProUGUI text, Vector2 position, bool global = true) {
+	public int FindNearestCharacterModified(TextMeshProUGUI text, Vector2 position, bool global = true) {
 		if (global)
 			position = text.transform.InverseTransformPoint(position);
 
@@ -157,10 +157,10 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		// last char check
 		if (closestLineI == text.textInfo.lineCount - 1) {
 			float lastCharD = Mathf.Abs(
-				text.textInfo.characterInfo[text.textInfo.characterCount - 1].bottomRight.x
+				text.textInfo.characterInfo[Content.Length - 1].bottomRight.x
 				- position.x);
 			if (lastCharD < distX)
-				return text.textInfo.characterCount;
+				return Content.Length;
 		}
 
 		return closestCharI;
@@ -168,18 +168,18 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 	/// <summary>
 	/// <b>RETURNS IN LS</b>
+	/// dont be afraid to call this, its literally o(1) array access with some extra if statements
+	/// should be super duper fast
 	/// </summary>
 	protected TMP_CharacterInfo CharInfo(int i) {
 		if (Content.Length == 0) {
 			Content = "H"; // give it sum to work with
-			UpdateText(false);
-			CodeText.ForceMeshUpdate();
+			UpdateText(false, true);
 
 			var info = CharInfo(0);
 
 			Content = "";
-			UpdateText(false);
-			CodeText.ForceMeshUpdate();
+			UpdateText(false, false);
 			return info;
 		}
 		if (i < 0 || i > Content.Length) throw new IndexOutOfRangeException();
@@ -187,18 +187,17 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 		// i == length
 
-		// newlines treated special
-		if (Content[^1] == '\n') {
+		// newlines treated special 
+		// + tabs
+		if (Content[^1] == '\n' || Content[^1] == '\t') {
 			// do the content pretend trick from earlier
 			Content += "H";
-			UpdateText(false);
-			CodeText.ForceMeshUpdate();
+			UpdateText(false, true);
 
 			var info = CharInfo(Content.Length - 1);
 
 			Content = Content[..^1];
-			UpdateText(true);
-			CodeText.ForceMeshUpdate();
+			UpdateText(true, false);
 			return info;
 		}
 
@@ -327,6 +326,8 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 		if (direction == -1) i--; // nudge
 
+		if (i == Content.Length) i--;
+
 		int against = charToType(Content[i]);
 		int check = against; // you think this is funny?
 		while (check == against) {
@@ -340,6 +341,12 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		if (direction == 1) i++; // nudge
 
 		return i - direction;
+	}
+
+	protected int LineIndentation(int line) {
+		var li = CodeText.textInfo.lineInfo[line];
+		string content = Content[li.firstCharacterIndex..li.lastCharacterIndex];
+		return content.Length - content.TrimStart('\t').Length;
 	}
 	#endregion
 
@@ -403,7 +410,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				}
 
 				Carets.SetSingleCaret(dragStartI, dragEndI);
-				Carets.Carets[0].RememberTargetX();
+				Carets.RememberTargetX();
 			} else {
 				var corners = MaskCorners;
 				var altDragPos = Conatrols.Mouse.Position.Clamp(
@@ -450,8 +457,6 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	}
 
 	void HandleTyping() {
-		if (Conatrols.Keyboard.Modifiers.Ctrl) return;
-
 		var presses = Conatrols.Keyboard.Presses;
 
 		bool modified = false;
@@ -464,27 +469,34 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		}
 
 		if (modified) {
-			UpdateText(true);
-			KeepMainCaretOnScreen();
+			UpdateText(true, true);
+			Carets.RememberTargetX();
 			ForceCaretOnState_Update();
+			KeepMainCaretOnScreen();
 		}
 	}
 
 	void Type(Key key) {
 		// handle special
 		char c;
-		if (key == Key.Enter) c = '\n';
-		else if (key == Key.Tab) c = '\t';
-		else if (key == Key.Backspace) {
+		if (key == Key.Enter) {
+			Carets.Enter(
+				Conatrols.Keyboard.Modifiers.Ctrl,
+				Conatrols.Keyboard.Modifiers.Shift);
+			return;
+		} else if (key == Key.Tab) {
+			Carets.Tab(Conatrols.Keyboard.Modifiers.Shift);
+			return;
+		} else if (key == Key.Backspace) {
 			if (Content.Length == 0) return;
-
 			Carets.Backspace(Conatrols.Keyboard.Modifiers.Ctrl);
-
 			return;
 		} else
 			c = Conatrols.Keyboard.Modifiers.Shift
 				? Conatrols.Keyboard.All.KeyShiftedMapping[key]
 				: Conatrols.Keyboard.All.KeyCharMapping[key];
+
+		if (Conatrols.Keyboard.Modifiers.Ctrl) return;
 
 		Carets.Type(c.ToString());
 	}
@@ -494,7 +506,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	// MAY potentially become laggy. if this does happen then optimize it. otherwise 
 	// keep the naive code cuz it works and its <1ms anyway
 	//string lastContent = "";
-	void UpdateText(bool renderColors) {
+	void UpdateText(bool renderColors, bool forceRecalculate) {
 		// do colors later
 		// great we have to do colors now
 		// identify modified lines
@@ -516,19 +528,28 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			
 		}*/
 
-		ScriptEditor.Context context = new();
-		StringBuilder builder = new();
-		for (int i = 0; i < newLines.Length; i++) {
-			string line = newLines[i];
-			var colors = SyntaxHighlighter.ParseLineToColorList(line, context);
+		string content;
+		if (renderColors) {
+			ScriptEditor.Context context = new();
+			StringBuilder builder = new();
+			for (int i = 0; i < newLines.Length; i++) {
+				string line = newLines[i];
+				var colors = SyntaxHighlighter.ParseLineToColorList(line, context);
 
-			string tagged = SyntaxHighlighter.TagLine(line, colors);
-			builder.Append(tagged);
-			if (i != newLines.Length - 1)
-				builder.Append("\n");
+				string tagged = SyntaxHighlighter.TagLine(line, colors);
+				builder.Append(tagged);
+				if (i != newLines.Length - 1)
+					builder.Append("\n");
+			}
+
+			content = builder.ToString();
+		} else {
+			content = Content;
 		}
 
-		CodeText.text = $"<mspace=.5em>{builder}</mspace>";
+		CodeText.text = $"<mspace=.5em>{content}</mspace>";
+		if (forceRecalculate)
+			CodeText.ForceMeshUpdate();
 
 		// .5em is 150 tab width
 
@@ -599,7 +620,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 	// todo fix the thing where carets on the top and left edge
 	// yea figure it out lol
+	// im not fixing it for now cuz its fine with the bug
 	void KeepMainCaretOnScreen(int rec = 0) {
+		KeepHeadCaretHeadOnScreen_FromOld();
+		return;
+
 		if (Carets.Carets.Count == 0) return;
 		if (rec > cfg.MaxCaretViewRecoverySteps) return;
 
@@ -608,7 +633,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 		Vector2Int shift = Vector2Int.zero;
 		Vector3[] mCorners = MaskCorners;
-		Vector3[] cCorners = ContentCorners;
+		//Vector3[] cCorners = ContentCorners;
 
 		// is over?
 		mCorners[0] += cfg.CursorScreenMargin * Vector3.one;
@@ -631,11 +656,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		if (mTedge) shift.y++;
 		if (mBedge) shift.y--;
 
-		/*DebugExtra.DrawRect2D(mCorners[0], mCorners[2], color: Color.cyan);
-		DebugExtra.DrawRect2D(cCorners[0], cCorners[2], color: Color.yellow);
-		DebugExtra.DrawPoint(cCorners[0], 10, Color.green);
-		DebugExtra.DrawPoint(cCorners[2], 10, Color.blue);
-		DebugExtra.DrawPoint(caret0pos, 10, Color.red);*/
+		DebugExtra.DrawRect2D(mCorners[0], mCorners[2], color: Color.cyan);
+		//DebugExtra.DrawRect2D(cCorners[0], cCorners[2], color: Color.yellow);
+		//DebugExtra.DrawPoint(cCorners[0], 10, Color.green);
+		//DebugExtra.DrawPoint(cCorners[2], 10, Color.blue);
+		DebugExtra.DrawPoint(caret0pos, 10, Color.red);
 
 		if (shift.sqrMagnitude > 0) {
 			Debug.Log($"scrolling {shift}");
@@ -645,27 +670,84 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		}
 	}
 
+	// only allah knows how this works now cuz i didnt bother to explain it
+	// and it worked so im using it now
+	// nvm it was the text not updating and giving \0s causing the headpos to be 0 0
+	// weird ass shit fixed now tho and im just gonna stick with this one
+	// next commit its replacing the old method and getting optimized
+	void KeepHeadCaretHeadOnScreen_FromOld() {
+		if (Carets.Carets.Count == 0) return;
+
+		var head = Carets.Carets[0];
+		Vector2 pos = head.HeadPos;
+
+		int count = 0;
+		var offset = CheckCursorOffsets(pos);
+		while (offset != (0, 0)) {
+			if (offset.x > 0)		MainEditorScrollRect.ManuallyScrollX(CharSize.x);
+			else if (offset.x < 0)	MainEditorScrollRect.ManuallyScrollX(-CharSize.x);
+			if (offset.y > 0)		MainEditorScrollRect.ManuallyScrollY(CharSize.y);
+			else if (offset.y < 0)	MainEditorScrollRect.ManuallyScrollY(-CharSize.y);
+
+			offset = CheckCursorOffsets(pos);
+
+			if (++count > cfg.MaxCaretViewRecoverySteps) break; // shouldn't be THIS off screen hopefully :(
+		}
+	}
+
+	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
+		pos -= MainEditorScrollRect.CurrentScrollAmount();
+
+		float marg = cfg.CursorScreenMargin;
+
+		// definition of insanity
+		return // seriously why are we using ternary here :(((((
+		(
+			pos.x < marg
+				? -1
+			: (
+			pos.x > CodeMask.rect.width - marg
+				? 1
+			: 0)
+		,
+			pos.y < marg
+				? -1
+			: (
+			pos.y > CodeMask.rect.height - marg
+				? 1
+			: 0)
+		);
+	}
+
 	public class CaretHandler {
 		public class Caret {
-			public CaretHandler handler;
-			public ScriptEditorRewritten main;
+			internal CaretHandler handler;
+			internal ScriptEditorRewritten main;
 			public int head; // if this == content.length, then it is at the end
 			public int tail;
-			public RectTransform rt;
-			public List<RectTransform> selBoxes = new();
+			internal RectTransform rt;
+			internal List<RectTransform> selBoxes = new();
 			
-			// caret centers
-			public Vector2? customTail;
-			public Vector2? customHead;
+			public struct Position {
+				public int I;
+				public Position(int i) => I = i;
+				public static implicit operator int(Position pos) => pos.I;
+				public static implicit operator Position(int i) => new(i);
+				public void CompareTo(int other) => I.CompareTo(other);
+			}
 
-			public Vector2 HeadPos =>
+			// caret centers
+			internal Vector2? customTail;
+			internal Vector2? customHead;
+
+			internal Vector2 HeadPos =>
 				isCustom
 				? customHead.Value :
 				main.CharInfo(head).bottomLeft;
 
 			float targetX = -1;
 
-			public bool isCustom => customTail.HasValue || customHead.HasValue;
+			internal bool isCustom => customTail.HasValue || customHead.HasValue;
 
 			void Clamp() {
 				tail = Mathf.Clamp(tail, 0, main.Content.Length);
@@ -673,7 +755,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			}
 
 			// trigger redraw in the handler 
-			public void Move(Vector2Int amount, bool shift, bool ctrl) {
+			internal void Move(Vector2Int amount, bool shift, bool ctrl) {
 				// y movement overrides x
 				if (amount.y != 0) {
 					if (main.CharInfo(head).lineNumber == 0
@@ -713,11 +795,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				}
 			}
 
-			public void RememberTargetX() {
+			internal void RememberTargetX() {
 				targetX = main.CharInfo(head).bottomLeft.x;
 			}
 
-			public void MatchTail() {
+			internal void MatchTail() {
 				tail = head;
 			}
 
@@ -864,7 +946,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			#endregion
 
 			#region Typing
-			public void Type(string s) {
+			internal void Type(string s) {
 				if (head == tail) {
 					main.Content = main.Content.Insert(head, s);
 				} else {
@@ -880,7 +962,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				MatchTail();
 			}
 
-			public void Backspace(bool ctrl) {
+			internal void Backspace(bool ctrl) {
 				if (head != tail) {
 					// this works the same lamo
 					Type("");
@@ -897,6 +979,57 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				} else {
 
 				}
+			}
+
+			// normal- line below with break
+			// ctrl- line above no break
+			// shift- line below, no break this
+			// ctrl+shift- line above with break
+			internal void Enter(bool ctrl, bool shift) {
+				bool down = !ctrl;
+				bool sever = ctrl == shift; // nor
+
+				int indent = main.LineIndentation(main.CharInfo(head).lineNumber);
+				string tabs = new('\t', indent);
+
+				if (down && sever) {
+					main.Content = main.Content.Insert(head, '\n' + tabs);
+
+					head += indent + 1;
+				} else
+				if (down && !sever) {
+					int NLPos = main.LineInfo(main.CharInfo(head).lineNumber).lastCharacterIndex;
+					main.Content = main.Content.Insert(NLPos + 1, tabs + '\n');
+
+					head = NLPos + 1 + indent;
+				} else 
+				if (!down && sever) {
+					int FCPos = main.LineInfo(main.CharInfo(head).lineNumber).firstCharacterIndex;
+					int NLPos = main.LineInfo(main.CharInfo(head).lineNumber).lastCharacterIndex;
+					if (main.Content[NLPos] != '\n') NLPos++; // end
+					string section = main.Content[head..NLPos];
+					main.Content = main.Content.Remove(head, NLPos - head)
+						.Insert(FCPos, tabs + section + '\n');
+
+					head = FCPos + indent;
+				} else
+				if (!down && !sever) {
+					int FCPos = main.LineInfo(main.CharInfo(head).lineNumber).firstCharacterIndex;
+					main.Content = main.Content.Insert(FCPos, tabs + '\n');
+
+					head = FCPos + indent;
+				}
+
+				MatchTail();
+			}
+
+			internal void Tab(bool shift) {
+				if (!shift) {
+					Type("\t"); // functionally the same
+					return;
+				}
+
+
 			}
 			#endregion
 		}
@@ -938,7 +1071,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		}
 
 		// still expecting a manual update from this one's caller
-		public void Move(Vector2Int amount, bool shift, bool ctrl) {
+		internal void Move(Vector2Int amount, bool shift, bool ctrl) {
 			foreach (var c in Carets) {
 				c.Move(amount, shift, ctrl);
 			}
@@ -952,6 +1085,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				caret.handler = this;
 				caret.main = Main;
 			}
+		}
+
+		internal void RememberTargetX() {
+			foreach (var c in Carets)
+				c.RememberTargetX();
 		}
 
 		// call this every frame and redraw all carets
@@ -989,22 +1127,86 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			return rt;
 		}
 
-		void Sort() {
+		// for file operations to occur without affecting next cursor,
+		// do operations end to beginning
+		void SortBackwards() {
 			Carets.Sort((a, b) => a.head.CompareTo(b.head));
 			Carets.Reverse();
 		}
 		public void Type(string s) {
-			Sort();
+			SortBackwards();
 
 			foreach (var c in Carets)
 				c.Type(s);
 		}
 
 		public void Backspace(bool ctrl) {
-			Sort();
+			SortBackwards();
 
 			foreach (var c in Carets)
 				c.Backspace(ctrl);
+		}
+
+		public void Enter(bool ctrl, bool shift) {
+			// merge same line carets for ctrl or shift
+			// collapse all carets to head if either
+			SortBackwards();
+
+			if (ctrl || shift) {
+				foreach (var c in Carets)
+					c.MatchTail();
+
+				// just collapse down to the line's max it really doesnt matter
+
+				// in reverse order now
+				Caret[] caretsOnLine(int i) =>
+					Carets.Where(c => Main.CharInfo(c.head).lineNumber == i).ToArray();
+
+				int[] uniqueLineNums =
+					Carets.Select(c => Main.CharInfo(c.head).lineNumber).Distinct().ToArray();
+
+				List<Caret> LineUniqueCarets = new();
+				foreach (int ln in uniqueLineNums) {
+					var carets = caretsOnLine(ln);
+
+					LineUniqueCarets.Add(carets[0]); // would be the most distal
+				}
+
+				Carets = LineUniqueCarets;
+			}
+
+			foreach (var c in Carets)
+				c.Enter(ctrl, shift);
+		}
+
+		public void Tab(bool shift) {
+			// same shit as enter
+			SortBackwards();
+
+			List<Caret> LineUniqueCarets = Carets;
+			if (shift) {
+				foreach (var c in Carets)
+					c.MatchTail();
+
+				// just collapse down to the line's max it really doesnt matter
+
+				// in reverse order now
+				Caret[] caretsOnLine(int i) =>
+					Carets.Where(c => Main.CharInfo(c.head).lineNumber == i).ToArray();
+
+				int[] uniqueLineNums =
+					Carets.Select(c => Main.CharInfo(c.head).lineNumber).Distinct().ToArray();
+
+				LineUniqueCarets = new();
+				foreach (int ln in uniqueLineNums) {
+					var carets = caretsOnLine(ln);
+
+					LineUniqueCarets.Add(carets[0]); // would be the most distal
+				}
+			}
+		
+			foreach (var c in LineUniqueCarets)
+				c.Tab(shift);
 		}
 	}
 	#endregion

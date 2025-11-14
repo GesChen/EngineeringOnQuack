@@ -53,6 +53,15 @@ public static class HF {
 		scrollRect.onValueChanged?.Invoke(scrollRect.normalizedPosition);
 	}
 
+	/// <summary>
+	/// Calculates the current scroll offset of a <see cref="ScrollRect"/> in pixels.
+	/// </summary>
+	/// <param name="scrollRect">The <see cref="ScrollRect"/> whose scroll position is queried.</param>
+	/// <returns>
+	/// A <see cref="Vector2"/> representing the current scroll amount in pixels:
+	/// X corresponds to horizontal scroll, Y corresponds to vertical scroll (top = 0).
+	/// Returns <see cref="Vector2.zero"/> if the <paramref name="scrollRect"/> or its content is null.
+	/// </returns>
 	public static Vector2 CurrentScrollAmount(this ScrollRect scrollRect) {
 		if (scrollRect == null || scrollRect.content == null) return Vector2.zero;
 		float contentWidth = scrollRect.content.rect.width;
@@ -269,6 +278,10 @@ public static class HF {
 	/// </summary>
 	public static string ReplaceSection(string original, int startIndexInc, int endIndexExc, string replaceWith) => 
 		original[..startIndexInc] + replaceWith + original[endIndexExc..];
+
+	public static string MoveSection(string original, int startIndexInc, int endIndexExc, int insertIndex) =>
+		original[..startIndexInc] + original[endIndexExc..insertIndex] + original[startIndexInc..endIndexExc] + original[insertIndex..];
+
 
 	public static string RemoveSection(string original, int start, int end) => 
 		original.Remove(start, end - start);
