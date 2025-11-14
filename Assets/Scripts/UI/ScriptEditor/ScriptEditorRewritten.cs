@@ -97,6 +97,14 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		MoveLineNumbers();
 	}
 
+	void SubscribeToShortcuts() {
+		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
+		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
+		Conatrols.IM.Editing.Paste.performed	+= _ => Paste();
+		Conatrols.IM.Editing.Undo.performed		+= _ => History.Undo();
+		Conatrols.IM.Editing.Redo.performed		+= _ => History.Redo();
+	}
+
 	#region Util functions
 	// uses global coords
 	protected int SS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos);
@@ -587,7 +595,25 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	#endregion
 
 	#region Shortcuts
-	
+	void Copy() {
+
+	}
+
+	void Cut() {
+
+	}
+
+	void Paste() {
+
+	}
+
+	void Undo() {
+
+	}
+
+	void Redo() {
+
+	}
 	#endregion
 
 	#region Carets
@@ -605,7 +631,6 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		
 		Carets.Update(caretsOn);
 
-
 		//debugcarets = string.Join(", ", Carets.Carets.Select(c => $"c({c.tail}-{c.head}"));
 	}
 
@@ -621,61 +646,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	// todo fix the thing where carets on the top and left edge
 	// yea figure it out lol
 	// im not fixing it for now cuz its fine with the bug
-	void KeepMainCaretOnScreen(int rec = 0) {
-		KeepHeadCaretHeadOnScreen_FromOld();
-		return;
-
-		if (Carets.Carets.Count == 0) return;
-		if (rec > cfg.MaxCaretViewRecoverySteps) return;
-
-		Vector2 caret0pos = Carets.Carets[0].HeadPos;
-		caret0pos = L2G(caret0pos);
-
-		Vector2Int shift = Vector2Int.zero;
-		Vector3[] mCorners = MaskCorners;
-		//Vector3[] cCorners = ContentCorners;
-
-		// is over?
-		mCorners[0] += cfg.CursorScreenMargin * Vector3.one;
-		mCorners[2] -= cfg.CursorScreenMargin * Vector3.one;
-		//cCorners[0] += cfg.CursorScreenMargin * Vector3.one;
-		//cCorners[2] -= cfg.CursorScreenMargin * Vector3.one;
-
-		bool mLedge = caret0pos.x < mCorners[0].x;
-		bool mRedge = caret0pos.x > mCorners[2].x;
-		bool mTedge = caret0pos.y < mCorners[0].y;
-		bool mBedge = caret0pos.y > mCorners[2].y;
-
-		//bool cLedge = caret0pos.x < cCorners[0].x;
-		//bool cRedge = caret0pos.x > cCorners[2].x;
-		//bool cTedge = caret0pos.y < cCorners[0].y;
-		//bool cBedge = caret0pos.y > cCorners[2].y;
-
-		if (mLedge) shift.x--;
-		if (mRedge) shift.x++;
-		if (mTedge) shift.y++;
-		if (mBedge) shift.y--;
-
-		DebugExtra.DrawRect2D(mCorners[0], mCorners[2], color: Color.cyan);
-		//DebugExtra.DrawRect2D(cCorners[0], cCorners[2], color: Color.yellow);
-		//DebugExtra.DrawPoint(cCorners[0], 10, Color.green);
-		//DebugExtra.DrawPoint(cCorners[2], 10, Color.blue);
-		DebugExtra.DrawPoint(caret0pos, 10, Color.red);
-
-		if (shift.sqrMagnitude > 0) {
-			Debug.Log($"scrolling {shift}");
-			MainEditorScrollRect.ManuallyScrollX(shift.x * CharSize.x);
-			MainEditorScrollRect.ManuallyScrollY(shift.y * CharSize.y);
-			KeepMainCaretOnScreen(rec + 1);
-		}
-	}
 
 	// only allah knows how this works now cuz i didnt bother to explain it
 	// and it worked so im using it now
 	// nvm it was the text not updating and giving \0s causing the headpos to be 0 0
 	// weird ass shit fixed now tho and im just gonna stick with this one
 	// next commit its replacing the old method and getting optimized
-	void KeepHeadCaretHeadOnScreen_FromOld() {
+	void KeepMainCaretOnScreen() {
 		if (Carets.Carets.Count == 0) return;
 
 		var head = Carets.Carets[0];
@@ -727,6 +704,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			public int tail;
 			internal RectTransform rt;
 			internal List<RectTransform> selBoxes = new();
+			float targetX = -1;
 			
 			public struct Position {
 				public int I;
@@ -745,13 +723,23 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				? customHead.Value :
 				main.CharInfo(head).bottomLeft;
 
-			float targetX = -1;
 
 			internal bool isCustom => customTail.HasValue || customHead.HasValue;
 
 			void Clamp() {
 				tail = Mathf.Clamp(tail, 0, main.Content.Length);
 				head = Mathf.Clamp(head, 0, main.Content.Length);
+			}
+
+			int[] SelectedLines {
+				get {
+					int tLine = main.CharInfo(tail).lineNumber;
+					int hLine = main.CharInfo(head).lineNumber;
+					return Enumerable.Range(
+						Mathf.Min(tLine, hLine),
+						Mathf.Max(tLine, hLine) - Mathf.Min(tLine, hLine) + 1
+					);
+				}
 			}
 
 			// trigger redraw in the handler 
@@ -1029,7 +1017,27 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					return;
 				}
 
+				var sel = SelectedLines;
+				Array.Reverse(sel);
 
+				int tabsDeleted = 0;
+				foreach (int li in sel) {
+					int start = main.LineInfo(li).firstCharacterIndex;
+					char first = main.Content[start];
+
+					if (first == '\t') {
+						main.Content = main.Content.Remove(start, 1);
+						tabsDeleted++;
+					}
+				}
+
+				if (head > tail) {
+					head -= tabsRemoved;
+					tail--;
+				} else{
+					head--;
+					tail -= tabsRemoved;
+				}
 			}
 			#endregion
 		}
@@ -1063,6 +1071,17 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 			InitCarets();
 		}
+
+		public void SetMultipleCarets((int head, int tail)[] carets) {
+			Carets = carets.Select(c => 
+				new Caret() {
+					tail = c.tail,
+					head = c.head
+				}
+			);
+
+			InitCarets();
+		} 
 
 		public void MatchAllTails() {
 			foreach (var c in Carets) {
