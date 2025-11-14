@@ -197,7 +197,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			var info = CharInfo(0);
 
 			Content = "";
-			UpdateText(false, false);
+			UpdateText(false, true);
 			return info;
 		}
 		if (i < 0 || i > Content.Length) throw new IndexOutOfRangeException();
@@ -215,7 +215,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			var info = CharInfo(Content.Length - 1);
 
 			Content = Content[..^1];
-			UpdateText(true, false);
+			UpdateText(true, true);
 			return info;
 		}
 
