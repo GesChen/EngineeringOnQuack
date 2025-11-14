@@ -19,9 +19,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 	public string Content = "";
 
+	// modules
 	public CaretHandler Carets;
 	public SyntaxHighlighter SyntaxHighlighter;
 	public LazyHistory History;
+	public Clipboard Clipboard;
 
 	float LineNumberWidth = 0;
 
@@ -86,7 +88,16 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		Carets = new() {
 			Main = this
 		};
+		
 		SyntaxHighlighter = new();
+		
+		History = new() {
+			SE = this
+		};
+
+		Clipboard = new() {
+			SE = this
+		};
 	}
 	void Update() {
 		UpdateCarets();
@@ -98,9 +109,9 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	}
 
 	void SubscribeToShortcuts() {
-		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
-		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
-		Conatrols.IM.Editing.Paste.performed	+= _ => Paste();
+		Conatrols.IM.Editing.Copy.performed		+= _ => Clipboard.Copy();
+		Conatrols.IM.Editing.Cut.performed		+= _ => Clipboard.Cut();
+		Conatrols.IM.Editing.Paste.performed	+= _ => Clipboard.Paste();
 		Conatrols.IM.Editing.Undo.performed		+= _ => History.Undo();
 		Conatrols.IM.Editing.Redo.performed		+= _ => History.Redo();
 	}
@@ -109,7 +120,6 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	// uses global coords
 	protected int SS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos);
 	protected int LS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos, false);
-
 
 	// only checks against left edge
 	// also only check against the nearest line
@@ -300,7 +310,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			return corners;
 		}
 	}
-
+	
 
 	protected bool MouseOverCode {
 		get {
@@ -486,7 +496,6 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 	void Type(Key key) {
 		// handle special
-		char c;
 		if (key == Key.Enter) {
 			Carets.Enter(
 				Conatrols.Keyboard.Modifiers.Ctrl,
@@ -499,8 +508,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			if (Content.Length == 0) return;
 			Carets.Backspace(Conatrols.Keyboard.Modifiers.Ctrl);
 			return;
-		} else
-			c = Conatrols.Keyboard.Modifiers.Shift
+		} else if (key == Key.Delete) {
+			if (Content.Length == 0) return;
+			Carets.Delete(Conatrols.Keyboard.Modifiers.Ctrl);
+			return;
+		}
+
+		char c = Conatrols.Keyboard.Modifiers.Shift
 				? Conatrols.Keyboard.All.KeyShiftedMapping[key]
 				: Conatrols.Keyboard.All.KeyCharMapping[key];
 
@@ -591,28 +605,6 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	void MoveLineNumbers() {
 		LineNumbersText.rectTransform.anchoredPosition = 
 			new(0, MainEditorScrollRect.content.anchoredPosition.y);
-	}
-	#endregion
-
-	#region Shortcuts
-	void Copy() {
-
-	}
-
-	void Cut() {
-
-	}
-
-	void Paste() {
-
-	}
-
-	void Undo() {
-
-	}
-
-	void Redo() {
-
 	}
 	#endregion
 
@@ -725,6 +717,8 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 
 			internal bool isCustom => customTail.HasValue || customHead.HasValue;
+			internal string GetSelection() => 
+				main.Content[Mathf.Min(tail, head)..Mathf.Max(tail, head)];
 
 			void Clamp() {
 				tail = Mathf.Clamp(tail, 0, main.Content.Length);
@@ -944,28 +938,44 @@ public class ScriptEditorRewritten : MonoBehaviour {
 						Mathf.Max(head, tail),
 						s
 					);
+
+					head = Mathf.Min(head, tail);
 				}
 
-				head++;
+				head += s.Length;
 				MatchTail();
 			}
 
-			internal void Backspace(bool ctrl) {
+			internal void Backspace(bool ctrl, out (int sInc, int eExc) deletionRange) {
 				if (head != tail) {
+					deletionRange = (
+						Mathf.Min(head, tail),
+						Mathf.Max(head, tail)
+					);
+
 					// this works the same lamo
 					Type("");
 
-					head = Mathf.Min(head, tail) - 1;
 					MatchTail();
 					return;
 				}
+
+				if (head == 0) return;
 
 				if (!ctrl) {
 					main.Content = main.Content.Remove(head - 1, 1);
 					head--;
 					MatchTail();
-				} else {
 
+					deletionRange = (head, head + 1);
+				} else {
+					int deleteTo = main.EndIndexOfSameType(head - 1, -1);
+
+					// head == tail
+					tail = deleteTo;
+					// already implemented this
+					Backspace(false, out var range);
+					deletionRange = range;
 				}
 			}
 
@@ -1039,6 +1049,27 @@ public class ScriptEditorRewritten : MonoBehaviour {
 					tail -= tabsRemoved;
 				}
 			}
+
+			internal void Delete(bool ctrl) {
+				if (head != tail) {
+					Backspace(false, out _)
+					return;
+				}
+
+				if (head == main.Content.Length) return;
+
+				if (!ctrl) {
+					main.Content = main.Content.Remove(head + 1, 1);
+					// no caret moving needed today
+				} else{
+					int deleteTo = main.EndIndexOfSameType(head, 1);
+
+					// head == tail
+					tail = deleteTo;
+					Backspace(false, out _)
+
+				}
+			}
 			#endregion
 		}
 
@@ -1086,6 +1117,53 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		public void MatchAllTails() {
 			foreach (var c in Carets) {
 				c.MatchTail();
+			}
+		}
+
+		// for when multiple carets come out
+		public void ResolveAllOverlaps() {
+			// any overlapping carets will get merged
+
+			(int sInc, int eInc)[] cPositions = 
+				Carets.Select(c =>
+				(
+					Mathf.Min(c.head, c.tail),
+					Mathf.Max(c.head, c.tail)
+				)).ToArray();
+
+			/*int[] insideOthers = cPositions.Where(c =>
+				cPositions.Any(p =>
+					c.sInc >= p.sInc && c.sInc <= p.eInc &&
+					c.eInc >= p.sInc && c.eInc <= p.eInc
+				)
+			).Select(c => c.i).ToArray();
+
+			int[] duplicates = cPositons.Where(c =>
+				cPositions.Any(p => 
+					c.
+				)
+			)*/
+
+			List<int> insideOthers = new();
+			List<int> duplicates = new();
+			for (int i = 0; i < cPositions.Length; i++) {
+				var A = cPositions[i];
+				for (int j = 0; j < cPositions.Length; j++) {
+					if (i == j) continue;
+					var B = cPositions[j];
+
+					if (A.sInc == B.sInc && A.eInc == B.eInc) {
+						// gonna dissolve into one anyway so duplicates will exist
+						duplicates.Add(i); 
+						duplicates.Add(j);
+					}
+
+					if (
+						A.sInc >= B.sInc && A.sInc <= B.eInc &&
+						A.eInc >= B.sInc && A.eInc <= B.eInc) {
+						insideOthers = 
+					}
+				}
 			}
 		}
 
@@ -1162,8 +1240,33 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		public void Backspace(bool ctrl) {
 			SortBackwards();
 
-			foreach (var c in Carets)
-				c.Backspace(ctrl);
+			List<Caret> InvalidCarets = new();
+			List<(int sInc, int eExc)> DeletedRanges = new();
+			foreach (var c in Carets) {
+				// if this carets range overlaps any
+				// already deleted range then ignore it
+				// or cause unintended side effects
+
+				// hopefully not too expensive
+				bool deleted = DeletedRanges.Any(r =>
+					(c.head >= r.sInc && c.head < s.eExc) || // head in range
+					(c.tail >= r.sInc && c.tail < s.eExc) || // tail in range
+					(r.sInc >= c.head && r.sInc <= c.tail) || // sinc in sel
+					(r.eExc > c.head && r.eExc < c.tail) // eexc in sel
+				);
+
+				if (!deleted) {
+					c.Backspace(ctrl, out var delRange);
+					
+					deleted.Add(delRange);
+				} else {
+					InvalidCarets.Add(c);
+				}
+			}
+
+			foreach (var ic in InvalidCarets) {
+				Carets.Remove(ic);
+			}
 		}
 
 		public void Enter(bool ctrl, bool shift) {
@@ -1226,6 +1329,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		
 			foreach (var c in LineUniqueCarets)
 				c.Tab(shift);
+		}
+
+		public void Delete(bool ctrl) {
+			SortBackwards();
+
+			foreach (var c in Carets)
+				c.Delete(ctrl);
 		}
 	}
 	#endregion
