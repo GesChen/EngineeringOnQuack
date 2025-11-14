@@ -4,2102 +4,1303 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-// is this too many usings?
-// answer: yea prolly
+using cfg = Config.ScriptEditor;
 
-// look i KNOW its a god class but i literally can NOT figure out
-// how to separate them without making each separate class have to reference 
-// main. for every single use of lines or carets or whatever OK
-// "ill fix it later" 4-23-25 
+// coordinates work in screen space
+// +y is up in the doc, back in the content
 
-// todo: fix the line width thing where you can only click up to
-// the longset line as it is used to set the uvs and char widths,
-// hint it uses the longestlinewidth variables so figure that
-// out please :(
+public class ScriptEditorRewritten : MonoBehaviour {
+	static readonly float NavBarHeight = 50;
+	public static float CaretWidth = 1.5f;
+	public static Color CaretColor = new(1, 1, 1);
 
-public class ScriptEditor : MonoBehaviour {
-	public List<Line> lines;
-	List<LineNumber> lineNumbers;
+	public string Content = "";
 
-	public ScrollRect scroll; // interchangable with SEScrollWindow, comment out handleshiftscrolling tho
-	public RectTransform contentParent;
-	public RectTransform contentMask; // prevents lines from being drawn under line numbers
-	public VerticalLayoutGroup lineNumbersVerticalLayout; // interchangable with customverticallayout
-	[HideInNormalInspector] public RectTransform lineNumbersRect;
-	RectTransform widthSetter; // 0 height line in the line contents, always at the end, sets the width for parent 
+	public CaretHandler Carets;
+	public SyntaxHighlighter SyntaxHighlighter;
+	public LazyHistory History;
 
-	// modules
-	public SyntaxHighlighter syntaxHighlighter;
-	public LazyHistory history; // can be interchanged with just
-	// normal history if i decide to fix it someday
+	float LineNumberWidth = 0;
 
-	internal List<Caret> carets = new();
-	internal int headCaretI = 0;
-	internal int tailCaretI = 0;
+	public bool Open => Window.RealisedWindow.Open;
 
-	public event Action<bool> OnDragStateChanged; // custom drag handling
-	public Action<string[]> OnScriptUpdated; // may change
+	static Action<Transform> PostRealizationAction;
+	public static void CreateWindow() {
+		var temp = new GameObject("ser");
+		var ser = temp.AddComponent<ScriptEditorRewritten>();
 
-	#region Line Classes
-	public class Line {
-		public string Content;
-		public string ProcessedContent;
-		public List<float> IndexTs;
-		public (
-			RectTransform LineContent,
-			TextMeshProUGUI LineText) Components;
-		public bool Realised;
-		public SyntaxHighlighter.Types[] ColorsSpaces;
-		public SyntaxHighlighter.Types[] ColorsOriginal;
-		public Context ContextAfterLine; // context at the end of the line after everything is paresed
+		ser.SetWindow();
+		ser.UpdateWindow();
+
+		PostRealizationAction = (t) => {
+			// make the new component on the actual object and copy over all values
+			var nsr = t.gameObject.AddComponent<ScriptEditorRewritten>();
+			nsr.Window = ser.Window;
+			nsr.LineNumbersText = ser.LineNumbersText;
+			nsr.MainEditorScrollRect = ser.MainEditorScrollRect;
+			nsr.CodeText = ser.CodeText;
+			nsr.ExtraRaycastTarget = ser.ExtraRaycastTarget;
+
+			// move numbers into viewport
+			nsr.LineNumbersText.rectTransform.SetParent(
+				nsr.MainEditorScrollRect.viewport);
+
+			// move content into a parent mask
+			var codeMask = HF.CreateRectTransform(
+				"Code Mask",
+				nsr.MainEditorScrollRect.viewport,
+				new(0, 0), new(1, 1), new(.5f, .5f),
+				new(0, 0), new(0, 0), new(0, 0)
+				);
+			codeMask.gameObject.AddComponent<RectMask2D>();
+
+			var con = nsr.MainEditorScrollRect.content;
+			con.SetParent(codeMask);
+			nsr.CodeMask = codeMask;
+
+			// give content an autoscaler
+			var AS = con.gameObject.AddComponent<TMPAutoScaler>();
+			AS.tmp = nsr.CodeText;
+			nsr.ContentAutoScaler = AS;
+
+			// fix content
+			con.anchorMin = new(0, 1);
+			con.anchorMax = new(0, 1);
+			var stc = con.gameObject.GetComponent<ScaleToContents>();
+			Destroy(stc);
+
+			// update stuff
+			nsr.UpdateLineNumbers();
+
+			Destroy(temp);
+			PostRealizationAction = null;
+		};
+
+		WindowManager.Instance.RealiseWindows(ser.Window);
 	}
 
-	public class LineNumber {
-		public int Number;
-		public RectTransform Rect;
+	void Awake() {
+		Carets = new() {
+			Main = this
+		};
+		SyntaxHighlighter = new();
 	}
-	#endregion
-
-	#region Context Classes
-	[HideInInspector]
-	// changed to class so maybe each line's localcontext copy will reference the same variable objects
-	public class LCVariable { // it would be inside localcontext if it wasnt so fucking deep
-		public string Name;
-
-		public enum Types {
-			Normal,
-			MembFunc,
-			Type
-		}
-		public Types Type;
-		public int IndentLevel;
-
-		public override string ToString() {
-			return $"% {Name} ({Type}) at {IndentLevel}";
-		}
+	void Update() {
+		UpdateCarets();
+		HandleMouse();
+		HandleKeyboard();
 	}
-	public class Context {
-		public List<LCVariable> Variables;
-		public bool InComment;
-
-		public Context() {
-			Variables = new();
-			InComment = false;
-		}
-		public Context(Context original) {
-			Variables = original.Variables.ToList(); // copy individual items if needed
-			InComment = original.InComment;
-		}
+	void LateUpdate() {
+		MoveLineNumbers();
 	}
-	public struct ContextSignature { // for faster comparison
-		public string VarNames;
-		public bool InComment;
-	}
-	public ContextSignature ContextToSignature(Context context) => new() {
-		VarNames = string.Join(' ', context.Variables.Select(v => v.Name)),
-		InComment = context.InComment
-	};
 
-	Context LC;
-	#endregion
-
-	void Start() {
-		lineNumbersRect = lineNumbersVerticalLayout.GetComponent<RectTransform>();
-		SubscribeToShortcuts();
-	}
-	
-	#region Setup
 	void SubscribeToShortcuts() {
 		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
 		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
 		Conatrols.IM.Editing.Paste.performed	+= _ => Paste();
-		Conatrols.IM.Editing.Undo.performed		+= _ => history.Undo();
-		Conatrols.IM.Editing.Redo.performed		+= _ => history.Redo();
+		Conatrols.IM.Editing.Undo.performed		+= _ => History.Undo();
+		Conatrols.IM.Editing.Redo.performed		+= _ => History.Redo();
+	}
+
+	#region Util functions
+	// uses global coords
+	protected int SS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos);
+	protected int LS2I(Vector2 SSpos) => FindNearestCharacterModified(CodeText, SSpos, false);
+
+
+	// only checks against left edge
+	// also only check against the nearest line
+	public int FindNearestCharacterModified(TextMeshProUGUI text, Vector2 position, bool global = true) {
+		if (global)
+			position = text.transform.InverseTransformPoint(position);
+
+		var LIs = text.textInfo.lineInfo;
+
+		// find closest line
+		float distY = Mathf.Infinity;
+		int closestLineI = -1;
+		for (int i = 0; i < LIs.Length; i++) {
+			TMP_LineInfo line = LIs[i];
+
+			/*Debug.DrawLine(new(0, line.ascender), new(0, line.descender), MoreColors.SkyBlue);
+			Debug.DrawLine(new(0, line.ascender), new(10, line.ascender), MoreColors.Orange);
+			Debug.DrawLine(new(0, line.descender), new(10, line.descender), MoreColors.Red);
+			DebugExtra.DrawPoint(new(0, (line.ascender + line.descender) / 2), 10, MoreColors.Teal);
+			DebugExtra.DrawPoint(new(0, position.y), 10, MoreColors.Green);*/
+
+			if (position.y < line.ascender && position.y > line.descender) {
+				closestLineI = i;
+				break;
+			}
+
+			// abs dist to the center y
+			float d = Mathf.Abs((line.ascender + line.descender) / 2 - position.y);
+
+			if (d < distY) {
+				distY = d;
+				closestLineI = i;
+			}
+		}
+
+		if (closestLineI == -1) throw new("bad code!");
+
+		var cLineInfo = LIs[closestLineI];
+
+		float distX = Mathf.Infinity;
+		int closestCharI = -1;
+		// find closest char in that line
+		for (int c = cLineInfo.firstCharacterIndex; c <= cLineInfo.lastCharacterIndex; c++) {
+			var cInfo = text.textInfo.characterInfo[c];
+
+			float d = Mathf.Abs(cInfo.bottomLeft.x - position.x);
+			if (d < distX) {
+				distX = d;
+				closestCharI = c;
+			}
+		}
+
+		// last char check
+		if (closestLineI == text.textInfo.lineCount - 1) {
+			float lastCharD = Mathf.Abs(
+				text.textInfo.characterInfo[Content.Length - 1].bottomRight.x
+				- position.x);
+			if (lastCharD < distX)
+				return Content.Length;
+		}
+
+		return closestCharI;
+	}
+
+	/// <summary>
+	/// <b>RETURNS IN LS</b>
+	/// dont be afraid to call this, its literally o(1) array access with some extra if statements
+	/// should be super duper fast
+	/// </summary>
+	protected TMP_CharacterInfo CharInfo(int i) {
+		if (Content.Length == 0) {
+			Content = "H"; // give it sum to work with
+			UpdateText(false, true);
+
+			var info = CharInfo(0);
+
+			Content = "";
+			UpdateText(false, false);
+			return info;
+		}
+		if (i < 0 || i > Content.Length) throw new IndexOutOfRangeException();
+		if (i < Content.Length) return CodeText.textInfo.characterInfo[i];
+
+		// i == length
+
+		// newlines treated special 
+		// + tabs
+		if (Content[^1] == '\n' || Content[^1] == '\t') {
+			// do the content pretend trick from earlier
+			Content += "H";
+			UpdateText(false, true);
+
+			var info = CharInfo(Content.Length - 1);
+
+			Content = Content[..^1];
+			UpdateText(true, false);
+			return info;
+		}
+
+		var penultimate = CharInfo(i - 1);
+		return new() { // save some cycles
+			ascender = penultimate.ascender,
+			//aspectRatio = penultimate.aspectRatio,
+			baseLine = penultimate.baseLine,
+			bottomLeft = penultimate.bottomRight,
+			bottomRight = penultimate.bottomRight,
+			character = default,
+			color = penultimate.color,
+			descender = penultimate.descender,
+			//elementType = penultimate.elementType,
+			//fontAsset = penultimate.fontAsset,
+			//highlightColor = penultimate.highlightColor,
+			//highlightState = penultimate.highlightState,
+			index = i + 1,
+			//isUsingAlternateTypeface = penultimate.isUsingAlternateTypeface,
+			//isVisible = penultimate.isVisible,
+			lineNumber = penultimate.lineNumber,
+			//material = penultimate.material,
+			//materialReferenceIndex = penultimate.materialReferenceIndex,
+			//origin = penultimate.origin,
+			//pageNumber = penultimate.pageNumber,
+			//pointSize = penultimate.pointSize,
+			//scale = penultimate.scale,
+			//spriteAsset = penultimate.spriteAsset,
+			//spriteIndex = penultimate.spriteIndex,
+			//strikethroughColor = penultimate.strikethroughColor,
+			//strikethroughVertexIndex = penultimate.strikethroughVertexIndex,
+			//stringLength = penultimate.stringLength,
+			//style = penultimate.style,
+			//textElement = penultimate.textElement,
+			topLeft = penultimate.topRight,
+			topRight = penultimate.topRight,
+			//underlineColor = penultimate.underlineColor,
+			//underlineVertexIndex = penultimate.underlineVertexIndex,
+			//xAdvance = penultimate.xAdvance,
+		};
+	}
+
+	protected Vector2 L2G(Vector2 localPos) =>
+		CodeText.transform.TransformPoint(localPos);
+	protected Vector2 G2L(Vector2 globalPos) =>
+		CodeText.transform.InverseTransformPoint(globalPos);
+
+	protected TMP_LineInfo LineInfo(int lineNum) {
+		if (Content.Length == 0) {
+
+		}
+		return CodeText.textInfo.lineInfo[lineNum];
+	}
+
+	protected int NumLines => Content.Count(c => c == '\n') + 1;
+
+	bool layoutChanged = true;
+	Vector2 m_LH;
+	protected Vector2 CharSize {
+		get {
+			if (layoutChanged) {
+				CodeText.text = 'H' + CodeText.text; // test on H
+				CodeText.ForceMeshUpdate();
+
+				var info = CodeText.textInfo.characterInfo[0];
+				float width = info.bottomRight.x - info.bottomLeft.x;
+				float height = LineInfo(0).ascender - LineInfo(0).descender;
+
+				m_LH = new(width, height);
+
+				CodeText.text = CodeText.text[1..];
+				layoutChanged = false;
+			}
+			return m_LH;
+		}
+	}
+
+	/// <summary>
+	/// BL, TL, TR, BR
+	/// </summary>
+	protected Vector3[] MaskCorners {
+		get {
+			var corners = new Vector3[4];
+			CodeMask.GetWorldCorners(corners);
+			return corners;
+		}
+	}
+	protected Vector3[] ContentCorners {
+		get {
+			var corners = new Vector3[4];
+			ContentAutoScaler.GetComponent<RectTransform>().GetWorldCorners(corners);
+			return corners;
+		}
+	}
+
+
+	protected bool MouseOverCode {
+		get {
+			var corners = MaskCorners;
+			bool inbounds = HF.IsPointInBounds(
+				Conatrols.Mouse.Position,
+				(Vector2)corners[2],
+				(Vector2)corners[0]
+			);
+
+			bool hovered =
+				UIHovers.CheckStrictlyFirst(CodeText.transform)
+				|| UIHovers.CheckStrictlyFirst(ExtraRaycastTarget);
+			return inbounds && hovered;
+		}
+	}
+
+	static int charToType(char c) {
+		if (char.IsWhiteSpace(c)) return 0;
+		if (char.IsDigit(c) || char.IsLetter(c)) return 1;
+		if (char.IsSymbol(c)) return 2;
+		return 3; // all unknown types are treated as their own ig?
+	}
+
+	// direction is -1 or 1
+	// output is inclusive
+	protected int EndIndexOfSameType(int i, int direction) {
+		if (direction != -1 && direction != 1) throw new ArgumentException();
+		if ((direction == -1 && i < 0)
+			|| (direction == 1 && i >= Content.Length)) return i;
+
+		if (direction == -1) i--; // nudge
+
+		if (i == Content.Length) i--;
+
+		int against = charToType(Content[i]);
+		int check = against; // you think this is funny?
+		while (check == against) {
+			i += direction;
+			
+			if (i < 0 || i >= Content.Length) break;
+
+			against = charToType(Content[i]);
+		}
+
+		if (direction == 1) i++; // nudge
+
+		return i - direction;
+	}
+
+	protected int LineIndentation(int line) {
+		var li = CodeText.textInfo.lineInfo[line];
+		string content = Content[li.firstCharacterIndex..li.lastCharacterIndex];
+		return content.Length - content.TrimStart('\t').Length;
 	}
 	#endregion
 
-	void Update() {
-		if (lines == null) return;
+	#region Navigation
+	bool dragging = false;
+	bool altDragging = false;
+	Vector2 dragStart;
+	float lastPressTime = 0;
+	bool doubleClickDragging = false;
+	void HandleMouse() {
+		if (Conatrols.Mouse.Left.PressedThisFrame) {
+			if (MouseOverCode) {
+				doubleClickDragging = 
+					(Time.time - lastPressTime < Config.Input.doubleClickMaxTimeMs / 1000f
+					|| Conatrols.Keyboard.Modifiers.Ctrl)
+					&& !Conatrols.Keyboard.Modifiers.Shift;
+				lastPressTime = Time.time;
+
+				dragging = true;
+
+				if (!Conatrols.Keyboard.Modifiers.Shift)
+					dragStart = Conatrols.Mouse.Position;
+
+				altDragging = Conatrols.Keyboard.Modifiers.Alt && !doubleClickDragging;
+
+				Window.RealisedWindow.Config.Movable = false;
+				Window.RealisedWindow.dragging = false;
 
-		HandleMouseNavigation();
-		HandleKeyboardNavgation();
-		UpdateCarets();
-		HandleTyping();
-		UpdateLineNumbersPos();
-		
-		UpdateSubscribers();
-	}
-
-	void UpdateSubscribers() {
-		var content = lines.Select(l => l.Content).ToArray();
-	
-		static bool ArraysEqual(string[] a, string[] b) {
-			if (a == b) return true;
-			if (a == null || b == null) return false;
-			if (a.Length != b.Length) return false;
-			for (int i = 0; i < a.Length; i++)
-				if (a[i] != b[i]) return false;
-			return true;
-		}
-
-		if (!ArraysEqual(content, lastContent)) {
-			OnScriptUpdated?.Invoke(content);
-			lastContent = content;
-		}
-	}
-	string[] lastContent = new string[0];
-
-
-	#region Loading/Generation
-	float longestLineWidth;
-	int longestLine;
-	float charUVAmount;
-	float lineNumberWidth;
-	float charWidth;
-	[HideInNormalInspector] public float allLinesHeight;
-
-	public void Load(string[] strLines) {
-		Clear();
-
-		// recalculate max line number width
-		CalculateLineSizes(strLines);
-
-		// fix container
-		//lineContentContainer.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
-		contentParent.localPosition = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
-
-		// reset localcontext
-		LC = new() {
-			Variables = new(),
-			InComment = false,
-		};
-
-		// generate lines
-		foreach (string line in strLines) {
-			Line newLine = GenerateNewLine(line);
-			lines.Add(newLine);
-		}
-
-		// generate line numbers
-		for (int i = 0; i < lines.Count; i++) {
-			LineNumber newLN = GenerateNewNumber(i + 1);
-			lineNumbers.Add(newLN);
-		}
-
-		// generate widthsetter
-		var wsObj = new GameObject("Width Setter");
-		widthSetter = wsObj.AddComponent<RectTransform>();
-		widthSetter.SetParent(contentParent);
-		widthSetter.sizeDelta = new(0, 0); // width will be set in recalculate
-		wsObj.AddComponent<Image>().color = Color.clear; // dualie
-
-		RecalculateAll();
-
-		SetSingleCaret(new(0, 0), new(0, 0));
-
-		history.Initialize();
-	}
-
-	private void CalculateLineSizes(string[] strLines) {
-		var randomObject = new GameObject();
-		var rort = randomObject.AddComponent<RectTransform>(); // can scale
-		rort.SetParent(contentParent);
-
-		TextMeshProUGUI testingText = randomObject.AddComponent(typeof(TextMeshProUGUI)) as TextMeshProUGUI;
-		testingText.font = Config.ScriptEditor.Font;
-		testingText.fontSize = Config.ScriptEditor.FontSize;
-		Vector2 numberSize = HF.TextWidthExact(strLines.Length.ToString(), testingText);
-		Destroy(randomObject); // die
-
-		lineNumberWidth = numberSize.x;
-		allLinesHeight = numberSize.y;
-	}
-
-	void RecalculateAll() {
-		// scale all containers to max width
-		RecalculateLongest();
-		RecalculateCharUVA();
-		ScaleAllContainersToMax();
-		UpdateContentMask();
-		UpdateWidthSetter();
-
-		// calculate ts (charuv must have a value)
-		CalculateAllTs();
-	}
-
-	void Clear() {
-		// delete all existing lines
-
-		lines ??= new();
-		foreach (Line line in lines) {
-			if (line.Components.LineContent != null) {
-				Destroy(line.Components.LineContent.gameObject); // line contents
-			}
-		}
-		lines.Clear();
-
-		lineNumbers ??= new();
-		foreach (LineNumber ln in lineNumbers) {
-			if (ln.Rect != null)
-				Destroy(ln.Rect.gameObject);
-		}
-		lineNumbers.Clear();
-
-		// delete widthsetter
-		if (widthSetter != null)
-			Destroy(widthSetter.gameObject);
-		widthSetter = null;
-	}
-
-	void RecalculateLongest() {
-		longestLineWidth = -1;
-		longestLine = -1;
-		for (int i = 0; i < lines.Count; i++) {
-			Line line = lines[i];
-			float width = LineWidth(line);
-
-			if (width > longestLineWidth) {
-				longestLineWidth = width;
-				//longestLineWidth = contentMask.rect.width;
-				longestLine = i;
-			}
-		}
-	}
-
-	float LineWidth(Line line) {
-		line.Components.LineText.ForceMeshUpdate();
-		return LayoutUtility.GetPreferredWidth(line.Components.LineContent);
-	}
-
-	void RecalculateCharUVA() {
-		if (lines.Count == 0) {
-			Debug.LogWarning($"script lines are empty");
-			return;
-		}
-
-		charUVAmount = 1f / lines[longestLine].ProcessedContent.Length;
-		charWidth = longestLineWidth / lines[longestLine].ProcessedContent.Length;
-	}
-
-	void ScaleAllContainersToMax() {
-		lines.ForEach(l => l.Components.LineContent
-			.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, longestLineWidth));
-	}
-
-	void UpdateContentMask() {
-		contentMask.offsetMin = new(lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
-	}
-
-	void UpdateWidthSetter() {
-		widthSetter.sizeDelta = new(longestLineWidth + lineNumberWidth + Config.ScriptEditor.NumberToContentSpace, 0);
-	}
-
-	void CalculateAllTs() {
-		for (int i = 0; i < lines.Count; i++) {
-			lines[i].IndexTs = CalculateTs(i);
-		}
-	}
-
-	List<float> CalculateTs(int i) {
-		// hopefully this loop isnt too slow for being called once
-		// can be precomputed if needed
-		// index = index of cursor location, basically 1 before the actual char
-
-		List<float> TtoIndex = new();
-		float pos = 0;
-		int charPos = 0;
-
-		for (int l = 0; l < lines[i].Content.Length; l++) {
-			char c = lines[i].Content[l];
-			TtoIndex.Add(pos);
-
-			int charIncrease = c == '\t' ? TabIndexToSpaceCount(charPos) : 1;
-			pos += charUVAmount * charIncrease;
-			charPos += charIncrease;
-		}
-
-		//// pos isnt gonna be 1 but need to add it again to be able to select last item still
-		//TtoIndex.Add(pos);
-
-		// experiment
-		while (pos < 1) {
-			TtoIndex.Add(pos);
-			pos += charUVAmount;
-		}
-		TtoIndex.Add(pos);
-
-		return TtoIndex;
-	}
-
-	Line GenerateNewLine(string content) { // ~1ms
-		Line line = new() {
-			Content = content
-		};
-
-		// convert tabs to aligned spaces (for tmpro, original is unchanged)
-		string processed = ConvertTabsToSpaces(line);
-		line.ProcessedContent = processed;
-
-		// colorize
-		var colors = syntaxHighlighter.ParseLineToColorList(processed, LC);
-		line.ColorsSpaces = colors;
-
-		// keep copy after execution for later use
-		line.ContextAfterLine = new(LC);
-
-		// need to store a usable copy based on tabs instead of spaces
-		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
-		line.ColorsOriginal = tabsConvertedBack;
-
-		// represent tabs and spaces
-		//processed = MakeWhiteSpaceVisible(processed);
-
-		// tag line
-		processed = syntaxHighlighter.TagLine(processed, colors);
-
-		// make actual line content
-		(GameObject _, TextMeshProUGUI LCText, RectTransform LCRect)
-			= NewText(
-				"Line Content",
-				$"{processed}",
-				contentParent.transform,
-				TextAlignmentOptions.Left,
-				0); // temp set width to zero, recalculate later
-
-		// setup line container rect
-		LCRect.anchorMin = new(0, 1);
-		LCRect.anchorMax = new(0, 1);
-		LCRect.pivot = new(0, 1);
-
-		line.Components.LineContent = LCRect;
-		line.Components.LineText = LCText;
-
-		line.Realised = true;
-
-		return line;
-	}
-
-	LineNumber GenerateNewNumber(int number) {
-		(GameObject _, TextMeshProUGUI _, RectTransform NRect)
-			= NewText(
-				$"Line Number  ({number})",
-				number.ToString(),
-				lineNumbersVerticalLayout.transform,
-				TextAlignmentOptions.Right,
-				lineNumberWidth);
-		NRect.localPosition = Vector2.zero;
-
-		return new() {
-			Number = number,
-			Rect = NRect
-		};
-	}
-
-	internal List<int> UpdateLine(int lineIndex, bool forceUpdateNextToo = true) {
-		Line line = lines[lineIndex];
-
-		Context context =
-			lineIndex == 0
-			? new()
-			: new(lines[lineIndex - 1].ContextAfterLine);
-
-		ContextSignature preRunSignature =
-			ContextToSignature(line.ContextAfterLine);
-
-		string processed = ConvertTabsToSpaces(line);
-		line.ProcessedContent = processed;
-
-		var colors = syntaxHighlighter.ParseLineToColorList(processed, context);
-		line.ColorsSpaces = colors;
-
-		// if the context has changed
-
-		List<int> updatedLines = new() { lineIndex };
-
-		if (!ContextToSignature(context).Equals(preRunSignature) ||
-			forceUpdateNextToo) {
-			line.ContextAfterLine = context;
-
-			// then propgoate updates down the lines
-			if (lineIndex != lines.Count - 1)
-				updatedLines.AddRange(UpdateLine(lineIndex + 1, false));
-		}
-
-		var tabsConvertedBack = RevertSpacesToTabs(colors, processed, line.Content);
-		line.ColorsOriginal = tabsConvertedBack;
-
-		// tag line
-		processed = syntaxHighlighter.TagLine(processed, colors);
-		line.Components.LineText.text = processed;
-
-		// manually check if longer than longest
-		float width = LineWidth(line);
-		if (width > longestLineWidth) { // update everything if this is new longset
-			longestLine = lineIndex;
-			//longestLineWidth = contentMask.rect.width;
-			longestLineWidth = width;
-
-			RecalculateCharUVA();
-			ScaleAllContainersToMax();
-
-			// recalculate all ts if uvamount changed
-			CalculateAllTs();
-		} else {
-			// SCALE TO MAX!!!
-			line.Components.LineContent
-				.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, longestLineWidth);
-
-			// otherwise just do this ones ts
-			line.IndexTs = CalculateTs(lineIndex);
-		}
-
-		return updatedLines;
-	}
-
-	internal Line AddLine(string contents) {
-		Line newLine = GenerateNewLine(contents);
-
-		lines.Add(newLine);
-		newLine.Components.LineContent.transform.SetAsLastSibling();
-
-		return newLine;
-	}
-
-	internal Line InsertLine(string contents, int at) {
-		Line newLine = GenerateNewLine(contents);
-
-		lines.Insert(at, newLine);
-		newLine.Components.LineContent.transform.SetSiblingIndex(at);
-
-		return newLine;
-	}
-
-	internal void DeleteLine(int index) {
-		Line line = lines[index];
-
-		// destroy the line
-		Destroy(line.Components.LineContent.gameObject);
-		lines.RemoveAt(index);
-
-		// decrement a line number
-		Destroy(lineNumbers[^1].Rect.gameObject);
-		lineNumbers.RemoveAt(lineNumbers.Count - 1);
-	}
-
-	internal void ResetLines() {
-		for (int i = lines.Count - 1; i >= 0; i--) {
-			DeleteLine(i);
-		}
-	}
-
-	internal void SetLines(string[] newLines) {
-		ResetLines();
-
-		foreach (string line in newLines) {
-			AddLine(line);
-		}
-
-		for (int i = 0; i < newLines.Length; i++) {
-			UpdateLine(i, false);
-		}
-
-		for (int i = 0; i < lines.Count; i++) {
-			LineNumber newLN = GenerateNewNumber(i + 1);
-			lineNumbers.Add(newLN);
-		}
-	}
-
-	string ConvertTabsToSpaces(Line line) {
-		return ConvertTabsToSpaces(line.Content);
-	}
-
-	int TabIndexToSpaceCount(int i) => HF.Mod(-i - 1, Config.Language.SpacesPerTab) + 1;
-	string ConvertTabsToSpaces(string line) {
-		string tabsToSpaces = line;
-		for (int i = 0; i < tabsToSpaces.Length; i++) {
-			char c = tabsToSpaces[i];
-			if (c == '\t') {
-				int num = TabIndexToSpaceCount(i);
-				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i + 1, new string(' ', num));
-			}
-		}
-
-		return tabsToSpaces;
-	}
-
-	string MakeWhiteSpaceVisible(string original) {
-
-		StringBuilder sb = new();
-
-		for (int i = 0; i < original.Length; i++) {
-			char c = original[i];
-			if (c == ' ') {
-				sb.Append('•');
-			} else
-			if (c == '\t') {
 			} else {
-				sb.Append(c);
+				Carets.ClearCarets();
 			}
+		} else 
+		if (Conatrols.Mouse.Left.ReleasedThisFrame) {
+			dragging = false;
+
+			Window.RealisedWindow.Config.Movable = true;
+			Window.RealisedWindow.dragging = false;
 		}
 
-		return sb.ToString();
-	}
-
-	SyntaxHighlighter.Types[] RevertSpacesToTabs(
-		SyntaxHighlighter.Types[] colors,
-		string convertedString,
-		string originalString) {
-
-		var reconstructed = new SyntaxHighlighter.Types[originalString.Length];
-		int ci = 0;
-		int oi = 0;
-		while (ci < convertedString.Length) { // they should both each their ends at the same time idk
-			reconstructed[oi] = colors[ci];
-			if (originalString[oi] == '\t')
-				ci += TabIndexToSpaceCount(ci);
-			else
-				ci++;
-
-			oi++;
-		}
-		return reconstructed;
-	}
-
-	(GameObject, TextMeshProUGUI, RectTransform) NewText(
-		string name,
-		string actualText,
-		Transform parent,
-		TextAlignmentOptions alignment,
-		float width) {
-
-		GameObject newObj = new(name);
-		newObj.transform.SetParent(parent);
-
-		// add text
-		TextMeshProUGUI newText = newObj.AddComponent<TextMeshProUGUI>();
-		newText.text = actualText;
-		newText.font = Config.ScriptEditor.Font;
-		newText.fontSize = Config.ScriptEditor.FontSize;
-		newText.alignment = alignment;
-
-		// set up rt properly
-		if (!newObj.TryGetComponent<RectTransform>(out var newRect))
-			newRect = newObj.AddComponent<RectTransform>();
-		newRect.anchorMin = new(0, 1);
-		newRect.anchorMax = new(0, 1);
-		newRect.pivot = new(0, 1);
-		newRect.sizeDelta = new(width, allLinesHeight);
-
-		return (newObj, newText, newRect);
-	}
-
-	public string LinesString =>
-		string.Join('\n', lines.Select(l => l.Content));
-
-	public string[] LinesStringArray =>
-		lines.Select(l => l.Content).ToArray();
-
-	void UpdateLineNumbersPos() {
-		float amount = scroll.CurrentScrollAmount().y;
-		lineNumbersRect.localPosition = new(0, amount);
-	}
-
-	#endregion
-
-	#region Caret Utilities
-	internal void ResetCarets() {
-		if (carets.Count == 0) return; // prolly doesnt help lmao
-
-		foreach (var caret in carets)
-			caret.Destroy();
-		carets.Clear();
-	}
-
-	Caret SetSingleCaret(Vector2Int head, Vector2Int tail) {
-		ResetCarets();
-
-		var newCaret = AddNewCaret(head, tail);
-
-		return newCaret;
-	}
-
-	internal List<Caret> AddMultipleCarets(List<(Vector2Int head, Vector2Int tail)> positions) {
-
-		List<Caret> newCarets = new();
-		for (int i = 0; i < positions.Count; i++) {
-			var newCaret = AddNewCaret(positions[i].head, positions[i].tail);
-			newCarets.Add(newCaret);
-		}
-
-		return newCarets;
-	}
-
-	Caret AddNewCaret(Vector2Int head, Vector2Int tail) {
-		Caret newCaret = new(this);
-		newCaret.Initialize();
-		newCaret.UpdatePos(head, tail);
-		carets.Add(newCaret);
-		return newCaret;
-	}
-
-	void RemoveCaret(int i) {
-		carets[i].Destroy();
-		carets.RemoveAt(i);
-	}
-
-	internal void UpdateCarets() {
-		CheckForOverlaps();
-		PushTails();
-
-		foreach (var caret in carets)
-			caret.Update();
-
-		for (int i = 0; i < carets.Count; i++)
-			carets[i].isHeadCaret = i == headCaretI;
-	}
-
-	void CheckForOverlaps() {
-		var seen = new Dictionary<(Vector2Int, Vector2Int), int>();
-		var duplicateIndices = new List<int>();
-
-		for (int i = 0; i < carets.Count; i++) {
-			var key = (carets[i].head, carets[i].tail);
-
-			if (seen.ContainsKey(key)) {
-				duplicateIndices.Add(i);
-			} else {
-				seen[key] = i; // store index of first occurrence
-			}
-		}
-
-		duplicateIndices.Reverse();
-
-		foreach (int i in duplicateIndices) {
-			carets[i].Destroy();
-			carets.RemoveAt(i);
-
-			if (headCaretI >= i) headCaretI--;
-			if (tailCaretI >= i) tailCaretI--;
-		}
-	}
-
-	void PushTails() {
-		for (int i = 0; i < carets.Count; i++) {
-			Caret caret = carets[i];
-			for (int j = 0; j < carets.Count; j++) {
-				if (i == j) continue;
-
-				Caret check = carets[j];
-				if (PosInCaretSelection(caret.head, check)) {
-					check.tail = caret.head; // push
+		if (dragging) {
+			ForceCaretOnState_Update();
+			if (!altDragging) {
+				if (Content.Length == 0) {
+					Carets.SetSingleCaret(0, 0);
+					return;
 				}
+
+				int dragStartI = SS2I(dragStart); // tail
+				int dragEndI = SS2I(Conatrols.Mouse.Position); // head
+
+				if (doubleClickDragging) {
+					dragStartI = EndIndexOfSameType(
+						dragStartI,
+						dragEndI < dragStartI // goes left normally cuz of == case
+						? 1 : -1);
+
+					dragEndI = EndIndexOfSameType(
+						dragEndI,
+						dragEndI < dragStartI // goes right normally cuz of == case
+						? -1 : 1);
+				}
+
+				Carets.SetSingleCaret(dragStartI, dragEndI);
+				Carets.RememberTargetX();
+			} else {
+				var corners = MaskCorners;
+				var altDragPos = Conatrols.Mouse.Position.Clamp(
+					corners[0],
+					corners[2]
+					);
+				Carets.SetSingleCustomCaret(dragStart, altDragPos);
 			}
 		}
 	}
 
-	bool PosInCaretSelection(Vector2Int pos, Caret caret) {
-		if (!caret.HasSelection) return false;
+	void HandleKeyboardMovement() {
+		var presses = Conatrols.Keyboard.Presses;
 
-		bool tailBehind = caret.tail.y < caret.head.y ||
-			(caret.tail.y == caret.head.y && caret.tail.x < caret.head.x);
+		Vector2Int movement = new(
+			(presses.Contains(Key.LeftArrow) ? -1 : 0) +
+			(presses.Contains(Key.RightArrow) ? 1 : 0),
+			(presses.Contains(Key.DownArrow) ? -1 : 0) +
+			(presses.Contains(Key.UpArrow) ? 1 : 0)
+		);
 
-		if (tailBehind
-			? (pos.y > caret.tail.y && pos.y < caret.head.y)
-			: (pos.y > caret.head.y && pos.y < caret.tail.y))
-			return true;
+		if (movement.sqrMagnitude > 0) {
+			Carets.Move(
+				movement, 
+				Conatrols.Keyboard.Modifiers.Shift,
+				Conatrols.Keyboard.Modifiers.Ctrl);
+			ForceCaretOnState_Update();
 
-		if (pos.y == caret.head.y && pos.y == caret.tail.y) {
-			if (tailBehind
-				? (pos.x >= caret.tail.x && pos.x <= caret.head.x)
-				: (pos.x <= caret.tail.x && pos.x >= caret.head.x))
-				return true;
-			return false;
+			KeepMainCaretOnScreen();
 		}
 
-		if (pos.y == caret.tail.y &&
-			(tailBehind ? pos.x >= caret.tail.x : pos.x <= caret.tail.x))
-			return true;
+		if (Conatrols.Keyboard.PressedThisFrame.Contains(Key.Escape)) {
+			Carets.MatchAllTails();
+			ForceCaretOnState_Update();
+		}
+	}
+	#endregion
 
-		if (pos.y == caret.head.y &&
-			(tailBehind ? pos.x <= caret.head.x : pos.x >= caret.head.x))
-			return true;
+	#region Typing
+	void HandleKeyboard() {
+		HandleTyping();
 
-		return false;
+		HandleKeyboardMovement();
 	}
 
-	void KeepHeadCaretHeadOnScreen() {
-		Caret head = carets[headCaretI];
-		Vector2 pos = LocalPositionOfCaretHead(head);
+	void HandleTyping() {
+		var presses = Conatrols.Keyboard.Presses;
+
+		bool modified = false;
+		foreach (var key in presses) {
+			if (Conatrols.Keyboard.All.TextKeys.Contains(key)) {
+				Type(key);
+
+				modified = true;
+			}
+		}
+
+		if (modified) {
+			UpdateText(true, true);
+			Carets.RememberTargetX();
+			ForceCaretOnState_Update();
+			KeepMainCaretOnScreen();
+		}
+	}
+
+	void Type(Key key) {
+		// handle special
+		char c;
+		if (key == Key.Enter) {
+			Carets.Enter(
+				Conatrols.Keyboard.Modifiers.Ctrl,
+				Conatrols.Keyboard.Modifiers.Shift);
+			return;
+		} else if (key == Key.Tab) {
+			Carets.Tab(Conatrols.Keyboard.Modifiers.Shift);
+			return;
+		} else if (key == Key.Backspace) {
+			if (Content.Length == 0) return;
+			Carets.Backspace(Conatrols.Keyboard.Modifiers.Ctrl);
+			return;
+		} else
+			c = Conatrols.Keyboard.Modifiers.Shift
+				? Conatrols.Keyboard.All.KeyShiftedMapping[key]
+				: Conatrols.Keyboard.All.KeyCharMapping[key];
+
+		if (Conatrols.Keyboard.Modifiers.Ctrl) return;
+
+		Carets.Type(c.ToString());
+	}
+	#endregion
+
+	#region UI Management
+	// MAY potentially become laggy. if this does happen then optimize it. otherwise 
+	// keep the naive code cuz it works and its <1ms anyway
+	//string lastContent = "";
+	void UpdateText(bool renderColors, bool forceRecalculate) {
+		// do colors later
+		// great we have to do colors now
+		// identify modified lines
+		var newLines = Content.Split('\n');
+		/*var modifiedLinesI =
+			lastContent.Split('\n')
+			.Select((s, i) => (s, i))
+			.Where(si => newLines[si.i] != si.s)
+			.Select(si => si.i)
+			.ToArray();
+
+		var updatedLines =
+			modifiedLinesI.ToDictionary(i => i, i => false);
+
+		// should be in ascending order already
+		foreach (var line in modifiedLinesI) {
+			if (updatedLines[line]) continue; // already updated
+
+			
+		}*/
+
+		string content;
+		if (renderColors) {
+			ScriptEditor.Context context = new();
+			StringBuilder builder = new();
+			for (int i = 0; i < newLines.Length; i++) {
+				string line = newLines[i];
+				var colors = SyntaxHighlighter.ParseLineToColorList(line, context);
+
+				string tagged = SyntaxHighlighter.TagLine(line, colors);
+				builder.Append(tagged);
+				if (i != newLines.Length - 1)
+					builder.Append("\n");
+			}
+
+			content = builder.ToString();
+		} else {
+			content = Content;
+		}
+
+		CodeText.text = $"<mspace=.5em>{content}</mspace>";
+		if (forceRecalculate)
+			CodeText.ForceMeshUpdate();
+
+		// .5em is 150 tab width
+
+		UpdateLineNumbers();
+	}
+
+	void UpdateLineNumbers() {
+		int digits = NumLines.ToString().Length;
+		float width = digits * CharSize.x;
+		width = Mathf.Max(cfg.NumberDefaultWidth, width);
+
+		if (width != LineNumberWidth) {
+			LineNumberWidth = width;
+
+			// manually change sizes (instead of recreating the window)
+			LineNumbersText.rectTransform.anchoredPosition = new(0, 0);
+			LineNumbersText.rectTransform.sizeDelta = new(LineNumberWidth + cfg.NumberExtraWidth, 0);
+
+			float text = LineNumberWidth + cfg.NumberExtraWidth + cfg.NumberToContentSpace;
+			CodeMask.offsetMin = new(text, 0);
+			CodeMask.offsetMax = new(0, 0);
+
+			ContentAutoScaler.Padding = new(text + cfg.ContentExtraWidth, 0);
+
+			CodeText.rectTransform.anchoredPosition = new(text, 0);
+		}
+
+		LineNumbersText.text = string.Join('\n', Enumerable.Range(0, NumLines));
+	}
+
+	void MoveLineNumbers() {
+		LineNumbersText.rectTransform.anchoredPosition = 
+			new(0, MainEditorScrollRect.content.anchoredPosition.y);
+	}
+	#endregion
+
+	#region Shortcuts
+	void Copy() {
+
+	}
+
+	void Cut() {
+
+	}
+
+	void Paste() {
+
+	}
+
+	void Undo() {
+
+	}
+
+	void Redo() {
+
+	}
+	#endregion
+
+	#region Carets
+	float lastToggleTime = 0;
+	bool caretsOn = false;
+	bool caretsForceUpdate = false;
+	//string debugcarets;
+	void UpdateCarets() {
+		if (!((Time.time - lastToggleTime > cfg.CursorBlinkRateMs / 1000f)
+			|| caretsForceUpdate)) return;
+		caretsForceUpdate = false;
+		lastToggleTime = Time.time;
+
+		caretsOn = !caretsOn;
+		
+		Carets.Update(caretsOn);
+
+		//debugcarets = string.Join(", ", Carets.Carets.Select(c => $"c({c.tail}-{c.head}"));
+	}
+
+	protected void ForceCaretsUpdate(){
+		caretsForceUpdate = true;
+	}
+
+	protected void ForceCaretOnState_Update() {
+		caretsOn = false; // toggles to true
+		ForceCaretsUpdate();
+	}
+
+	// todo fix the thing where carets on the top and left edge
+	// yea figure it out lol
+	// im not fixing it for now cuz its fine with the bug
+
+	// only allah knows how this works now cuz i didnt bother to explain it
+	// and it worked so im using it now
+	// nvm it was the text not updating and giving \0s causing the headpos to be 0 0
+	// weird ass shit fixed now tho and im just gonna stick with this one
+	// next commit its replacing the old method and getting optimized
+	void KeepMainCaretOnScreen() {
+		if (Carets.Carets.Count == 0) return;
+
+		var head = Carets.Carets[0];
+		Vector2 pos = head.HeadPos;
 
 		int count = 0;
 		var offset = CheckCursorOffsets(pos);
 		while (offset != (0, 0)) {
-			if (offset.x > 0) scroll.ManuallyScrollX(charWidth);
-			else if (offset.x < 0) scroll.ManuallyScrollX(-charWidth);
-			if (offset.y > 0) scroll.ManuallyScrollY(allLinesHeight);
-			else if (offset.y < 0) scroll.ManuallyScrollY(-allLinesHeight);
+			if (offset.x > 0)		MainEditorScrollRect.ManuallyScrollX(CharSize.x);
+			else if (offset.x < 0)	MainEditorScrollRect.ManuallyScrollX(-CharSize.x);
+			if (offset.y > 0)		MainEditorScrollRect.ManuallyScrollY(CharSize.y);
+			else if (offset.y < 0)	MainEditorScrollRect.ManuallyScrollY(-CharSize.y);
 
 			offset = CheckCursorOffsets(pos);
 
-			if (++count > Config.ScriptEditor.MaxCaretViewRecoverySteps) break; // shouldn't be THIS off screen hopefully :(
+			if (++count > cfg.MaxCaretViewRecoverySteps) break; // shouldn't be THIS off screen hopefully :(
 		}
 	}
 
-	public Vector2 LocalPositionOfCaretHead(Caret c) {
-		float x = c.LocalX;
-		float y = allLinesHeight * c.head.y;
-
-		return new(x, y);
-	}
-
 	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
-		pos -= scroll.CurrentScrollAmount();
+		pos -= MainEditorScrollRect.CurrentScrollAmount();
 
-		float xmarg = Config.ScriptEditor.CursorScreenMargin;
-		float ymarg = Config.ScriptEditor.CursorScreenMargin;
+		float marg = cfg.CursorScreenMargin;
 
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
 		(
-			pos.x < xmarg * charWidth
+			pos.x < marg
 				? -1
 			: (
-			pos.x > contentMask.rect.width - xmarg * charWidth
+			pos.x > CodeMask.rect.width - marg
 				? 1
 			: 0)
 		,
-			pos.y < ymarg * allLinesHeight
+			pos.y < marg
 				? -1
 			: (
-			pos.y > contentMask.rect.height - ymarg * allLinesHeight
+			pos.y > CodeMask.rect.height - marg
 				? 1
 			: 0)
 		);
 	}
-	#endregion
 
-	#region Mouse Input
-
-	bool lastDragState = false;
-	void HandleMouseNavigation() {
-		Vector2Int? mousePos = CurrentMouseHoverUnclamped();
-		if (!mousePos.HasValue) {
-			if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
-				// deselect if click outside
-				ResetCarets();
+	public class CaretHandler {
+		public class Caret {
+			internal CaretHandler handler;
+			internal ScriptEditorRewritten main;
+			public int head; // if this == content.length, then it is at the end
+			public int tail;
+			internal RectTransform rt;
+			internal List<RectTransform> selBoxes = new();
+			float targetX = -1;
+			
+			public struct Position {
+				public int I;
+				public Position(int i) => I = i;
+				public static implicit operator int(Position pos) => pos.I;
+				public static implicit operator Position(int i) => new(i);
+				public void CompareTo(int other) => I.CompareTo(other);
 			}
 
-			return;
-		}
+			// caret centers
+			internal Vector2? customTail;
+			internal Vector2? customHead;
 
-		DetectExtraClicks(mousePos.Value);
-		HandleDrag(ClampPosition(mousePos.Value), mousePos.Value);
+			internal Vector2 HeadPos =>
+				isCustom
+				? customHead.Value :
+				main.CharInfo(head).bottomLeft;
 
-		if (lastDragState != dragging)
-			OnDragStateChanged?.Invoke(dragging);
-		lastDragState = dragging;
-	}
 
-	float lastClickTime;
-	Vector2Int lastClickPos;
-	int clicksInARow = 0;
-	void DetectExtraClicks(Vector2Int pos) {
-		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
-			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000f &&
-			lastClickPos == pos) {
-				clicksInARow++;
-			} else {
-				clicksInARow = 1;
+			internal bool isCustom => customTail.HasValue || customHead.HasValue;
+
+			void Clamp() {
+				tail = Mathf.Clamp(tail, 0, main.Content.Length);
+				head = Mathf.Clamp(head, 0, main.Content.Length);
 			}
 
-			lastClickTime = Time.time;
-			lastClickPos = pos;
-		}
-	}
-
-	(int startInc, int endExc) DoubleClickWordAt(Vector2Int pos) {
-		if (string.IsNullOrWhiteSpace(lines[pos.y].Content)) return (0, 0); // index errors everywhere
-
-		var colors = lines[pos.y].ColorsOriginal; // does this store a reference to it or copy the array?
-		string line = lines[pos.y].Content;
-
-		// custom case for symbols
-		// returns just that symbol
-		//if (pos.x < colors.Length && colors[pos.x] == SyntaxHighlighter.Types.symbol)
-		//	return (pos.x, pos.x + 1);
-
-		static int chartype(char c) {
-			if (char.IsLetterOrDigit(c)) return 0;
-			if (char.IsSymbol(c)) return 1;
-			if (char.IsWhiteSpace(c)) return 2;
-			return -1;
-		}
-
-		var findColorType =
-			pos.x < colors.Length
-			? colors[pos.x]
-			: SyntaxHighlighter.Types.unassigned;
-
-		int findCharType =
-			pos.x < colors.Length
-			? chartype(line[pos.x])
-			: -1;
-
-		// search
-		int left = pos.x - 1;
-		while (left > 0 &&
-			colors[left] == findColorType &&
-			chartype(line[left]) == findCharType)
-			left--;
-
-		// honestly idk either its just made to work
-		if (left < 0 || chartype(line[left]) != findCharType) left++;
-
-		int right = pos.x;
-		while (right < colors.Length &&
-			colors[right] == findColorType &&
-			chartype(line[right]) == findCharType)
-			right++;
-		//if (right == colors.Length) right--;
-
-		return (left, right);
-	}
-
-	bool dragging = false;
-	bool dragStartedWithAlt = false;
-	Vector2Int dragStart;
-	Vector2Int dragStartUnclamped;
-	bool boxCleared = false;
-	void HandleDrag(Vector2Int pos, Vector2Int posUnclamped) {
-		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) { // down
-			history.RecordChange(); // before cursor moves
-			history.UpdateLastCarets();
-
-			dragging = true;
-
-			if (!Conatrols.Keyboard.Modifiers.Shift) {
-				dragStart = pos;
-				dragStartUnclamped = posUnclamped;
-
-				dragStartedWithAlt = Conatrols.Keyboard.Modifiers.Alt;
+			int[] SelectedLines {
+				get {
+					int tLine = main.CharInfo(tail).lineNumber;
+					int hLine = main.CharInfo(head).lineNumber;
+					return Enumerable.Range(
+						Mathf.Min(tLine, hLine),
+						Mathf.Max(tLine, hLine) - Mathf.Min(tLine, hLine) + 1
+					);
+				}
 			}
 
-			if (Conatrols.Keyboard.Modifiers.Ctrl && Conatrols.Keyboard.Modifiers.Alt) {
-				// add more carets
-				AddNewCaret(pos, pos);
-				headCaretI = carets.Count - 1;
-				tailCaretI = headCaretI;
-			} else { // single select
-				SetSingleCaret(pos, pos);
-				headCaretI = 0;
-				tailCaretI = 0;
-			}
-		} else
-		if (Conatrols.IM.Mouse.Left.WasReleasedThisFrame()) {
-			history.UpdateLastCarets();
+			// trigger redraw in the handler 
+			internal void Move(Vector2Int amount, bool shift, bool ctrl) {
+				// y movement overrides x
+				if (amount.y != 0) {
+					if (main.CharInfo(head).lineNumber == 0
+						&& amount.y > 0) return;
+					if (main.CharInfo(head).lineNumber == main.NumLines - 1
+						&& amount.y < 0) return;
 
-			dragging = false;
-		}
-		if (dragging) {
-			if (Conatrols.Keyboard.Modifiers.Ctrl &&
-				Conatrols.Keyboard.Modifiers.Shift &&
-				Conatrols.Keyboard.Modifiers.Alt)
-				return; // do nothing with all 3 
+					// attempt to move to target x
+					Vector2 targetPos = new(
+						targetX,
+						main.LineInfo(main.CharInfo(head).lineNumber - amount.y).CenterY()
+					);
 
-			bool doubleClickCondition =
-				Conatrols.Keyboard.Modifiers.Ctrl &&
-				!Conatrols.Keyboard.Modifiers.Alt; // dont want during adding
-
-			bool boxCondition = // otherwise overrides ctrl alt adding news, TODO fix this later idk
-				Conatrols.Keyboard.Modifiers.Alt && // alt dragging
-				!Conatrols.Keyboard.Modifiers.Ctrl;
-
-			if (!boxCondition && !boxCleared) {
-				// box stop
-				SetSingleCaret(pos, dragStart);
-				headCaretI = 0;
-				tailCaretI = 0;
-
-				boxCleared = true;
-			}
-
-			if (boxCondition) {
-				ResetCarets();
-
-				Vector2Int boxStart =
-					dragStartedWithAlt
-					? dragStartUnclamped
-					: dragStart;
-
-				int startLine = boxStart.y;
-				int startCol = ColumnOfPosition(boxStart);
-
-				int endLine = posUnclamped.y;
-				int endCol = ColumnOfPosition(posUnclamped);
-
-				bool down = endLine < startLine;
-				if (down)
-					(endLine, startLine) = (startLine, endLine);
-
-				List<(Vector2Int head, Vector2Int tail)> newCarets = new();
-				for (int i = startLine; i <= endLine; i++) {
-					Vector2Int head = new(PositionOfColumn(endCol, i), i);
-					Vector2Int tail = new(PositionOfColumn(startCol, i), i);
-
-					newCarets.Add((head, tail));
+					head = main.SS2I(main.L2G(targetPos));
+					return;
 				}
 
-				boxCleared = false;
-
-				AddMultipleCarets(newCarets);
-
-				tailCaretI = newCarets.Count - 1;
-				headCaretI = 0;
-
-				if (!down)
-					(tailCaretI, headCaretI) = (headCaretI, tailCaretI);
-
-				boxEditing = true;
-			} else if (clicksInARow == 1 && !doubleClickCondition) {
-				// normal dragging
-				SetCurrentCaret(pos, dragStart);
-				carets[headCaretI].DesiredCol = ColumnOfPosition(pos);
-			} else
-			if (clicksInARow == 2 || doubleClickCondition) {
-				(int dsS, int dsE) = DoubleClickWordAt(dragStart);
-				(int deS, int deE) = DoubleClickWordAt(pos);
-
-				Vector2Int start;
-				Vector2Int end;
-
-				if (dragStart.y == pos.y) {
-					start = new(Mathf.Max(dsE, deE), pos.y);
-					end = new(Mathf.Min(dsS, deS), pos.y);
-
-					if (dragStart.x > pos.x)
-						(start, end) = (end, start); // lol theres gotta be a better way but it works
-				} else
-				if (dragStart.y < pos.y) {
-					start = new(deE, pos.y);
-					end = new(dsS, dragStart.y);
-				} else {
-					start = new(deS, pos.y);
-					end = new(dsE, dragStart.y);
-				}
-
-				SetCurrentCaret(start, end);
-			} else {
-				Vector2Int start;
-				Vector2Int end;
-
-				if (dragStart.y == pos.y) {
-					start = new(lines[pos.y].Content.Length, pos.y);
-					end = new(0, pos.y);
-				} else
-				if (dragStart.y < pos.y) {
-					start = new(lines[pos.y].Content.Length, pos.y);
-					end = new(0, dragStart.y);
-				} else {
-					start = new(0, pos.y);
-					end = new(lines[dragStart.y].Content.Length, dragStart.y);
-				}
-
-				SetCurrentCaret(start, end);
-			}
-		}
-
-		scroll.enabled = !dragging; // hacky fix to dragging the scrollrect, just stops it. 
-	}
-
-	void SetCurrentCaret(Vector2Int head, Vector2Int tail) {
-		carets[headCaretI].UpdatePos(head, tail);
-	}
-
-	// returns in char space
-	Vector2Int? CurrentMouseHoverUnclamped() {
-		int line = FindLineHoveringOver();
-		if (line == -1) return null;
-
-		int index = GetCharIndexAtWorldSpacePositionUnclamped(line);
-		if (index == -1) return null;
-
-		return new(index, line);
-	}
-
-	int FindLineHoveringOver() {
-		if (lines == null || lines.Count == 0 || lines[0].Components.LineContent == null) return -1;
-
-		for (int i = 0; i < lines.Count; i++) {
-			RectTransform contents = lines[i].Components.LineContent;
-			//if (UIHovers.CheckFirstAllowing(contents, lineContentVerticalLayout.transform)) 
-			if (UIHovers.CheckIgnoreOrder(contents))
-				return i;
-		}
-		return -1;
-	}
-
-	// long ass name
-	int GetCharIndexAtWorldSpacePositionUnclamped(int line) {
-
-		// not sure why this happens but it just does idk
-		// ok this was broken before idk its fixed now??
-		if (!UIHovers.CheckFirstAllowing(lines[line].Components.LineContent, contentParent.transform))
-			//if (!UIHovers.CheckIgnoreOrder(lines[line].Components.LineContent))
-			return -1;
-
-		RectTransform rt = lines[line].Components.LineContent;
-
-		Vector3[] corners = new Vector3[4];
-		rt.GetWorldCorners(corners);
-
-		int contentsIndex = UIHovers.hovers.IndexOf(rt);
-
-		RaycastResult result = UIHovers.results[contentsIndex];
-
-		Vector2? uv = HF.UVOfHover(result);
-		if (!uv.HasValue) return -1;
-		float t = uv.Value.x;
-
-		// determine which t is closest to real t
-		List<float> ts = lines[line].IndexTs;
-		float closestDist = float.PositiveInfinity;
-		int charIndex = -1;
-		for (int i = 0; i < ts.Count; i++) {
-			float dist = Mathf.Abs(ts[i] - t);
-			if (dist < closestDist) {
-				closestDist = dist;
-				charIndex = i;
-			}
-		}
-
-		return charIndex;
-	}
-
-	#endregion
-
-	#region Keyboard Navigation
-
-	bool boxEditing = false;
-	void HandleKeyboardNavgation() {
-		if (carets.Count == 0) return;
-
-		if (Conatrols.IsPressed(Key.Escape))
-			Escape();
-
-		// normal arrow keys only for now, move to seperate if needed
-		Vector2Int movement = Vector2Int.zero;
-		if (Conatrols.IsUsed(Key.UpArrow)) movement.y--;
-		if (Conatrols.IsUsed(Key.DownArrow)) movement.y++;
-		if (Conatrols.IsUsed(Key.LeftArrow)) movement.x--;
-		if (Conatrols.IsUsed(Key.RightArrow)) movement.x++;
-
-		if (movement.sqrMagnitude == 0) return;
-
-		if (Conatrols.Keyboard.Modifiers.Shift &&
-			Conatrols.Keyboard.Modifiers.Alt)
-			boxEditing = true;
-		if (!Conatrols.Keyboard.Modifiers.Shift ||
-			Conatrols.Keyboard.Modifiers.Ctrl)
-			boxEditing = false;
-
-		if (Conatrols.Keyboard.Modifiers.Ctrl &&
-			movement.y != 0) {
-			scroll.ManuallyScrollY(Mathf.Sign(movement.y) * allLinesHeight);
-			return;
-		}
-
-		if (boxEditing) {
-			HandleKeyboardBox(movement);
-			return;
-		}
-		foreach (Caret c in carets) {
-			if (Conatrols.Keyboard.Modifiers.Ctrl &&
-				Conatrols.Keyboard.Modifiers.Shift &&
-				Conatrols.Keyboard.Modifiers.Alt)
-				continue; // do nothing with all 3
-
-			// this logic is sooooo fucked
-
-			if (Conatrols.Keyboard.Modifiers.Alt &&
-				!Conatrols.Keyboard.Modifiers.Ctrl) {
-				AltMove(c, movement);
-			} else {
-				c.MoveHead(movement);
-			}
-
-			if (Conatrols.Keyboard.Modifiers.Ctrl) {
-				(int start, int end) = DoubleClickWordAt(new(
-					Mathf.Max(0, c.head.x - (movement.x > 0 ? 1 : 0)),
-					c.head.y));
-
-				c.SetHead(new(
-					movement.x > 0
-					? end
-					: start, c.head.y));
-			}
-
-
-			if (!Conatrols.Keyboard.Modifiers.Shift) {
-				c.MatchTail();
-			}
-
-			c.Update();
-			c.ResetBlink();
-		}
-
-		KeepHeadCaretHeadOnScreen();
-	}
-
-	void AltMove(Caret c, Vector2Int movement) {
-		if (movement.x != 0) {
-			//if (c.HasSelection) {
-			//HorizontalMoveSelection(c, movement);
-			//} else {
-			int pos =
-				movement.x > 0
-				? lines[c.head.y].Content.Length // end if right
-				: 0; // start if left
-
-			c.SetHead(new(pos, c.head.y));
-			//}
-		}
-
-		if (movement.y < 0 && c.head.y > 0) {
-
-			// swap contents
-			(lines[c.head.y].Content, lines[c.head.y - 1].Content) =
-				(lines[c.head.y - 1].Content, lines[c.head.y].Content);
-
-			UpdateLine(c.head.y);
-			UpdateLine(c.head.y - 1);
-
-			// move with
-			c.head.y--;
-			c.MatchTail();
-		} else
-		if (movement.y > 0 && c.head.y < lines.Count - 1) {
-
-			// swap contents
-			(lines[c.head.y].Content, lines[c.head.y + 1].Content) =
-				(lines[c.head.y + 1].Content, lines[c.head.y].Content);
-
-			UpdateLine(c.head.y);
-			UpdateLine(c.head.y + 1);
-
-			// move with
-			c.head.y++;
-			c.MatchTail();
-		}
-	}
-
-	// if you like suffering, then make this work. 
-	void HorizontalMoveSelection(Caret c, Vector2Int movement) {
-
-		// move left and right
-		// make it go between lines if you really wanna deal with those bugs
-
-		// im doing this a dumb way, more bugs. but . idk im lazy
-
-		bool forward = movement.x > 0;
-		int shift = forward ? 1 : -1; // add ctrl and whatever other bullshit later
-
-		if (c.head.y == c.tail.y) {
-			Line thisLine = lines[c.head.y];
-
-			int minX = Mathf.Min(c.head.x, c.tail.x);
-			int maxX = Mathf.Max(c.head.x, c.tail.x);
-
-			// stop at ends 
-			if ((movement.x > 0 && c.head.y == lines.Count - 1 && maxX >= thisLine.Content.Length - 1) ||
-				(movement.x < 0 && c.head.y == 0 && minX <= 0))
-				return;
-
-			(string shiftedString, bool overflows, string overRegion) =
-				HF.ShiftRegion(thisLine.Content, minX, maxX - 1, shift);
-
-			thisLine.Content = shiftedString;
-			UpdateLine(c.head.y);
-
-			bool tailBehind = c.tail.x < c.head.x;
-
-			// yeah fuck never nesting we stacking nests to the ceiling rn
-			// honestly im too lazy to make the code look good rn
-			// sooo easily dryable tho
-			if (overflows) {
-				if (forward) {
-					Line nextLine = lines[c.head.y + 1];
-					nextLine.Content = nextLine.Content.Insert(0, overRegion);
-					UpdateLine(c.head.y + 1);
-
-					if (tailBehind) {
-						c.head.x = overRegion.Length;
-						c.head.y++;
-
-						c.tail.x += shift;
+				if (amount.x != 0) {
+					if (head == tail || shift) {
+						if (!ctrl) {
+							head += amount.x;
+						} else {
+							int otherSide = main.EndIndexOfSameType(head, amount.x);
+
+							head = otherSide;
+						}
 					} else {
-						c.tail.x = 1;
-						c.tail.y++;
-
-						c.head.x += shift;
+						head =
+							amount.x > 0
+							? Mathf.Max(head, tail)
+							: Mathf.Min(head, tail);
 					}
+
+					Clamp();
+
+					RememberTargetX();
+				}
+			}
+
+			internal void RememberTargetX() {
+				targetX = main.CharInfo(head).bottomLeft.x;
+			}
+
+			internal void MatchTail() {
+				tail = head;
+			}
+
+			#region Drawing
+
+			public void Draw(bool caretOn) {
+				if (isCustom) {
+					DrawCustom(caretOn);
+					return;
+				}
+
+				Clamp();
+
+				DrawCaret(caretOn);
+				DrawSelBoxes();
+			}
+
+			void DrawCustom(bool draw) {
+				MakeSelBox(
+					main.G2L(customTail.Value + new Vector2(0, main.CharSize.y / 2f)),
+					main.G2L(customHead.Value - new Vector2(0, main.CharSize.y / 2f)));
+
+				if (!draw) return;
+
+				DrawCaret(main.G2L(customHead.Value));
+			}
+
+			void DrawCaret(bool draw){
+				if (!draw) return;
+
+				DrawCaret(main.CharInfo(head).CenterLeft());
+			}
+
+			void DrawCaret(Vector2 atLocal) {
+				// assuming theres at least 1 line
+
+				var size = new Vector2(CaretWidth, main.CharSize.y);
+
+				rt = handler.MakeImageInCode(
+					"Caret",
+					CaretColor,
+					atLocal - size / 2f,
+					atLocal + size / 2f
+				);
+			}
+
+			internal void DestroyCaret() {
+				if (rt != null) {
+					Destroy(rt.gameObject);
+					rt = null;
+				}
+			}
+
+			void DrawSelBoxes() {
+				ClearSelBoxes();
+
+				if (head == tail) return;
+
+				// process assuming tail is behind head
+				bool swap = head < tail;
+				if (swap) (head, tail) = (tail, head);
+
+				// use ints for rounding and speed
+				int tailLN = main.CharInfo(tail).lineNumber;
+				int headLN = main.CharInfo(head).lineNumber;
+
+				if (tailLN == headLN) {
+					var LI = main.LineInfo(headLN);
+					MakeSelBox(
+						new(main.CharInfo(tail).bottomLeft.x, LI.descender), 
+						new(main.CharInfo(head).bottomLeft.x, LI.ascender));
 				} else {
-					Line prevLine = lines[c.head.y - 1];
-					prevLine.Content += overRegion;
-					UpdateLine(c.head.y - 1);
+					// assuming head is after tail now
+					List<(Vector2 bl, Vector2 tr)> CornerPairs = new();
 
-					if (tailBehind) {
-						c.tail.x = prevLine.Content.Length - overRegion.Length;
-						c.tail.y--;
+					// add obvious head and tail
+					var tailCI = main.CharInfo(tail);
+					var tailLI = main.LineInfo(tailCI.lineNumber);
+					CornerPairs.Add((
+						new(tailCI.bottomLeft.x,
+							tailLI.descender),
+						new(main.CharInfo(tailLI.lastCharacterIndex).topRight.x,
+							tailLI.ascender)));
 
-						c.head.x += shift;
-					} else {
-						c.head.x = prevLine.Content.Length - overRegion.Length;
-						c.head.y--;
+					var headCI = main.CharInfo(head);
+					var headLI = main.LineInfo(headCI.lineNumber);
+					float headBLx = main.CharInfo(headLI.firstCharacterIndex).bottomLeft.x;
+					CornerPairs.Add((
+						new(headBLx,
+							headLI.descender),
+						new(headCI.bottomLeft.x,
+							headLI.ascender)));
 
-						c.tail.x += shift;
+					// onto tricky ones
+					float lEdgeX = headBLx;
+					for (int line = tailLN + 1; line < headLN; line++) {
+						// hope i never have to deal with this again
+
+						// go from left edge to far right 
+						var lineinfo = main.LineInfo(line);
+
+						float ibLineBLy = lineinfo.descender;
+						
+						// i think this is the newline
+						// which is why we take TL
+						float ibLineTLx = main.CharInfo(lineinfo.lastCharacterIndex).topLeft.x;
+						float ibLineTLy = lineinfo.ascender;
+
+						CornerPairs.Add((
+							new(lEdgeX, ibLineBLy),
+							new(ibLineTLx, ibLineTLy)
+						));
+					}
+
+					// HANK!!!! DONT ABBREVIATE CORNER PAIRS!!!! NOOOO
+					foreach (var (bl, tr) in CornerPairs) {
+						MakeSelBox(bl, tr);
 					}
 				}
 
-				c.WrapHead();
-				c.WrapTail();
-
-			} else {
-				c.head.x += shift;
-				c.tail.x += shift;
+				// swap back
+				if (swap) (tail, head) = (head, tail);
 			}
-		} else {
-			string selectedFullLines = string.Join("", c.boxes.Select(b => lines[b.line].Content));
-			List<int> lineLengths = c.boxes.Select(b => lines[b.line].Content.Length).ToList();
+			
+			void ClearSelBoxes() {
+				if (selBoxes.Count == 0) return;
 
-			int fullStartI = c.boxes[0].start;
-			int fullEndI =
-				selectedFullLines.Length - 1 -
-				(lines[c.boxes[^1].line].Content.Length - c.boxes[^1].end);
-
-			string selection = selectedFullLines[fullStartI..(fullEndI + 1)];
-
-			(string shiftedString, bool overflows, string overRegion) =
-				HF.ShiftRegion(selectedFullLines, fullStartI, fullEndI, shift);
-
-			if (!overflows) {
-				int index = 0;
-				for (int i = 0; i < c.boxes.Count; i++) {
-					SelectionBox box = c.boxes[i];
-					lines[box.line].Content = shiftedString[index..(index + lineLengths[i])];
-					index += lineLengths[i];
+				foreach (var box in selBoxes) {
+					Destroy(box.gameObject);
 				}
 
-				UpdateLine(c.boxes[0].line);
-
-				c.head.x += shift;
-				c.tail.x += shift;
-
-				c.WrapHead();
-				c.WrapTail();
-			} else {
-
+				selBoxes.Clear();
 			}
-		}
-	}
 
-	void Escape() {
-		Vector2Int headOfHead = carets[headCaretI].head;
-		SetSingleCaret(headOfHead, headOfHead);
-		headCaretI = 0;
-		tailCaretI = 0;
-	}
-
-	void HandleKeyboardBox(Vector2Int movement) {
-		Caret headCaret = carets[headCaretI];
-		Caret tailCaret = carets[tailCaretI];
-
-		int targetHeadCol = ColumnOfPosition(headCaret.head);
-		int targetTailCol = ColumnOfPosition(tailCaret.tail);
-
-		if (movement.x != 0) {
-			targetHeadCol = ColumnOfPosition(headCaret.head + movement);
-
-			foreach (Caret c in carets)
-				c.SetHead(new(
-					PositionOfColumn(targetHeadCol, c.head.y),
-					c.head.y));
-		}
-
-		if (movement.y != 0) {
-			if (headCaret.head.y == lines.Count - 1) return;
-
-			int currentBoxVerticalDirection = // hope this is readable enough
-				headCaret.head.y == tailCaret.head.y
-				? 0
-				: (
-					headCaret.head.y < tailCaret.head.y
-					? -1
-					: 1
+			void MakeSelBox(Vector2 from, Vector2 to) {
+				var box = handler.MakeImageInCode(
+					"Selection Box",
+					cfg.SelectionColor,
+					from, to
 				);
 
-			// simplify later, TODO DRY THIS!!!!!
-			if (movement.y > 0) { // going up
-				switch (currentBoxVerticalDirection) {
-					case 0: // add go up from head
-					case 1:
-						int newY = headCaret.head.y + movement.y;
-						Vector2Int head = new(
-							PositionOfColumn(targetHeadCol, newY),
-							newY);
+				selBoxes.Add(box);
+			}
+			#endregion
 
-						Vector2Int tail = new(
-							PositionOfColumn(targetTailCol, newY),
-							newY);
-
-						AddNewCaret(head, tail);
-						headCaretI++;
-						break;
-					case -1: // remove head to go up
-						RemoveCaret(headCaretI);
-						headCaretI--;
-						break;
+			#region Typing
+			internal void Type(string s) {
+				if (head == tail) {
+					main.Content = main.Content.Insert(head, s);
+				} else {
+					main.Content = HF.ReplaceSection(
+						main.Content,
+						Mathf.Min(head, tail),
+						Mathf.Max(head, tail),
+						s
+					);
 				}
-			} else { // going down
-				switch (currentBoxVerticalDirection) {
-					case 0:
-					case -1:
-						int newY = headCaret.head.y + movement.y;
-						Vector2Int head = new(
-							PositionOfColumn(targetHeadCol, newY),
-							newY);
 
-						Vector2Int tail = new(
-							PositionOfColumn(targetTailCol, newY),
-							newY);
+				head++;
+				MatchTail();
+			}
 
-						AddNewCaret(head, tail);
-						headCaretI++;
-						break;
-					case 1:
-						RemoveCaret(headCaretI);
-						headCaretI--;
-						break;
+			internal void Backspace(bool ctrl) {
+				if (head != tail) {
+					// this works the same lamo
+					Type("");
+
+					head = Mathf.Min(head, tail) - 1;
+					MatchTail();
+					return;
+				}
+
+				if (!ctrl) {
+					main.Content = main.Content.Remove(head - 1, 1);
+					head--;
+					MatchTail();
+				} else {
+
 				}
 			}
-		}
 
-		foreach (Caret c in carets) {
-			c.ResetBlink();
-			c.Update();
-		}
-	}
+			// normal- line below with break
+			// ctrl- line above no break
+			// shift- line below, no break this
+			// ctrl+shift- line above with break
+			internal void Enter(bool ctrl, bool shift) {
+				bool down = !ctrl;
+				bool sever = ctrl == shift; // nor
 
-	#endregion
+				int indent = main.LineIndentation(main.CharInfo(head).lineNumber);
+				string tabs = new('\t', indent);
 
-	#region Text Editing
-	// aw hell nah i really need to get this into a separate class :((((((((((
-	bool lastAnyMeetsCriteria = false;
-	float lastTypeTime = 0;
-	bool pauseRecorded = false;
-	void HandleTyping() {
-		bool good = GoodToType();
+				if (down && sever) {
+					main.Content = main.Content.Insert(head, '\n' + tabs);
 
-		if (good) {
-			//print($"good");
-			var presses = Conatrols.Keyboard.Presses;
+					head += indent + 1;
+				} else
+				if (down && !sever) {
+					int NLPos = main.LineInfo(main.CharInfo(head).lineNumber).lastCharacterIndex;
+					main.Content = main.Content.Insert(NLPos + 1, tabs + '\n');
 
-			static bool criteria(char c) => char.IsLetterOrDigit(c) || c == ' ';
+					head = NLPos + 1 + indent;
+				} else 
+				if (!down && sever) {
+					int FCPos = main.LineInfo(main.CharInfo(head).lineNumber).firstCharacterIndex;
+					int NLPos = main.LineInfo(main.CharInfo(head).lineNumber).lastCharacterIndex;
+					if (main.Content[NLPos] != '\n') NLPos++; // end
+					string section = main.Content[head..NLPos];
+					main.Content = main.Content.Remove(head, NLPos - head)
+						.Insert(FCPos, tabs + section + '\n');
 
-			// fuck performance im done with this code
-			bool anyCharKeysPressed = presses.Any(press =>
-				Conatrols.Keyboard.All.CharacterKeys.Contains(press));
+					head = FCPos + indent;
+				} else
+				if (!down && !sever) {
+					int FCPos = main.LineInfo(main.CharInfo(head).lineNumber).firstCharacterIndex;
+					main.Content = main.Content.Insert(FCPos, tabs + '\n');
 
-			bool anyMeetsCriteria =
-				presses.Any(press =>
-				Conatrols.Keyboard.All.CharacterKeys.Contains(press) && // early escape prevent keyerror
-				criteria(
-					Conatrols.Keyboard.Modifiers.Shift
-					? Conatrols.Keyboard.All.KeyShiftedMapping[press]
-					: Conatrols.Keyboard.All.KeyCharMapping[press]));
+					head = FCPos + indent;
+				}
 
-			if (anyCharKeysPressed) {
-				if (anyMeetsCriteria != lastAnyMeetsCriteria)
-					history.RecordChange();
-
-				lastAnyMeetsCriteria = anyMeetsCriteria;
+				MatchTail();
 			}
 
-			//print($"any {anyMeetsCriteria} lkas {lastAnyMeetsCriteria} anychar {anyCharKeysPressed}");
+			internal void Tab(bool shift) {
+				if (!shift) {
+					Type("\t"); // functionally the same
+					return;
+				}
 
-			foreach (Caret c in carets) {
-				HandleCaretTyping(c);
-			}
+				var sel = SelectedLines;
+				Array.Reverse(sel);
 
-			KeepHeadCaretHeadOnScreen();
-			lastTypeTime = Time.time;
-			pauseRecorded = false;
-		}
+				int tabsDeleted = 0;
+				foreach (int li in sel) {
+					int start = main.LineInfo(li).firstCharacterIndex;
+					char first = main.Content[start];
 
-		if (Time.time - lastTypeTime > Config.ScriptEditor.NewHistoryPauseThresholdMs / 1000f &&
-			!pauseRecorded) {
-			history.RecordChange();
-			pauseRecorded = true;
-		}
-	}
+					if (first == '\t') {
+						main.Content = main.Content.Remove(start, 1);
+						tabsDeleted++;
+					}
+				}
 
-	bool GoodToType() {
-		if (carets.Count == 0) return false;
-		if (Conatrols.Keyboard.Presses.Count == 0) return false;
-
-		bool shortcutPressed =
-			(Conatrols.Keyboard.Modifiers.Ctrl ||
-			Conatrols.Keyboard.Modifiers.Alt) &&
-			Conatrols.Keyboard.Presses.All(
-				k => Conatrols.Keyboard.All.CharacterKeys.Contains(k) ||
-				Conatrols.Keyboard.All.Modifiers.Contains(k));
-
-		if (shortcutPressed)
-			return false;
-
-		// standalone shift check
-		if (Conatrols.Keyboard.Modifiers.Shift &&
-			!Conatrols.Keyboard.Presses.Any(
-				k => Conatrols.Keyboard.All.CharacterKeys.Contains(k)))
-			return false;
-
-		return Conatrols.Keyboard.Presses.All(
-			k => 
-				Conatrols.Keyboard.All.TextKeys.Contains(k) || 
-				Conatrols.Keyboard.All.Modifiers.Contains(k));
-	}
-
-	void HandleCaretTyping(Caret c) {
-		Line line = lines[c.head.y];
-
-		// force stop dragging;
-		dragging = false;
-
-		// deleters
-		if (c.HasSelection)
-			DeleteSelection(c, line);
-
-		else if (Conatrols.IsUsed(Key.Backspace))
-			Backspace(c, line);
-
-		else if (Conatrols.IsUsed(Key.Delete))
-			Delete(c, line);
-
-		line = lines[c.head.y];
-		
-		// adders
-		if (Conatrols.IsUsed(Key.Enter)) {
-			bool splitText = !Conatrols.Keyboard.Modifiers.Shift;
-			bool addDownwards = !Conatrols.Keyboard.Modifiers.Ctrl;
-
-			Enter(c, line, splitText, addDownwards);
-
-			history.RecordChange(); // after adding
-		} else 
-		if (Conatrols.IsUsed(Key.Tab))
-			Tab(c, line);
-
-		else
-			NormallyType(c, line);
-	}
-
-	void DeleteSelection(Caret c, Line line) {
-		// removes the selection. 
-
-		if (c.IsSingleWholeLine) {
-			DeleteWholeLine(c);
-			return;
-		} else
-		if (c.head.y == c.tail.y) {
-
-			int start = Mathf.Min(c.head.x, c.tail.x);
-			int end = Mathf.Max(c.head.x, c.tail.x);
-
-			if (start >= line.Content.Length) {
-				//PadToIndex(start, c.head.y, line);
-				// ok so this is kinda useless and breaks shitfuck everything. lets not use it? maybe?
-
-				// js set the position and match gng :(
-				c.head.x = start;
-				c.MatchTail();
-
-				return;
-
-			} else if (end >= line.Content.Length) {
-				line.Content = HF.RemoveSection(line.Content, start, line.Content.Length);
-			} else {
-				line.Content = HF.RemoveSection(line.Content, start, end);
-			}
-
-			c.head.x = start;
-
-		} else {
-			var boxes = c.boxes; // this MIGHT just help IDK
-
-			// remove first line end
-			Line sLine = lines[boxes[0].line];
-			sLine.Content = HF.RemoveSection(sLine.Content, boxes[0].start, boxes[0].end);
-
-			// remove last line start 
-			Line eLine = lines[boxes[^1].line];
-			eLine.Content = HF.RemoveSection(eLine.Content, boxes[^1].start, boxes[^1].end);
-
-
-			// put cursor in right place
-			c.SetHead(new(lines[boxes[0].line].Content.Length, boxes[0].line));
-
-			// add end to start
-			lines[boxes[0].line].Content +=
-				lines[boxes[^1].line].Content;
-
-			// delete the floating last line 
-			DeleteLine(boxes[^1].line);
-
-			// delete in between contents 
-			for (int i = boxes.Count - 1; i >= 0; i--) {
-				var box = boxes[i];
-
-				if (box.fullLine) {
-					DeleteLine(box.line);
+				if (head > tail) {
+					head -= tabsRemoved;
+					tail--;
+				} else{
+					head--;
+					tail -= tabsRemoved;
 				}
 			}
+			#endregion
 		}
 
-		UpdateLine(c.head.y);
+		public ScriptEditorRewritten Main;
+		public List<Caret> Carets = new();
+		private readonly List<Transform> Objects = new();
 
-		c.ResetBlink();
-		c.MatchTail();
-		c.Update();
-	}
-
-	void NormallyType(Caret c, Line line) {
-		string contentBefore = line.Content;
-
-		// no ctrl or alt!! commands... and and idk
-		if (Conatrols.Keyboard.Modifiers.Ctrl ||
-			Conatrols.Keyboard.Modifiers.Alt) return;
-
-		string toType = "";
-		foreach (Key k in Conatrols.Keyboard.Presses) {
-			bool keyIsChar = Conatrols.Keyboard.All.CharacterKeys.Contains(k);
-			if (!keyIsChar) continue;
-
-			if (Conatrols.Keyboard.Modifiers.Shift) {
-				toType += Conatrols.Keyboard.All.KeyShiftedMapping[k];
-			} else {
-				toType += Conatrols.Keyboard.All.KeyCharMapping[k];
-			}
+		public void ClearCarets() {
+			Carets.Clear();
 		}
 
-		if (toType.Length == 0) return;
-
-		// type it
-		TypeAt(c, line, toType);
-
-		if (line.Content == contentBefore) return; // dont waste time
-
-		// update
-		UpdateLine(c.head.y);
-
-		c.ResetBlink();
-		c.MatchTail();
-		c.Update();
-	}
-
-	void TypeAt(Caret c, Line line, string toType) {
-		if (c.head.x <= line.Content.Length) {
-			line.Content = line.Content.Insert(c.head.x, toType);
-			c.head.x += toType.Length;
-		} else {
-			PadToIndex(c.head.x, c.head.y, line);
-			line.Content += toType;
-
-			c.head.x = line.Content.Length;
-		}
-	}
-
-	void PadToIndex(int index, int lineNum, Line line) {
-		bool useTabs = true; // TODO: figure this out sometime 
-
-		// actual TODO: figure out this stupid tabs thing? cuz i just cant figure out whats 
-		// wrong with it and spaces work just fine so
-		// im gonna keep using them 
-
-		if (useTabs) {
-			string extraIndent = IndentToPosString(line.Content.Length, index, lineNum);
-
-			line.Content += extraIndent;
-		} else {
-			int spacesToAdd = index - line.Content.Length;
-			line.Content += new string(' ', spacesToAdd);
-		}
-	}
-
-	void DeleteWholeLine(Caret c) {
-		int num = c.head.y;
-
-		c.head.y++;
-		c.Update();
-
-		DeleteLine(num);
-		UpdateLine(num - 1);
-
-		c.head.y--;
-		c.head.x = 0;
-		c.ResetBlink();
-		c.MatchTail();
-		c.Update();
-
-		return;
-	}
-
-	void Backspace(Caret c, Line line) {
-		if (c.head.x == 0) { // delete line
-							 // might switch to a SMARTER SYSTEM if it is needed later
-							 // maybe with actual newlines idk
-
-			int num = c.head.y;
-			if (num == 0) return;
-
-			// put the caret
-			c.head.y--;
-			c.head.x = lines[c.head.y].Content.Length;
-			c.MatchTail();
-			c.Update(); // force update before the line gets deleted
-
-			// append whatevers on this line onto previous
-			lines[num - 1].Content += line.Content;
-
-			// then delete the line
-			DeleteLine(num);
-
-			// this line needs to update
-			UpdateLine(num - 1);
-
-			return;
-		}
-
-		if (c.head.x >= line.Content.Length)
-			PadToIndex(c.head.x, c.head.y, line);
-
-		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			(int start, _) = DoubleClickWordAt(c.head - new Vector2Int(1, 0));
-			int end = c.head.x;
-			int length = end - start;
-			line.Content = line.Content.Remove(start, length);
-			c.head.x -= length;
-
-			history.RecordChange();
-		} else {
-			line.Content = line.Content.Remove(c.head.x - 1, 1);
-			c.head.x--;
-		}
-
-		// update
-		UpdateLine(c.head.y);
-
-		c.ResetBlink();
-		c.MatchTail();
-		c.Update();
-	}
-
-	void Delete(Caret c, Line line) {
-		if (c.head.x >= line.Content.Length) { // delete line
-
-			int num = c.head.y;
-			if (num == lines.Count - 1) return;
-
-			// pad to the caret since it might be past
-			PadToIndex(c.head.x, c.head.y, line);
-
-			// append prev line onto this
-			line.Content += lines[num + 1].Content;
-
-			// then delete the next line
-			DeleteLine(num + 1);
-
-			// update
-			UpdateLine(c.head.y);
-			c.ResetBlink();
-
-			return;
-		}
-
-		if (Conatrols.Keyboard.Modifiers.Ctrl) {
-			(_, int end) = DoubleClickWordAt(c.head);
-			int start = c.head.x;
-			int length = end - start;
-			line.Content = line.Content.Remove(start, length);
-		} else {
-			line.Content = line.Content.Remove(c.head.x, 1);
-		}
-
-		// update
-		UpdateLine(c.head.y);
-		c.ResetBlink();
-	}
-
-	void Enter(Caret c, Line line, bool splitText, bool addDownwards) {
-		// determine end contents and split
-		string endContents = "";
-		if (splitText) {
-			if (c.head.x >= line.Content.Length) {
-				PadToIndex(c.head.x, c.head.y, line);
-			} else {
-				endContents = line.Content[c.head.x..];
-				line.Content = line.Content[..c.head.x];
-			}
-			UpdateLine(c.head.y);
-		}
-
-		endContents = endContents.TrimStart(); // no spaces before
-
-		// match indent (uugh have to add smart block indents and stuff later with if and whatevnlksghlfk;sjg
-		int indentSpaces = IndentSpacesOfLine(line);
-		//print($"FUCK YOU {indentSpaces}");
-		string startIndent = IndentToColumnString(0, indentSpaces, c.head.y + 1);
-		endContents = endContents.Insert(0, startIndent);
-
-		bool addIndent = false;
-		if (addDownwards) {
-			c.head.y++;
-
-			// hacky check just to make it work i guess idk.
-			int index = line.Content.IndexOf(':');
-			addIndent =
-				index != -1
-				&& line.ColorsOriginal[index] == SyntaxHighlighter.Types.symbol
-				&& line.ColorsOriginal.Take(index)
-					.Any(t => t == SyntaxHighlighter.Types.func
-					|| t == SyntaxHighlighter.Types.type);
-
-			if (addIndent) {
-				endContents = "\t" + endContents;
-			}
-		}
-
-		Line newLine = InsertLine(endContents, c.head.y);
-
-		// place cursor
-		c.head.x = newLine.Content.Length - endContents.Length + startIndent.Length;
-		if (addIndent) c.head.x++;
-
-		// add ln
-		LineNumber newLN = GenerateNewNumber(lines.Count);
-		lineNumbers.Add(newLN);
-
-		UpdateLine(c.head.y);
-
-		RecalculateAll();
-
-		c.ResetBlink();
-		c.MatchTail();
-		c.Update();
-	}
-
-	void Tab(Caret c, Line line) {
-		if (Conatrols.Keyboard.Modifiers.Shift) {
-			// dedent entire line
-			string spaceIndent = new(' ', Config.Language.SpacesPerTab);
-
-			if (line.Content.StartsWith('\t'))
-				line.Content = line.Content[1..]; // tab dedent
-			else if (line.Content.StartsWith(spaceIndent))
-				line.Content = line.Content[Config.Language.SpacesPerTab..]; // spaces dedent
-
-		} else {
-			// normal add tab
-			TypeAt(c, line, "\t");
-		}
-
-		// update
-		UpdateLine(c.head.y);
-
-		c.ResetBlink();
-		c.MatchTail();
-		c.Update();
-	}
-	#endregion
-
-	#region Position Utils
-	public (RectTransform rt, float t) GetLocation(Vector2Int vec) {
-		return (
-			lines[vec.y].Components.LineContent,
-			lines[vec.y].IndexTs[vec.x]);
-	}
-
-	Vector2Int ClampPosition(Vector2Int pos) {
-		return new(Mathf.Clamp(pos.x, 0, lines[pos.y].Content.Length), pos.y);
-	}
-
-	public int ColumnOfPosition(Vector2Int pos) {
-		string line = lines[pos.y].Content;
-		if (pos.x >= line.Length)
-			return ColumnOfPositionOvershoot(pos);
-
-		int col = 0;
-		for (int i = 0; i < pos.x; i++) {
-			if (line[i] == '\t') col += TabIndexToSpaceCount(col);
-			else col++;
-		}
-		return col;
-	}
-
-	public int ColumnOfPositionOvershoot(Vector2Int pos) {
-		string line = lines[pos.y].Content;
-		int col = 0;
-		foreach (char c in line) {
-			if (c == '\t') col += TabIndexToSpaceCount(col);
-			else col++;
-		}
-
-		col += pos.x - line.Length;
-		return col;
-	}
-
-	public int PositionOfColumn(int col, int line) {
-		if (col == 0) return 0;
-
-		string content = lines[line].Content;
-		int pos = 0;
-		int testCol = 0;
-		while (pos < content.Length) {
-			if (content[pos] == '\t') {
-				testCol += TabIndexToSpaceCount(testCol);
-			} else {
-				testCol++;
-			}
-			pos++;
-
-			if (testCol >= col) return pos;
-		}
-
-		while (testCol < col) { // will = at the end
-			pos++;
-			testCol++;
-		}
-
-		return pos;
-	}
-
-	public int IndentSpacesOfLine(Line line) {
-		int pos = 0;
-		int i = 0;
-		while (i < line.Content.Length) {
-			char c = line.Content[i];
-			if (!char.IsWhiteSpace(c)) break;
-			pos += c switch {
-				'\t' => TabIndexToSpaceCount(pos),
-				_ => 1
+		public void SetSingleCaret(int tail, int head) {
+			Carets = new() {
+				new() {
+					tail = tail,
+					head = head
+				}
 			};
-			i++;
+
+			InitCarets();
 		}
-		return pos;
-	}
+		
+		public void SetSingleCustomCaret(Vector2 tail, Vector2 head) {
+			Carets = new() {
+				new() {
+					customTail = tail,
+					customHead = head
+				}
+			};
 
-	public (int tabs, int spaces) IndentToPosCharsCount(int startIndex, int endIndex, int line) {
-		int startCol = ColumnOfPosition(new(startIndex, line));
-		int endCol = ColumnOfPosition(new(endIndex, line));
+			InitCarets();
+		}
 
-		return IndentToPosColumn(startCol, endCol, line);
-	}
+		public void SetMultipleCarets((int head, int tail)[] carets) {
+			Carets = carets.Select(c => 
+				new Caret() {
+					tail = c.tail,
+					head = c.head
+				}
+			);
 
-	public (int tabs, int spaces) IndentToPosColumn(int startCol, int endCol, int line) {
-		//print($"s {startCol} e {endCol}");
+			InitCarets();
+		} 
 
-		int tabs = 0;
-		int pos = startCol;
-		while (pos < endCol) {
-			int amount = TabIndexToSpaceCount(pos);
-			pos += amount;
-			if (pos >= endCol) {
-				pos -= amount;
-				break;
+		public void MatchAllTails() {
+			foreach (var c in Carets) {
+				c.MatchTail();
 			}
-			tabs++;
 		}
 
+		// still expecting a manual update from this one's caller
+		internal void Move(Vector2Int amount, bool shift, bool ctrl) {
+			foreach (var c in Carets) {
+				c.Move(amount, shift, ctrl);
+			}
 
-		int extraSpaces = endCol - pos;
-		// im so tired of this fuckking method
-		if (extraSpaces == Config.Language.SpacesPerTab) {
-			extraSpaces = 0;
-			tabs++;
+			if (!shift)
+				MatchAllTails();
 		}
 
-		//print($"t {tabs} p {pos} e {extraSpaces}");
+		void InitCarets() {
+			foreach (Caret caret in Carets) {
+				caret.handler = this;
+				caret.main = Main;
+			}
+		}
 
-		return (tabs, extraSpaces);
-	}
+		internal void RememberTargetX() {
+			foreach (var c in Carets)
+				c.RememberTargetX();
+		}
 
-	public string IndentToPosString(int startIndex, int endIndex, int line) {
-		(int tabs, int spaces) = IndentToPosCharsCount(startIndex, endIndex, line);
-		return new string('\t', tabs) + new string(' ', spaces);
-	}
-	public string IndentToColumnString(int startCol, int endCol, int line) {
-		(int tabs, int spaces) = IndentToPosColumn(startCol, endCol, line);
-		return new string('\t', tabs) + new string(' ', spaces);
-	}
+		// call this every frame and redraw all carets
+		// shouldnt be too expensive, if it is we can optimize it
+		// write once optimize never
+		public void Update(bool drawCarets) {
+			// clear everything
+			foreach (var t in Objects) {
+				Destroy(t.gameObject);
+			}
+			Objects.Clear();
 
+			// then redraw
+			foreach (var caret in Carets) {
+				caret.Draw(drawCarets);
+			}
+		}
+		
+		protected RectTransform MakeImageInCode(string name, Color color, Vector2 fromLocal, Vector2 toLocal) {
+			GameObject obj = new(name);
+			var rt = obj.AddComponent<RectTransform>();
+			rt.SetParent(Main.CodeText.transform);
+
+			Vector2 min = Vector2.Min(fromLocal, toLocal);
+			Vector2 max = Vector2.Max(fromLocal, toLocal);
+
+			rt.localPosition = (min + max) / 2f;
+			rt.sizeDelta = max - min;
+
+			var image = obj.AddComponent<Image>();
+			image.color = color;
+
+			Objects.Add(rt);
+
+			return rt;
+		}
+
+		// for file operations to occur without affecting next cursor,
+		// do operations end to beginning
+		void SortBackwards() {
+			Carets.Sort((a, b) => a.head.CompareTo(b.head));
+			Carets.Reverse();
+		}
+		public void Type(string s) {
+			SortBackwards();
+
+			foreach (var c in Carets)
+				c.Type(s);
+		}
+
+		public void Backspace(bool ctrl) {
+			SortBackwards();
+
+			foreach (var c in Carets)
+				c.Backspace(ctrl);
+		}
+
+		public void Enter(bool ctrl, bool shift) {
+			// merge same line carets for ctrl or shift
+			// collapse all carets to head if either
+			SortBackwards();
+
+			if (ctrl || shift) {
+				foreach (var c in Carets)
+					c.MatchTail();
+
+				// just collapse down to the line's max it really doesnt matter
+
+				// in reverse order now
+				Caret[] caretsOnLine(int i) =>
+					Carets.Where(c => Main.CharInfo(c.head).lineNumber == i).ToArray();
+
+				int[] uniqueLineNums =
+					Carets.Select(c => Main.CharInfo(c.head).lineNumber).Distinct().ToArray();
+
+				List<Caret> LineUniqueCarets = new();
+				foreach (int ln in uniqueLineNums) {
+					var carets = caretsOnLine(ln);
+
+					LineUniqueCarets.Add(carets[0]); // would be the most distal
+				}
+
+				Carets = LineUniqueCarets;
+			}
+
+			foreach (var c in Carets)
+				c.Enter(ctrl, shift);
+		}
+
+		public void Tab(bool shift) {
+			// same shit as enter
+			SortBackwards();
+
+			List<Caret> LineUniqueCarets = Carets;
+			if (shift) {
+				foreach (var c in Carets)
+					c.MatchTail();
+
+				// just collapse down to the line's max it really doesnt matter
+
+				// in reverse order now
+				Caret[] caretsOnLine(int i) =>
+					Carets.Where(c => Main.CharInfo(c.head).lineNumber == i).ToArray();
+
+				int[] uniqueLineNums =
+					Carets.Select(c => Main.CharInfo(c.head).lineNumber).Distinct().ToArray();
+
+				LineUniqueCarets = new();
+				foreach (int ln in uniqueLineNums) {
+					var carets = caretsOnLine(ln);
+
+					LineUniqueCarets.Add(carets[0]); // would be the most distal
+				}
+			}
+		
+			foreach (var c in LineUniqueCarets)
+				c.Tab(shift);
+		}
+	}
 	#endregion
 
-	void DebugLines() {
-		StringBuilder sb = new();
-		for (int i = 0; i < lines.Count; i++) {
-			Line line = lines[i];
-			sb.Append($"Line {i} com {line.Components} real {line.Realised} __ {line.ProcessedContent}\n");
-		}
+	#region UI
+	protected TextMeshProUGUI LineNumbersText;
+	protected BetterScrollRect MainEditorScrollRect;
+	protected TextMeshProUGUI CodeText;
+	protected RectTransform CodeMask; // parent of content
+	protected TMPAutoScaler ContentAutoScaler;
+	protected RectTransform ExtraRaycastTarget;
+
+	public CWindow Window;
+
+	public void SetWindow() { Window = new(); }
+	public void UpdateWindow() {
+		Window.Name = "Script Editor";
+		Window.Config = new() {
+			Size = CWindow.Configuration.FreeSize(new(500, 400)),
+			HideOnStart = false
+		};
+		Window.Items = new WindowItem[] {
+				// just do the actual editor stuff for now
+				WindowItem.NewScrollView(
+					"Editor",
+					new PComponents.ScrollView()
+						.OnRealised<PComponents.ScrollView>(c => MainEditorScrollRect = (BetterScrollRect)c),
+					WindowItem.LayoutConfig.DynamicLayout(
+						margin: NavBarHeight * FourSides.UpConst
+					),
+new() {
+	WindowItem.NewText(
+		"Line Numbers",
+		new PComponents.Text(
+			"0",
+			cfg.Font,
+			fontSize: cfg.FontSize,
+			alignment: TextAlignmentOptions.TopRight
+		),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredAt(UIPosition.TopLeft),
+			new(0, 0) // size set by script
+		)
+	).OnRealized((rt, _) => LineNumbersText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
+	WindowItem.NewText(
+		"Code",
+		new PComponents.Text(
+			"",
+			cfg.Font,
+			fontSize: cfg.FontSize
+		).OnRealised<PComponents.Text>(c => CodeText = (TextMeshProUGUI)c),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredAt(UIPosition.TopLeft),
+			new(100000, 100000) // real scaling happens on the contents object so this can be any size
+			// disable overflow 
+			// it must be selectable tho so make it big
+		)
+	).OnRealized((rt, _) => CodeText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
+	WindowItem.NewImage(
+		"Raycast Target",
+		new PComponents.Image(Color.clear),
+		WindowItem.LayoutConfig.FixedLayout(
+			UIPosition.AnchoredAt(UIPosition.TopLeft),
+			new(100000, 100000) // must be omnipresent
+		)
+	).OnRealized((rt, _) => ExtraRaycastTarget = rt)
+})
+		};
+
+		Window.CustomEvents = new() {
+			new(
+				TimedEventInvoker.Timing.Awake,
+				(src) => PostRealizationAction?.Invoke(src.transform)
+			) 
+		};
 	}
-
-	#region Clipboard
-
-	class Clipboard {
-		public struct Entry {
-			public bool IsMultiline;
-			public bool IsWholeLine;
-			public List<string> Strings;
-		}
-
-		// 0 is first and goes ascending the older it is
-		public List<Entry> Entries = new();
-
-		public void Add(Entry entry) {
-			Entries.Insert(0, entry);
-
-			if (Entries.Count > Config.ScriptEditor.MaxClipboardSize) {
-				Entries.RemoveAt(Entries.Count - 1);
-			}
-		}
-
-		public Entry Get(int index) => Entries[index];
-
-		public Entry NewestEntry => Entries[^1];
-	}
-
-	private readonly Clipboard clipboard = new();
-
-	public void Copy() {
-		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
-
-		if (carets.Count == 0) return;
-
-		if (carets.Count > 1) {
-			CopyMultiCaret();
-			return;
-		}
-
-		Caret c = carets[0];
-		if (c.HasSelection) {
-			string content = c.GetSelectionString();
-
-			clipboard.Add(new() {
-				IsMultiline = false,
-				IsWholeLine = false,
-				Strings = new() { content }
-			});
-		} else {
-			// copy entire line 
-			clipboard.Add(new() {
-				IsMultiline = false,
-				IsWholeLine = true,
-				Strings = new() { lines[c.head.y].Content }
-			});
-		}
-
-		// possible edge cases
-	}
-
-	void CopyMultiCaret() {
-		List<string> contents = carets.Select(c => c.GetSelectionString()).ToList();
-
-		clipboard.Add(new() {
-			IsMultiline = true,
-			IsWholeLine = false,
-			Strings = contents
-		});
-	}
-
-	public void Cut() {
-		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
-
-		if (carets.Count == 0) return;
-
-		history.RecordChange();
-
-		DebugLines();
-		Copy();
-
-		foreach (Caret c in carets) {
-			DeleteSelection(c, lines[c.head.y]);
-		}
-	}
-
-	public void Paste() {
-		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
-
-		PasteIndex(0);
-	}
-
-	void PasteIndex(int i) {
-		if (carets.Count == 0) return;
-
-		history.RecordChange();
-
-		var entry = clipboard.Get(i);
-
-		if (entry.IsWholeLine) {
-
-		}
-
-		if (entry.IsMultiline && carets.Count > 1) {
-
-		} else
-		if (entry.IsMultiline) {
-
-		} else
-		if (carets.Count > 1) {
-
-		}
-
-		Caret c = carets[0];
-
-		if (c.HasSelection) {
-			DeleteSelection(c, lines[c.head.y]);
-		}
-
-		PasteSingleContents(c, entry.Strings[0]);
-	}
-
-	void PasteSingleContents(Caret c, string contents) {
-		bool singleLine = !contents.Contains('\n');
-
-		string[] multiLines = new string[0];
-		if (!singleLine) {
-			multiLines = contents.Split('\n');
-			contents = contents[..(multiLines[0].Length + 1)]; // truncate first line entry
-		}
-
-		TypeAt(c, lines[c.head.y], contents);
-		UpdateLine(c.head.y);
-
-		if (!singleLine) {
-			foreach (string line in multiLines[1..]) {
-				Enter(c, lines[c.head.y], false, true);
-
-				lines[c.head.y].Content = line;
-				UpdateLine(c.head.y);
-
-				c.head.x = line.Length;
-			}
-		}
-
-		c.MatchTail();
-		KeepHeadCaretHeadOnScreen();
-	}
-
 	#endregion
 }
