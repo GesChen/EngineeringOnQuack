@@ -26,6 +26,11 @@ public class LazierHistory {
 	// we are at, increment/decremented by undos
 	// 0 is current
 
+	public void Reset() {
+		undos = 0;
+		Versions.Clear();
+	}
+
 	public void RecordChange() {
 		// no duplicates
 		if (Versions.Count > 0) {
@@ -74,13 +79,17 @@ public class LazierHistory {
 	
 	public void Undo() {
 		//Debug.Log($"undo {undos}");
-		if (undos == Versions.Count - 1) return;
 
-		if (undos == 0) {
+		if (undos == 0) { // at current
 			RecordChange();
 		}
 
 		undos++;
+
+		if (undos >= Versions.Count) { // limit
+			undos = Versions.Count - 1;
+			return; 
+		}
 		
 		SetState(Versions[Versions.Count - 1 - undos]);
 	}

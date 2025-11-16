@@ -14,6 +14,8 @@ public class RightClick : Singleton<RightClick> {
 	Flyout currentOpen;
 	float smoothDelta = 0f;
 
+	public IContext ContextAtClick;
+
 	protected override void Awake() {
 		base.Awake();
 	}
@@ -41,6 +43,8 @@ public class RightClick : Singleton<RightClick> {
 		var window = WindowLookupFunc(ContextManager.Current, out var customization);
 
 		if (window != null) {
+			ContextAtClick = ContextManager.Current;
+
 			// don't optimize this if not needed 
 			currentOpen = window.CWindow.RealisedWindow.GetComponent<Flyout>();
 

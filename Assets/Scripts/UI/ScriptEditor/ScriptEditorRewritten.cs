@@ -8,43 +8,57 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using cfg = Config.ScriptEditor;
+using W = PMenu.Window;
 
 // coordinates work in screen space
 // +y is up in the doc, back in the content
 
 public class ScriptEditorRewritten : MonoBehaviour {
-	static readonly float NavBarHeight = 50;
-	public static float CaretWidth = 1.5f;
-	public static Color CaretColor = new(1, 1, 1);
-
 	public string Content = "";
-
-	// modules
-	public CaretHandler Carets;
-	public SyntaxHighlighter SyntaxHighlighter;
-	public LazierHistory History;
-	public Clipboard Clipboard;
-
 	float LineNumberWidth = 0;
 
-	public bool Open => Window.RealisedWindow.Open;
+	public event Action<string> OnContentsChanged;
+	public event Action OnEditorClosed;
+
+	// modules
+	internal CaretHandler Carets;
+	SyntaxHighlighter SyntaxHighlighter;
+	LazierHistory History;
+	Clipboard Clipboard;
 
 	static Action<Transform> PostRealizationAction;
-	public static void CreateWindow() {
+	public static void CreateWindow(Action<ScriptEditorRewritten> OnCreatedWindow) {
 		var temp = new GameObject("ser");
 		var ser = temp.AddComponent<ScriptEditorRewritten>();
 
-		ser.SetWindow();
-		ser.UpdateWindow();
+		ser.Set();
 
 		PostRealizationAction = (t) => {
 			// make the new component on the actual object and copy over all values
 			var nsr = t.gameObject.AddComponent<ScriptEditorRewritten>();
 			nsr.Window = ser.Window;
+			nsr.FileMenu = ser.FileMenu;
+			nsr.EditMenu = ser.EditMenu;
+			nsr.FileNameField = ser.FileNameField;
+
 			nsr.LineNumbersText = ser.LineNumbersText;
 			nsr.MainEditorScrollRect = ser.MainEditorScrollRect;
 			nsr.CodeText = ser.CodeText;
 			nsr.ExtraRaycastTarget = ser.ExtraRaycastTarget;
+
+			nsr.StartCoroutine(nsr.DelayAddCloseEvent());
+
+			// ugh
+			(nsr.FileMenu.Items[0] as W.Button).RedirectAction(() => nsr.OnNewPressed?.Invoke());
+			(nsr.FileMenu.Items[1] as W.Button).RedirectAction(() => nsr.OnLoadPressed?.Invoke());
+			(nsr.FileMenu.Items[2] as W.Button).RedirectAction(() => nsr.OnSavePressed?.Invoke());
+			(nsr.FileMenu.Items[3] as W.Button).RedirectAction(() => nsr.OnSaveAsPressed?.Invoke());
+
+			(nsr.EditMenu.Items[0] as W.Button).RedirectAction(() => nsr.OnCopyPressed?.Invoke());
+			(nsr.EditMenu.Items[1] as W.Button).RedirectAction(() => nsr.OnCutPressed?.Invoke());
+			(nsr.EditMenu.Items[2] as W.Button).RedirectAction(() => nsr.OnPastePressed?.Invoke());
+			(nsr.EditMenu.Items[3] as W.Button).RedirectAction(() => nsr.OnUndoPressed?.Invoke());
+			(nsr.EditMenu.Items[4] as W.Button).RedirectAction(() => nsr.OnRedoPressed?.Invoke());
 
 			// move numbers into viewport
 			nsr.LineNumbersText.rectTransform.SetParent(
@@ -79,9 +93,23 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 			Destroy(temp);
 			PostRealizationAction = null;
+
+			OnCreatedWindow?.Invoke(nsr);
 		};
 
-		WindowManager.Instance.RealiseWindows(ser.Window);
+		WindowManager.Instance.AddMenus(ser.Menus);
+		WindowManager.Instance.RealiseWindows(ser.Windows);
+	}
+
+	IEnumerator DelayAddCloseEvent() {
+		yield return null;
+
+		Window.CustomEvents.Add(new(
+			TimedEventInvoker.Timing.Close,
+			_ => {
+				OnEditorClosed?.Invoke();
+				Destroy();
+			}));
 	}
 
 	void Awake() {
@@ -116,6 +144,22 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		Conatrols.IM.Editing.Paste.performed	+= _ => Clipboard.Paste();
 		Conatrols.IM.Editing.Undo.performed		+= _ => History.Undo();
 		Conatrols.IM.Editing.Redo.performed		+= _ => History.Redo();
+
+		OnCopyPressed = () => Clipboard.Copy();
+		OnCutPressed = () => Clipboard.Cut();
+		OnPastePressed = () => Clipboard.Paste();
+		OnUndoPressed = () => History.Undo();
+		OnRedoPressed = () => History.Redo();
+	}
+
+	public void Load(string content) {
+		Content = content;
+
+		UpdateText(true, true);
+		Carets.ClearCarets();
+
+		History.Reset();
+		History.RecordChange();
 	}
 
 	#region Util functions
@@ -125,7 +169,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 	// only checks against left edge
 	// also only check against the nearest line
-	public int FindNearestCharacterModified(TextMeshProUGUI text, Vector2 position, bool global = true) {
+	int FindNearestCharacterModified(TextMeshProUGUI text, Vector2 position, bool global = true) {
 		if (global)
 			position = text.transform.InverseTransformPoint(position);
 
@@ -142,13 +186,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		for (int i = 0; i < LIs.Length; i++) {
 			TMP_LineInfo line = LIs[i];
 
-			DebugExtra.DrawPoly(new[] {
-				new Vector3(0, line.ascender), 
+			/*DebugExtra.DrawPoly(new[] {
+				new Vector3(0, line.ascender),
 				new Vector3(0, line.descender),
 				new Vector3(10, line.descender),
 				new Vector3(10, line.ascender),
 			}, color: MoreColors.Green, duration: 1);
-			DebugExtra.DrawPoint(position, 10, color: MoreColors.Red, duration: 1);
+			DebugExtra.DrawPoint(position, 10, color: MoreColors.Red, duration: 1);*/
 
 			if (position.y < line.ascender && position.y > line.descender) {
 				closestLineI = i;
@@ -200,6 +244,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		if (special) {
 			Content = Content[..^1];
 			UpdateText(false, true);
+		}
+
+		// first char check
+		if (position.y > text.textInfo.lineInfo[0].ascender) {
+			return 0;
 		}
 
 		return closestCharI;
@@ -285,10 +334,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		CodeText.transform.InverseTransformPoint(globalPos);
 
 	protected TMP_LineInfo LineInfo(int lineNum) {
-		if (Content.Length == 0) {
+		var info = CodeText.textInfo.lineInfo[lineNum];
+		if (lineNum == NumLines - 1)
+			info.lastCharacterIndex++;
 
-		}
-		return CodeText.textInfo.lineInfo[lineNum];
+		return info;
 	}
 
 	protected int NumLines => Content.Count(c => c == '\n') + 1;
@@ -331,7 +381,6 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			return corners;
 		}
 	}
-	
 
 	protected bool MouseOverCode {
 		get {
@@ -395,13 +444,22 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	Vector2 dragStart;
 	float lastPressTime = 0;
 	bool doubleClickDragging = false;
+	bool tripleClickDragging = false;
+	int extraClicks = 0;
 	void HandleMouse() {
 		if (Conatrols.Mouse.Left.PressedThisFrame) {
 			if (MouseOverCode) {
-				doubleClickDragging = 
-					(Time.time - lastPressTime < Config.Input.doubleClickMaxTimeMs / 1000f
+				bool extraClickCriterion =
+					(Time.time - lastPressTime < Config.Input.extraClickMaxTimeMs / 1000f
 					|| Conatrols.Keyboard.Modifiers.Ctrl)
 					&& !Conatrols.Keyboard.Modifiers.Shift;
+
+				if (extraClickCriterion) extraClicks++;
+				else extraClicks = 0;
+
+				doubleClickDragging = extraClicks == 1;
+				tripleClickDragging = extraClicks == 2;
+	
 				lastPressTime = Time.time;
 
 				dragging = true;
@@ -446,6 +504,21 @@ public class ScriptEditorRewritten : MonoBehaviour {
 						dragEndI,
 						dragEndI < dragStartI // goes right normally cuz of == case
 						? -1 : 1);
+				}
+
+				if (tripleClickDragging) {
+					bool forward = dragEndI > dragStartI;
+					TMP_LineInfo dsInfo = LineInfo(CharInfo(dragStartI).lineNumber);
+					dragStartI =
+						forward
+						? dsInfo.firstCharacterIndex
+						: dsInfo.lastCharacterIndex;
+
+					TMP_LineInfo deInfo = LineInfo(CharInfo(dragEndI).lineNumber);
+					dragEndI = 
+						forward
+						? deInfo.lastCharacterIndex
+						: deInfo.firstCharacterIndex;
 				}
 
 				Carets.SetSingleCaret(dragStartI, dragEndI);
@@ -495,6 +568,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		HandleKeyboardMovement();
 	}
 
+	float PausedSince = Mathf.Infinity;
 	void HandleTyping() {
 		var presses = Conatrols.Keyboard.Presses;
 
@@ -508,29 +582,49 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		}
 
 		if (modified) {
+			PausedSince = Time.time;
+
 			UpdateText(true, true);
 			Carets.RememberTargetX();
 			ForceCaretOnState_Update();
 			KeepMainCaretOnScreen();
+			OnContentsChanged?.Invoke(Content);
+		}
+
+		if (Time.time - PausedSince > cfg.NewHistoryPauseThresholdMs / 1000f) {
+			History.RecordChange();
+			PausedSince = Mathf.Infinity;
 		}
 	}
 
 	void Type(Key key) {
 		// handle special
 		if (key == Key.Enter) {
+			History.RecordChange();
 			Carets.Enter(
 				Conatrols.Keyboard.Modifiers.Ctrl,
 				Conatrols.Keyboard.Modifiers.Shift);
 			return;
+
 		} else if (key == Key.Tab) {
+			History.RecordChange();
+
 			Carets.Tab(Conatrols.Keyboard.Modifiers.Shift);
 			return;
+
 		} else if (key == Key.Backspace) {
 			if (Content.Length == 0) return;
+			if (Conatrols.Keyboard.Modifiers.Ctrl)
+				History.RecordChange();
+
 			Carets.Backspace(Conatrols.Keyboard.Modifiers.Ctrl);
 			return;
+
 		} else if (key == Key.Delete) {
 			if (Content.Length == 0) return;
+			if (Conatrols.Keyboard.Modifiers.Ctrl)
+				History.RecordChange();
+
 			Carets.Delete(Conatrols.Keyboard.Modifiers.Ctrl);
 			return;
 		}
@@ -685,7 +779,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		}
 	}
 
-	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
+	(int x, int y) CheckCursorOffsets(Vector2 pos) {
 		pos -= MainEditorScrollRect.CurrentScrollAmount();
 
 		float marg = cfg.CursorScreenMargin;
@@ -761,18 +855,22 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			internal void Move(Vector2Int amount, bool shift, bool ctrl) {
 				// y movement overrides x
 				if (amount.y != 0) {
-					if (main.CharInfo(head).lineNumber == 0
-						&& amount.y > 0) return;
+					/*if (main.CharInfo(head).lineNumber == 0
+						&& amount.y > 0) return;*/
 					if (main.CharInfo(head).lineNumber == main.NumLines - 1
-						&& amount.y < 0) return;
+						&& amount.y < 0) {
+						head = main.Content.Length;
+						return;
+					}
 
 					// attempt to move to target x
 					Vector2 targetPos = new(
 						targetX,
-						main.LineInfo(main.CharInfo(head).lineNumber - amount.y).CenterY()
+						main.LineInfo(main.CharInfo(head).lineNumber).CenterY() 
+						+ main.CharSize.y * amount.y
 					);
 
-					Debug.DrawLine(
+					/*Debug.DrawLine(
 						new Vector3(0, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).ascender),
 						new Vector3(2000, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).ascender),
 						MoreColors.Orange,
@@ -783,7 +881,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 						new Vector3(2000, main.LineInfo(main.CharInfo(head).lineNumber - amount.y).descender),
 						MoreColors.Orange,
 						1
-						);
+						);*/
 
 					head = main.SS2I(main.L2G(targetPos));
 					return;
@@ -852,11 +950,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			void DrawCaret(Vector2 atLocal) {
 				// assuming theres at least 1 line
 
-				var size = new Vector2(CaretWidth, main.CharSize.y);
+				var size = new Vector2(cfg.CaretWidth, main.CharSize.y);
 
 				rt = handler.MakeImageInCode(
 					"Caret",
-					CaretColor,
+					cfg.CaretColor,
 					atLocal - size / 2f,
 					atLocal + size / 2f
 				);
@@ -1380,69 +1478,233 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	protected TMPAutoScaler ContentAutoScaler;
 	protected RectTransform ExtraRaycastTarget;
 
-	public CWindow Window;
+	public event Action OnNewPressed;
+	public event Action OnLoadPressed;
+	public event Action OnSavePressed;
+	public event Action OnSaveAsPressed;
 
-	public void SetWindow() { Window = new(); }
-	public void UpdateWindow() {
-		Window.Name = "Script Editor";
-		Window.Config = new() {
-			Size = CWindow.Configuration.FreeSize(new(500, 400)),
-			HideOnStart = false
-		};
-		Window.Items = new WindowItem[] {
-				// just do the actual editor stuff for now
+	public W FileMenu;
+	void SetFileMenu() {
+		FileMenu = new(
+			"File",
+			150,
+			true,
+			new() {
+				new W.Button(
+					() => OnNewPressed?.Invoke(),
+					"New"
+				),
+				new W.Button(
+					() => OnLoadPressed?.Invoke(),
+					"Load"
+				),
+				new W.Button(
+					() => OnSavePressed?.Invoke(),
+					"Save"
+				),
+				new W.Button(
+					() => OnSaveAsPressed?.Invoke(),
+					"Save As"
+				),
+			},
+			showTitle: false
+		);
+	}
+
+	Action OnCopyPressed;
+	Action OnCutPressed;
+	Action OnPastePressed;
+	Action OnUndoPressed;
+	Action OnRedoPressed;
+
+	public W EditMenu;
+	void SetEditMenu() {
+		EditMenu = new(
+			"Edit",
+			150,
+			true,
+			new() {
+				new W.Button(
+					() => OnUndoPressed?.Invoke(),
+					"Undo"
+				),
+				new W.Button(
+					() => OnRedoPressed?.Invoke(),
+					"Redo"
+				),
+				new W.Button(
+					() => OnCutPressed?.Invoke(),
+					"Cut"
+				),
+				new W.Button(
+					() => OnCopyPressed?.Invoke(),
+					"Copy"
+				),
+				new W.Button(
+					() => OnPastePressed?.Invoke(),
+					"Paste"
+				),
+			},
+			showTitle: false
+		);
+	}
+
+	public void SetFileName(string name) {
+		if (FileNameField == null) Debug.Log("how");
+
+		FileNameField.text = name;
+	}
+	TMP_InputField FileNameField;
+	public event Action<string> OnFileNameChanged;
+
+	public CWindow Window;
+	public void SetWindow() {
+		Window = new() {
+			Name = "Script Editor",
+			Config = new() {
+				Size = CWindow.Configuration.FreeSize(new(500, 400)),
+				HideOnStart = false
+			},
+			Items = new WindowItem[] {
+				WindowItem.NewLayout(
+					PComponents.Layout.Horizontal.Fixed(true, true),
+					WindowItem.LayoutConfig.Custom(
+						position: new(1, 0, 0, 0),
+						sizeDelta: new(0, cfg.NavBarHeight),
+						fixedPosition: new() {
+							Pivot = UIPosition.TopCenter
+						}
+					),
+					new() {
+						WindowItem.NewFlyoutTriggerWithLabel(
+							"File",
+							new PComponents.FlyoutTrigger(
+								FileMenu.CWindow,
+								openTargetEdge: 2,
+								openAlignment: true
+							),
+							new PComponents.Text(
+								"File",
+								alignment: TextAlignmentOptions.Center
+							),
+							WindowItem.LayoutConfig.LayoutElementDynamic()
+						).AddComponents(
+							new PComponents.LayoutElement(cfg.MenuButtonRelWidth)
+						),
+						WindowItem.NewFlyoutTriggerWithLabel(
+							"Edit",
+							new PComponents.FlyoutTrigger(
+								EditMenu.CWindow,
+								openTargetEdge: 2,
+								openAlignment: true
+							),
+							new PComponents.Text(
+								"Edit",
+								alignment: TextAlignmentOptions.Center
+							),
+							WindowItem.LayoutConfig.LayoutElementDynamic()
+						).AddComponents(
+							new PComponents.LayoutElement(cfg.MenuButtonRelWidth)
+						),
+						WindowItem.NewInputField(
+							new PComponents.InputField(
+								null,
+								n => OnFileNameChanged?.Invoke(n),
+								placeholderText: "File Name",
+								alignment: TextAlignmentOptions.Center
+							).OnRealised<PComponents.InputField>(c =>
+								FileNameField = (TMP_InputField)c
+							),
+							WindowItem.LayoutConfig.LayoutElementDynamic()
+						).AddComponents(
+							new PComponents.LayoutElement(cfg.MenuNameRelWidth)
+						)
+					}
+				),
 				WindowItem.NewScrollView(
 					"Editor",
 					new PComponents.ScrollView()
 						.OnRealised<PComponents.ScrollView>(c => MainEditorScrollRect = (BetterScrollRect)c),
 					WindowItem.LayoutConfig.DynamicLayout(
-						margin: NavBarHeight * FourSides.UpConst
+						margin: (cfg.NavBarHeight + cfg.NavBarGap) * FourSides.UpConst
 					),
 new() {
-	WindowItem.NewText(
-		"Line Numbers",
-		new PComponents.Text(
-			"0",
-			cfg.Font,
-			fontSize: cfg.FontSize,
-			alignment: TextAlignmentOptions.TopRight
-		),
-		WindowItem.LayoutConfig.FixedLayout(
-			UIPosition.AnchoredAt(UIPosition.TopLeft),
-			new(0, 0) // size set by script
-		)
-	).OnRealized((rt, _) => LineNumbersText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
-	WindowItem.NewText(
-		"Code",
-		new PComponents.Text(
-			"",
-			cfg.Font,
-			fontSize: cfg.FontSize
-		).OnRealised<PComponents.Text>(c => CodeText = (TextMeshProUGUI)c),
-		WindowItem.LayoutConfig.FixedLayout(
-			UIPosition.AnchoredAt(UIPosition.TopLeft),
-			new(100000, 100000) // real scaling happens on the contents object so this can be any size
+		WindowItem.NewText(
+			"Line Numbers",
+			new PComponents.Text(
+				"0",
+				cfg.Font,
+				fontSize: cfg.FontSize,
+				alignment: TextAlignmentOptions.TopRight
+			),
+			WindowItem.LayoutConfig.FixedLayout(
+				UIPosition.AnchoredAt(UIPosition.TopLeft),
+				new(0, 0) // size set by script
+			)
+		).OnRealized((rt, _) => LineNumbersText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
+		WindowItem.NewText(
+			"Code",
+			new PComponents.Text(
+				"",
+				cfg.Font,
+				fontSize: cfg.FontSize
+			).OnRealised<PComponents.Text>(c => CodeText = (TextMeshProUGUI)c),
+			WindowItem.LayoutConfig.FixedLayout(
+				UIPosition.AnchoredAt(UIPosition.TopLeft),
+				new(100000, 100000) // real scaling happens on the contents object so this can be any size
 			// disable overflow 
 			// it must be selectable tho so make it big
-		)
-	).OnRealized((rt, _) => CodeText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
-	WindowItem.NewImage(
-		"Raycast Target",
-		new PComponents.Image(Color.clear),
-		WindowItem.LayoutConfig.FixedLayout(
-			UIPosition.AnchoredAt(UIPosition.TopLeft),
-			new(100000, 100000) // must be omnipresent
-		)
-	).OnRealized((rt, _) => ExtraRaycastTarget = rt)
+			)
+		).OnRealized((rt, _) => CodeText = rt.gameObject.GetComponent<TextMeshProUGUI>()),
+		WindowItem.NewImage(
+			"Raycast Target",
+			new PComponents.Image(Color.clear),
+			WindowItem.LayoutConfig.FixedLayout(
+				UIPosition.AnchoredAt(UIPosition.TopLeft),
+				new(100000, 100000) // must be omnipresent
+			)
+		).OnRealized((rt, _) => ExtraRaycastTarget = rt)
 })
-		};
+			},
 
-		Window.CustomEvents = new() {
-			new(
-				TimedEventInvoker.Timing.Awake,
-				(src) => PostRealizationAction?.Invoke(src.transform)
-			) 
+			CustomEvents = new() {
+				new(
+					TimedEventInvoker.Timing.Awake,
+					(src) => PostRealizationAction?.Invoke(src.transform)
+				)
+			}
 		};
+	}
+
+	public void Set() {
+		SetFileMenu();
+		SetEditMenu();
+		SetWindow();
+	}
+
+	public CWindow[] Windows => new[] {
+		FileMenu.CWindow.SetGroup("script editor"),
+		EditMenu.CWindow.SetGroup("script editor"),
+		Window.SetGroup("script editor"),
+	};
+
+	public W[] Menus => new[] {
+		FileMenu,
+		EditMenu
+	};
+
+	bool destroyRequested = false;
+	public void Destroy() {
+		if (destroyRequested) return; // dont call coroutine twice
+		destroyRequested = true;
+		StartCoroutine(DelayDestroy());
+	}
+	IEnumerator DelayDestroy() {
+		yield return null;
+
+		WindowManager.Instance.DestroyMenu(FileMenu);
+		WindowManager.Instance.DestroyMenu(EditMenu);
+		WindowManager.Instance.DestroyWindow(Window);
 	}
 	#endregion
 }

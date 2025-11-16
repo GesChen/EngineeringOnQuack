@@ -60,6 +60,7 @@ public class KeyboardFastPoll : Singleton<KeyboardFastPoll> {
 	}
 
 	// only let conatrols use it 
+	// >1 call will break shit
 	internal static List<Key> GetAllPressedKeys() {
 		var _ = Instance;
 

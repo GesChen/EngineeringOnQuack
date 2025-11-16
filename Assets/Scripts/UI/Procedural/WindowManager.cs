@@ -78,6 +78,9 @@ public class WindowManager : Singleton<WindowManager> {
 			Windows.Add(window);
 		}
 	}
+	public void AddMenus(params PMenu.Window[] menus) {
+		Menus.AddRange(menus);
+	}
 
 	void DestroyAllWindows() {
 		// destroy these for good measure and non grouped
@@ -90,12 +93,21 @@ public class WindowManager : Singleton<WindowManager> {
 		WindowRealiser.Instance.DestroyAllGroupObjects();
 	}
 
+	internal void DestroyMenu(PMenu.Window menu) {
+		DestroyWindow(menu.CWindow);
+	}
+
 	internal void DestroyWindow(CWindow window) {
 		int i = Windows.IndexOf(window);
 
 		if (i == -1) {
 			Debug.LogWarning($"deletion attempt of cw {window.Name} failed, not registered in windows list");
 			return;
+		}
+
+		var associatedmenu = Menus.FirstOrDefault(m => m.CWindow == window);
+		if (associatedmenu != null) {
+			Menus.Remove(associatedmenu);
 		}
 
 		Windows.RemoveAt(i);

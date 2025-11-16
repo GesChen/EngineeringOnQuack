@@ -206,6 +206,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 2498203954752546326}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
       propertyPath: MainPart
       value: 
       objectReference: {fileID: 5720584220106716956}

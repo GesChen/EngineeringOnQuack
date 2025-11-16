@@ -4,7 +4,7 @@ public class Script {
 	public string OriginalText;
 	public string Version;
 
-	public bool Saved = false; // exists as a file?
+	public bool SavedAsFile = false; // exists as a file?
 	public string SaveLocation = null;
 
 	public Script(string name, Section contents, string originalText, string version) {

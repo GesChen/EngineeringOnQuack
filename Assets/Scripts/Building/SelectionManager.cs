@@ -297,7 +297,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		Transform selected = null;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit)) {
-			Part component = hit.transform.GetComponent<Part>();
+			Part component = hit.transform.GetComponentInParent<Part>();
 			if (component && BuildingManager.Instance.Assembly.Parts.Contains(component))
 				selected = hit.transform;
 		}

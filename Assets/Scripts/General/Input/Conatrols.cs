@@ -99,7 +99,7 @@ public class Conatrols : MonoBehaviour {
 				SingleClicked = false;
 
 				if (PressedThisFrame) {
-					if (Time.time - lastClickTime < Config.Input.doubleClickMaxTimeMs / 1000f
+					if (Time.time - lastClickTime < Config.Input.extraClickMaxTimeMs / 1000f
 						&& (Position - lastClickPos).sqrMagnitude
 							< Config.Input.doubleClickMaxMovement * Config.Input.doubleClickMaxMovement)
 						DoubleClicked = true;

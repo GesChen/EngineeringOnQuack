@@ -1,13 +1,12 @@
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public class Part_CPU : NonStaticPart {
 	public override string PartName => "CPU";
-
-	internal static Script currentlyEditingScript;
 
 	public Script Script;
 	public string DEBUG_CurrentScriptText; // for debugging purposes
@@ -44,6 +43,224 @@ public class Part_CPU : NonStaticPart {
 		);
 	public T_Data InternalDataObject = new(Type_CPU);
 	public override T_Data GetInternalLanguageDataObject() => InternalDataObject;
+	#endregion
+
+	#region ui
+	public static void SetupUI() {
+		CPU_UI.GetCurrentScript = () => {
+			// rcm extensions only does ss for now
+			// this fixes the selection bcoming null 
+			Part_CPU cpu = (RightClick.Instance.ContextAtClick as Contexts.SingleSelection)
+				.Selected.GetComponent<Part_CPU>();
+			var script = cpu.Script;
+
+			if (script == null) {
+				Tokenizer tokenizer = new();
+
+				// should always tokenize properly??
+				(Script newScript, _) = tokenizer.Tokenize(
+					"setup():\n\t\n\treturn 0\n\ntick():\n\t\n\treturn 0");
+
+				newScript.Name = "New Script";
+
+				script = newScript;
+				cpu.Script = script;
+			}
+
+			return (
+				script.OriginalText,
+				script.Name
+			);
+		};
+
+		// might be the worst thing ive ever written
+		// set up all selected cpus with the new script editor
+		/*CPU_UI.OnEdit = editor =>
+			SelectionManager.Instance.PartSelection
+			.Select(p => p.GetComponent<Part_CPU>()).Where(c => c != null)
+			.ToList().ForEach(c => c.SetupScriptEditor(editor));*/
+		CPU_UI.OnEdit = e =>
+			(RightClick.Instance.ContextAtClick as Contexts.SingleSelection)
+			.Selected.GetComponent<Part_CPU>().SetupScriptEditor(e);
+			
+	}
+
+	ScriptEditorRewritten UsingEditor;
+	public void SetupScriptEditor(ScriptEditorRewritten editor) {
+		if (UsingEditor != null) {
+			UsingEditor.Destroy();
+		}
+
+		UsingEditor = editor;
+
+		// hope this is alright
+		editor.OnContentsChanged += s => Script.OriginalText = s;
+		editor.OnFileNameChanged += Rename;
+
+		editor.OnNewPressed += TryNew;
+		editor.OnSavePressed += TrySaveNotAs;
+		editor.OnSaveAsPressed += RequestSave;
+		editor.OnLoadPressed += RequestLoad;
+
+		editor.OnEditorClosed += () => UsingEditor = null;
+	}
+
+	void Rename(string name) {
+		Script.Name = name;
+
+		UsingEditor.SetFileName(name);
+	}
+
+	void TryNew() {
+		// auto save unless current file is not already saved
+		if (!Script.SavedAsFile) {
+			UnsavedNotification(CreateNewFile);
+			return;
+		}
+		CreateNewFile();
+	}
+
+	void UnsavedNotification(Action intendedAction) {
+		PDialog.GenerateDialog(new(
+			"This script hasn't been saved!\nWould you like to save it?",
+			new PDialog.Option[] {
+				new("Save", () => RequestSave()),
+				new("Don't Save", intendedAction),
+				new("Cancel", null)
+			},
+			new(350, 150)
+		));
+	}
+
+	// the regular save option not the save as so it should serve dual purpose
+	void TrySaveNotAs() {
+		if (Script.SavedAsFile) {
+			try {
+				string path = Script.SaveLocation;
+
+				byte[] data = ScriptSaveLoad.ConvertScriptToBytes(Script);
+
+				File.WriteAllBytes(path, data);
+			} catch (Exception e) {
+				PDialog.GenerateDialog(new(
+					$"An error occurred while saving the file:\n{e.Message}",
+					new PDialog.Option[] {
+					new("OK", null)
+					},
+					new(300, 200)
+				));
+			}
+		} else {
+			RequestSave();
+		}
+	}
+
+	void RequestSave() {
+		FileExplorer.CreateNewFE(
+			HF.GuaranteePath(
+				Config.Path.LocalPath("Scripts").ToString()
+			),
+			new(
+				FileExplorer.Type.SaveFile,
+				new string[] { ".qk" },
+				path => {
+					FileInfo info = new (path);
+					long sizeBytes = info.Length;
+					return new[] {
+						($"{sizeBytes} bytes", 2f)
+					};
+				},
+				"Save",
+				TrySave,
+				5,
+				"New Script.qk",
+				10
+			)
+		);
+	}
+
+	void TrySave(string filePath) {
+		try {
+			// may change to allow string saving later and nongzipped perhaps
+			byte[] data = ScriptSaveLoad.ConvertScriptToBytes(Script);
+
+			File.WriteAllBytes(filePath, data);
+			Script.SavedAsFile = true;
+			Script.SaveLocation = filePath;
+
+			string name = Path.GetFileNameWithoutExtension(filePath);
+
+			UsingEditor.SetFileName(name);
+		} catch (Exception e) {
+			PDialog.GenerateDialog(new(
+				$"An error occurred while saving the file:\n{e.Message}",
+				new PDialog.Option[] {
+					new("OK", null)
+				},
+				new(300, 200)
+			));
+		}
+	}
+
+	void RequestLoad() {
+		FileExplorer.CreateNewFE(
+			HF.GuaranteePath(
+				Config.Path.LocalPath("Scripts").ToString()
+			),
+			new(
+				FileExplorer.Type.OpenFile,
+				new string[] { ".qk" },
+				path => {
+					FileInfo info = new (path);
+					long sizeBytes = info.Length;
+					return new[] {
+						($"{sizeBytes} bytes", 2f)
+					};
+				},
+				"Load",
+				TryLoad,
+				5,
+				".qk",
+				0
+			)
+		);
+	}
+
+	void TryLoad(string filePath) {
+		try {
+			byte[] bytes = File.ReadAllBytes(filePath);
+
+			Script script = ScriptSaveLoad.ConvertBytesToScript(bytes);
+
+			Script = script;
+
+			UsingEditor.SetFileName(script.Name);
+			UsingEditor.Load(script.OriginalText);
+
+		} catch (Exception e) {
+			PDialog.GenerateDialog(new(
+				$"An error occurred while loading the file:\n{e.Message}",
+				new PDialog.Option[] {
+					new("OK", null)
+				},
+				new(300, 200)
+			));
+		}
+	}
+
+	void CreateNewFile() {
+		Tokenizer tokenizer = new();
+		// should always tokenize properly??
+		(Script newScript, _) = tokenizer.Tokenize(
+			"setup():\n\t\n\treturn 0\n\ntick():\n\t\n\treturn 0");
+
+		Script = newScript;
+
+		newScript.Name = "New Script";
+
+		UsingEditor.SetFileName(newScript.Name);
+		UsingEditor.Load(newScript.OriginalText);
+	}
 	#endregion
 
 	IEnumerator DelayScriptSetup() {
@@ -122,11 +339,12 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 	T_Data CPUGet(int intID) =>
-		intID == Interpreter.ID
+		intID == Interpreter?.ID // false if int is null
 		? GetInternalLanguageDataObject()
 		: null;
 
 	void TryPrint(int interpreterID, string message) {
+		if (Interpreter == null) return;
 		if (interpreterID != Interpreter.ID) return;
 
 		// now do this properly
@@ -141,6 +359,7 @@ public class Part_CPU : NonStaticPart {
 	}
 
 	T_Data GetPort(int interpreterID, int id) {
+		if (Interpreter == null) return null;
 		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
 														  // however illegal this may feel
 

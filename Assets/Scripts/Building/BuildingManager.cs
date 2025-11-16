@@ -66,7 +66,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.ClearNewPressed();
 		BottomBar.OnNewPressed += New;
 
-		CPU_SESetup.Setup();
+		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
 	}
 

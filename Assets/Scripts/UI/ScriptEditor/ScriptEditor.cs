@@ -810,7 +810,7 @@ public class ScriptEditor : MonoBehaviour {
 	int clicksInARow = 0;
 	void DetectExtraClicks(Vector2Int pos) {
 		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
-			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000f &&
+			if (Time.time - lastClickTime < Config.Input.extraClickMaxTimeMs / 1000f &&
 			lastClickPos == pos) {
 				clicksInARow++;
 			} else {

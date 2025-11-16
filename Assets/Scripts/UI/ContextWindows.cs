@@ -60,7 +60,6 @@ public static class ContextWindows {
 			OutputsMenu.Set,
 			BottomBar.Set,
 			UnsavedWorkMenu.Set,
-			SEProcedural.Set,
 			Transceiver_UI.Set
 		},
 		() => (
@@ -72,7 +71,6 @@ public static class ContextWindows {
 			OutputsMenu.Windows,
 			BottomBar.Windows,
 			UnsavedWorkMenu.Windows,
-			SEProcedural.Windows,
 			Transceiver_UI.Windows
 		),
 		Conglomerate(
@@ -81,8 +79,7 @@ public static class ContextWindows {
 			SaveLoadMenus.Menus,
 			OutputsMenu.Menus,
 			BottomBar.Menus,
-			UnsavedWorkMenu.Menus,
-			SEProcedural.Menus
+			UnsavedWorkMenu.Menus
 		))
 	);
 

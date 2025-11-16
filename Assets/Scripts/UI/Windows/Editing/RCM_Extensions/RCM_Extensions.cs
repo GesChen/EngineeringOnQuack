@@ -21,13 +21,12 @@ public static class RCM_Extensions {
 	}
 
 	public static void Setup() {
-		CPU_UI.Setup();
 	}
 
 	public static readonly PartExtension[] PartExtensions = new PartExtension[] {
 		new(3, // cpu
 200,
-new W.Button(() => RCM.Call(CPU_UI.OnEditScript), "edit script", iconName: "edit script")
+new W.Button(() => RCM.Call(CPU_UI.EditScript), "edit script", iconName: "edit script")
 		),
 		new(6, // transceiver
 200,

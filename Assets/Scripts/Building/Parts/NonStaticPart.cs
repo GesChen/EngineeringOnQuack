@@ -12,7 +12,7 @@ using UnityEngine;
  * 4. custom spart/saving then overrides
  */
 public abstract class NonStaticPart : MonoBehaviour {
-	public Part Part;
+	[HideInNormalInspector] public Part Part;
 
 	public Port[] Ports;
 

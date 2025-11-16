@@ -103,7 +103,7 @@ public class FileExplorer {
 	void Select(int i) {
 
 		// double click check
-		if (Time.time - LastSelectTime < Config.Input.doubleClickMaxTimeMs / 1000f) {
+		if (Time.time - LastSelectTime < Config.Input.extraClickMaxTimeMs / 1000f) {
 			if (CurrentlySelected.Type == Entry.EntryType.File 
 				&& ExplorerType == Type.OpenFile
 				&& i == LastSelectedI)
