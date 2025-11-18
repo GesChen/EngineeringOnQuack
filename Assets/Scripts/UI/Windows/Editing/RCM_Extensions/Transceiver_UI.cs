@@ -8,6 +8,8 @@ using UnityEngine.UI;
 public static class Transceiver_UI {
 	public static Func<string[]> RequestOutputs;
 	public static Func<int> InitialSelection;
+	public static Action OnManageOutputsPressed;
+
 	public static void OnSetOutput() {
 		UpdateOutputs();
 
@@ -104,7 +106,7 @@ public static class Transceiver_UI {
 						horizontalScrolling: false
 					),
 					WindowItem.LayoutConfig.Custom(
-							margins: new(30, 0, 0, 0)
+							margins: new(30, 0, 30, 0)
 					),
 					new() {
 						WindowItem.NewLayout(
@@ -121,6 +123,20 @@ public static class Transceiver_UI {
 							SelectionsLayout = wi
 						)
 					}
+				),
+				WindowItem.NewButtonCustomText(
+					new PComponents.Button(() => OnManageOutputsPressed?.Invoke()),
+					new PComponents.Text(
+						"Manage Outputs",
+						alignment: TMPro.TextAlignmentOptions.Center
+					),
+					WindowItem.LayoutConfig.Custom(
+						position: new(0, 0, 1, 0),
+						sizeDelta: new(0, 30),
+						fixedPosition: new() {
+							Pivot = UIPosition.BottomCenter
+						}
+					)
 				)
 			}
 		};

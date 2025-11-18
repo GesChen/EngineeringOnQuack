@@ -78,18 +78,11 @@ public class Part_Cable : NonStaticPart {
 		public int BID;
 	}
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_Cable {
-			AID = connectionA.CCID,
-			BID = connectionB.CCID,
+		var sp = new SPart_Cable();
 
-			basePartID = SPart.basePartID,
-			id = SPart.id,
-			position = SPart.position,
-			rotation = SPart.rotation,
-			scale = SPart.scale,
-			color = SPart.color,
-			compositionID = SPart.compositionID,
-		};
+		sp.CopyMembers(SPart);
+		sp.AID = connectionA.CCID;
+		sp.BID = connectionB.CCID;
 
 		SPart = sp;
 	}

@@ -42,8 +42,7 @@ public class Part_CableConnection : NonStaticPart {
 		var ports = BuildingManager.Instance.SimulationContainer.GetComponentsInChildren<Port>();
 
 		foreach (var port in ports) {
-			float dist = (transform.position - port.transform.position).sqrMagnitude;
-			if (dist < Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance) {
+			if (port.SnapTarget.CheckSnap(transform)) {
 				// connect up
 				var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
 
@@ -61,23 +60,15 @@ public class Part_CableConnection : NonStaticPart {
 	}
 
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CC {
-			CCID = CCID,
+		var sp = new SPart_CC();
 
-			basePartID = SPart.basePartID,
-			id = SPart.id,
-			position = SPart.position,
-			rotation = SPart.rotation,
-			scale = SPart.scale,
-			color = SPart.color,
-			compositionID = SPart.compositionID,
-		};
+		sp.CopyMembers(SPart);
+		sp.CCID = CCID;
 
 		SPart = sp;
 	}
 
 	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
-
 		var cc = unfinishedPart.GetComponent<Part_CableConnection>();
 		var part = (SPart_CC)originalSPart;
 

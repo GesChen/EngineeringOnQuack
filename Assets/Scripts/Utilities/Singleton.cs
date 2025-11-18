@@ -34,6 +34,8 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
 		}
 	}
 
+	public static bool InstanceExists => _instance != null;
+
 	//private static bool _applicationIsQuitting = false;
 
 	protected virtual void Awake() {

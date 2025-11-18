@@ -1,14 +1,15 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class SaveLoadManager : Singleton<SaveLoadManager> {
 	public static bool Loading = false;
 
 	static readonly float SaveTextHideDelay = 1.5f;
+
+	public event Action OnLoaded;
 
 	int currentlySelectedI = -1;
 	string currentlySelectedName;
@@ -32,6 +33,8 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 		SaveLoadMenus.ClearOnLoad();
 		SaveLoadMenus.OnLoad += Load;
+
+		OnLoaded = null;
 	}
 
 	public void Save() {
@@ -92,11 +95,16 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 	void Load() {
 		if (currentlySelectedI == -1) return;
 
+
 		SelectionManager.Instance.SetSelection();
 
 		// hope name conflicts arent a thing
 		Loading = true;
 		SaveLoadHelper.LoadFromFile(currentlySelectedName);
 		Loading = false;
+
+		BottomBar.UpdateNameText(BuildingManager.Instance.Assembly.Name);
+
+		OnLoaded?.Invoke();
 	}
 }

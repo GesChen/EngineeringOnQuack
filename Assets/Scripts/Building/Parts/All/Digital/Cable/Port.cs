@@ -15,12 +15,17 @@ public class Port : MonoBehaviour {
 		BuildingManager.Instance.OnModified += UpdateSnapTarget;
 	}
 
+	// also called on scene cleanup and the instance would therefdore no longer extist
+	private void OnDestroy() {
+		if (BuildingManager.InstanceExists)
+			BuildingManager.Instance.OnModified -= UpdateSnapTarget;
+	}
+
 	void UpdateSnapTarget() {
 		// snap exclusivity
 
 		foreach (var p in BuildingManager.Instance.Assembly.Parts) {
-			if ((transform.position - p.transform.position).sqrMagnitude < 
-				Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance) {
+			if (SnapTarget.CheckSnap(p.transform)) {
 				SnapTarget.enabled = false;
 				return;
 			}

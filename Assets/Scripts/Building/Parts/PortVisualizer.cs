@@ -16,6 +16,13 @@ public class PortVisualizer : Singleton<PortVisualizer> {
 
 	private List<Transform> Numbers = new();
 
+	void Start() {
+		BuildingManager.Instance.OnPartCreated += ForceVizUpdate;
+		BuildingManager.Instance.OnNewAssemblyMade += DestroyAllNumbers;
+
+		SaveLoadManager.Instance.OnLoaded += DestroyAllNumbers;
+	}
+
 	void Update() {
 		CheckVisualizing();
 
@@ -26,15 +33,21 @@ public class PortVisualizer : Singleton<PortVisualizer> {
 		LastVisualizing = Visualizing;
 	}
 
+	public void ForceVizUpdate() {
+		DestroyAllNumbers();
+		CreateNumbers();
+	}
+
 	void CheckVisualizing() {
 		// criterion: cc or nsp selected
 		foreach (var p in SelectionManager.Instance.PartSelection) {
 			if (p.IsNonStaticPart(out var nsp)) {
 				// criterion subject to change
-				if (nsp is Part_CPU or Part_CableConnection) { // first time using or lmao
+				// yeah maybe just all nsps
+				//if (nsp is Part_CPU or Part_CableConnection) { // first time using or lmao
 					Visualizing = true;
 					return;
-				}
+				//}
 			}
 		}
 		Visualizing = false;

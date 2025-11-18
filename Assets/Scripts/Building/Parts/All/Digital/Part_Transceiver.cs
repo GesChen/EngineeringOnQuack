@@ -17,6 +17,8 @@ public class Part_Transceiver : NonStaticPart {
 		Transceiver_UI.InitialSelection = InitialSelection;
 		Transceiver_UI.OnItemSelected = OnItemSelected;
 
+		Transceiver_UI.OnManageOutputsPressed = OutputManager.Instance.OpenModifyOutputs;
+
 		SelectionManager.Instance.OnSelectionChanged += () => {
 			if (Transceiver_UI.OutputSelectionWindow.RealisedWindow.Open) {
 				OutputsChanged();
@@ -123,6 +125,31 @@ public class Part_Transceiver : NonStaticPart {
 	#endregion
 
 	#region overrides
+	public class SPart_Transceiver : Assembly.SPart {
+		public string Output;
+	}
+	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
+		var sp = new SPart_Transceiver();
+
+		sp.CopyMembers(SPart);
+		sp.Output = TargetOutput.Name;
+
+		SPart = sp;
+	}
+	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var newTrans = unfinishedPart.GetComponent<Part_Transceiver>();
+		var part = (SPart_Transceiver)originalSPart;
+
+		newTrans.StartCoroutine(newTrans.DelaySetup(part));
+	}
+
+	IEnumerator DelaySetup(SPart_Transceiver spart) {
+		yield return null;
+
+		TargetOutput = BuildingManager.Instance.Assembly
+			.Outputs.FirstOrDefault(o => o.Name == spart.Output);
+	}
+
 	public override void FinalizeInstantiation(GameObject instantiatedPart) {
 		var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
 

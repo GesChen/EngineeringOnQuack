@@ -8,6 +8,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	public List<Transform> Selection { get; private set; }
 	public Part[] PartSelection { get; private set; } // always in sync with selection
+	HashSet<Part> PartSelectionHS;
 
 	public Transform selectionContainer;
 
@@ -48,13 +49,13 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void Subscribe() {
-		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
-		ContextObserver.Instance.RequestSelectionCount += () => Selection.Count;
-		ContextObserver.Instance.GetCurrentSSInfo += () =>
-			(PartSelection[0].transform, PartSelection[0].basePart.ID);
+		ContextObserver.Instance.GroupCheck = UpdateGroupContext;
+		ContextObserver.Instance.RequestSelectionCount = () => Selection.Count;
+		ContextObserver.Instance.GetCurrentSelectionInfo = () =>
+			(PartSelection.Select(p => p.transform).ToArray(),
+			PartSelection.Select(p => p.basePart.ID).ToArray());
 
 		// do processing in here since ui doesnt depend on language
-		
 	}
 
 	bool UpdateGroupContext() {
@@ -104,7 +105,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 		HandleContainer();
 
 		CheckForGroups();
-		HandleContainer(); // selection might have changed from groups
+		CheckForSnaps();
+		HandleContainer(); // selection might have changed from groups and snaps
 	}
 
 	void HandleInput() {
@@ -128,7 +130,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 
 		// no selection right click check
-		if (Conatrols.Mouse.Right.PressedThisFrame && Selection.Count == 0)
+		if ((Conatrols.Mouse.Right.PressedThisFrame
+			|| Conatrols.Mouse.Left.PressedThisFrame) && Selection.Count == 0)
 			ClickCheck();
 
 		// detect mouse up
@@ -165,6 +168,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	void HandleContainer() {
 		if (selectionChanged) {
 			PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
+			PartSelectionHS = PartSelection.ToHashSet();
 
 			UpdateContainer();
 			selectionChanged = false;
@@ -178,11 +182,33 @@ public class SelectionManager : Singleton<SelectionManager> {
 		foreach (var part in PartSelection) {
 			if (part.Group != null)
 				foreach (var item in part.Group.Parts)
-					if (!PartSelection.Contains(item)) {
+					if (!PartSelectionHS.Contains(item)) {
 						Selection.Add(item.transform);
 						selectionChanged = true;
 					}
 		}
+	}
+
+	void CheckForSnaps() {
+		// why.
+		// add to selection any nonselected parts which meet the checksnap of any 
+		// selected part's snaptargets
+
+		var oldhs = Selection.ToHashSet();
+
+		Selection.AddRange( // add to selection
+			PartSelection.SelectMany(part => // any selected part's
+				part.GetComponentsInChildren<SnapTarget>() // snaptargets
+				.SelectMany(cst => 
+					BuildingManager.Instance.Assembly.Parts.Where(p => // any 
+					p != part // self check for good 
+					&& !PartSelectionHS.Contains(p) // nonselected part
+					&& cst.CheckSnap(p.transform))) // which meet the checksnap
+			).Select(p => p.transform)
+		);
+
+		if (!Selection.ToHashSet().SetEquals(oldhs))
+			selectionChanged = true;
 	}
 
 	void HandleBox() {
@@ -299,7 +325,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit)) {
 			Part component = hit.transform.GetComponentInParent<Part>();
 			if (component && BuildingManager.Instance.Assembly.Parts.Contains(component))
-				selected = hit.transform;
+				selected = component.transform;
 		}
 
 		if (selected == null) {

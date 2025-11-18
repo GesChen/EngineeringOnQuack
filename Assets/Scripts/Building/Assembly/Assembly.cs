@@ -54,6 +54,17 @@ public class Assembly {
 
 		public SVector3 color;
 		public int compositionID;
+
+		public void CopyMembers(SPart other) {
+			basePartID = other.basePartID;
+			id = other.id;
+			position = other.position;
+			rotation = other.rotation;
+			scale = other.scale;
+
+			color = other.color;
+			compositionID = other.compositionID;
+		}
 	}
 	public class SGroup {
 		public List<int> PartIDs;

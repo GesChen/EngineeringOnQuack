@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
+
+	public Transform MainPartsContainer;
+	public Transform SimulationContainer;
+
 	public event Action OnModified; // only sub to this in start, its cleared in awake
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
@@ -15,14 +19,16 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Instance.OnModified?.Invoke();
 	}
 
-	public Transform MainPartsContainer;
-	public Transform SimulationContainer;
-
+	public event Action OnPartCreated;
+	public event Action OnNewAssemblyMade;
+	
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
 
 		OnModified = null;
+		OnPartCreated = null;
+		OnNewAssemblyMade = null;
 
 		Assembly = new();
 
@@ -141,6 +147,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SetDirty();
 
+		OnPartCreated?.Invoke();
+
 		return newpart;
 	}
 
@@ -166,6 +174,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SelectionManager.Instance.SetSelection();
 		SelectionManager.Instance.UpdateContainer();
+
+		OnNewAssemblyMade?.Invoke();
 	}
 	public void ResetPartsAndGroups() {
 		foreach (Part part in Assembly.Parts) {
