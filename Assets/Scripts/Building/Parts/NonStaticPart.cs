@@ -16,6 +16,8 @@ public abstract class NonStaticPart : MonoBehaviour {
 
 	public Port[] Ports;
 
+	// public List<Part> LinkedParts;
+
 	public abstract string PartName { get; }
 
 	// dont forget to call base.awake in derived classes

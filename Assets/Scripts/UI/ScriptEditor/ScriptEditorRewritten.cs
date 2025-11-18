@@ -434,7 +434,12 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	protected int LineIndentation(int line) {
 		var li = CodeText.textInfo.lineInfo[line];
 		string content = Content[li.firstCharacterIndex..li.lastCharacterIndex];
-		return content.Length - content.TrimStart('\t').Length;
+
+		if (!cfg.TabAsSpaces)
+			return content.Length - content.TrimStart('\t').Length;
+		else
+		// use int division to auto truncate 
+			return (content.Length - content.TrimStart(' ').Length) / cfg.TabSpaceCount;
 	}
 	#endregion
 
@@ -863,7 +868,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 						return;
 					}
 
-					// attempt to move to target x
+					// attempt to move to pattern x
 					Vector2 targetPos = new(
 						targetX,
 						main.LineInfo(main.CharInfo(head).lineNumber).CenterY() 
@@ -1157,27 +1162,58 @@ public class ScriptEditorRewritten : MonoBehaviour {
 			}
 
 			internal void Tab(bool shift) {
+				string pattern = 
+					cfg.TabAsSpaces
+					? new string(' ', cfg.TabSpaceCount)
+					: '\t';
+
 				if (!shift) {
-					Type("\t"); // functionally the same
+					Type(pattern);
 					return;
 				}
 
 				var sel = SelectedLines;
 				Array.Reverse(sel);
 
-				int tabsDeleted = 0;
-				foreach (int li in sel) {
-					int start = main.LineInfo(li).firstCharacterIndex;
-					char first = main.Content[start];
+				// puh lease work :(
 
-					if (first == '\t') {
-						main.Content = main.Content.Remove(start, 1);
-						tabsDeleted++;
+				foreach (int li in sel) {
+					var li = main.LineInfo(li);
+					string content = main.Content[li.firstCharacterIndex..li.lastCharacterIndex];
+					
+					if (content.Length < pattern.Length) continue;
+
+					bool match = content[..pattern.Length] == pattern;
+					if (match) {
+						main.Content = main.Content.Remove(li.firstCharacterIndex, pattern.Length);
+						charsDeleted += pattern.Length;
 					}
 				}
 
-				head -= tabsDeleted;
-				tail -= tabsDeleted;
+				var li0 = main.LineInfo(sel[^1]);
+				string lc0 = main.Content[li0.firstCharacterIndex..li0.lastCharacterIndex];
+				int startCharsDeleted = 
+					lc0.Length >= pattern.Length 
+					? (
+						lc0[..pattern.Length] == pattern
+						? pattern.Length
+						: 0
+					): 0;
+
+				int hLN = main.CharInfo(head).lineNumber;
+				int tLN = main.CharInfo(tail).lineNumber;
+
+				if (hLN == tLN) {
+					head -= charsDeleted;
+					tail -= charsDeleted;
+				} else
+				if (hLN > tLN) {
+					head -= charsDeleted;
+					tail -= startCharsDeleted;
+				} else {
+					head -= startCharsDeleted;
+					tail -= charsDeleted;
+				}
 			}
 
 			internal void Delete(bool ctrl) {

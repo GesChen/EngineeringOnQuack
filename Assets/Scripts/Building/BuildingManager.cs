@@ -290,18 +290,51 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void DeleteSelection() {
 		// delete current selection
-		foreach (var part in SelectionManager.Instance.PartSelection) {
-			if (!Assembly.Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
-			else
-				Assembly.Parts.Remove(part);
+		List<Transform> additionalToDelete = new();
 
-			Destroy(part.gameObject);
+		foreach (var part in SelectionManager.Instance.PartSelection) {
+			// if (part.IsNonStaticPart(out var nsp)) {
+			// 	additionalToDelete.AddRange(nsp.LinkedParts.Select(p => p.transform));
+			// }
+
+			if (part.IsNonStaticPart(out var nsp)) {
+				if (nsp is Part_CableConnection cc) {
+					// delete cable and other cc if not selected
+					Part cable = cc.Cable;
+					if (cable != null) {
+						DeletePart(cable);
+						cc.Cable = null;
+					}
+					
+					Part other = cable.OtherCC(cc);
+					if (!SelectionManager.Instance.PartSelectionHS.Contains(other)){
+						DeletePart(other);
+					}
+				}
+			}
+
+			DeletePart(part)
 		}
+
+		// if (additionalToDelete.Length > 0) {
+		// 	SelectionManager.Instance.SetSelection(additionalToDelete.ToArray());
+		// 	SelectionManager.Instance.HandleContainer(); // force update
+		// 	DeleteSelection();
+		// }
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
 
 		SetDirty();
+	}
+
+	void DeletePart(Part part) {
+		if (!Assembly.Parts.Contains(part)) 
+			Debug.LogError("Deleting part that isn't in the parts list");
+		else
+			Assembly.Parts.Remove(part);
+
+		Destroy(part.gameObject);
 	}
 	#endregion
 

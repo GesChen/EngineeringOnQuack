@@ -102,10 +102,17 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Update() {
 		HandleInput();
-		HandleContainer();
+		UpdatePartSelection();
 
-		CheckForGroups();
-		CheckForSnaps();
+		// ?????????????
+		while (selectionChanged) {
+			CheckForGroups();
+			CheckForSnaps();
+			CheckForLinks();
+			RemoveDuplicates();
+			UpdatePartSelection();
+		}
+
 		HandleContainer(); // selection might have changed from groups and snaps
 	}
 
@@ -165,18 +172,24 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 	}
 
-	void HandleContainer() {
-		if (selectionChanged) {
-			PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
-			PartSelectionHS = PartSelection.ToHashSet();
+	void UpdatePartSelection() {
+		if (!selectionChanged) return;
 
-			UpdateContainer();
-			selectionChanged = false;
-		}
+		PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
+		PartSelectionHS = PartSelection.ToHashSet();
+	}
+
+	void HandleContainer() {
+		if (!selectionChanged) return;
+
+		UpdateContainer();
+		selectionChanged = false;
 	}
 
 	void CheckForGroups() {
 		if (overrideGroupSelect) return;
+
+		var oldhs = Selection.ToHashSet();
 
 		// if any selected part is in a group, select parts in that group not already in selection
 		foreach (var part in PartSelection) {
@@ -187,6 +200,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 						selectionChanged = true;
 					}
 		}
+
+		if (!Selection.ToHashSet().SetEquals(oldhs)) selectionChanged = true;
 	}
 
 	void CheckForSnaps() {
@@ -202,13 +217,29 @@ public class SelectionManager : Singleton<SelectionManager> {
 				.SelectMany(cst => 
 					BuildingManager.Instance.Assembly.Parts.Where(p => // any 
 					p != part // self check for good 
-					&& !PartSelectionHS.Contains(p) // nonselected part
 					&& cst.CheckSnap(p.transform))) // which meet the checksnap
 			).Select(p => p.transform)
 		);
 
-		if (!Selection.ToHashSet().SetEquals(oldhs))
-			selectionChanged = true;
+		if (!Selection.ToHashSet().SetEquals(oldhs)) selectionChanged = true;
+	}
+
+	void CheckForLinks() {
+		// hes doing it again :(
+		
+		var oldhs = Selection.ToHashSet();
+
+		foreach (var p in PartSelection) {
+			if (p.IsNonStaticPart(out var nsp)) {
+				// Selection.AddRange(nsp.LinkedParts));
+			}
+		}
+		
+		if (!Selection.ToHashSet().SetEquals(oldhs)) selectionChanged = true;
+	}
+
+	void RemoveDuplicates() {
+		Selection = Selection.Distinct();
 	}
 
 	void HandleBox() {

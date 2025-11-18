@@ -22,6 +22,9 @@ public static partial class Config {
 		public static readonly float	ContentExtraWidth		= 50;
 
 		// behaviour
+		public static readonly bool		TabAsSpaces		= true;
+		public static readonly int		TabSpaceCount	= 2;
+
 		public static readonly int		MaxClipboardSize				= 100;
 		public static readonly int		MaxCaretViewRecoverySteps		= 100;
 		public static readonly int		MaxHistoryLength				= 100;
