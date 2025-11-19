@@ -54,9 +54,9 @@ public class ContextObserver : Singleton<ContextObserver> {
 						var c = ContextManager.EnterContext<SingleSelection>();
 						c.Selected = selectedTransforms[0];
 						c.SelectedBasePartID = BPids[0];
-							
 					} else {
 						var c = ContextManager.EnterContext<MultiSelection>();
+						c.Selected = selectedTransforms;
 						c.SelectedBasePartIDs = BPids;
 					}
 				}

@@ -7,10 +7,7 @@ using W = PMenu.Window;
 
 public class MaterialEditingMenu {
 	public static void ClearEvents() {
-		OnStart = null;
-		OnColorSelection = null;
 		OnRequestCompositionItems = null;
-		OnCompositionSelection = null;
 	}
 
 	public static readonly float size = 100;
@@ -19,7 +16,7 @@ public class MaterialEditingMenu {
 		ref RectTransform colorPickerButton,
 		ref RectTransform compositionPickerButton);
 
-	public static event StartEvent OnStart;
+	public static StartEvent OnStart;
 
 	public static Action<Color> OnColorSelection;
 
@@ -60,7 +57,7 @@ public class MaterialEditingMenu {
 	}
 	// also rc version for now
 	public static Func<WindowItem[]> OnRequestCompositionItems;
-	public static event Action<int> OnCompositionSelection;
+	public static Action<int> OnCompositionSelection;
 
 	public static void SelectComposition(int index) {
 		OnCompositionSelection?.Invoke(index);

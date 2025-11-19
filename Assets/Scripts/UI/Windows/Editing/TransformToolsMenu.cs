@@ -4,15 +4,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class TransformToolsMenu {
-	public static event Action onTranslatePressed;
-	public static event Action onRotatePressed;
-	public static event Action onScalePressed;
-
-	public static void ClearEvents() {
-		onTranslatePressed	= null;
-		onRotatePressed		= null;
-		onScalePressed		= null;
-	}
+	public static Action onTranslatePressed;
+	public static Action onRotatePressed;
+	public static Action onScalePressed;
 
 	public static CWindow MainWindow;
 	static void SetMainWindow() { 

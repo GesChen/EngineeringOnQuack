@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager> {
+
+	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
 		base.Awake();
 

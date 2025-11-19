@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditorInternal.VR;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,24 +41,21 @@ public class MaterialEditor : MonoBehaviour {
 	}
 
 	static void Subscribe(MaterialEditor editor) {
-		RightClickMenus.OnMaterial += (source) => {
-			editor.UpdateParts();
-			MaterialEditingMenu.ShowMenu(source);
-		};
+		RightClickMenus.OnMaterialOpened				= editor.ShowMaterialMenu;
+		SelectionManager.Instance.OnSelectionChanged	= editor.UpdateParts;
+		MaterialEditingMenu.OnColorSelection			= editor.SetColor;
+		MaterialEditingMenu.OnCompositionSelection		= editor.SetComposition;
+		BottomBar.OnMaterialOpened						= editor.ShowMenuCenter;
+	}
 
-		SelectionManager.Instance.OnSelectionChanged += editor.UpdateParts;
+	void ShowMaterialMenu(WindowItem source) {
+		UpdateParts();
+		MaterialEditingMenu.ShowMenu(source);
+	}
 
-		MaterialEditingMenu.OnColorSelection += editor.SetColor;
-		MaterialEditingMenu.OnCompositionSelection += editor.SetComposition;
-
-		BottomBar.ClearMaterial();
-		// look idk where else to put it and for now im too lazy to add the windowitem callback
-		// thing cuz it has to refernce itself and whatnot
-		var canvas = editor.GetComponentInParent<Canvas>();
-		BottomBar.OnMaterialOpened += () => {
-			editor.UpdateParts();
-			MaterialEditingMenu.ShowMenu();
-		};
+	void ShowMenuCenter() {
+		UpdateParts();
+		MaterialEditingMenu.ShowMenu();
 	}
 
 	public void UpdateParts() {

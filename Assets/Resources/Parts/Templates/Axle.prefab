@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2599434518676190551}
   - component: {fileID: 6804442207414628078}
   - component: {fileID: 7453336552193076269}
-  - component: {fileID: 9171463267628465383}
+  - component: {fileID: 6999596434941035659}
   m_Layer: 0
   m_Name: Axle
   m_TagString: Untagged
@@ -123,11 +123,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ID: 0
-  Selected: 0
   color: {r: 0, g: 0, b: 0, a: 0}
+  dontUpdateMaterialsFor: []
   material: {fileID: 0}
   physicMaterial: {fileID: 0}
---- !u!114 &9171463267628465383
+--- !u!114 &6999596434941035659
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -136,9 +136,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1785169975147441746}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 132b9cad0723c1146a0486990d80444b, type: 3}
+  m_Script: {fileID: 11500000, guid: bd4dea209833ff745afb435fce49b4b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Part: {fileID: 0}
+  Ports: []
   endA: {fileID: 7507296724593259006}
   endB: {fileID: 8752007019700843666}
 --- !u!1 &4786511176873984170

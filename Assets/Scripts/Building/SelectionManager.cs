@@ -8,7 +8,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	public List<Transform> Selection { get; private set; }
 	public Part[] PartSelection { get; private set; } // always in sync with selection
-	HashSet<Part> PartSelectionHS;
+	public HashSet<Part> PartSelectionHS { get; private set; }
 
 	public Transform selectionContainer;
 
@@ -38,8 +38,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	/// Subscribe in something called from Buildingmanager after the clear
 	/// should be around line 47
 	/// </summary>
-	public event Action OnSelectionChanged;
-	public void ClearSelectionChanged() { OnSelectionChanged = null; }
+	public Action OnSelectionChanged;
 
 	void Start() {
 		Selection = new();
@@ -102,6 +101,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Update() {
 		HandleInput();
+		bool changed = selectionChanged;
 		UpdatePartSelection();
 
 		// ?????????????
@@ -110,10 +110,15 @@ public class SelectionManager : Singleton<SelectionManager> {
 			CheckForSnaps();
 			CheckForLinks();
 			RemoveDuplicates();
+
+			if (selectionChanged)
+				changed = true;
+
 			UpdatePartSelection();
 		}
 
-		HandleContainer(); // selection might have changed from groups and snaps
+		if (changed)
+			UpdateContainer(); // selection might have changed from groups and snaps
 	}
 
 	void HandleInput() {
@@ -177,12 +182,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
 		PartSelectionHS = PartSelection.ToHashSet();
-	}
 
-	void HandleContainer() {
-		if (!selectionChanged) return;
-
-		UpdateContainer();
 		selectionChanged = false;
 	}
 
@@ -239,7 +239,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void RemoveDuplicates() {
-		Selection = Selection.Distinct();
+		Selection = Selection.Distinct().ToList();
 	}
 
 	void HandleBox() {

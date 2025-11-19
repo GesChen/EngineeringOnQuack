@@ -24,8 +24,7 @@ public class RightClickMenus : MonoBehaviour {
 	public static event Action OnCombineGroups;
 	public static event Action OnAddToGroup;
 	public static event Action OnRemoveFromGroup;
-	public delegate void TabOpenEvent(WindowItem source);
-	public static event TabOpenEvent OnMaterial;
+	public static Action<WindowItem> OnMaterialOpened;
 
 	public static void ClearEvents() {
 		// theres no reason to align them i just think it looks funny
@@ -41,7 +40,6 @@ public class RightClickMenus : MonoBehaviour {
 		OnCombineGroups			= null;
 		OnAddToGroup			= null;
 		OnRemoveFromGroup		= null;
-		OnMaterial				= null;
 	}
 
 	static void MakeNewPart(string name) {
@@ -55,7 +53,7 @@ public class RightClickMenus : MonoBehaviour {
 	static void Material(W source, int index) {
 		WindowItem item = source.Items[index].RealItem;
 
-		OnMaterial?.Invoke(item);
+		OnMaterialOpened?.Invoke(item);
 	}
 
 	// will have to add more later for other contexts but for now this is enough

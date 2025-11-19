@@ -43,6 +43,8 @@ namespace Contexts {
 		public Type ParentType => typeof(InWorld);
 		public MultiSelection(IContext parent) => ((IContext)this).SetParent(parent);
 		public MultiSelection() { }
+
+		public Transform[] Selected;
 		public int[] SelectedBasePartIDs;
 	}
 

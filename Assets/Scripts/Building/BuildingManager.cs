@@ -39,7 +39,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
 		RightClickMenus.ClearEvents();
-		MaterialEditingMenu.ClearEvents();
 
 		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
 		RightClickMenus.OnDelete		+= DeleteSelection;
@@ -53,20 +52,16 @@ public class BuildingManager : Singleton<BuildingManager> {
 		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
 		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
 
-		SelectionManager.Instance.ClearSelectionChanged();
-
-		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
-		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
+		MaterialEditingMenu.OnStart = MaterialEditor.SetupComponent;
+		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
 		BottomBar.ClearAssemble();
 		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
 
-		SimulatingMainUI.TopBar.ClearReturnToEditing();
-		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
+		SimulatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.StopSimulating;
 
-		BottomBar.ClearNameChanged();
-		BottomBar.OnNameChanged += ChangeName;
+		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
 
 		BottomBar.ClearNewPressed();
@@ -297,23 +292,24 @@ public class BuildingManager : Singleton<BuildingManager> {
 			// 	additionalToDelete.AddRange(nsp.LinkedParts.Select(p => p.transform));
 			// }
 
+			// manually handle cc deletion for now 
 			if (part.IsNonStaticPart(out var nsp)) {
 				if (nsp is Part_CableConnection cc) {
 					// delete cable and other cc if not selected
-					Part cable = cc.Cable;
-					if (cable != null) {
-						DeletePart(cable);
+					Part_Cable cable = cc.Cable;
+					if (Assembly.Parts.Contains(cable.Part)) {
+						DeletePart(cable.Part);
 						cc.Cable = null;
 					}
 					
-					Part other = cable.OtherCC(cc);
+					Part other = cable.OtherCC(cc).Part;
 					if (!SelectionManager.Instance.PartSelectionHS.Contains(other)){
 						DeletePart(other);
 					}
 				}
 			}
 
-			DeletePart(part)
+			DeletePart(part);
 		}
 
 		// if (additionalToDelete.Length > 0) {

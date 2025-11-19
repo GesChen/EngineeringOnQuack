@@ -20,10 +20,8 @@ public static class BottomBar {
 	public static WindowItem OutputButton;
 	public static void ClearOutputs() { OnOutputsOpened = null; }
 	public static event Action OnOutputsOpened;
-	public static void ClearTransform() { OnTransformOpened = null; }
-	public static event Action OnTransformOpened;
-	public static void ClearMaterial() { OnMaterialOpened = null; }
-	public static event Action OnMaterialOpened;
+	public static Action OnTransformOpened;
+	public static Action OnMaterialOpened;
 
 	public static void ClearAssemble() { OnAssemble = null; }
 	public static event Action OnAssemble;
@@ -112,7 +110,6 @@ public static class BottomBar {
 	public static void UpdateNameText(string name) {
 		NameField.text = name;
 	}
-	public static void ClearNameChanged() { OnNameChanged = null; }
 	public static Action<string> OnNameChanged;
 
 	public static CWindow Bar;

@@ -50,9 +50,13 @@ public class Part_CPU : NonStaticPart {
 		CPU_UI.GetCurrentScript = () => {
 			// rcm extensions only does ss for now
 			// this fixes the selection bcoming null 
-			Part_CPU cpu = (RightClick.Instance.ContextAtClick as Contexts.SingleSelection)
-				.Selected.GetComponent<Part_CPU>();
-			var script = cpu.Script;
+
+			var cpuTransforms = GetSelectedCPUs();
+			Part_CPU cpu =
+				cpuTransforms.Count > 0
+				? cpuTransforms[0].GetComponent<Part_CPU>()
+				: null;
+			var script = cpu != null ? cpu.Script : null;
 
 			if (script == null) {
 				Tokenizer tokenizer = new();
@@ -64,7 +68,11 @@ public class Part_CPU : NonStaticPart {
 				newScript.Name = "New Script";
 
 				script = newScript;
-				cpu.Script = script;
+			}
+
+			foreach (var ct in cpuTransforms) {
+				var thisCPU = ct.GetComponent<Part_CPU>();
+				thisCPU.Script ??= script;
 			}
 
 			return (
@@ -80,9 +88,17 @@ public class Part_CPU : NonStaticPart {
 			.Select(p => p.GetComponent<Part_CPU>()).Where(c => c != null)
 			.ToList().ForEach(c => c.SetupScriptEditor(editor));*/
 		CPU_UI.OnEdit = e =>
-			(RightClick.Instance.ContextAtClick as Contexts.SingleSelection)
-			.Selected.GetComponent<Part_CPU>().SetupScriptEditor(e);
-			
+			GetSelectedCPUs().ForEach(t => t.GetComponent<Part_CPU>().SetupScriptEditor(e));
+	}
+
+	static List<Transform> GetSelectedCPUs() {
+		List<Transform> cpus = new();
+		if (RightClick.Instance.ContextAtClick is Contexts.SingleSelection ss)
+			cpus = new() { ss.Selected };
+		else if (RightClick.Instance.ContextAtClick is Contexts.MultiSelection ms)
+			cpus = new(ms.Selected);
+
+		return cpus.Where(t => t.GetComponent<Part_CPU>() != null).ToList();
 	}
 
 	ScriptEditorRewritten UsingEditor;

@@ -1165,7 +1165,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				string pattern = 
 					cfg.TabAsSpaces
 					? new string(' ', cfg.TabSpaceCount)
-					: '\t';
+					: "\t";
 
 				if (!shift) {
 					Type(pattern);
@@ -1177,8 +1177,9 @@ public class ScriptEditorRewritten : MonoBehaviour {
 
 				// puh lease work :(
 
-				foreach (int li in sel) {
-					var li = main.LineInfo(li);
+				int charsDeleted = 0;
+				foreach (int l in sel) {
+					var li = main.LineInfo(l);
 					string content = main.Content[li.firstCharacterIndex..li.lastCharacterIndex];
 					
 					if (content.Length < pattern.Length) continue;
