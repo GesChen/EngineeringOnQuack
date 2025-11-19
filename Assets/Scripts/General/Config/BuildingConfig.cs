@@ -50,11 +50,10 @@ public static partial class Config {
 
 			public static readonly bool SaveClipboard = true;
 			
-			
 			public static string AssembliesLocation =>
 				HF.GuaranteePath(
 					Path.LocalPath("Assemblies").ToString()
-					);
+				);
 		}
 	}
 }

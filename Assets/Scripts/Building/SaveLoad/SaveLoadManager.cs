@@ -11,28 +11,12 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 	public event Action OnLoaded;
 
-	int currentlySelectedI = -1;
-	string currentlySelectedName;
-
-	WindowItem[] items;
-
 	protected override void Awake() {
 		base.Awake();
 
-		SaveLoadMenus.ClearSave();
-		SaveLoadMenus.OnSave += Save;
-
-		SaveLoadMenus.ClearSaveAs();
-		SaveLoadMenus.OnSaveAs += SaveAs;
-
-		SaveLoadMenus.ClearLoadRequested();
-		SaveLoadMenus.OnLoadRequested += UpdateLoadMenu;
-
-		SaveLoadMenus.ClearLoadEntryChosen();
-		SaveLoadMenus.OnLoadEntryChosen += LoadOptionSelect;
-
-		SaveLoadMenus.ClearOnLoad();
-		SaveLoadMenus.OnLoad += Load;
+		SaveLoadMenus.OnSave = Save;
+		SaveLoadMenus.OnSaveAs = SaveAs;
+		SaveLoadMenus.OnLoad = Load;
 
 		OnLoaded = null;
 	}
@@ -73,34 +57,13 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.HideSaveIcon();
 	}
 
-	void UpdateLoadMenu() {
-		items =
-			SaveLoadHelper.GetSortedAssemblyInfos().
-			Select((info, i) => SaveLoadMenus.FileEntry(i, info.Name, info.Parts))
-			.ToArray();
-
-		currentlySelectedI = -1;
-
-		SaveLoadMenus.LoadOptionsLayout.SetSubItems(items);
-		WindowManager.Instance.Realiser.UpdateWindow(SaveLoadMenus.LoadOptionsMenu);
-	}
-
-	void LoadOptionSelect(int id) {
-		currentlySelectedI = id;
-		currentlySelectedName = SaveLoadHelper.GetSortedAssemblyInfos()[id].Name;
-
-		OptionSelectionUIHelper.SetColors(items, id);
-	}
-
-	void Load() {
-		if (currentlySelectedI == -1) return;
-
-
-		SelectionManager.Instance.SetSelection();
+	void Load(string path) {
+		SelectionManager.Instance.Clear();
 
 		// hope name conflicts arent a thing
+		string name = System.IO.Path.GetFileNameWithoutExtension(path);
 		Loading = true;
-		SaveLoadHelper.LoadFromFile(currentlySelectedName);
+		SaveLoadHelper.LoadFromFile(name);
 		Loading = false;
 
 		BottomBar.UpdateNameText(BuildingManager.Instance.Assembly.Name);

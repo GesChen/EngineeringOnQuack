@@ -179,13 +179,7 @@ public class Part_CPU : NonStaticPart {
 			new(
 				FileExplorer.Type.SaveFile,
 				new string[] { ".qk" },
-				path => {
-					FileInfo info = new (path);
-					long sizeBytes = info.Length;
-					return new[] {
-						($"{sizeBytes} bytes", 2f)
-					};
-				},
+				FileExplorer.MetadataGetters.GetBytes,
 				"Save",
 				TrySave,
 				5,
@@ -226,13 +220,7 @@ public class Part_CPU : NonStaticPart {
 			new(
 				FileExplorer.Type.OpenFile,
 				new string[] { ".qk" },
-				path => {
-					FileInfo info = new (path);
-					long sizeBytes = info.Length;
-					return new[] {
-						($"{sizeBytes} bytes", 2f)
-					};
-				},
+				FileExplorer.MetadataGetters.GetBytes,
 				"Load",
 				TryLoad,
 				5,
