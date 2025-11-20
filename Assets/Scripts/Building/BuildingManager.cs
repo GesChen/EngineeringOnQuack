@@ -46,6 +46,10 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.OnPaste			+= Paste;
 		RightClickMenus.OnDuplicate		+= Duplicate;
 
+		Conatrols.IM.Editing.Copy.performed += _ => Copy();
+		Conatrols.IM.Editing.Cut.performed += _ => Cut();
+		Conatrols.IM.Editing.Paste.performed += _ => Paste();
+
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
@@ -355,6 +359,12 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void Copy() {
 		Assembly.Clipboard.Copy(); // uses the most current version of assembly
+	}
+
+	void Cut() {
+		DeleteSelection();
+
+		Copy();
 	}
 
 	void Paste() {
