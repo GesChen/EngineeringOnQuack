@@ -49,6 +49,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Conatrols.IM.Editing.Copy.performed += _ => Copy();
 		Conatrols.IM.Editing.Cut.performed += _ => Cut();
 		Conatrols.IM.Editing.Paste.performed += _ => Paste();
+		Conatrols.IM.Editing.Duplicate.performed += _ => Duplicate();
 
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
@@ -60,16 +61,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
-		BottomBar.ClearAssemble();
-		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
+		BottomBar.OnAssemble = GameManager.Instance.StartSimulating;
 
 		SimulatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.StopSimulating;
 
 		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
 
-		BottomBar.ClearNewPressed();
-		BottomBar.OnNewPressed += New;
+		BottomBar.OnNewPressed = New;
 
 		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
@@ -152,10 +151,13 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	// function for getting a position for placing parts based on selection and mouse position
-	Vector3 PlacePos() {
+	Vector3 PlacePos(bool useCurrent = false) {
 		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
 		Vector3 planeDir = -Camera.main.transform.forward;
-		Ray ray = Camera.main.ScreenPointToRay(RightClick.Instance.downPos); // use right click pos not current
+		Ray ray = Camera.main.ScreenPointToRay(
+			useCurrent
+			? Conatrols.Mouse.Position
+			: RightClick.Instance.downPos);
 
 		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
 
@@ -167,7 +169,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly = new();
 
 		OutputManager.Instance.UpdateMenu();
-		OutputsMenu.HideMenu();
+		OutputsMenu.Hide();
 
 		BottomBar.UpdateNameText("");
 
@@ -368,7 +370,10 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	void Paste() {
-		var newparts = Assembly.Clipboard.Paste(PlacePos(), true);
+		var newparts = Assembly.Clipboard.Paste(
+			PlacePos(true),
+			true,
+			!Conatrols.Keyboard.Modifiers.Shift);
 		if (newparts == null) return; // failed, no objects to paste
 
 		Assembly.Parts.AddRange(newparts);

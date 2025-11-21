@@ -5,22 +5,21 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class EditingCameraMovement : MonoBehaviour
-{
+public class EditingCameraMovement : MonoBehaviour {
 	[Header("Customization")]
-	public float orbitSensitivity	= .4f;
-	public float zoomSensitivity	= .001f;
-	public float moveSensitivity	= .00015f;
-	public float keyboardmoveSpeed	= .1f;
-	public float precisionCoef		= .2f;
+	public float orbitSensitivity   = .4f;
+	public float zoomSensitivity    = .001f;
+	public float moveSensitivity    = .00015f;
+	public float keyboardmoveSpeed  = .1f;
+	public float precisionCoef      = .2f;
 	[Space]
-	public float orbitDrift			= .8f;
-	public float zoomDrift			= .1f;
-	public float moveDrift			= .8f;
+	public float orbitDrift         = .8f;
+	public float zoomDrift          = .1f;
+	public float moveDrift          = .8f;
 	float moveSmoothness;
 	[Space]
-	public float initDist			= -5f;
-	
+	public float initDist           = -5f;
+
 	[Header("Focusing")]
 	public Vector3 focus;
 	Vector3 target;
@@ -37,25 +36,25 @@ public class EditingCameraMovement : MonoBehaviour
 	Vector2 lastvel;
 
 	// Start is called before the first frame update
-	void Awake()
-	{
+	void Awake() {
 		//Cursor.lockState = CursorLockMode.Locked;
 		//Cursor.visible = false;
 		dist = initDist;
 		targetDist = initDist;
 		moveSmoothness = moveDrift;
+
+		Conatrols.IM.Camera.FocusMouse.performed += _ => FocusMouse();
+		Conatrols.IM.Camera.FocusSelection.performed += _ => FocusSelection();
 	}
 
 	// Update is called once per frame
 	float globalSensitivity = 1.0f;
-	void Update()
-	{
+	void Update() {
 		globalSensitivity = Conatrols.IM.Camera.Precision.IsPressed() ? precisionCoef : 1;
-		
+
 		// orbit
 		vel *= orbitDrift;
-		if (Conatrols.IM.Camera.PerfOrbit.IsPressed())
-		{
+		if (Conatrols.IM.Camera.PerfOrbit.IsPressed()) {
 			Orbit();
 			Movement();
 		}
@@ -69,62 +68,56 @@ public class EditingCameraMovement : MonoBehaviour
 
 		Zoom();
 
-		if(focusing && (target - focus).sqrMagnitude < focusThreshold)
-		{
+		if (focusing && (target - focus).sqrMagnitude < focusThreshold) {
 			focusing = false;
 			moveSmoothness = moveDrift;
 		}
 
-		if (Conatrols.IM.Camera.Focus.WasPerformedThisFrame()) {
-			Focus();
-		}
-
 		focus = Vector3.Lerp(focus, target, moveSmoothness);// Vector3.SmoothDamp(focus, target, ref smoothTargetVel, focusTime);
 		Quaternion r = Quaternion.Euler(pitch, yaw, 0);
+
 		transform.SetPositionAndRotation(r * Vector3.forward * dist + focus, r);
 	}
-	void Orbit()
-	{
+	void Orbit() {
 		if (sumAxes(v2Abs(lastvel) - v2Abs(vel)) > 0)
 			vel = Vector2.Lerp(vel, globalSensitivity * orbitSensitivity * Conatrols.Mouse.Delta, 1 - orbitDrift);
 		else
 			vel = globalSensitivity * orbitSensitivity * Conatrols.Mouse.Delta;
 		lastvel = vel;
 	}
-	void Movement()
-	{
+	void Movement() {
 		Vector3 movement = Conatrols.IM.Camera.KeyboardMovement.ReadValue<Vector3>();
 		Vector3 globalMove = transform.rotation * movement;
 		target += globalMove * keyboardmoveSpeed;
 	}
-	void Zoom()
-	{
+	void Zoom() {
 		targetDist += Conatrols.IM.Camera.Zoom.ReadValue<float>() * zoomSensitivity * globalSensitivity;
 		dist = Mathf.Lerp(dist, targetDist, zoomDrift);
 	}
-	void Focus()
-	{
-		if (Physics.Raycast(Camera.main.ScreenPointToRay(Conatrols.Mouse.Position), out RaycastHit hit)) { 
-			if (hit.transform.GetComponent<Part>())
-			{
+	void FocusMouse() {
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(Conatrols.Mouse.Position), out RaycastHit hit)) {
+			if (hit.transform.GetComponent<Part>()) {
 				targetTransform = hit.transform;
 				target = targetTransform.position;
 				focusing = true;
 				moveSmoothness = focusingDrift;
 			}
-		}
-		else
-		{
+		} else {
 			targetTransform = null;
 		}
-		
 	}
-	Vector2 v2Abs(Vector2 v)
-	{
+	void FocusSelection() {
+		if (SelectionManager.Instance.Selection.Count == 0) return;
+		targetTransform = SelectionManager.Instance.selectionContainer;
+		target = targetTransform.position;
+		focusing = true;
+		moveSmoothness = focusingDrift;
+	}
+
+	Vector2 v2Abs(Vector2 v) {
 		return new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 	}
-	float sumAxes(Vector3 v)
-	{
+	float sumAxes(Vector3 v) {
 		return v.x + v.y + v.z;
 	}
 }

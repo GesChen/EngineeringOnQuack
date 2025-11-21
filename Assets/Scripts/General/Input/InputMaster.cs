@@ -93,6 +93,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""242ca290-21f9-4781-8792-e7fdc4ef943c"",
             ""actions"": [
                 {
+                    ""name"": ""FocusSelection"",
+                    ""type"": ""Button"",
+                    ""id"": ""21970879-ab17-47e8-951f-7c2559c75662"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""PerfOrbit"",
                     ""type"": ""Button"",
                     ""id"": ""b686a359-b3b3-4316-9df6-ac7632c4dc22"",
@@ -129,7 +138,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Focus"",
+                    ""name"": ""FocusMouse"",
                     ""type"": ""Button"",
                     ""id"": ""781b16df-b033-4077-94c2-99b98f6636a9"",
                     ""expectedControlType"": """",
@@ -210,18 +219,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""interactions"": ""MultiTap"",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Focus"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""dffc1521-75a6-44db-ab46-459b107d6883"",
-                    ""path"": ""<Keyboard>/f"",
-                    ""interactions"": ""Tap"",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Focus"",
+                    ""action"": ""FocusMouse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -301,6 +299,17 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""action"": ""KeyboardMovement"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""dffc1521-75a6-44db-ab46-459b107d6883"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": ""Tap"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FocusSelection"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -867,6 +876,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Duplicate"",
+                    ""type"": ""Button"",
+                    ""id"": ""283a627f-e414-410c-82df-1a9af26ee91b"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1076,6 +1094,39 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Redo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""40196455-e351-458e-b8df-d2b87a9203de"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Duplicate"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""be2f7fcf-c765-4ae7-8db7-c04565438e88"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Duplicate"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""6449e4d0-b015-463f-b017-025837196195"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Duplicate"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 }
@@ -1991,11 +2042,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
 }");
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
+        m_Camera_FocusSelection = m_Camera.FindAction("FocusSelection", throwIfNotFound: true);
         m_Camera_PerfOrbit = m_Camera.FindAction("PerfOrbit", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_Move = m_Camera.FindAction("Move", throwIfNotFound: true);
         m_Camera_Precision = m_Camera.FindAction("Precision", throwIfNotFound: true);
-        m_Camera_Focus = m_Camera.FindAction("Focus", throwIfNotFound: true);
+        m_Camera_FocusMouse = m_Camera.FindAction("FocusMouse", throwIfNotFound: true);
         m_Camera_KeyboardMovement = m_Camera.FindAction("KeyboardMovement", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
@@ -2029,6 +2081,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Editing_Paste = m_Editing.FindAction("Paste", throwIfNotFound: true);
         m_Editing_Undo = m_Editing.FindAction("Undo", throwIfNotFound: true);
         m_Editing_Redo = m_Editing.FindAction("Redo", throwIfNotFound: true);
+        m_Editing_Duplicate = m_Editing.FindAction("Duplicate", throwIfNotFound: true);
         // original_UI
         m_original_UI = asset.FindActionMap("original_UI", throwIfNotFound: true);
         m_original_UI_Navigate = m_original_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -2135,11 +2188,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Camera
     private readonly InputActionMap m_Camera;
     private List<ICameraActions> m_CameraActionsCallbackInterfaces = new List<ICameraActions>();
+    private readonly InputAction m_Camera_FocusSelection;
     private readonly InputAction m_Camera_PerfOrbit;
     private readonly InputAction m_Camera_Zoom;
     private readonly InputAction m_Camera_Move;
     private readonly InputAction m_Camera_Precision;
-    private readonly InputAction m_Camera_Focus;
+    private readonly InputAction m_Camera_FocusMouse;
     private readonly InputAction m_Camera_KeyboardMovement;
     /// <summary>
     /// Provides access to input actions defined in input action map "Camera".
@@ -2152,6 +2206,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// Construct a new instance of the input action map wrapper class.
         /// </summary>
         public CameraActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Camera/FocusSelection".
+        /// </summary>
+        public InputAction @FocusSelection => m_Wrapper.m_Camera_FocusSelection;
         /// <summary>
         /// Provides access to the underlying input action "Camera/PerfOrbit".
         /// </summary>
@@ -2169,9 +2227,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Precision => m_Wrapper.m_Camera_Precision;
         /// <summary>
-        /// Provides access to the underlying input action "Camera/Focus".
+        /// Provides access to the underlying input action "Camera/FocusMouse".
         /// </summary>
-        public InputAction @Focus => m_Wrapper.m_Camera_Focus;
+        public InputAction @FocusMouse => m_Wrapper.m_Camera_FocusMouse;
         /// <summary>
         /// Provides access to the underlying input action "Camera/KeyboardMovement".
         /// </summary>
@@ -2202,6 +2260,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_CameraActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_CameraActionsCallbackInterfaces.Add(instance);
+            @FocusSelection.started += instance.OnFocusSelection;
+            @FocusSelection.performed += instance.OnFocusSelection;
+            @FocusSelection.canceled += instance.OnFocusSelection;
             @PerfOrbit.started += instance.OnPerfOrbit;
             @PerfOrbit.performed += instance.OnPerfOrbit;
             @PerfOrbit.canceled += instance.OnPerfOrbit;
@@ -2214,9 +2275,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Precision.started += instance.OnPrecision;
             @Precision.performed += instance.OnPrecision;
             @Precision.canceled += instance.OnPrecision;
-            @Focus.started += instance.OnFocus;
-            @Focus.performed += instance.OnFocus;
-            @Focus.canceled += instance.OnFocus;
+            @FocusMouse.started += instance.OnFocusMouse;
+            @FocusMouse.performed += instance.OnFocusMouse;
+            @FocusMouse.canceled += instance.OnFocusMouse;
             @KeyboardMovement.started += instance.OnKeyboardMovement;
             @KeyboardMovement.performed += instance.OnKeyboardMovement;
             @KeyboardMovement.canceled += instance.OnKeyboardMovement;
@@ -2231,6 +2292,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="CameraActions" />
         private void UnregisterCallbacks(ICameraActions instance)
         {
+            @FocusSelection.started -= instance.OnFocusSelection;
+            @FocusSelection.performed -= instance.OnFocusSelection;
+            @FocusSelection.canceled -= instance.OnFocusSelection;
             @PerfOrbit.started -= instance.OnPerfOrbit;
             @PerfOrbit.performed -= instance.OnPerfOrbit;
             @PerfOrbit.canceled -= instance.OnPerfOrbit;
@@ -2243,9 +2307,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Precision.started -= instance.OnPrecision;
             @Precision.performed -= instance.OnPrecision;
             @Precision.canceled -= instance.OnPrecision;
-            @Focus.started -= instance.OnFocus;
-            @Focus.performed -= instance.OnFocus;
-            @Focus.canceled -= instance.OnFocus;
+            @FocusMouse.started -= instance.OnFocusMouse;
+            @FocusMouse.performed -= instance.OnFocusMouse;
+            @FocusMouse.canceled -= instance.OnFocusMouse;
             @KeyboardMovement.started -= instance.OnKeyboardMovement;
             @KeyboardMovement.performed -= instance.OnKeyboardMovement;
             @KeyboardMovement.canceled -= instance.OnKeyboardMovement;
@@ -2818,6 +2882,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Editing_Paste;
     private readonly InputAction m_Editing_Undo;
     private readonly InputAction m_Editing_Redo;
+    private readonly InputAction m_Editing_Duplicate;
     /// <summary>
     /// Provides access to input actions defined in input action map "Editing".
     /// </summary>
@@ -2849,6 +2914,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Editing/Redo".
         /// </summary>
         public InputAction @Redo => m_Wrapper.m_Editing_Redo;
+        /// <summary>
+        /// Provides access to the underlying input action "Editing/Duplicate".
+        /// </summary>
+        public InputAction @Duplicate => m_Wrapper.m_Editing_Duplicate;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2890,6 +2959,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Redo.started += instance.OnRedo;
             @Redo.performed += instance.OnRedo;
             @Redo.canceled += instance.OnRedo;
+            @Duplicate.started += instance.OnDuplicate;
+            @Duplicate.performed += instance.OnDuplicate;
+            @Duplicate.canceled += instance.OnDuplicate;
         }
 
         /// <summary>
@@ -2916,6 +2988,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Redo.started -= instance.OnRedo;
             @Redo.performed -= instance.OnRedo;
             @Redo.canceled -= instance.OnRedo;
+            @Duplicate.started -= instance.OnDuplicate;
+            @Duplicate.performed -= instance.OnDuplicate;
+            @Duplicate.canceled -= instance.OnDuplicate;
         }
 
         /// <summary>
@@ -3357,6 +3432,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     public interface ICameraActions
     {
         /// <summary>
+        /// Method invoked when associated input action "FocusSelection" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFocusSelection(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "PerfOrbit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -3385,12 +3467,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPrecision(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Focus" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "FocusMouse" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnFocus(InputAction.CallbackContext context);
+        void OnFocusMouse(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "KeyboardMovement" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
@@ -3592,6 +3674,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRedo(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Duplicate" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDuplicate(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "original_UI" which allows adding and removing callbacks.

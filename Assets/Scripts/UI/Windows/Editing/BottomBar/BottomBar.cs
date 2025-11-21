@@ -14,17 +14,14 @@ public static class BottomBar {
 	static readonly float splitspacing = 5;
 	static readonly float splittextspace = 10;
 
-	public static void ClearNewPressed() { OnNewPressed = null; }
-	public static event Action OnNewPressed;
+	public static Action OnNewPressed;
 
 	public static WindowItem OutputButton;
-	public static void ClearOutputs() { OnOutputsOpened = null; }
-	public static event Action OnOutputsOpened;
+	public static Action OnOutputsOpened;
 	public static Action OnTransformOpened;
 	public static Action OnMaterialOpened;
 
-	public static void ClearAssemble() { OnAssemble = null; }
-	public static event Action OnAssemble;
+	public static Action OnAssemble;
 	public static void Assemble() { OnAssemble?.Invoke(); }
 
 	static W FileMenu;

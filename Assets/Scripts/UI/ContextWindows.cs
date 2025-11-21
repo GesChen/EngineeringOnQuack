@@ -77,7 +77,6 @@ public static class ContextWindows {
 			RightClickMenus.Menus,
 			MaterialEditingMenu.Menus,
 			SaveLoadMenus.Menus,
-			OutputsMenu.Menus,
 			BottomBar.Menus,
 			UnsavedWorkMenu.Menus
 		))

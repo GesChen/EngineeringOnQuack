@@ -7,6 +7,15 @@
             "id": "242ca290-21f9-4781-8792-e7fdc4ef943c",
             "actions": [
                 {
+                    "name": "FocusSelection",
+                    "type": "Button",
+                    "id": "21970879-ab17-47e8-951f-7c2559c75662",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "PerfOrbit",
                     "type": "Button",
                     "id": "b686a359-b3b3-4316-9df6-ac7632c4dc22",
@@ -43,7 +52,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Focus",
+                    "name": "FocusMouse",
                     "type": "Button",
                     "id": "781b16df-b033-4077-94c2-99b98f6636a9",
                     "expectedControlType": "",
@@ -124,18 +133,7 @@
                     "interactions": "MultiTap",
                     "processors": "",
                     "groups": "",
-                    "action": "Focus",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "dffc1521-75a6-44db-ab46-459b107d6883",
-                    "path": "<Keyboard>/f",
-                    "interactions": "Tap",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Focus",
+                    "action": "FocusMouse",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -215,6 +213,17 @@
                     "action": "KeyboardMovement",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "dffc1521-75a6-44db-ab46-459b107d6883",
+                    "path": "<Keyboard>/f",
+                    "interactions": "Tap",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FocusSelection",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -781,6 +790,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Duplicate",
+                    "type": "Button",
+                    "id": "283a627f-e414-410c-82df-1a9af26ee91b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -990,6 +1008,39 @@
                     "processors": "",
                     "groups": "",
                     "action": "Redo",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "One Modifier",
+                    "id": "40196455-e351-458e-b8df-d2b87a9203de",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Duplicate",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "be2f7fcf-c765-4ae7-8db7-c04565438e88",
+                    "path": "<Keyboard>/ctrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Duplicate",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "6449e4d0-b015-463f-b017-025837196195",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Duplicate",
                     "isComposite": false,
                     "isPartOfComposite": true
                 }
