@@ -32,7 +32,7 @@ public class ContextObserver : Singleton<ContextObserver> {
 	public Func<int> RequestSelectionCount;
 	private int selectionCount;
 	public Func<bool> GroupCheck;
-	public Func<(Transform, int id)> GetCurrentSSInfo;
+	public Func<(Transform[] selectedTransforms, int[] BPids)> GetCurrentSelectionInfo;
 	void CheckEditing() {
 		selectionCount = RequestSelectionCount?.Invoke() ?? throw new("RequestSelectionCount not subscribed to");
 
@@ -48,12 +48,17 @@ public class ContextObserver : Singleton<ContextObserver> {
 				bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
 
 				if (!isGroup) {
+					var (selectedTransforms, BPids) = GetCurrentSelectionInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to"); ;
+
 					if (selectionCount == 1) {
 						var c = ContextManager.EnterContext<SingleSelection>();
-						(c.Selected, c.SelectedBasePartID) = 
-							GetCurrentSSInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to");
-					} else
-						ContextManager.EnterContext<MultiSelection>();
+						c.Selected = selectedTransforms[0];
+						c.SelectedBasePartID = BPids[0];
+					} else {
+						var c = ContextManager.EnterContext<MultiSelection>();
+						c.Selected = selectedTransforms;
+						c.SelectedBasePartIDs = BPids;
+					}
 				}
 			}
 		}

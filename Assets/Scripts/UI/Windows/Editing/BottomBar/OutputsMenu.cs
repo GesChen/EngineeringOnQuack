@@ -3,83 +3,94 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using W = PMenu.Window;
 
 public static class OutputsMenu {
-	static readonly float ListBoxHeight = 100;
 	public static WindowItem LayoutContainer;
 
-	static readonly float width = 200;
-
-	public static void ClearNameChanged() { OnNameChanged = null; }
-	public static event Action<string> OnNameChanged;
-
-	public static void ClearSubtract() { OnSubtract = null; }
-	public static event Action OnSubtract;
-
-	public static void ClearRename() { OnRename = null; }
-	public static event Action OnRename;
-
-	public static void ClearAdd() { OnAdd = null; }
-	public static event Action OnAdd;
-
-	public static void ClearItemSelected() { OnItemSelected = null; }
-	public static event Action<int> OnItemSelected;
+	public static Action<string> OnNameChanged;
+	public static Action OnSubtract;
+	public static Action OnRename;
+	public static Action OnAdd;
+	public static Action<int> OnItemSelected;
 	public static void Select(int i) {
 		OptionSelectionUIHelper.SetColors(LayoutContainer.SubItems.ToArray(), i);
 
 		OnItemSelected?.Invoke(i);
 	}
 
-	public static void ShowMenu() { Menu.CWindow.RealisedWindow.Show(); }
-	public static void HideMenu() { Menu.CWindow.RealisedWindow.Hide(); }
+	public static void Show() { Window.RealisedWindow.Show(); }
+	public static void Hide() { Window.RealisedWindow.Hide(); }
 
-	public static W Menu;
-	static void SetMenu() {
-		Menu = new(
-			"Manage Outputs",
-			width, false,
-			new() {
-				new W.CustomItem( // list
-					WindowItem.NewScrollView(
-						new PComponents.ScrollView(
-							horizontalScrolling: false
-						),
-						WindowItem.LayoutConfig.FixedLayout(
-							UIPosition.AnchoredAt(UIPosition.TopLeft),
-							new(width, ListBoxHeight),
-							new FourSides(10)
-						),
-						new(){
-							WindowItem.NewLayout(
-								PComponents.Layout.Vertical.Fixed(
-									false,
-									true
-								),
-								WindowItem.LayoutConfig.Custom(
-									position: new(1, 0, 0, 0),
-									sizeDelta: new(0, 0)
-								),
-								new(){}
-							).OnRealized((_, wi) =>
-								LayoutContainer = wi
-							)
+	public static CWindow Window;
+	public static void Set() {
+		Window = new() {
+			Name = "Manage Outputs",
+			Config = new() {
+				Size = CWindow.Configuration.FreeSize(new(220, 220))
+			},
+			Items = new[] {
+				WindowItem.NewText(
+					new PComponents.Text(
+						"Manage Outputs",
+						alignment:TMPro.TextAlignmentOptions.Center
+					),
+					WindowItem.LayoutConfig.Custom(
+						position: new(1, 0, 0, 0),
+						sizeDelta: new(0, Config.UI.Menu.TitleHeight),
+						fixedPosition: new() {
+							Pivot = UIPosition.TopCenter
 						}
 					)
 				),
-				new W.InputField( // the actual naming part
-					(name) => OnNameChanged?.Invoke(name), // you could put it directly as onnamechanged and it would work but 
-					// it wouldn't use the up to date version with all of the subscriptions
-					"Name for Output..."
+				WindowItem.NewScrollView(
+					new PComponents.ScrollView(
+						horizontalScrolling: false
+					),
+					WindowItem.LayoutConfig.DynamicLayout(
+						new(
+							Config.UI.Menu.TitleHeight, 0,
+							(Config.UI.Menu.ItemHeight + Config.UI.Menu.ItemPadding) * 2, 0)
+					),
+					new(){
+						WindowItem.NewLayout(
+							PComponents.Layout.Vertical.Fixed(
+								false,
+								true
+							),
+							WindowItem.LayoutConfig.Custom(
+								position: new(1, 0, 0, 0),
+								sizeDelta: new(0, 0)
+							),
+							new(){}
+						).OnRealized((_, wi) =>
+							LayoutContainer = wi
+						)
+					}
 				),
-				new W.CustomItem( // controls
-					WindowItem.NewLayout(
+				WindowItem.NewInputField(
+					new PComponents.InputField(
+						(name) => OnNameChanged?.Invoke(name),
+						placeholderText: "Name for Output..."
+					),
+					WindowItem.LayoutConfig.Custom(
+						position: new(0, 0, 1, 0),
+						sizeDelta: new(0, Config.UI.Menu.ItemHeight),
+						fixedPosition: new() {
+							Pivot = UIPosition.BottomCenter,
+							Position = new(0, Config.UI.Menu.ItemHeight + Config.UI.Menu.ItemPadding)
+						}
+					)
+				),
+				WindowItem.NewLayout(
 						PComponents.Layout.Horizontal.Fixed(
 							true,
 							true),
-						WindowItem.LayoutConfig.FixedLayout(
-							UIPosition.LayoutItem,
-							new(width, Config.UI.Menu.ItemHeight)
+						WindowItem.LayoutConfig.Custom(
+							position: new(0, 0, 1, 0),
+							sizeDelta: new(0, Config.UI.Menu.ItemHeight),
+							fixedPosition: new() {
+								Pivot = UIPosition.BottomCenter
+							}
 						),
 						new() {
 							WindowItem.NewButtonCustomImageOverlay( // -
@@ -125,12 +136,8 @@ public static class OutputsMenu {
 							)
 						}
 					)
-				)
-			},
-			movable: true,
-			closable: true,
-			extraSpacing: Config.UI.Visual.DefaultLayoutSpacing
-		);
+			}
+		};
 	}
 
 	public static void UpdateMenu(List<string> outputs) {
@@ -138,14 +145,12 @@ public static class OutputsMenu {
 			outputs.Select(OutputItem).ToArray()
 		);
 
-		Menu.RequestRegeneration();
-
-		WindowRealiser.Instance.UpdateWindow(Menu.CWindow);
+		WindowRealiser.Instance.UpdateWindow(Window);
 	}
 
 	public static void ShowMenu(RectTransform sourceButton) {
-		Menu.CWindow.RealisedWindow.PlaceAt(sourceButton, 1, false);
-		Menu.CWindow.RealisedWindow.Show();
+		Window.RealisedWindow.PlaceAt(sourceButton, 1, false);
+		Window.RealisedWindow.Show();
 	}
 
 	static WindowItem OutputItem(string name, int i) =>
@@ -157,20 +162,12 @@ public static class OutputsMenu {
 				name,
 				fontSize: Config.UI.Menu.FontSize
 			),
-			WindowItem.LayoutConfig.FixedLayout(
-				UIPosition.LayoutItem,
-				new(width, Config.UI.Menu.ItemHeight),
-				new(5)
-			)
+			WindowItem.LayoutConfig.LayoutElement(
+				new(0, Config.UI.Menu.ItemHeight),
+				Config.UI.Menu.ItemPadding * FourSides.One)
 		);
 
-	public static void Set() {
-		SetMenu();
-	}
 	public static CWindow[] Windows => new[] {
-		Menu.CWindow.SetGroup("tools")
-	};
-	public static W[] Menus => new[] {
-		Menu
+		Window.SetGroup("tools")
 	};
 }

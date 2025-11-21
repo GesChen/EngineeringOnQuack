@@ -99,7 +99,7 @@ public class Conatrols : MonoBehaviour {
 				SingleClicked = false;
 
 				if (PressedThisFrame) {
-					if (Time.time - lastClickTime < Config.Input.doubleClickMaxTimeMs / 1000f
+					if (Time.time - lastClickTime < Config.Input.extraClickMaxTimeMs / 1000f
 						&& (Position - lastClickPos).sqrMagnitude
 							< Config.Input.doubleClickMaxMovement * Config.Input.doubleClickMaxMovement)
 						DoubleClicked = true;
@@ -139,6 +139,7 @@ public class Conatrols : MonoBehaviour {
 		public static List<Key> Pressed; // held ones stay held, presses repeats held
 		public static List<Key> PressedThisFrame;
 		public static List<Key> ReleasedThisFrame;
+
 		public void UpdateKeyboard() {
 			Pressed = KeyboardFastPoll.GetAllPressedKeys();
 
@@ -187,8 +188,8 @@ public class Conatrols : MonoBehaviour {
 		List<Key> GetRepeats() {
 			List<Key> keys = new();
 			foreach (KeyValuePair<Key, float> keytime in KeyHeldTimes) {
-				if (Time.time - keytime.Value > Config.ScriptEditor.RepeatDelayMs / 1000f && // long enough held
-					Time.time - KeyLastRepeatTime[keytime.Key] > 1f / Config.ScriptEditor.RepeatRateCPS) { // long enough since last repeat
+				if (Time.time - keytime.Value > Config.Input.RepeatDelayMs / 1000f && // long enough held
+					Time.time - KeyLastRepeatTime[keytime.Key] > 1f / Config.Input.RepeatRateCPS) { // long enough since last repeat
 					keys.Add(keytime.Key);
 					KeyLastRepeatTime[keytime.Key] = Time.time;
 				}

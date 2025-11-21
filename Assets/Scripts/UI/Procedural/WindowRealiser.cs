@@ -46,7 +46,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		var stringpath = window.GroupPath;
 
 		var path = 
-			stringpath == null || stringpath == ""
+			string.IsNullOrWhiteSpace(stringpath) // blank empty handled separately
 			? new string[0]
 			: stringpath.Split('/').Select(part => part.Trim()).ToArray();
 
@@ -131,6 +131,10 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		windowRT.anchoredPosition	= window.Config.Position.Position;
 		windowRT.sizeDelta			= window.Config.Size.Default;
 
+		// give window a rectmask
+		//windowRT.gameObject.AddComponent<RectMask2D>()
+		//	.padding = Vector4.one * Config.UI.Visual.OutlineThickness;
+
 		// make background obj
 		var (bgRT, bgIM) = MakeNewImageObj("Background", windowRT, window.Config.Color);
 		SetFull(bgRT);
@@ -188,7 +192,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		component.Source = window;
 
 		// set up timed events once everything has been set up
-		if (window.CustomEvents != null &&  window.CustomEvents.Count > 0) {
+		if (window.CustomEvents != null && window.CustomEvents.Count > 0) {
 			var invoker = newWindow.AddComponent<TimedEventInvoker>();
 			invoker.CustomEvents = window.CustomEvents; // calls customawake anyway
 		}

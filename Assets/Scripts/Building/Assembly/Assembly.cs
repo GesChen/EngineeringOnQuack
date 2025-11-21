@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -14,7 +15,7 @@ public class Assembly {
 	public string Name = "";
 	public List<Part> Parts = new();
 	public List<PartGroup> Groups = new();
-	public BuildingClipboard Clipboard = new();
+	public BuildingClipboard Clipboard = new(); // might move to main
 	public List<Output> Outputs = new();
 
 	// putting this code in here violates SRP btw dude
@@ -36,6 +37,12 @@ public class Assembly {
 			new(other.x, other.y, other.z);
 		public static implicit operator SVector3(Color other) =>
 			new(other.r, other.g, other.b);
+		public override bool Equals(object obj) {
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj is not SVector3 v) return false;
+			return v.x == x && v.y == y && v.z == z;
+		}
+		public override int GetHashCode() => HashCode.Combine(x, y, z);
 	}
 	public class SVector4 {
 		public float x, y, z, w;
@@ -44,6 +51,13 @@ public class Assembly {
 			new(other.x, other.y, other.z, other.w);
 		public static implicit operator SVector4(Quaternion other) =>
 			new(other.x, other.y, other.z, other.w);
+
+		public override bool Equals(object obj) {
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj is not SVector4 v) return false;
+			return v.x == x && v.y == y && v.z == z && v.w == w;
+		}
+		public override int GetHashCode() => HashCode.Combine(x, y, z, w);
 	}
 	public class SPart {
 		public int basePartID;
@@ -54,6 +68,17 @@ public class Assembly {
 
 		public SVector3 color;
 		public int compositionID;
+
+		public void CopyMembers(SPart other) {
+			basePartID = other.basePartID;
+			id = other.id;
+			position = other.position;
+			rotation = other.rotation;
+			scale = other.scale;
+
+			color = other.color;
+			compositionID = other.compositionID;
+		}
 	}
 	public class SGroup {
 		public List<int> PartIDs;
@@ -76,18 +101,18 @@ public class Assembly {
 		public List<SGroup> Groups;
 		public BuildingClipboard Clipboard; // should serialize just fine
 		public List<SOutput> Outputs;
-
-		public static explicit operator SAssembly(Assembly other) => new() {
-			Name = other.Name,
-			Parts = other.Parts.Select(p => ConvertPartToSPart(p)).ToList(),
-			Groups = other.Groups.Select(group => (SGroup)group).ToList(),
-			Clipboard = Config.Building.Saving.SaveClipboard ? other.Clipboard : null,
-			Outputs = other.Outputs.Select(o => (SOutput)o).ToList()
-		};
 	}
 
+	public SAssembly ConvertToSerializable() => new() {
+		Name = Name,
+		Parts = Parts.Select(p => ConvertPartToSPart(p)).ToList(),
+		Groups = Groups.Select(group => (SGroup)group).ToList(),
+		Clipboard = Config.Building.Saving.SaveClipboard ? Clipboard : null,
+		Outputs = Outputs.Select(o => (SOutput)o).ToList()
+	};
+
 	public static string Serialize(Assembly assembly) => 
-		JsonConvert.SerializeObject((SAssembly)assembly, SaveLoadHelper.Settings);
+		JsonConvert.SerializeObject(assembly.ConvertToSerializable(), SaveLoadHelper.Settings);
 	public static Assembly Reconstruct(SAssembly assembly) {
 		var reconstructed = new Assembly {
 			Name = assembly.Name
@@ -140,7 +165,7 @@ public class Assembly {
 	}
 
 	private static void ReconstructPart(Assembly reconstructed, SPart part) {
-		Part newPart = BuildingManager.Instance.GeneratePart(part.basePartID);
+		Part newPart = BuildingManager.Instance.MakeNewPart(part.basePartID, false);
 
 		newPart.transform.localPosition = new(part.position.x, part.position.y, part.position.z);
 		newPart.transform.rotation = new(part.rotation.x, part.rotation.y, part.rotation.z, part.rotation.w);

@@ -525,7 +525,7 @@ public class ScriptEditor : MonoBehaviour {
 			char c = tabsToSpaces[i];
 			if (c == '\t') {
 				int num = TabIndexToSpaceCount(i);
-				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i, new string(' ', num));
+				tabsToSpaces = HF.ReplaceSection(tabsToSpaces, i, i + 1, new string(' ', num));
 			}
 		}
 
@@ -760,8 +760,8 @@ public class ScriptEditor : MonoBehaviour {
 	public (int x, int y) CheckCursorOffsets(Vector2 pos) {
 		pos -= scroll.CurrentScrollAmount();
 
-		float xmarg = Config.ScriptEditor.XCursorScreenMarginChars;
-		float ymarg = Config.ScriptEditor.YCursorScreenMarginLines;
+		float xmarg = Config.ScriptEditor.CursorScreenMargin;
+		float ymarg = Config.ScriptEditor.CursorScreenMargin;
 
 		// definition of insanity
 		return // seriously why are we using ternary here :(((((
@@ -810,7 +810,7 @@ public class ScriptEditor : MonoBehaviour {
 	int clicksInARow = 0;
 	void DetectExtraClicks(Vector2Int pos) {
 		if (Conatrols.IM.Mouse.Left.WasPressedThisFrame()) {
-			if (Time.time - lastClickTime < Config.ScriptEditor.MultiClickThresholdMs / 1000f &&
+			if (Time.time - lastClickTime < Config.Input.extraClickMaxTimeMs / 1000f &&
 			lastClickPos == pos) {
 				clicksInARow++;
 			} else {
@@ -1983,6 +1983,8 @@ public class ScriptEditor : MonoBehaviour {
 	private readonly Clipboard clipboard = new();
 
 	public void Copy() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		if (carets.Count == 0) return;
 
 		if (carets.Count > 1) {
@@ -2022,6 +2024,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public void Cut() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		if (carets.Count == 0) return;
 
 		history.RecordChange();
@@ -2035,6 +2039,8 @@ public class ScriptEditor : MonoBehaviour {
 	}
 
 	public void Paste() {
+		if (!SEProcedural.SEWindow.RealisedWindow.Open) return;
+
 		PasteIndex(0);
 	}
 

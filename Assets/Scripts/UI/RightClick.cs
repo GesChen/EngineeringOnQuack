@@ -14,6 +14,8 @@ public class RightClick : Singleton<RightClick> {
 	Flyout currentOpen;
 	float smoothDelta = 0f;
 
+	public IContext ContextAtClick;
+
 	protected override void Awake() {
 		base.Awake();
 	}
@@ -41,6 +43,8 @@ public class RightClick : Singleton<RightClick> {
 		var window = WindowLookupFunc(ContextManager.Current, out var customization);
 
 		if (window != null) {
+			ContextAtClick = ContextManager.Current;
+
 			// don't optimize this if not needed 
 			currentOpen = window.CWindow.RealisedWindow.GetComponent<Flyout>();
 
@@ -91,11 +95,21 @@ public class RightClick : Singleton<RightClick> {
 		};
 
 		// part extensions (only on ss for now?)
-		if (context is C.SingleSelection ss) {
-			// single selection is also part extended
-			if (RCM_Extensions.PartExtensions
-				.TryFind(pe => pe.AssociatedBasePartID == ss.SelectedBasePartID, out var ex)) {
-				
+		if (context is C.SingleSelection or C.MultiSelection) {
+			List<int> selectedBPIDs = new();
+			if (context is C.SingleSelection ss)
+				selectedBPIDs = new() { ss.SelectedBasePartID };
+			else 
+				selectedBPIDs = ((C.MultiSelection)context).SelectedBasePartIDs.ToList();
+
+			// find part extension(s)
+			var pExs = RCM_Extensions.PartExtensions
+				.Where(ex =>
+					selectedBPIDs.Any(ss =>
+						ex.AssociatedBasePartID == ss)
+				);
+
+			foreach (var ex in pExs) {
 				// add indices
 				indices = indices.Concat(ex.NewItems.Select(ni => ni.RCMi)).ToArray();
 

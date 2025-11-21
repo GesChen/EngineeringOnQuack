@@ -4,15 +4,48 @@ using UnityEngine;
 using Geometry;
 
 public class DebugExtra {
-	public static void DrawEmpty(Vector3 pos, float size, Color? color = null) {
-		Color col = color ?? Color.white;
+	// most important
+	public static void DrawLine(
+		Vector3 start,
+		Vector3 end,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false,
+		bool depthTest = true) {
 
-		Debug.DrawLine(pos - size * Vector3.up, pos + size * Vector3.up, col);
-		Debug.DrawLine(pos - size * Vector3.right, pos + size * Vector3.right, col);
-		Debug.DrawLine(pos - size * Vector3.forward, pos + size * Vector3.forward, col);
+		color ??= Color.white;
+
+		if (drawScene)
+			Debug.DrawLine(start, end, color.Value, duration, depthTest);
+		if (drawGame)
+			DebugExtraDrawer.Instance.DrawLine3D(start, end, color.Value, color.Value, duration, depthTest);
 	}
 
-	public static void DrawSphere(Vector3 pos, float radius, int resolution = 40, Color? color = null) {
+	public static void DrawEmpty(
+		Vector3 pos,
+		float size,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true, 
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
+
+		DrawLine(pos - size * Vector3.up,			pos + size * Vector3.up,		col, duration, drawScene, drawGame);
+		DrawLine(pos - size * Vector3.right,		pos + size * Vector3.right,		col, duration, drawScene, drawGame);
+		DrawLine(pos - size * Vector3.forward,		pos + size * Vector3.forward,	col, duration, drawScene, drawGame);
+	}
+
+	public static void DrawSphere(
+		Vector3 pos,
+		float radius,
+		int resolution = 40,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Color col = color ?? Color.white;
 		float sin0 = Mathf.Sin(0);
 		float cos0 = Mathf.Cos(0);
@@ -29,9 +62,9 @@ public class DebugExtra {
 			Vector3 yPoint = new Vector3(sin, 0, cos) * radius + pos;
 			Vector3 zPoint = new Vector3(sin, cos, 0) * radius + pos;
 
-			Debug.DrawLine(lastX, xPoint, col);
-			Debug.DrawLine(lastY, yPoint, col);
-			Debug.DrawLine(lastZ, zPoint, col);
+			DrawLine(lastX, xPoint, col, duration, drawScene, drawGame);
+			DrawLine(lastY, yPoint, col, duration, drawScene, drawGame);
+			DrawLine(lastZ, zPoint, col, duration, drawScene, drawGame);
 
 			lastX = xPoint;
 			lastY = yPoint;
@@ -39,7 +72,13 @@ public class DebugExtra {
 		}
 	}
 
-	public static void DrawPoint(Vector3 pos, float size = .1f, Color? color = null) {
+	public static void DrawPoint(
+		Vector3 pos,
+		float size = .1f,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
 		Vector3 px = pos + size * Vector3.right;
 		Vector3 nx = pos + size * Vector3.left;
 		Vector3 py = pos + size * Vector3.up;
@@ -49,23 +88,34 @@ public class DebugExtra {
 
 		Color col = color ?? Color.white;
 
-		Debug.DrawLine(px, py, col);
-		Debug.DrawLine(px, ny, col);
-		Debug.DrawLine(px, pz, col);
-		Debug.DrawLine(px, nz, col);
+		DrawLine(px, py, col, duration, drawScene, drawGame);
+		DrawLine(px, ny, col, duration, drawScene, drawGame);
+		DrawLine(px, pz, col, duration, drawScene, drawGame);
+		DrawLine(px, nz, col, duration, drawScene, drawGame);
 
-		Debug.DrawLine(nx, py, col);
-		Debug.DrawLine(nx, ny, col);
-		Debug.DrawLine(nx, pz, col);
-		Debug.DrawLine(nx, nz, col);
+		DrawLine(nx, py, col, duration, drawScene, drawGame);
+		DrawLine(nx, ny, col, duration, drawScene, drawGame);
+		DrawLine(nx, pz, col, duration, drawScene, drawGame);
+		DrawLine(nx, nz, col, duration, drawScene, drawGame);
 
-		Debug.DrawLine(py, pz, col);
-		Debug.DrawLine(py, nz, col);
-		Debug.DrawLine(ny, pz, col);
-		Debug.DrawLine(ny, nz, col);
+		DrawLine(py, pz, col, duration, drawScene, drawGame);
+		DrawLine(py, nz, col, duration, drawScene, drawGame);
+		DrawLine(ny, pz, col, duration, drawScene, drawGame);
+		DrawLine(ny, nz, col, duration, drawScene, drawGame);
 	}
 
-	public static void DrawGrid(Vector3 pos, Vector3 normal, int gridSize, int cellSize) {
+	public static void DrawGrid(
+		Vector3 pos,
+		Vector3 normal,
+		int gridSize,
+		int cellSize,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		var col = color ?? Color.white;
+
 		// Calculate the right and forward vectors based on the normal
 		Vector3 right = Vector3.Cross(normal, Vector3.up).normalized;
 		Vector3 forward = Vector3.Cross(normal, right).normalized;
@@ -78,55 +128,94 @@ public class DebugExtra {
 		for (int i = 0; i <= gridSize; i++) {
 			Vector3 start = pos + i * cellSize * forward - 0.5f * gridSizeX * forward;
 			Vector3 end = start + gridSizeX * right;
-			Debug.DrawLine(start, end, Color.white);
+			DrawLine(start, end, col, duration, drawScene, drawGame);
 		}
 
 		// Draw vertical lines
 		for (int i = 0; i <= gridSize; i++) {
 			Vector3 start = pos + i * cellSize * right - 0.5f * gridSizeY * right;
 			Vector3 end = start + gridSizeY * forward;
-			Debug.DrawLine(start, end, Color.white);
+			DrawLine(start, end, col, duration, drawScene, drawGame);
 		}
 	}
 
-	public static void DrawPlane(Vector3 pos, Vector3 normal, float size, int resolution = 10, Color? color = null) {
+	public static void DrawPlane(
+		Vector3 pos,
+		Vector3 normal,
+		float size,
+		int resolution = 10,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Vector3 right = Vector3.Cross(normal, Vector3.up).normalized;
 		Vector3 up = Vector3.Cross(normal, right).normalized;
 
 		Color col = color ?? Color.white;
 		for (int i = 0; i < resolution; i++) {
 			float d = (i - (resolution - 1) / 2f) / resolution * 2f * size;
-			Debug.DrawLine(pos + right * d - up * size, pos + right * d + up * size, col);
-			Debug.DrawLine(pos + up * d - right * size, pos + up * d + right * size, col);
+			DrawLine(pos + right * d - up * size, pos + right * d + up * size, col, duration, drawScene, drawGame);
+			DrawLine(pos + up * d - right * size, pos + up * d + right * size, col, duration, drawScene, drawGame);
 		}
 	}
 
-	public static void DrawTriangle(Vector3 a, Vector3 b, Vector3 c, Color? color = null) {
+	public static void DrawTriangle(
+		Vector3 a,
+		Vector3 b,
+		Vector3 c,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Color col = color ?? Color.white;
-		Debug.DrawLine(a, b, col);
-		Debug.DrawLine(b, c, col);
-		Debug.DrawLine(c, a, col);
+		DrawLine(a, b, col, duration, drawScene, drawGame);
+		DrawLine(b, c, col, duration, drawScene, drawGame);
+		DrawLine(c, a, col, duration, drawScene, drawGame);
 	}
 
-	public static void DrawTriangle(Triangle tri, Color? color = null) {
+	public static void DrawTriangle(
+		Triangle tri,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Color col = color ?? Color.white;
-		Debug.DrawLine(tri.p1, tri.p2, col);
-		Debug.DrawLine(tri.p2, tri.p3, col);
-		Debug.DrawLine(tri.p3, tri.p1, col);
+		DrawLine(tri.p1, tri.p2, col, duration, drawScene, drawGame);
+		DrawLine(tri.p2, tri.p3, col, duration, drawScene, drawGame);
+		DrawLine(tri.p3, tri.p1, col, duration, drawScene, drawGame);
 	}
 
-	public static void DrawTriangleFilled(Vector3 a, Vector3 b, Vector3 c, int density = 10, Color? color = null) {
+	public static void DrawTriangleFilled(
+		Vector3 a,
+		Vector3 b,
+		Vector3 c,
+		int density = 10,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Color col = color ?? Color.white;
 
 		for (int i = 0; i < density + 1; i++) {
 			float t = (float)i / density;
-			Debug.DrawLine(a, Vector3.Lerp(b, c, t), col);
-			Debug.DrawLine(b, Vector3.Lerp(a, c, t), col);
-			Debug.DrawLine(c, Vector3.Lerp(a, b, t), col);
+			DrawLine(a, Vector3.Lerp(b, c, t), col, duration, drawScene, drawGame);
+			DrawLine(b, Vector3.Lerp(a, c, t), col, duration, drawScene, drawGame);
+			DrawLine(c, Vector3.Lerp(a, b, t), col, duration, drawScene, drawGame);
 		}
 	}
 
-	public static void DrawCube(Vector3 a, Vector3 b, Color? color = null) {
+	public static void DrawCube(
+		Vector3 a,
+		Vector3 b,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Vector3 A = new(a.x, a.y, a.z);
 		Vector3 B = new(a.x, a.y, b.z);
 		Vector3 C = new(b.x, a.y, a.z);
@@ -138,49 +227,78 @@ public class DebugExtra {
 
 		Color col = color ?? Color.white;
 
-		Debug.DrawLine(A, B, col);
-		Debug.DrawLine(A, C, col);
-		Debug.DrawLine(A, E, col);
-		Debug.DrawLine(D, B, col);
-		Debug.DrawLine(D, C, col);
-		Debug.DrawLine(D, H, col);
-		Debug.DrawLine(G, H, col);
-		Debug.DrawLine(G, E, col);
-		Debug.DrawLine(G, C, col);
-		Debug.DrawLine(F, H, col);
-		Debug.DrawLine(F, E, col);
-		Debug.DrawLine(F, B, col);
+		DrawLine(A, B, col, duration, drawScene, drawGame);
+		DrawLine(A, C, col, duration, drawScene, drawGame);
+		DrawLine(A, E, col, duration, drawScene, drawGame);
+		DrawLine(D, B, col, duration, drawScene, drawGame);
+		DrawLine(D, C, col, duration, drawScene, drawGame);
+		DrawLine(D, H, col, duration, drawScene, drawGame);
+		DrawLine(G, H, col, duration, drawScene, drawGame);
+		DrawLine(G, E, col, duration, drawScene, drawGame);
+		DrawLine(G, C, col, duration, drawScene, drawGame);
+		DrawLine(F, H, col, duration, drawScene, drawGame);
+		DrawLine(F, E, col, duration, drawScene, drawGame);
+		DrawLine(F, B, col, duration, drawScene, drawGame);
 	}
 
-	public static void DrawCone(Vector3 p, Vector3 d, float radius, float height, Color color, int resolution) {
+	// update this with optional params and duration
+	// when actually use it lmao i
+	public static void DrawCone(
+		Vector3 p,
+		Vector3 d,
+		float radius,
+		float height,
+		Color color,
+		int resolution,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Vector3 tip = p + d * height;
-		Debug.DrawLine(p, tip, color);
+		DrawLine(p, tip, color);
 		Quaternion r = Quaternion.LookRotation(d);
 
 		Vector3 lastPoint = r * Vector3.forward * radius;
 		for (int i = 0; i < resolution; i++) {
 			float t = (i + 1) / resolution * 2f * Mathf.PI;
 			Vector3 point = r * new Vector3(Mathf.Sin(t), 0, Mathf.Cos(t)) * radius;
-			Debug.DrawLine(point, lastPoint, color);
-			Debug.DrawLine(point, tip, color);
+			DrawLine(point, lastPoint, color);
+			DrawLine(point, tip, color);
 		}
 	}
 
-	public static void DrawArrow(Vector3 pos, Vector3 dir, float length = 1, float tipLength = .1f, Color? color = null) {
+
+	public static void DrawArrow(
+		Vector3 pos,
+		Vector3 dir,
+		float length = 1,
+		float tipLength = .1f,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
 		Color col = color ?? Color.white;
 
 		dir.Normalize();
 		Vector3 tip = pos + dir * length;
-		Debug.DrawLine(pos, tip, col);
+		DrawLine(pos, tip, col, duration, drawScene, drawGame);
 
 		Quaternion r = Quaternion.LookRotation(dir);
-		Debug.DrawLine(tip, tip + (r * new Vector3(0, .4472135955f, -.894427191f) * tipLength), col);
-		Debug.DrawLine(tip, tip + (r * new Vector3(0, -.4472135955f, -.894427191f) * tipLength), col);
-		Debug.DrawLine(tip, tip + (r * new Vector3(.4472135955f, 0, -.894427191f) * tipLength), col);
-		Debug.DrawLine(tip, tip + (r * new Vector3(-.4472135955f, 0, -.894427191f) * tipLength), col);
+		DrawLine(tip, tip + (r * new Vector3(0, .4472135955f, -.894427191f) * tipLength),	col, duration, drawScene, drawGame);
+		DrawLine(tip, tip + (r * new Vector3(0, -.4472135955f, -.894427191f) * tipLength),col, duration, drawScene, drawGame);
+		DrawLine(tip, tip + (r * new Vector3(.4472135955f, 0, -.894427191f) * tipLength), col, duration, drawScene, drawGame);
+		DrawLine(tip, tip + (r * new Vector3(-.4472135955f, 0, -.894427191f) * tipLength),col, duration, drawScene, drawGame);
 	}
 
-	public static void DrawMesh(Vector3[] verts, int[] tris, Color? color = null) {
+	public static void DrawMesh(
+		Vector3[] verts,
+		int[] tris,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
 		var edges = new HashSet<(int a, int b)>();
 
 		for (int i = 0; i < tris.Length; i += 3) {
@@ -195,19 +313,68 @@ public class DebugExtra {
 		}
 
 		foreach (var (a, b) in edges) {
-			Debug.DrawLine(verts[a], verts[b], color ?? Color.white);
+			DrawLine(verts[a], verts[b], col, duration, drawScene, drawGame);
 		}
 	}
 
-	public static void DrawMesh(Triangle[] tris, Color? color = null) {
+	public static void DrawMesh(
+		Triangle[] tris,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
+
 		// i cant figure out how to do the edge duplication removal this time
 		// so this is just naive :( sorry performance 2x lines ig
 
 		foreach (var tri in tris) {
-			Debug.DrawLine(tri.p1, tri.p2, color ?? Color.white);
-			Debug.DrawLine(tri.p2, tri.p3, color ?? Color.white);
-			Debug.DrawLine(tri.p3, tri.p1, color ?? Color.white);
+			DrawLine(tri.p1, tri.p2, col, duration, drawScene, drawGame);
+			DrawLine(tri.p2, tri.p3, col, duration, drawScene, drawGame);
+			DrawLine(tri.p3, tri.p1, col, duration, drawScene, drawGame);
 		}
+	}
+
+	public static void DrawPoly(
+		Vector3[] points,
+		bool closed = true,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
+
+		if (points == null || points.Length < 2)
+			return;
+
+		for (int i = 0; i < points.Length - 1; i++)
+			DrawLine(points[i], points[i + 1], col, duration, drawScene, drawGame);
+
+		if (closed)
+			DrawLine(points[^1], points[0], col, duration, drawScene, drawGame);
+	}
+
+	public static void DrawRect2D(
+		Vector2 cornerA,
+		Vector2 cornerB,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
+
+		Vector3 a = new(cornerA.x, cornerA.y, 0);
+		Vector3 b = new(cornerB.x, cornerA.y, 0);
+		Vector3 c = new(cornerB.x, cornerB.y, 0);
+		Vector3 d = new(cornerA.x, cornerB.y, 0);
+
+		DrawLine(a, b, col, duration, drawScene, drawGame);
+		DrawLine(b, c, col, duration, drawScene, drawGame);
+		DrawLine(c, d, col, duration, drawScene, drawGame);
+		DrawLine(d, a, col, duration, drawScene, drawGame);
 	}
 
 	static readonly Dictionary<char, Vector3> GridPoints = new(){
@@ -414,7 +581,17 @@ public class DebugExtra {
 		{ '?',	330	},
 	};
 
-	public static void DrawText(string text, Vector3 position, float scale, Color color, float duration = 0) {
+	public static void DrawText(
+		string text,
+		Vector3 position,
+		float scale,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
+
 		if (string.IsNullOrEmpty(text)) return;
 
 		float charWidth = .6f * scale;
@@ -441,12 +618,11 @@ public class DebugExtra {
 				
 				if (i == 0) last = p;
 
-				Debug.DrawLine(cursor + p, cursor + last, color, duration);
+				DrawLine(cursor + p, cursor + last, col, duration, drawScene, drawGame);
 				last = p;
 			}
 
 			cursor.x += charWidth + spacing;
 		}
 	}
-
 }

@@ -6,9 +6,12 @@ public static partial class Config {
 	public static class Input {
 		public static readonly float	clickMaxMovement = 5;
 		public static readonly int		clickMaxTimeMs = 100;
-		public static readonly int		doubleClickMaxTimeMs = 500;
+		public static readonly int		extraClickMaxTimeMs = 500;
 		public static readonly float	doubleClickMaxMovement = 20;
 
 		public static readonly float	ScrollSensitivity = .05f;
+
+		public static readonly int		RepeatDelayMs = 500;
+		public static readonly int		RepeatRateCPS = 31;
 	}
 }

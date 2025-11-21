@@ -6,9 +6,17 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static PlasticGui.WorkspaceWindow.Merge.MergeInProgress;
 
 public class FileExplorer {
+	public static class MetadataGetters {
+		public static (string, float)[] GetBytes(string path) {
+			FileInfo info = new (path);
+			long sizeBytes = info.Length;
+			return new[] {
+				($"{sizeBytes} bytes", 2f)
+			};
+		}
+	}
 
 	public static void CreateNewFE(
 		string initialDirectory,
@@ -25,7 +33,7 @@ public class FileExplorer {
 	/// Primary constructor. A directory must be manually loaded after creation.
 	/// </summary>
 	/// <param name="extensions">Include the . Null for all</param>
-	/// <param name="metadataGetter">
+	/// <param name="onUsePressed">Returns the chosen file's full path</param>
 	/// <example>
 	/// <code>
 	/// // example metadata getter for bytes
@@ -60,7 +68,7 @@ public class FileExplorer {
 		InitialFileName = (initialFileName, initialNameSelectionEndExc);
 	}
 
-	// config
+	#region Config
 	public string UseButtonLabel = "Load"; // to be changed per instance
 	public event Action<string> OnUsePressed; // returns the file full path
 	public float NameWidth = 5;
@@ -70,8 +78,9 @@ public class FileExplorer {
 	// intellisense added select folder but maybe probably wont use
 	public Type ExplorerType;
 	public (string name, int selectionEndExc) InitialFileName; // for save file dialog
+	#endregion
 
-	// state
+	#region State
 	TMP_InputField AddressBar;
 	WindowItem ItemsLayout;
 	Button NewFolderButton;
@@ -88,8 +97,7 @@ public class FileExplorer {
 	// 0 is most recent
 	List<string> DirectoryHistory = new();
 	int HistoryPosition;
-
-	//string FixPathForTMP(string path) => path.Replace("\\", "\\\\");
+	#endregion
 
 	public void Show() {
 		ExplorerWindow.RealisedWindow.PlaceAtCenter();
@@ -101,16 +109,17 @@ public class FileExplorer {
 	}
 
 	void Select(int i) {
-
 		// double click check
-		if (Time.time - LastSelectTime < Config.Input.doubleClickMaxTimeMs / 1000f) {
+		if (Time.time - LastSelectTime < Config.Input.extraClickMaxTimeMs / 1000f) {
 			if (CurrentlySelected.Type == Entry.EntryType.File 
 				&& ExplorerType == Type.OpenFile
 				&& i == LastSelectedI)
 				UseButton();
 			else
-				LoadDirectory(
-					Path.Join(CurrentDirectory, CurrentlySelected.Name));
+				LoadDirectory(Path.Join(CurrentDirectory, CurrentlySelected.Name));
+
+			CurrentlySelectedI = -1;
+			return;
 		}
 
 		LastSelectTime = Time.time;
@@ -432,10 +441,6 @@ public class FileExplorer {
 			Use(CurrentlySelected.Name);
 	}
 
-	void ManuallyUse(string name) {
-		Use(name);
-	}
-
 	void Use(string name) {
 		var path = Path.Combine(CurrentDirectory, name);
 
@@ -588,13 +593,12 @@ public class FileExplorer {
 		new PComponents.InputField(
 			onEndEdit: TryChangeDirectories,
 			placeholderText: "",
-			alignment: TextAlignmentOptions.Left
+			alignment: TextAlignmentOptions.Right
 			).OnRealised<PComponents.InputField>(c => AddressBar = (TMP_InputField)c),
 		WindowItem.LayoutConfig.DynamicLayout(
 			FourSides.LeftConst * (Config.FileExplorer.NavgationHeight * 5 + Config.UI.Visual.DefaultLayoutSpacing * 3)
 		)
 	)
-
 					}
 				),
 				WindowItem.NewScrollView(
@@ -751,7 +755,7 @@ public class FileExplorer {
 	}
 
 	void SetEntries(params Entry[] entries) {
-		if (entries.Length == 0) return;
+		//if (entries.Length == 0) return;
 
 		ItemsLayout.SetSubItems(entries.Select((e, i) => FileEntry(i, e)).ToArray());
 		 
@@ -777,10 +781,8 @@ public class FileExplorer {
 
 		// get files
 		string[] fps = GetFilesSafe(path, Extensions);
-
 		// get folders
 		string[] dps = GetDirectoriesSafe(path);
-
 
 		var entries =
 			dps.Select(dp => {
@@ -862,7 +864,6 @@ public class FileExplorer {
 	}
 
 	public void Refresh() {
-		LoadDirectory(
-			CurrentDirectory);
+		LoadDirectory(CurrentDirectory);
 	}
 }

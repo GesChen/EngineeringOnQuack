@@ -1,18 +1,12 @@
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public class Part_CPU : NonStaticPart {
 	public override string PartName => "CPU";
-	public List<Port> Ports; // assign in inspector
-
-	public override void SetupPart(Part main) {
-		main.Ports = Ports.ToArray();
-	}
-
-	internal static Script currentlyEditingScript;
 
 	public Script Script;
 	public string DEBUG_CurrentScriptText; // for debugging purposes
@@ -28,7 +22,7 @@ public class Part_CPU : NonStaticPart {
 						  // but we'll see
 						  // this shouldnt be hard to modify either
 
-	Port[] TransceiverPorts;
+	int[] TransceiverPorts;
 
 	Interpreter Interpreter;
 	Memory Memory;
@@ -36,6 +30,7 @@ public class Part_CPU : NonStaticPart {
 	bool hasTick;
 	Primitive.Function tickFunc;
 
+	#region Language
 	public static Type Type_CPU = new(
 		"CPU",
 		new Memory(
@@ -47,34 +42,230 @@ public class Part_CPU : NonStaticPart {
 			)
 		);
 	public T_Data InternalDataObject = new(Type_CPU);
-	public override T_Data InternalLanguageDataObject() => InternalDataObject;
+	public override T_Data GetInternalLanguageDataObject() => InternalDataObject;
+	#endregion
 
-	public override void OnStopSimulating() {
-		running = false;
+	#region ui
+	public static void SetupUI() {
+		CPU_UI.GetCurrentScript = () => {
+			// rcm extensions only does ss for now
+			// this fixes the selection bcoming null 
 
-		hasTick = false;
-		tickFunc = null;
+			var cpuTransforms = GetSelectedCPUs();
+			Part_CPU cpu =
+				cpuTransforms.Count > 0
+				? cpuTransforms[0].GetComponent<Part_CPU>()
+				: null;
+			var script = cpu != null ? cpu.Script : null;
+
+			if (script == null) {
+				Tokenizer tokenizer = new();
+
+				// should always tokenize properly??
+				(Script newScript, _) = tokenizer.Tokenize(
+					"setup():\n\t\n\treturn 0\n\ntick():\n\t\n\treturn 0");
+
+				newScript.Name = "New Script";
+
+				script = newScript;
+			}
+
+			foreach (var ct in cpuTransforms) {
+				var thisCPU = ct.GetComponent<Part_CPU>();
+				thisCPU.Script ??= script;
+			}
+
+			return (
+				script.OriginalText,
+				script.Name
+			);
+		};
+
+		// might be the worst thing ive ever written
+		// set up all selected cpus with the new script editor
+		/*CPU_UI.OnEdit = editor =>
+			SelectionManager.Instance.PartSelection
+			.Select(p => p.GetComponent<Part_CPU>()).Where(c => c != null)
+			.ToList().ForEach(c => c.SetupScriptEditor(editor));*/
+		CPU_UI.OnEdit = e =>
+			GetSelectedCPUs().ForEach(t => t.GetComponent<Part_CPU>().SetupScriptEditor(e));
 	}
 
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
+	static List<Transform> GetSelectedCPUs() {
+		List<Transform> cpus = new();
+		if (RightClick.Instance.ContextAtClick is Contexts.SingleSelection ss)
+			cpus = new() { ss.Selected };
+		else if (RightClick.Instance.ContextAtClick is Contexts.MultiSelection ms)
+			cpus = new(ms.Selected);
 
-		newCPU.Script = Script;
-		newCPU.running = running;
-		newCPU.Interpreter = Interpreter;
-		newCPU.Memory = Memory;
-		newCPU.Evaluator = Evaluator;
-		newCPU.hasTick = hasTick;
-		newCPU.tickFunc = tickFunc;
-
-		// subscribe to print on a delay
-		// need to delay so internalfunctions.onprint is guaranteed
-		// to have been nulled
-		// cuz it all runs off the same onstartsimulating event
-		// and the order is random
-		// but the fields can be copied over first so that's what we do here 
-		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
+		return cpus.Where(t => t.GetComponent<Part_CPU>() != null).ToList();
 	}
+
+	ScriptEditorRewritten UsingEditor;
+	public void SetupScriptEditor(ScriptEditorRewritten editor) {
+		if (UsingEditor != null) {
+			UsingEditor.Destroy();
+		}
+
+		UsingEditor = editor;
+
+		// hope this is alright
+		editor.OnContentsChanged += s => Script.OriginalText = s;
+		editor.OnFileNameChanged += Rename;
+
+		editor.OnNewPressed += TryNew;
+		editor.OnSavePressed += TrySaveNotAs;
+		editor.OnSaveAsPressed += RequestSave;
+		editor.OnLoadPressed += RequestLoad;
+
+		editor.OnEditorClosed += () => UsingEditor = null;
+	}
+
+	void Rename(string name) {
+		Script.Name = name;
+
+		UsingEditor.SetFileName(name);
+	}
+
+	void TryNew() {
+		// auto save unless current file is not already saved
+		if (!Script.SavedAsFile) {
+			UnsavedNotification(CreateNewFile);
+			return;
+		}
+		CreateNewFile();
+	}
+
+	void UnsavedNotification(Action intendedAction) {
+		PDialog.GenerateDialog(new(
+			"This script hasn't been saved!\nWould you like to save it?",
+			new PDialog.Option[] {
+				new("Save", () => RequestSave()),
+				new("Don't Save", intendedAction),
+				new("Cancel", null)
+			},
+			new(350, 150)
+		));
+	}
+
+	// the regular save option not the save as so it should serve dual purpose
+	void TrySaveNotAs() {
+		if (Script.SavedAsFile) {
+			try {
+				string path = Script.SaveLocation;
+
+				byte[] data = ScriptSaveLoad.ConvertScriptToBytes(Script);
+
+				File.WriteAllBytes(path, data);
+			} catch (Exception e) {
+				PDialog.GenerateDialog(new(
+					$"An error occurred while saving the file:\n{e.Message}",
+					new PDialog.Option[] {
+					new("OK", null)
+					},
+					new(300, 200)
+				));
+			}
+		} else {
+			RequestSave();
+		}
+	}
+
+	void RequestSave() {
+		FileExplorer.CreateNewFE(
+			HF.GuaranteePath(
+				Config.Path.LocalPath("Scripts").ToString()
+			),
+			new(
+				FileExplorer.Type.SaveFile,
+				new string[] { ".qk" },
+				FileExplorer.MetadataGetters.GetBytes,
+				"Save",
+				TrySave,
+				5,
+				"New Script.qk",
+				10
+			)
+		);
+	}
+
+	void TrySave(string filePath) {
+		try {
+			// may change to allow string saving later and nongzipped perhaps
+			byte[] data = ScriptSaveLoad.ConvertScriptToBytes(Script);
+
+			File.WriteAllBytes(filePath, data);
+			Script.SavedAsFile = true;
+			Script.SaveLocation = filePath;
+
+			string name = Path.GetFileNameWithoutExtension(filePath);
+
+			UsingEditor.SetFileName(name);
+		} catch (Exception e) {
+			PDialog.GenerateDialog(new(
+				$"An error occurred while saving the file:\n{e.Message}",
+				new PDialog.Option[] {
+					new("OK", null)
+				},
+				new(300, 200)
+			));
+		}
+	}
+
+	void RequestLoad() {
+		FileExplorer.CreateNewFE(
+			HF.GuaranteePath(
+				Config.Path.LocalPath("Scripts").ToString()
+			),
+			new(
+				FileExplorer.Type.OpenFile,
+				new string[] { ".qk" },
+				FileExplorer.MetadataGetters.GetBytes,
+				"Load",
+				TryLoad,
+				5,
+				".qk",
+				0
+			)
+		);
+	}
+
+	void TryLoad(string filePath) {
+		try {
+			byte[] bytes = File.ReadAllBytes(filePath);
+
+			Script script = ScriptSaveLoad.ConvertBytesToScript(bytes);
+
+			Script = script;
+
+			UsingEditor.SetFileName(script.Name);
+			UsingEditor.Load(script.OriginalText);
+
+		} catch (Exception e) {
+			PDialog.GenerateDialog(new(
+				$"An error occurred while loading the file:\n{e.Message}",
+				new PDialog.Option[] {
+					new("OK", null)
+				},
+				new(300, 200)
+			));
+		}
+	}
+
+	void CreateNewFile() {
+		Tokenizer tokenizer = new();
+		// should always tokenize properly??
+		(Script newScript, _) = tokenizer.Tokenize(
+			"setup():\n\t\n\treturn 0\n\ntick():\n\t\n\treturn 0");
+
+		Script = newScript;
+
+		newScript.Name = "New Script";
+
+		UsingEditor.SetFileName(newScript.Name);
+		UsingEditor.Load(newScript.OriginalText);
+	}
+	#endregion
 
 	IEnumerator DelayScriptSetup() {
 		yield return null;
@@ -84,10 +275,17 @@ public class Part_CPU : NonStaticPart {
 		Memory.CPUGet += CPUGet;
 
 		// find transceiever ports
-		TransceiverPorts = Ports.Where(
-			p => p.Connector.ConnectedPart
-				.TryGetComponent<Part_Transceiver>(out _))
-			.ToArray(); // ugly
+		TransceiverPorts = 
+			Ports
+			.Select((port, i) => (i, port))
+			.Where(
+				ip => {
+					if (ip.port.OtherPart == null) return false;
+					ip.port.OtherPart.IsNonStaticPart(out var nsp);
+					return nsp is Part_Transceiver;
+				})
+			.Select(ip => ip.i)
+			.ToArray();
 
 		if (Script == null)
 			yield break;
@@ -122,12 +320,16 @@ public class Part_CPU : NonStaticPart {
 
 		// bit of a meta analysis
 		// for a perchance of performance save
-		if (!string.IsNullOrWhiteSpace(string.Join("",
-			tickFunc.Script.Lines.Select(l => 
+		if (hasTick) {
+			string totalTickFunc = string.Join("",
+				tickFunc.Script.Lines.Select(l =>
 				l.OriginalString.Contains("return")
-				? "" : l.OriginalString)))) {
-			hasTick = false;
-			tickFunc = null;
+				? "" : l.OriginalString));
+
+			if (string.IsNullOrWhiteSpace(totalTickFunc)) {
+				hasTick = false;
+				tickFunc = null;
+			}
 		}
 
 		running = true; // dont run if no script present
@@ -141,23 +343,38 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 	T_Data CPUGet(int intID) =>
-		intID == Interpreter.ID
-		? InternalLanguageDataObject()
+		intID == Interpreter?.ID // false if int is null
+		? GetInternalLanguageDataObject()
 		: null;
 
 	void TryPrint(int interpreterID, string message) {
+		if (Interpreter == null) return;
 		if (interpreterID != Interpreter.ID) return;
 
-		foreach (var port in TransceiverPorts)
-			port.CallCommand("print", new[] { message });
+		// now do this properly
+		foreach (int port in TransceiverPorts) {
+			var ILPort = GetPort(interpreterID, port);
+
+			// straight up call this lmfao
+			// should work
+			PartInternalFunctions.Transceiver
+				.print(ILPort, new() { new Primitive.String(message) });
+		}
 	}
 
 	T_Data GetPort(int interpreterID, int id) {
+		if (Interpreter == null) return null;
 		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
 														  // however illegal this may feel
 
-		Ports[id].OtherPart.IsNonStaticPart(out var connectedPart);
-		var data = connectedPart.InternalLanguageDataObject();
+		if (id < 0 || id >= Ports.Length)
+			return new Error($"Port index out of range: {id}");
+
+		var other = Ports[id].OtherPart;
+		// somehow return null
+
+		other.IsNonStaticPart(out var connectedPart);
+		var data = connectedPart.GetInternalLanguageDataObject();
 
 		return data;
 	}
@@ -201,21 +418,42 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 
+
 	public class SPart_CPU : Assembly.SPart {
 		public string Script; // could use bytearray but dont wanna risk issues w encoding into json
 	}
 
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CPU { // did you know you dont actually need the ()
-			basePartID = SPart.basePartID,
-			id = SPart.id,
-			position = SPart.position,
-			rotation = SPart.rotation,
-			scale = SPart.scale,
-			color = SPart.color,
-			compositionID = SPart.compositionID,
-		};
+	public override void OnStopSimulating() {
+		running = false;
 
+		hasTick = false;
+		tickFunc = null;
+	}
+
+	public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
+
+		newCPU.Script = Script;
+		newCPU.running = running;
+		newCPU.Interpreter = Interpreter;
+		newCPU.Memory = Memory;
+		newCPU.Evaluator = Evaluator;
+		newCPU.hasTick = hasTick;
+		newCPU.tickFunc = tickFunc;
+
+		// subscribe to print on a delay
+		// need to delay so internalfunctions.onprint is guaranteed
+		// to have been nulled
+		// cuz it all runs off the same onstartsimulating event
+		// and the order is random
+		// but the fields can be copied over first so that's what we do here 
+		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
+	}
+
+	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
+		var sp = new SPart_CPU();
+
+		sp.CopyMembers(SPart);
 		sp.Script =
 			Script != null
 			? ScriptSaveLoad.ConvertScriptToString(Script)
@@ -231,10 +469,5 @@ public class Part_CPU : NonStaticPart {
 			sp.Script != null
 			? ScriptSaveLoad.ConvertStringToScript(sp.Script)
 			: null;
-	}
-
-	public override void HandleCommand(string command, object[] args) {
-		
-		Debug.LogError(UnknownCommand(command));
 	}
 }

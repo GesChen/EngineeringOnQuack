@@ -769,6 +769,9 @@ public class PComponents {
 			BarHandleColorBlock	= barHandleColorBlock ?? Config.UI.ColorBlock.DefaultBlock;
 		}
 
+		// to mess around with the content, just access the windowitems contentobject
+		// and re set the components .content field
+
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
 			var comp = newObj.AddComponent<BetterScrollRect>(); // interchangable with normal scrollrect
 			var rt = newObj.GetComponent<RectTransform>();
@@ -922,6 +925,47 @@ public class PComponents {
 
 			// return
 			return comp;
+		}
+	}
+
+	public class RectMask : Component {
+		public FourSides Padding;
+
+		public RectMask(FourSides? padding = null) {
+			Padding = padding ?? FourSides.Zero;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var rmComp = newObj.AddComponent<RectMask2D>();
+			rmComp.padding = Padding.ToRectMask2DType();
+
+			RealComponent = rmComp;
+			FinaliseRealise();
+		}
+	}
+
+	// note when using with interactables like buttons
+	// the button component will make the outline black
+	// just add a fill subcomponent with outline instead
+	public class Outline : Component {
+		public Color Color;
+		public Vector2 Size;
+
+		public Outline(
+			Color? color = null,
+			Vector2? size = null) {
+
+			Color = color ?? Config.UI.Visual.OutlineColor;
+			Size = size ?? Config.UI.Visual.OutlineThickness * Vector2.one;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var olComp = newObj.AddComponent<UnityEngine.UI.Outline>();
+			olComp.effectColor = Color;
+			olComp.effectDistance = Size;
+
+			RealComponent = olComp;
+			FinaliseRealise();
 		}
 	}
 }

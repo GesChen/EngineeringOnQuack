@@ -53,6 +53,15 @@ public static class HF {
 		scrollRect.onValueChanged?.Invoke(scrollRect.normalizedPosition);
 	}
 
+	/// <summary>
+	/// Calculates the current scroll offset of a <see cref="ScrollRect"/> in pixels.
+	/// </summary>
+	/// <param name="scrollRect">The <see cref="ScrollRect"/> whose scroll position is queried.</param>
+	/// <returns>
+	/// A <see cref="Vector2"/> representing the current scroll amount in pixels:
+	/// X corresponds to horizontal scroll, Y corresponds to vertical scroll (top = 0).
+	/// Returns <see cref="Vector2.zero"/> if the <paramref name="scrollRect"/> or its content is null.
+	/// </returns>
 	public static Vector2 CurrentScrollAmount(this ScrollRect scrollRect) {
 		if (scrollRect == null || scrollRect.content == null) return Vector2.zero;
 		float contentWidth = scrollRect.content.rect.width;
@@ -91,7 +100,7 @@ public static class HF {
 	public static Vector2 Vector2Abs(Vector2 v) =>
 		new(Mathf.Abs(v.x), Mathf.Abs(v.y));
 
-	public static Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) =>
+	public static Vector2 Clamp(this Vector2 v, Vector2 min, Vector2 max) =>
 		new(
 			Mathf.Clamp(v.x, min.x, max.x),
 			Mathf.Clamp(v.y, min.y, max.y));
@@ -202,6 +211,13 @@ public static class HF {
 		return Vector2.Distance(point, pb);
 	}
 
+	public static Vector3 ClosestPointOnSegment(Vector3 a, Vector3 b, Vector3 point) {
+		Vector3 ab = b - a;
+		float t = Vector3.Dot(point - a, ab) / Vector3.Dot(ab, ab);
+		t = Mathf.Clamp01(t);
+		return a + t * ab;
+	}
+
 	public static Vector3 ClosestPointAOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2) {
 		Vector3 deltaP = linePoint2 - linePoint1;
 		float a = Vector3.Dot(lineVec1, lineVec1);
@@ -260,8 +276,12 @@ public static class HF {
 	/// <summary>
 	/// Replaces section of string with another, chars at start and end index are both replaced too
 	/// </summary>
-	public static string ReplaceSection(string original, int startIndex, int endIndex, string replaceWith) => 
-		original[..startIndex] + replaceWith + original[(endIndex + 1)..];
+	public static string ReplaceSection(string original, int startIndexInc, int endIndexExc, string replaceWith) => 
+		original[..startIndexInc] + replaceWith + original[endIndexExc..];
+
+	public static string MoveSection(string original, int startIndexInc, int endIndexExc, int insertIndex) =>
+		original[..startIndexInc] + original[endIndexExc..insertIndex] + original[startIndexInc..endIndexExc] + original[insertIndex..];
+
 
 	public static string RemoveSection(string original, int start, int end) => 
 		original.Remove(start, end - start);
@@ -449,6 +469,30 @@ public static class HF {
 		return (b0 == b1) && (b1 == b2) && (b2 == b3);
 	}
 
+	public static bool IsPointInBounds(Vector3 point, Vector3 corner1, Vector3 corner2) {
+		float minX = Mathf.Min(corner1.x, corner2.x);
+		float maxX = Mathf.Max(corner1.x, corner2.x);
+		float minY = Mathf.Min(corner1.y, corner2.y);
+		float maxY = Mathf.Max(corner1.y, corner2.y);
+		float minZ = Mathf.Min(corner1.z, corner2.z);
+		float maxZ = Mathf.Max(corner1.z, corner2.z);
+
+		return point.x >= minX && point.x <= maxX &&
+			   point.y >= minY && point.y <= maxY &&
+			   point.z >= minZ && point.z <= maxZ;
+	}
+
+	public static bool IsPointInBounds(Vector2 point, Vector2 corner1, Vector2 corner2) {
+		float minX = Mathf.Min(corner1.x, corner2.x);
+		float maxX = Mathf.Max(corner1.x, corner2.x);
+		float minY = Mathf.Min(corner1.y, corner2.y);
+		float maxY = Mathf.Max(corner1.y, corner2.y);
+
+		return point.x >= minX && point.x <= maxX &&
+			   point.y >= minY && point.y <= maxY;
+	}
+
+
 	public static float CrossProductSign(Vector3 p1, Vector3 p2, Vector3 p3) {
 		return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
 	}
@@ -563,11 +607,8 @@ public static class HF {
 	}
 
 	public static T LoadCached<T>(ref T cacheField, Func<T> processor) {
-		try { // introduces a sub ns overhead so dw
-			cacheField ??= processor();
-		} catch (Exception e) {
-			throw new("Encountered error while attempting to processes cacheField: " + e.Message);
-		}
+		if (cacheField != null) return cacheField;
+		cacheField = processor(); // not sure diff between no ?? and if vs other way
 		return cacheField;
 	}
 
@@ -596,4 +637,18 @@ public static class HF {
 	
 	// probably insecure but not going for security
 	public static int UIDHashFunction() => UnityEngine.Random.value.GetHashCode();
+
+	/// <summary>
+	/// Local space
+	/// </summary>
+	public static Vector2 CenterLeft(this TMP_CharacterInfo info) =>
+		new(
+			info.bottomLeft.x,
+			(info.ascender + info.descender) / 2f
+		);
+
+	/// <summary>
+	/// Local space
+	/// </summary>
+	public static float CenterY(this TMP_LineInfo info) => (info.ascender + info.descender) / 2f;
 }

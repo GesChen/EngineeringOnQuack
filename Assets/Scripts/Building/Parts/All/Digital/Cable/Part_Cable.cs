@@ -20,9 +20,11 @@ public class Part_Cable : NonStaticPart {
 		});
 	}
 
-	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
+	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
 	public override void OnPartCreation() {
+		if (SaveLoadManager.Loading) return; // dont do this for loading
+
 		var ccA = BuildingManager.Instance.MakeNewPart("cc", true, true);
 		var ccB = BuildingManager.Instance.MakeNewPart("cc", true, true);
 
@@ -68,11 +70,7 @@ public class Part_Cable : NonStaticPart {
 		if (connectionA == null) return "Cable, cc A disconnected";
 		if (connectionB == null) return "Cable, cc B disconnected";
 
-		return $"Cable connecting {connectionA.Port.MainPart.GetType().Name} -- {connectionB.Port.MainPart.GetType().Name}";
-	}
-
-	public override void HandleCommand(string command, object[] args) {
-		Debug.LogError(UnknownCommand(command));
+		return $"Cable connecting {connectionA.Port.MainNSP.GetType().Name} -- {connectionB.Port.MainNSP.GetType().Name}";
 	}
 
 	public class SPart_Cable : Assembly.SPart {
@@ -80,18 +78,11 @@ public class Part_Cable : NonStaticPart {
 		public int BID;
 	}
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_Cable {
-			AID = connectionA.CCID,
-			BID = connectionB.CCID,
+		var sp = new SPart_Cable();
 
-			basePartID = SPart.basePartID,
-			id = SPart.id,
-			position = SPart.position,
-			rotation = SPart.rotation,
-			scale = SPart.scale,
-			color = SPart.color,
-			compositionID = SPart.compositionID,
-		};
+		sp.CopyMembers(SPart);
+		sp.AID = connectionA.CCID;
+		sp.BID = connectionB.CCID;
 
 		SPart = sp;
 	}

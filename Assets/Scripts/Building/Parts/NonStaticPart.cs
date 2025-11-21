@@ -3,8 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * nsp file layout
+ * 1. partname => ""
+ * 2. all custom code for the part
+ * 3. language things
+ * - including internal methods
+ * 4. custom spart/saving then overrides
+ */
 public abstract class NonStaticPart : MonoBehaviour {
-	public Part Part;
+	[HideInNormalInspector] public Part Part;
+
+	public Port[] Ports;
+
+	// public List<Part> LinkedParts;
 
 	public abstract string PartName { get; }
 
@@ -12,22 +24,11 @@ public abstract class NonStaticPart : MonoBehaviour {
 	// think about how this works with creation during assembly copying
 	protected void Awake() {
 		Part = GetComponent<Part>();
-
-		SetupPart(Part);
-		
-		Part.OnCommandCalled = HandleCommand;
 	}
 
 	// throw unknowncommand at the end of this function
-	public abstract void HandleCommand(string command, object[] args);
-	protected string UnknownCommand(string command) => 
-		$"Unknown command \"{command}\" sent to {PartName}";
-	protected string BadArgumentCount(string command, int expected, int got) =>
-		$"Command \"{command}\" sent to {PartName} expected {expected} arguments, got {got}";
+	public abstract T_Data GetInternalLanguageDataObject();
 
-	public abstract T_Data InternalLanguageDataObject();
-
-	public virtual void SetupPart(Part main) { }
 	public virtual void OnStopSimulating() { }
 	public virtual void OnStartSimulating() { }
 	public virtual void OnPartCreation() { } // this codebase gets worse by the minute

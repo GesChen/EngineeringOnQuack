@@ -14,14 +14,21 @@ public class Part_CableConnection : NonStaticPart {
 	public Part_Cable Cable;
 	public Port Port;
 
-	public override T_Data InternalLanguageDataObject() => Errors.BadCode();
+	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
 	public Part_CableConnection(Part_Cable cable, Port port) {
 		Cable = cable;
 		Port = port;
 	}
 
-	public Part ConnectedPart => Cable.OtherCC(this).Port.MainPart; // may change this
+	public Part ConnectedPart {
+		get {
+			var other = Cable.OtherCC(this);
+			if (other == null) return null;
+
+			return other.Port.MainNSP.Part; // may change this
+		}
+	}
 
 	public void RandomizeID() {
 		CCID = HF.UIDHashFunction();
@@ -35,8 +42,7 @@ public class Part_CableConnection : NonStaticPart {
 		var ports = BuildingManager.Instance.SimulationContainer.GetComponentsInChildren<Port>();
 
 		foreach (var port in ports) {
-			float dist = (transform.position - port.transform.position).sqrMagnitude;
-			if (dist < Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance) {
+			if (port.SnapTarget.CheckSnap(transform)) {
 				// connect up
 				var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
 
@@ -49,32 +55,20 @@ public class Part_CableConnection : NonStaticPart {
 		// Cable moves its own reference in the cable field over to new
 	}
 
-	public override void HandleCommand(string command, object[] args) {
-		Debug.LogError(UnknownCommand(command));
-	}
-
 	public class SPart_CC : Assembly.SPart {
 		public int CCID;
 	}
 
 	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CC {
-			CCID = CCID,
+		var sp = new SPart_CC();
 
-			basePartID = SPart.basePartID,
-			id = SPart.id,
-			position = SPart.position,
-			rotation = SPart.rotation,
-			scale = SPart.scale,
-			color = SPart.color,
-			compositionID = SPart.compositionID,
-		};
+		sp.CopyMembers(SPart);
+		sp.CCID = CCID;
 
 		SPart = sp;
 	}
 
 	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
-
 		var cc = unfinishedPart.GetComponent<Part_CableConnection>();
 		var part = (SPart_CC)originalSPart;
 

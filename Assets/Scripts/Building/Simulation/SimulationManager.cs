@@ -15,8 +15,7 @@ public class SimulationManager : Singleton<SimulationManager> {
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
-		SimulatingMainUI.TopBar.ClearBarCreated();
-		SimulatingMainUI.TopBar.OnBarCreated += SetupTopBar;
+		SimulatingMainUI.TopBar.OnBarCreated = SetupTopBar;
 
 	}
 

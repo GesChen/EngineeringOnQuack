@@ -5,22 +5,21 @@ using UnityEngine;
 
 // probably gonna get changed
 public static class CPU_UI {
-	public static void ClearEvents() {
+	public static Action<ScriptEditorRewritten> OnEdit;
 
+	public static Func<(string contents, string name)> GetCurrentScript;
+
+	public static void EditScript() {
+		// make new ser
+		ScriptEditorRewritten.CreateWindow(EditorCreated);
 	}
 
-	public static void Setup() {
-
-	}
-
-	public static Func<(string[] contents, string name)> GetCurrentScript;
-
-	public static void OnEditScript() {
+	static void EditorCreated(ScriptEditorRewritten editor) {
 		var (contents, name) = GetCurrentScript?.Invoke() ?? throw new("GetCurrentScript not subscribed to!");
 
-		SEProcedural.Show();
+		editor.SetFileName(name);
+		editor.Load(contents);
 
-		SEProcedural.SetFileName(name);
-		SEProcedural.ScriptEditor.Load(contents);
+		OnEdit?.Invoke(editor);
 	}
 }

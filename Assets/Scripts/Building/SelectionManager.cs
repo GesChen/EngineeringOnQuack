@@ -8,6 +8,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	public List<Transform> Selection { get; private set; }
 	public Part[] PartSelection { get; private set; } // always in sync with selection
+	public HashSet<Part> PartSelectionHS { get; private set; }
 
 	public Transform selectionContainer;
 
@@ -37,8 +38,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 	/// Subscribe in something called from Buildingmanager after the clear
 	/// should be around line 47
 	/// </summary>
-	public event Action OnSelectionChanged;
-	public void ClearSelectionChanged() { OnSelectionChanged = null; }
+	public Action OnSelectionChanged;
 
 	void Start() {
 		Selection = new();
@@ -48,13 +48,13 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void Subscribe() {
-		ContextObserver.Instance.GroupCheck += UpdateGroupContext;
-		ContextObserver.Instance.RequestSelectionCount += () => Selection.Count;
-		ContextObserver.Instance.GetCurrentSSInfo += () =>
-			(PartSelection[0].transform, PartSelection[0].basePart.ID);
+		ContextObserver.Instance.GroupCheck = UpdateGroupContext;
+		ContextObserver.Instance.RequestSelectionCount = () => Selection.Count;
+		ContextObserver.Instance.GetCurrentSelectionInfo = () =>
+			(PartSelection.Select(p => p.transform).ToArray(),
+			PartSelection.Select(p => p.basePart.ID).ToArray());
 
 		// do processing in here since ui doesnt depend on language
-		
 	}
 
 	bool UpdateGroupContext() {
@@ -101,10 +101,24 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void Update() {
 		HandleInput();
-		HandleContainer();
+		bool changed = selectionChanged;
+		UpdatePartSelection();
 
-		CheckForGroups();
-		HandleContainer(); // selection might have changed from groups
+		// ?????????????
+		while (selectionChanged) {
+			CheckForGroups();
+			CheckForSnaps();
+			CheckForLinks();
+			RemoveDuplicates();
+
+			if (selectionChanged)
+				changed = true;
+
+			UpdatePartSelection();
+		}
+
+		if (changed)
+			UpdateContainer(); // selection might have changed from groups and snaps
 	}
 
 	void HandleInput() {
@@ -128,7 +142,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 
 		// no selection right click check
-		if (Conatrols.Mouse.Right.PressedThisFrame && Selection.Count == 0)
+		if ((Conatrols.Mouse.Right.PressedThisFrame
+			|| Conatrols.Mouse.Left.PressedThisFrame) && Selection.Count == 0)
 			ClickCheck();
 
 		// detect mouse up
@@ -162,27 +177,69 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 	}
 
-	void HandleContainer() {
-		if (selectionChanged) {
-			PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
+	void UpdatePartSelection() {
+		if (!selectionChanged) return;
 
-			UpdateContainer();
-			selectionChanged = false;
-		}
+		PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
+		PartSelectionHS = PartSelection.ToHashSet();
+
+		selectionChanged = false;
 	}
 
 	void CheckForGroups() {
 		if (overrideGroupSelect) return;
 
+		var oldhs = Selection.ToHashSet();
+
 		// if any selected part is in a group, select parts in that group not already in selection
 		foreach (var part in PartSelection) {
 			if (part.Group != null)
 				foreach (var item in part.Group.Parts)
-					if (!PartSelection.Contains(item)) {
+					if (!PartSelectionHS.Contains(item)) {
 						Selection.Add(item.transform);
 						selectionChanged = true;
 					}
 		}
+
+		if (!Selection.ToHashSet().SetEquals(oldhs)) selectionChanged = true;
+	}
+
+	void CheckForSnaps() {
+		// why.
+		// add to selection any nonselected parts which meet the checksnap of any 
+		// selected part's snaptargets
+
+		var oldhs = Selection.ToHashSet();
+
+		Selection.AddRange( // add to selection
+			PartSelection.SelectMany(part => // any selected part's
+				part.GetComponentsInChildren<SnapTarget>() // snaptargets
+				.SelectMany(cst => 
+					BuildingManager.Instance.Assembly.Parts.Where(p => // any 
+					p != part // self check for good 
+					&& cst.CheckSnap(p.transform))) // which meet the checksnap
+			).Select(p => p.transform)
+		);
+
+		if (!Selection.ToHashSet().SetEquals(oldhs)) selectionChanged = true;
+	}
+
+	void CheckForLinks() {
+		// hes doing it again :(
+		
+		var oldhs = Selection.ToHashSet();
+
+		foreach (var p in PartSelection) {
+			if (p.IsNonStaticPart(out var nsp)) {
+				// Selection.AddRange(nsp.LinkedParts));
+			}
+		}
+		
+		if (!Selection.ToHashSet().SetEquals(oldhs)) selectionChanged = true;
+	}
+
+	void RemoveDuplicates() {
+		Selection = Selection.Distinct().ToList();
 	}
 
 	void HandleBox() {
@@ -297,9 +354,9 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 		Transform selected = null;
 		if (Physics.Raycast(Camera.main.ScreenPointToRay(mousePos), out RaycastHit hit)) {
-			Part component = hit.transform.GetComponent<Part>();
+			Part component = hit.transform.GetComponentInParent<Part>();
 			if (component && BuildingManager.Instance.Assembly.Parts.Contains(component))
-				selected = hit.transform;
+				selected = component.transform;
 		}
 
 		if (selected == null) {

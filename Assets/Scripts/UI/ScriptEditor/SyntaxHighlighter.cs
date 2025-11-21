@@ -7,7 +7,7 @@ using System;
 
 // probably one of the most unmaintainable files ever, good luck and im sorry lol
 
-public class SyntaxHighlighter : MonoBehaviour {
+public class SyntaxHighlighter {
 	public enum Types {
 		unassigned,
 		keyword,
@@ -20,9 +20,10 @@ public class SyntaxHighlighter : MonoBehaviour {
 		comment
 	}
 
-	Dictionary<Types, string> TypeToHex;
-	void Awake() {
-		TypeToHex = new() {
+	static Dictionary<Types, string> m_tth;
+	static Dictionary<Types, string> TypeToHex =>
+		HF.LoadCached(ref m_tth,
+			() => new() {
 			{ Types.unassigned , "#000" },
 			{ Types.keyword		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.SyntaxColors.Keyword)	},
 			{ Types.func		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.SyntaxColors.Function)	},
@@ -32,8 +33,8 @@ public class SyntaxHighlighter : MonoBehaviour {
 			{ Types.literal		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.SyntaxColors.Literal)	},
 			{ Types.type		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.SyntaxColors.Type)		},
 			{ Types.comment		, ColorUtility.ToHtmlStringRGB(Config.ScriptEditor.SyntaxColors.Comment)	}
-		};
-	}
+		});
+
 
 	/// <summary>
 	/// Converts a line (string) into a list of colors
@@ -429,7 +430,7 @@ public class SyntaxHighlighter : MonoBehaviour {
 	public string TypeArrayToString(Types[] array) => new(array.Select(t => "_KFVUSLT#"[(int)t]).ToArray());
 
 	public string TagLine(string line, Types[] types) {
-		string generateTag(Types type) => 
+		static string generateTag(Types type) => 
 			$"<#{TypeToHex[type]}>";
 		string endColor = "</color>";
 

@@ -13,6 +13,7 @@ public static class AllParts {
 		new(3,	"cpu",			"CPU",			"CPU",			"CPU"),
 		new(4,	"cable",		"Cable",		"Cable",		"Cable"),
 		new(5,	"cc",			"Sphere",		"Sphere",		"CableConnection"),
-		new(6,	"transceiver",	"Transceiver",	"Transceiver",	"Transceiver")
+		new(6,	"transceiver",	"Transceiver",	"Transceiver",	"Transceiver"),
+		new(7,	"led",			"LED",			"LED",			"LED")
 	};
 }

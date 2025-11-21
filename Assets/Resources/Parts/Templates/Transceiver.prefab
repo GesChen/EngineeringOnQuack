@@ -122,10 +122,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ID: 0
-  Selected: 0
   color: {r: 0, g: 0, b: 0, a: 0}
-  Ports:
-  - {fileID: 8527337828351603693}
+  dontUpdateMaterialsFor: []
   material: {fileID: 0}
   physicMaterial: {fileID: 0}
 --- !u!114 &2498203954752546326
@@ -140,6 +138,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a562576e9c1d368448c9801003d1091b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Part: {fileID: 5720584220106716956}
+  Ports:
+  - {fileID: 8527337828351603693}
 --- !u!1001 &3215236474708067023
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -203,6 +204,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Port
       objectReference: {fileID: 0}
+    - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
+        type: 3}
+      propertyPath: MainNSP
+      value: 
+      objectReference: {fileID: 2498203954752546326}
     - target: {fileID: 6542006339722244386, guid: caffabde21f70c74c8febded6c8ecbc5,
         type: 3}
       propertyPath: MainPart

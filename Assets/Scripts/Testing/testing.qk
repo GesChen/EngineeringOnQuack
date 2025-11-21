@@ -8,6 +8,8 @@ testtype:
 		test+=1
 		return str(test)
 
+	
+
 a = testtype()
 
 print(a)

@@ -169,11 +169,10 @@ public class WindowSizeNode : MonoBehaviour {
 			Vector2 min = Vector2.Min(dragStartCenter + main.Config.Size.Maximum, dragStartCenter - main.Config.Size.Maximum);
 			Vector2 max = Vector2.Max(dragStartCenter + main.Config.Size.Maximum, dragStartCenter - main.Config.Size.Maximum);
 
-			pos = HF.Vector2Clamp(pos, min, max);
+			pos = pos.Clamp(min, max);
 			
 			// canvas padding
-			pos = HF.Vector2Clamp(
-				pos,
+			pos = pos.Clamp(
 				new Vector2(pad.Left, pad.Down),
 				WindowManager.Instance.CanvasRect.sizeDelta - new Vector2(pad.Right, pad.Up));
 			
@@ -238,11 +237,12 @@ public class WindowSizeNode : MonoBehaviour {
 		dragging = false;
 		main.anyNodesDragging = false;
 
-		main.Hide();
-
 		if (main.TryGetComponent<TimedEventInvoker>(out var invoker)) {
 			invoker.Close();
 		}
+
+		if (main != null) // invoker may destroy main
+			main.Hide();
 	}
 
 	Vector2 otherCornerPos;

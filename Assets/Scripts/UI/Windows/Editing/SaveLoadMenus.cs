@@ -8,12 +8,10 @@ using W = PMenu.Window;
 
 public class SaveLoadMenus {
 
-	public static event Action OnSave;
-	public static void ClearSave() { OnSave = null; }
+	public static Action OnSave;
 	public static void Save() { OnSave?.Invoke(); }
 
-	public static event Action OnSaveAs;
-	public static void ClearSaveAs() { OnSaveAs = null; }
+	public static Action OnSaveAs;
 	public static void SaveAs() { OnSaveAs?.Invoke(); }
 
 	public static void ShowNamePrompt(Action<string> nameCallback) {
@@ -29,22 +27,26 @@ public class SaveLoadMenus {
 		NamePrompt.CWindow.RealisedWindow.Hide();
 	}
 
-	public static event Action OnLoadRequested;
-	public static void ClearLoadRequested() { OnLoadRequested = null; }
 	public static void ShowLoadMenu() {
-		OnLoadRequested?.Invoke();
-
-		LoadOptionsMenu.RealisedWindow.PlaceAtCenter();
-		LoadOptionsMenu.RealisedWindow.Show();
-	}
-	public static void HideLoadMenu() {
-
+		FileExplorer.CreateNewFE(
+			Config.Building.Saving.AssembliesLocation
+			, new(
+				FileExplorer.Type.OpenFile,
+				new[] { Config.Building.Saving.SaveExtension },
+				FileExplorer.MetadataGetters.GetBytes,
+				"Load",
+				Load,
+				5)
+		);
 	}
 
 	public static void ShowSaveIcon() {
 		SaveStatus.RealisedWindow.Show();
 	}
 	public static void HideSaveIcon() {
+		// may have been destroyed from context change so hidden already
+		if (SaveStatus.RealisedWindow == null) return;
+
 		SaveStatus.RealisedWindow.Hide();
 	}
 	public static void SetSaveText(string text) {
@@ -136,17 +138,10 @@ public class SaveLoadMenus {
 		};
 	}
 
-	static void Cancel() {
-		LoadOptionsMenu.RealisedWindow.Hide();
-	}
-
-	public static void ClearOnLoad() { OnLoad = null; }
-	public static event Action OnLoad;
-	static void Load() {
+	public static Action<string> OnLoad;
+	static void Load(string path) {
 		try {
-			OnLoad?.Invoke();
-
-			LoadOptionsMenu.RealisedWindow.Hide();
+			OnLoad?.Invoke(path);
 		} catch (Exception e) {
 			PDialog.GenerateDialog(
 				new PDialog(
@@ -169,7 +164,7 @@ public class SaveLoadMenus {
 	 * 0   .2     .5    1
 	 * l0r8    l2r5  l5r0
 	 */
-	static (float left, float right)[] LeftAndRights(float[] spacings) {
+	/*static (float left, float right)[] LeftAndRights(float[] spacings) {
 		int count = spacings.Length + 1;
 
 		(float, float)[] leftrights = new (float, float)[count];
@@ -187,130 +182,15 @@ public class SaveLoadMenus {
 			leftrights[i] = (left, right);
 		}
 		return leftrights;
-	}
-
-	static readonly FourSides EntryTextMargin = new(20, 5);
-	static readonly float[] Spacings = { .6f } ;
-	static readonly (float left, float right)[] LeftRights = // look idk. 
-		LeftAndRights(Spacings);
-	static readonly float FileEntryHeight = 40;
-
-	public static void ClearLoadEntryChosen() { OnLoadEntryChosen = null; }
-	public static event Action<int> OnLoadEntryChosen;
-
-	// add other details later like part count or whatever
-	// like idk if i want filesize but i gotta add more than just name for now
-	public static WindowItem FileEntry(int id, string name, int parts) =>
-		WindowItem.NewButton(
-			$"File Entry \"{name}\"",
-			new PComponents.Button(() => OnLoadEntryChosen?.Invoke(id)),
-			WindowItem.LayoutConfig.LayoutElement(
-				FileEntryHeight * Vector2.one,
-				new(Config.UI.Menu.ItemPadding)
-				)
-			).SetSubItems(
-				WindowItem.NewText( // name text
-					new PComponents.Text(
-						name),
-					WindowItem.LayoutConfig.DynamicLayout(
-						margin: EntryTextMargin,
-						position: new(0, LeftRights[0].right, 0, LeftRights[0].left))),
-				WindowItem.NewText( // more stuff idk 
-					new PComponents.Text(
-						$"{parts} Parts"),
-					WindowItem.LayoutConfig.DynamicLayout(
-						margin: EntryTextMargin,
-						position: new(0, LeftRights[1].right, 0, LeftRights[1].left)))
-				);
-
-
-	public static WindowItem LoadOptionsLayout;
-	static readonly float BottomOptionsHeight = 50;
-	public static CWindow LoadOptionsMenu;
-	static void SetLOM() {
-		LoadOptionsMenu = new() {
-			Name = "Load Options Menu",
-			Config = new() {
-				Size = CWindow.Configuration.FreeSize(new(500, 500))
-			},
-			Items = new WindowItem[]{
-				WindowItem.NewScrollView(
-					"Files Scroll View",
-					new PComponents.ScrollView(
-						horizontalScrolling: false
-					),
-					WindowItem.LayoutConfig.DynamicLayout(
-						margin: BottomOptionsHeight * FourSides.DownConst),
-					new() { // file entries, probably make this procedural and update
-						WindowItem.NewLayout(
-							PComponents.Layout.Vertical.Fixed(
-								false,
-								true),
-							WindowItem.LayoutConfig.FillLayout,
-							new(){
-							}).OnRealized((_, item) => {
-								LoadOptionsLayout = item;
-							})
-					}
-				),
-				WindowItem.NewLayout(
-					"Button Container",
-					PComponents.Layout.Horizontal.Fixed(
-						true,
-						true,
-						5
-						),
-					WindowItem.LayoutConfig.Custom(
-						position: new(0, 0, 1, 0),
-						sizeDelta: new(0, BottomOptionsHeight),
-						fixedPosition: new() {
-							Pivot = UIPosition.BottomCenter
-							}
-					),
-					new() {
-						WindowItem.NewButton(
-							"Cancel",
-							new PComponents.Button(Cancel),
-							WindowItem.LayoutConfig.DynamicLayout(
-								margin: new(10),
-								position: new(0, .5f, 0, 0))
-							).SetSubItems(
-								WindowItem.NewText(
-									new PComponents.Text(
-										"Cancel",
-										alignment: TextAlignmentOptions.Center
-										),
-									WindowItem.LayoutConfig.FillLayout)
-							),
-						WindowItem.NewButton(
-							"Load",
-							new PComponents.Button(Load),
-							WindowItem.LayoutConfig.DynamicLayout(
-								margin: new(10),
-								position: new(0, 0, 0, .5f))
-							).SetSubItems(
-								WindowItem.NewText(
-									new PComponents.Text(
-										"Load",
-										alignment: TextAlignmentOptions.Center
-										),
-									WindowItem.LayoutConfig.FillLayout)
-							)
-						}
-					)
-			}
-		};
-	}
+	}*/
 
 	public static void Set() {
 		SetNamePrompt();
 		SetSaveStatus();
-		SetLOM();
 	}
 	public static CWindow[] Windows => new[] {
 		NamePrompt.CWindow.SetGroup("saveload"),
 		SaveStatus.SetGroup("saveload"),
-		LoadOptionsMenu.SetGroup("saveload")
 	};
 	public static W[] Menus => new[] {
 		NamePrompt

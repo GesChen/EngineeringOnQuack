@@ -100,21 +100,17 @@ public class BuildingClipboard {
 		Clipboard = clip;
 	}
 
-	public Part[] Paste(Vector3 position, bool selectNew) {
+	public Part[] Paste(Vector3 position, bool selectNew, bool overrideSelection) {
 		if (Clipboard.Parts == null || Clipboard.Parts.Length == 0) return null; // empty
 
-		var (newParts, newTransforms) = GeneratePasteParts(position, selectNew);
+		var (newParts, newTransforms) = GeneratePasteParts(position, selectNew, overrideSelection);
 
 		GroupPastedParts(newParts);
-
-		// select
-		if (selectNew)
-			SelectionManager.Instance.SetSelection(newTransforms);
 
 		return newParts;
 	}
 
-	(Part[], Transform[]) GeneratePasteParts(Vector3 position, bool selectNew) {
+	(Part[], Transform[]) GeneratePasteParts(Vector3 position, bool selectNew, bool overrideSelection) {
 
 		// get middle
 		Vector3 center = Vector3.zero;
@@ -129,7 +125,7 @@ public class BuildingClipboard {
 
 		for (int i = 0; i < Clipboard.Parts.Length; i++) {
 			var origPart = Clipboard.Parts[i];
-			var newPart = BuildingManager.Instance.GeneratePart(origPart.basePartID);
+			var newPart = BuildingManager.Instance.MakeNewPart(origPart.basePartID, selectNew, !overrideSelection);
 			newParts[i] = newPart;
 
 			var transform = newPart.transform;

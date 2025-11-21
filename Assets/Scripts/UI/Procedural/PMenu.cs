@@ -226,6 +226,10 @@ public class PMenu {
 				OnButtonClick?.Invoke();
 			}
 
+			public void RedirectAction(Action newTarget) {
+				OnButtonClick = () => newTarget?.Invoke();
+			}
+
 			public override WindowItem ConvertToItem(WindowItem[] subs, float width) {
 				return WindowItem.NewButton(
 					Label,

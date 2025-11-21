@@ -24,8 +24,7 @@ public class RightClickMenus : MonoBehaviour {
 	public static event Action OnCombineGroups;
 	public static event Action OnAddToGroup;
 	public static event Action OnRemoveFromGroup;
-	public delegate void TabOpenEvent(WindowItem source);
-	public static event TabOpenEvent OnMaterial;
+	public static Action<WindowItem> OnMaterialOpened;
 
 	public static void ClearEvents() {
 		// theres no reason to align them i just think it looks funny
@@ -41,7 +40,6 @@ public class RightClickMenus : MonoBehaviour {
 		OnCombineGroups			= null;
 		OnAddToGroup			= null;
 		OnRemoveFromGroup		= null;
-		OnMaterial				= null;
 	}
 
 	static void MakeNewPart(string name) {
@@ -55,7 +53,7 @@ public class RightClickMenus : MonoBehaviour {
 	static void Material(W source, int index) {
 		WindowItem item = source.Items[index].RealItem;
 
-		OnMaterial?.Invoke(item);
+		OnMaterialOpened?.Invoke(item);
 	}
 
 	// will have to add more later for other contexts but for now this is enough
@@ -72,7 +70,8 @@ public class RightClickMenus : MonoBehaviour {
 				//new W.Button(() => MakeNewPart("ram"),	"ram",		iconName: "Parts/ram"),
 				new W.Button(() => MakeNewPart("display"),	"display",	iconName: "Parts/display"),
 				//new W.Button(() => MakeNewPart("script"),	"script",	iconName: "Parts/script"),
-				new W.Button(() => MakeNewPart("transceiver"),  "transceiver",  iconName: "Parts/transceiver"),
+				new W.Button(() => MakeNewPart("transceiver"),	"transceiver",	iconName: "Parts/transceiver"),
+				new W.Button(() => MakeNewPart("led"),			"led",			iconName: "Parts/led"),
 			},
 			showTitle: false
 		);
@@ -84,7 +83,7 @@ public class RightClickMenus : MonoBehaviour {
 			"Mechanical",
 			120, true,
 			new(){
-				new W.Button(() => MakeNewPart("axle"),			"axle",			iconName: ""), // TODO
+				new W.Button(() => MakeNewPart("axle"),			"axle",			iconName: "parts/axle"), // TODO
 				new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
 				new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
 				new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),

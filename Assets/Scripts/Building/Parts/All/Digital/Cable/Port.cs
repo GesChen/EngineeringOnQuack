@@ -4,27 +4,28 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Port : MonoBehaviour {
-	public Part MainPart; // name to be changed later
+	public NonStaticPart MainNSP; // name to be changed later
 	public string Alias;
 	public Part_CableConnection Connector;
 	public SnapTarget SnapTarget;
 
-	public Part OtherPart => Connector.ConnectedPart;
-
-	public void CallCommand(string command, object[] args) {
-		OtherPart.HandleCommand(command, args);
-	}
+	public Part OtherPart => Connector != null ? Connector.ConnectedPart : null;
 
 	void Start() {
 		BuildingManager.Instance.OnModified += UpdateSnapTarget;
+	}
+
+	// also called on scene cleanup and the instance would therefdore no longer extist
+	private void OnDestroy() {
+		if (BuildingManager.InstanceExists)
+			BuildingManager.Instance.OnModified -= UpdateSnapTarget;
 	}
 
 	void UpdateSnapTarget() {
 		// snap exclusivity
 
 		foreach (var p in BuildingManager.Instance.Assembly.Parts) {
-			if ((transform.position - p.transform.position).sqrMagnitude < 
-				Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance) {
+			if (SnapTarget.CheckSnap(p.transform)) {
 				SnapTarget.enabled = false;
 				return;
 			}

@@ -5,7 +5,11 @@ using UnityEngine;
 
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
-	public event Action OnModified;
+
+	public Transform MainPartsContainer;
+	public Transform SimulationContainer;
+
+	public event Action OnModified; // only sub to this in start, its cleared in awake
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
 	/// Call this method whenever a change to the assembly is made! ANY CHANGE!
@@ -15,12 +19,16 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Instance.OnModified?.Invoke();
 	}
 
-	public Transform MainPartsContainer;
-	public Transform SimulationContainer;
-
+	public event Action OnPartCreated;
+	public event Action OnNewAssemblyMade;
+	
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
+
+		OnModified = null;
+		OnPartCreated = null;
+		OnNewAssemblyMade = null;
 
 		Assembly = new();
 
@@ -31,7 +39,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
 		RightClickMenus.ClearEvents();
-		MaterialEditingMenu.ClearEvents();
 
 		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
 		RightClickMenus.OnDelete		+= DeleteSelection;
@@ -39,32 +46,31 @@ public class BuildingManager : Singleton<BuildingManager> {
 		RightClickMenus.OnPaste			+= Paste;
 		RightClickMenus.OnDuplicate		+= Duplicate;
 
+		Conatrols.IM.Editing.Copy.performed += _ => Copy();
+		Conatrols.IM.Editing.Cut.performed += _ => Cut();
+		Conatrols.IM.Editing.Paste.performed += _ => Paste();
+		Conatrols.IM.Editing.Duplicate.performed += _ => Duplicate();
+
 		GameManager.Instance.OnStartSimulating += StartSimulating;
 		GameManager.Instance.OnStopSimulating += StopSimulating;
 
 		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
 		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
 
-		SelectionManager.Instance.ClearSelectionChanged();
-
-		MaterialEditingMenu.OnStart += MaterialEditor.SetupComponent;
-		MaterialEditingMenu.OnRequestCompositionItems += GenerateWindowItems;
+		MaterialEditingMenu.OnStart = MaterialEditor.SetupComponent;
+		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
-		BottomBar.ClearAssemble();
-		BottomBar.OnAssemble += GameManager.Instance.StartSimulating;
+		BottomBar.OnAssemble = GameManager.Instance.StartSimulating;
 
-		SimulatingMainUI.TopBar.ClearReturnToEditing();
-		SimulatingMainUI.TopBar.OnReturnToEditing += GameManager.Instance.StopSimulating;
+		SimulatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.StopSimulating;
 
-		BottomBar.ClearNameChanged();
-		BottomBar.OnNameChanged += ChangeName;
+		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
 
-		BottomBar.ClearNewPressed();
-		BottomBar.OnNewPressed += New;
+		BottomBar.OnNewPressed = New;
 
-		CPU_SESetup.Setup();
+		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
 	}
 
@@ -106,6 +112,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		// used to update ids but now just a placeholder
 	}
 
+	public Part MakeNewPart(int basePartID, bool select, bool addSelection = false) {
+		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.ID == basePartID);
+		if (bpIndex == -1)
+			throw new($"[INTERNAL] basepart #\"{basePartID}\" doesn't exist");
+
+		BasePart bp = AllParts.BaseParts[bpIndex];
+		return MakeNewPart(bp.Name, select, addSelection);
+	}
+
 	public Part MakeNewPart(string name, bool select, bool addSelection = false) {
 		var newpart = GeneratePart(name);
 
@@ -121,7 +136,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 				SelectionManager.Instance.SetSelection(newpart.transform);
 		}
 
-		if (newpart.TryGetComponent<NonStaticPart>(out var nsp))
+		if (newpart.IsNonStaticPart(out var nsp))
 			nsp.OnPartCreation();
 
 		Assembly.Parts.Add(newpart);
@@ -130,14 +145,19 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SetDirty();
 
+		OnPartCreated?.Invoke();
+
 		return newpart;
 	}
 
 	// function for getting a position for placing parts based on selection and mouse position
-	Vector3 PlacePos() {
+	Vector3 PlacePos(bool useCurrent = false) {
 		Vector3 planeOrigin = SelectionManager.Instance.selectionContainer.position;
 		Vector3 planeDir = -Camera.main.transform.forward;
-		Ray ray = Camera.main.ScreenPointToRay(RightClick.Instance.downPos); // use right click pos not current
+		Ray ray = Camera.main.ScreenPointToRay(
+			useCurrent
+			? Conatrols.Mouse.Position
+			: RightClick.Instance.downPos);
 
 		Vector3 pos = HF.RayPlaneIntersect(planeOrigin, planeDir, ray.origin, ray.direction);
 
@@ -149,12 +169,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly = new();
 
 		OutputManager.Instance.UpdateMenu();
-		OutputsMenu.HideMenu();
+		OutputsMenu.Hide();
 
 		BottomBar.UpdateNameText("");
 
 		SelectionManager.Instance.SetSelection();
 		SelectionManager.Instance.UpdateContainer();
+
+		OnNewAssemblyMade?.Invoke();
 	}
 	public void ResetPartsAndGroups() {
 		foreach (Part part in Assembly.Parts) {
@@ -168,7 +190,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	// DO NOT USE THESE FOR MAKING NEW PARTS IN CODE!!
 	// USE MAKENEWPART INSTEAD
-	public Part GeneratePart(int basePartID) {
+	// idk why i didnt just make these private to begin with
+	private Part GeneratePart(int basePartID) {
 		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.ID == basePartID);
 		if (bpIndex == -1)
 			throw new($"[INTERNAL] basepart #\"{basePartID}\" doesn't exist");
@@ -178,7 +201,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return GeneratePart(bp);
 	}
 
-	public Part GeneratePart(string basePartName) {
+	private Part GeneratePart(string basePartName) {
 		int bpIndex = AllParts.BaseParts.FindIndex(bp => bp.Name == basePartName);
 		if (bpIndex == -1)
 			throw new($"[INTERNAL] basepart \"{basePartName}\" doesn't exist");
@@ -268,18 +291,52 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void DeleteSelection() {
 		// delete current selection
-		foreach (var part in SelectionManager.Instance.PartSelection) {
-			if (!Assembly.Parts.Contains(part)) Debug.LogError("Deleting part that isn't in the parts list");
-			else
-				Assembly.Parts.Remove(part);
+		List<Transform> additionalToDelete = new();
 
-			Destroy(part.gameObject);
+		foreach (var part in SelectionManager.Instance.PartSelection) {
+			// if (part.IsNonStaticPart(out var nsp)) {
+			// 	additionalToDelete.AddRange(nsp.LinkedParts.Select(p => p.transform));
+			// }
+
+			// manually handle cc deletion for now 
+			if (part.IsNonStaticPart(out var nsp)) {
+				if (nsp is Part_CableConnection cc) {
+					// delete cable and other cc if not selected
+					Part_Cable cable = cc.Cable;
+					if (Assembly.Parts.Contains(cable.Part)) {
+						DeletePart(cable.Part);
+						cc.Cable = null;
+					}
+					
+					Part other = cable.OtherCC(cc).Part;
+					if (!SelectionManager.Instance.PartSelectionHS.Contains(other)){
+						DeletePart(other);
+					}
+				}
+			}
+
+			DeletePart(part);
 		}
+
+		// if (additionalToDelete.Length > 0) {
+		// 	SelectionManager.Instance.SetSelection(additionalToDelete.ToArray());
+		// 	SelectionManager.Instance.HandleContainer(); // force update
+		// 	DeleteSelection();
+		// }
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
 
 		SetDirty();
+	}
+
+	void DeletePart(Part part) {
+		if (!Assembly.Parts.Contains(part)) 
+			Debug.LogError("Deleting part that isn't in the parts list");
+		else
+			Assembly.Parts.Remove(part);
+
+		Destroy(part.gameObject);
 	}
 	#endregion
 
@@ -306,8 +363,17 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Clipboard.Copy(); // uses the most current version of assembly
 	}
 
+	void Cut() {
+		DeleteSelection();
+
+		Copy();
+	}
+
 	void Paste() {
-		var newparts = Assembly.Clipboard.Paste(PlacePos(), true);
+		var newparts = Assembly.Clipboard.Paste(
+			PlacePos(true),
+			true,
+			!Conatrols.Keyboard.Modifiers.Shift);
 		if (newparts == null) return; // failed, no objects to paste
 
 		Assembly.Parts.AddRange(newparts);

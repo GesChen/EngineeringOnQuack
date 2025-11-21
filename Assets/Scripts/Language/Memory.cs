@@ -14,7 +14,10 @@ public class Memory {
 	public Dictionary<string, T_Data> Data;
 	public Dictionary<string, Type> Types;
 
-	public static Dictionary<string, T_Data> StaticData = new() {
+	// data from this wont have a type field cuz those fields are still null
+	static Dictionary<string, T_Data> m_staticdata;
+	public static Dictionary<string, T_Data> StaticData =>
+		HF.LoadCached(ref m_staticdata, () => new() {
 		// normal functions
 		{ "breakpoint",	new Primitive.Function("breakpoint",InternalFunctions.breakpoint)},
 		{ "print",		new Primitive.Function("print",		InternalFunctions.print)	},
@@ -37,7 +40,8 @@ public class Memory {
 		// bool 
 		{ "true",		new Primitive.Bool(true) },
 		{ "false",		new Primitive.Bool(false) }
-	};
+	});
+
 	public static Dictionary<string, Type> StaticTypes = new() {
 		{ "Number",		Primitive.Number.	InternalType },
 		{ "String",		Primitive.String.	InternalType },

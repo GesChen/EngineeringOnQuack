@@ -1,35 +1,24 @@
-using System.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using UnityEngine;
 
 public class SaveLoadManager : Singleton<SaveLoadManager> {
+	public static bool Loading = false;
 
 	static readonly float SaveTextHideDelay = 1.5f;
 
-	int currentlySelectedI = -1;
-	string currentlySelectedName;
-
-	WindowItem[] items;
+	public event Action OnLoaded;
 
 	protected override void Awake() {
 		base.Awake();
 
-		SaveLoadMenus.ClearSave();
-		SaveLoadMenus.OnSave += Save;
+		SaveLoadMenus.OnSave = Save;
+		SaveLoadMenus.OnSaveAs = SaveAs;
+		SaveLoadMenus.OnLoad = Load;
 
-		SaveLoadMenus.ClearSaveAs();
-		SaveLoadMenus.OnSaveAs += SaveAs;
-
-		SaveLoadMenus.ClearLoadRequested();
-		SaveLoadMenus.OnLoadRequested += UpdateLoadMenu;
-
-		SaveLoadMenus.ClearLoadEntryChosen();
-		SaveLoadMenus.OnLoadEntryChosen += LoadOptionSelect;
-
-		SaveLoadMenus.ClearOnLoad();
-		SaveLoadMenus.OnLoad += Load;
+		OnLoaded = null;
 	}
 
 	public void Save() {
@@ -68,31 +57,17 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.HideSaveIcon();
 	}
 
-	void UpdateLoadMenu() {
-		items =
-			SaveLoadHelper.GetSortedAssemblyInfos().
-			Select((info, i) => SaveLoadMenus.FileEntry(i, info.Name, info.Parts))
-			.ToArray();
-
-		currentlySelectedI = -1;
-
-		SaveLoadMenus.LoadOptionsLayout.SetSubItems(items);
-		WindowManager.Instance.Realiser.UpdateWindow(SaveLoadMenus.LoadOptionsMenu);
-	}
-
-	void LoadOptionSelect(int id) {
-		currentlySelectedI = id;
-		currentlySelectedName = SaveLoadHelper.GetSortedAssemblyInfos()[id].Name;
-
-		OptionSelectionUIHelper.SetColors(items, id);
-	}
-
-	void Load() {
-		if (currentlySelectedI == -1) return;
-
-		SelectionManager.Instance.SetSelection();
+	void Load(string path) {
+		SelectionManager.Instance.Clear();
 
 		// hope name conflicts arent a thing
-		SaveLoadHelper.LoadFromFile(currentlySelectedName);
+		string name = System.IO.Path.GetFileNameWithoutExtension(path);
+		Loading = true;
+		SaveLoadHelper.LoadFromFile(name);
+		Loading = false;
+
+		BottomBar.UpdateNameText(BuildingManager.Instance.Assembly.Name);
+
+		OnLoaded?.Invoke();
 	}
 }

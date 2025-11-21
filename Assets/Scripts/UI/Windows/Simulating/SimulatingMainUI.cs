@@ -17,16 +17,14 @@ public static class SimulatingMainUI {
 
 		static readonly float listboxheight = 150;
 
-		public static void ClearReturnToEditing() { OnReturnToEditing = null; }
-		public static event Action OnReturnToEditing;
+		public static Action OnReturnToEditing;
 
 		private static TextMeshProUGUI NameText;
 		public static void SetName(string name) {
 			NameText.text = name;
 		}
 
-		public static void ClearBarCreated() { OnBarCreated = null; }
-		public static event Action OnBarCreated;
+		public static Action OnBarCreated;
 
 		public static class Outputs {
 			public static Dictionary<string, OutputWindow> OutputWindows = new();
