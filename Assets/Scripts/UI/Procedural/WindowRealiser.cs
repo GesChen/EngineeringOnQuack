@@ -131,6 +131,10 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		windowRT.anchoredPosition	= window.Config.Position.Position;
 		windowRT.sizeDelta			= window.Config.Size.Default;
 
+		// give window a rectmask
+		//windowRT.gameObject.AddComponent<RectMask2D>()
+		//	.padding = Vector4.one * Config.UI.Visual.OutlineThickness;
+
 		// make background obj
 		var (bgRT, bgIM) = MakeNewImageObj("Background", windowRT, window.Config.Color);
 		SetFull(bgRT);

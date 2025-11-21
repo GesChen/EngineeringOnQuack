@@ -943,4 +943,29 @@ public class PComponents {
 			FinaliseRealise();
 		}
 	}
+
+	// note when using with interactables like buttons
+	// the button component will make the outline black
+	// just add a fill subcomponent with outline instead
+	public class Outline : Component {
+		public Color Color;
+		public Vector2 Size;
+
+		public Outline(
+			Color? color = null,
+			Vector2? size = null) {
+
+			Color = color ?? Config.UI.Visual.OutlineColor;
+			Size = size ?? Config.UI.Visual.OutlineThickness * Vector2.one;
+		}
+
+		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
+			var olComp = newObj.AddComponent<UnityEngine.UI.Outline>();
+			olComp.effectColor = Color;
+			olComp.effectDistance = Size;
+
+			RealComponent = olComp;
+			FinaliseRealise();
+		}
+	}
 }
