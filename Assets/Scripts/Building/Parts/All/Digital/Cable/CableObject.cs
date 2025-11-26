@@ -170,7 +170,7 @@ public class CableObject : MonoBehaviour
 		foreach (Rigidbody rb in interRbs)
 			positions.Add(rb.transform.position);
 
-		List<Vector3> spline = Splines.CatmullRom(positions, resolution);
+		List<Vector3> spline = Curves.CatmullRomSpline(positions, resolution);
 
 		lineRenderer.positionCount = spline.Count;
 		lineRenderer.SetPositions(spline.ToArray());

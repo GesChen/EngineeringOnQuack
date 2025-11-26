@@ -651,4 +651,24 @@ public static class HF {
 	/// Local space
 	/// </summary>
 	public static float CenterY(this TMP_LineInfo info) => (info.ascender + info.descender) / 2f;
+
+	public static float VariableSmoothStep01(float t, float rise, float fall) {
+		t = Mathf.Clamp01(t);
+		return Mathf.Pow(t, rise) / (Mathf.Pow(t, rise) + Mathf.Pow(1 - t, fall));
+	}
+
+	public static float ArbitrarySmoothStep(float t, float x0, float y0, float x1, float y1, float rise, float fall) {
+		t = (t - x0) / (x1 - x0);
+		return y0 + (y1 - y0) * VariableSmoothStep01(t, rise, fall);
+	}
+
+	public static void DrawFunctionWithPoint(Func<float, float> func, float start, float end, float step, float pointX, float pointSize) {
+		List<Vector3> points = new();
+		for (float x = start; x <= end; x += step) {
+			points.Add(new Vector3(x, func(x), 0f));
+		}
+
+		DebugExtra.DrawPoly(points.ToArray());
+		DebugExtra.DrawPoint(new(pointX, func(pointX), 0f), pointSize);
+	}
 }
