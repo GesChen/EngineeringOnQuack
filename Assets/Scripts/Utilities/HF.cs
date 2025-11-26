@@ -668,7 +668,14 @@ public static class HF {
 			points.Add(new Vector3(x, func(x), 0f));
 		}
 
-		DebugExtra.DrawPoly(points.ToArray());
+		DebugExtra.DrawPoly(points.ToArray(), false);
 		DebugExtra.DrawPoint(new(pointX, func(pointX), 0f), pointSize);
+	}
+
+	// https://www.desmos.com/calculator/uh7d4hlpjp
+	public static float Falloff(float t, float initialSlope, float finalValue, float finalAt) {
+		float p = finalValue * finalAt / (initialSlope * finalAt - finalValue);
+		float f = finalValue * (finalAt + p) / finalAt * t / (t + p);
+		return Mathf.Clamp(f, 0, finalValue);
 	}
 }

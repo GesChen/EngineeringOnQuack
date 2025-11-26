@@ -4200,22 +4200,25 @@ MonoBehaviour:
   StickBase: {fileID: 940584280}
   CameraTransform: {fileID: 1681030642}
   Camera: {fileID: 1681030641}
-  FirstPerson: 0
+  FirstPerson: 1
   L: 0.13
   R: 2.56
   S: 0.92
   transitionScrollStrength: 1
   transitionFovSmoothing: 1
   transitionFovEffect: 10
-  transitionResidual: 1
-  tpDistMin: 0.5
+  transitionResidual: 5
+  tpDistMin: 2
   tpDistMax: 5
   tpOuterFovExtra: 10
   tpFovExtraPow: 5
   tpScrollSensitivity: 0.007
   tpDistSmooth: 5
-  tpCloseFalloff: 0.1
-  tpCloseFalloffRate: 20
+  tpCloseFalloff: {x: 0.98, y: 0.24, z: 1.61, w: 2.18}
+  zoomSens: 0.001
+  zoomCurveSlope: 2
+  maxZoom: 50
+  zoomSmooth: 5
   firstPersonYawFreedom: 30
   thirdPersonYawFreedom: 100
   movingYawMatchSmooth: 2

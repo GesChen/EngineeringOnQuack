@@ -42,14 +42,23 @@ public class PlayerVisualManager : MonoBehaviour {
 	public float tpFovExtraPow = 10;
 	public float tpScrollSensitivity;
 	public float tpDistSmooth = 5;
-	public float tpCloseFalloff = .5f;
-	public float tpCloseFalloffRate = 20;
+
+	public Vector4 tpCloseFalloff;
 
 	float transFovAdjust = 0;
 	float transSFov = 0;
 
 	float tpDistTarget;
 	float tpDistance;
+
+	[Header("Zoom")]
+	public float zoomSens;
+	public float zoomCurveSlope;
+	public float maxZoom;
+	public float zoomSmooth;
+	float zoomT;
+	float realZoom;
+	bool zooming = false;
 
 	[Header("Body")]
 	float yawFreedom; // angle l and r before body rotates too
@@ -150,18 +159,12 @@ public class PlayerVisualManager : MonoBehaviour {
 	void HandleInput() {
 		// zoom
 
+		zooming = Conatrols.IM.PlayerCamera.ZoomUse.WasPressedThisFrame() ? !zooming : zooming;
+		
 		float scroll = Conatrols.IM.PlayerCamera.ZoomAmount.ReadValue<float>();
 		smoothScroll = Mathf.Lerp(smoothScroll, scroll, 5 * Time.deltaTime);
-		if (FirstPerson || continueFovEffect) {
-
-			List<Vector3> points = new();
-			for (float x = 0f; x <= 2 * R; x += 1f) {
-				float y = resistance(x);
-				points.Add(new(x, y, 0));
-			}
-			DebugExtra.DrawPoly(points.ToArray(), false);
-			DebugExtra.DrawPoint(new(transSFov, resistance(transSFov)), S);
-
+		
+		if ((FirstPerson || continueFovEffect) && !zooming) {
 			transSFov = Mathf.Lerp(transSFov, transSFov + smoothScroll * transitionScrollStrength, transitionFovSmoothing * Time.deltaTime);
 			transSFov += resistance(transSFov);
 			transSFov = Mathf.Clamp(transSFov, 0f, 2 * R);
@@ -189,8 +192,7 @@ public class PlayerVisualManager : MonoBehaviour {
 					continueFovEffect = false;
 			}
 
-			HF.DrawFunctionWithPoint(x => HF.ArbitrarySmoothStep(x, 0, tpCloseFalloff, tpDistMin, 1, 1, tpCloseFalloffRate), 0, 3, .01f, tpDistance, 1);
-			float sensCoef = HF.ArbitrarySmoothStep(tpDistance, 0, tpCloseFalloff, tpDistMin, 1, 1, tpCloseFalloffRate);
+			float sensCoef = HF.ArbitrarySmoothStep(tpDistTarget, tpCloseFalloff.x, tpCloseFalloff.y, tpDistMin, 1, tpCloseFalloff.z, tpCloseFalloff.w);
 			tpDistTarget -= scroll * tpScrollSensitivity * sensCoef;
 			tpDistTarget = Mathf.Min(tpDistTarget, tpDistMax);
 			tpDistance = Mathf.Lerp(tpDistance, tpDistTarget, tpDistSmooth * Time.deltaTime);
@@ -202,6 +204,23 @@ public class PlayerVisualManager : MonoBehaviour {
 			if (transSFov < 5) {
 				continueFovEffect = false;
 			}
+		}
+
+		if (zooming && FirstPerson) {
+			zoomT += scroll * zoomSens;
+			zoomT = Mathf.Clamp01(zoomT);
+
+			float target = HF.Falloff(zoomT, zoomCurveSlope, 1, 1) * maxZoom;
+			realZoom = Mathf.Lerp(realZoom, target, zoomSmooth * Time.deltaTime);
+
+			Camera.fieldOfView = Config.FOV - realZoom;
+			
+			if (scroll < 0 && zoomT < .0001f) {
+				zooming = false;
+			}
+		} else {
+			zoomT = 0;
+			realZoom = 0;
 		}
 	}
 
