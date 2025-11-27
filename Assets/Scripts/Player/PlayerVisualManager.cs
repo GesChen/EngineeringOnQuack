@@ -42,6 +42,8 @@ public class PlayerVisualManager : MonoBehaviour {
 	public float tpFovExtraPow = 10;
 	public float tpScrollSensitivity;
 	public float tpDistSmooth = 5;
+	public float tpNeckRotationCoef;
+	public float tpCollisionOutset;
 
 	public Vector4 tpCloseFalloff;
 
@@ -65,6 +67,10 @@ public class PlayerVisualManager : MonoBehaviour {
 	public float firstPersonYawFreedom;
 	public float thirdPersonYawFreedom;
 	public float movingYawMatchSmooth;
+
+	[Header("Model")]
+	public Transform leftFoot;
+	public Transform rightFoot;
 
 	class Foot {
 		public bool Grounded = true;
@@ -146,17 +152,19 @@ public class PlayerVisualManager : MonoBehaviour {
 	}
 
 	void Update() {
-		HandleInput();
+		HandlePerspectiveZoom();
 
 		UpdateFeet();
 
 		UpdateCamera();
+
+		UpdateModel();
 	}
 
 
 	bool continueFovEffect = false;
 	float smoothScroll;
-	void HandleInput() {
+	void HandlePerspectiveZoom() {
 		// zoom
 
 		zooming = Conatrols.IM.PlayerCamera.ZoomUse.WasPressedThisFrame() ? !zooming : zooming;
@@ -196,6 +204,14 @@ public class PlayerVisualManager : MonoBehaviour {
 			tpDistTarget -= scroll * tpScrollSensitivity * sensCoef;
 			tpDistTarget = Mathf.Min(tpDistTarget, tpDistMax);
 			tpDistance = Mathf.Lerp(tpDistance, tpDistTarget, tpDistSmooth * Time.deltaTime);
+
+			if (Physics.Raycast(
+				new(StickBase.position, (Camera.transform.position - StickBase.position).normalized),
+				out var hit,
+				Mathf.Infinity,
+				~(1 << LayerMask.NameToLayer("Player"))))
+				if (hit.distance < tpDistance + tpCollisionOutset)
+					tpDistance = hit.distance - tpCollisionOutset;
 
 			// tp extra fov
 			Camera.fieldOfView = Config.FOV +
@@ -254,9 +270,6 @@ public class PlayerVisualManager : MonoBehaviour {
 		Left.Check(this, Right, Ljoint, dir, right, up);
 		Right.Check(this, Left, Rjoint, dir, right, up);
 
-		DebugExtra.DrawPoint(Left.Pos, color: Color.green, drawGame: true);
-		DebugExtra.DrawPoint(Right.Pos, color: Color.red, drawGame: true);
-
 		lastPos = transform.position;
 
 		if (vel.sqrMagnitude > 0)
@@ -286,7 +299,7 @@ public class PlayerVisualManager : MonoBehaviour {
 				Quaternion.Euler(controller.pitch, controller.yaw, 0));
 		}
 
-		Neck.localRotation = Quaternion.Euler(controller.pitch, 0, 0);
+		Neck.localRotation = Quaternion.Euler(controller.pitch * (FirstPerson ? 1 : tpNeckRotationCoef), 0, 0);
 
 		// constrain camera rotation to limits, rotate body
 		yawFreedom =
@@ -305,5 +318,20 @@ public class PlayerVisualManager : MonoBehaviour {
 			bodyYaw = Mathf.Lerp(bodyYaw, controller.yaw, movingYawMatchSmooth * Time.deltaTime);
 
 		transform.rotation = Quaternion.Euler(0, bodyYaw, 0);
+	}
+
+	void UpdateModel() {
+		leftFoot.SetPositionAndRotation(
+			Left.Pos,
+			Left.Rot
+			);
+
+		rightFoot.SetPositionAndRotation(
+			Right.Pos,
+			Right.Rot
+			);
+
+		StickBase.LookAt(Camera.transform);
+		StickBase.localScale = new(1, 1, tpDistance);
 	}
 }
