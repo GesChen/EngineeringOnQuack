@@ -1889,6 +1889,74 @@
                     "isPartOfComposite": true
                 }
             ]
+        },
+        {
+            "name": "PlayerCamera",
+            "id": "bd658d63-263e-4c7d-a0ff-405f1c95caac",
+            "actions": [
+                {
+                    "name": "TogglePerspective",
+                    "type": "Button",
+                    "id": "b5782763-c848-4594-92b4-4db78322418a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ZoomAmount",
+                    "type": "Value",
+                    "id": "1063ae30-6629-4c21-94db-d28a55fa08f4",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "ZoomUse",
+                    "type": "Button",
+                    "id": "4487d11f-bfb9-4df0-aedc-d2074d9b56e2",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "46512013-a9ea-45bb-8adc-a05923e10951",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TogglePerspective",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "803e7275-a94a-4993-9a4f-5f2722d15dda",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ZoomAmount",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "808794eb-83dd-4f88-adf3-c14bfe8d7548",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ZoomUse",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": [

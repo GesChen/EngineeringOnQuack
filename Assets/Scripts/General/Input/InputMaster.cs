@@ -1975,6 +1975,74 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 }
             ]
+        },
+        {
+            ""name"": ""PlayerCamera"",
+            ""id"": ""bd658d63-263e-4c7d-a0ff-405f1c95caac"",
+            ""actions"": [
+                {
+                    ""name"": ""TogglePerspective"",
+                    ""type"": ""Button"",
+                    ""id"": ""b5782763-c848-4594-92b4-4db78322418a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ZoomAmount"",
+                    ""type"": ""Value"",
+                    ""id"": ""1063ae30-6629-4c21-94db-d28a55fa08f4"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""ZoomUse"",
+                    ""type"": ""Button"",
+                    ""id"": ""4487d11f-bfb9-4df0-aedc-d2074d9b56e2"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""46512013-a9ea-45bb-8adc-a05923e10951"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""TogglePerspective"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""803e7275-a94a-4993-9a4f-5f2722d15dda"",
+                    ""path"": ""<Mouse>/scroll/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ZoomAmount"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""808794eb-83dd-4f88-adf3-c14bfe8d7548"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ZoomUse"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -2101,6 +2169,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_ScriptEditor_Cut = m_ScriptEditor.FindAction("Cut", throwIfNotFound: true);
         m_ScriptEditor_Undo = m_ScriptEditor.FindAction("Undo", throwIfNotFound: true);
         m_ScriptEditor_Redo = m_ScriptEditor.FindAction("Redo", throwIfNotFound: true);
+        // PlayerCamera
+        m_PlayerCamera = asset.FindActionMap("PlayerCamera", throwIfNotFound: true);
+        m_PlayerCamera_TogglePerspective = m_PlayerCamera.FindAction("TogglePerspective", throwIfNotFound: true);
+        m_PlayerCamera_ZoomAmount = m_PlayerCamera.FindAction("ZoomAmount", throwIfNotFound: true);
+        m_PlayerCamera_ZoomUse = m_PlayerCamera.FindAction("ZoomUse", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -2113,6 +2186,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Editing.enabled, "This will cause a leak and performance issues, InputMaster.Editing.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_original_UI.enabled, "This will cause a leak and performance issues, InputMaster.original_UI.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_ScriptEditor.enabled, "This will cause a leak and performance issues, InputMaster.ScriptEditor.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_PlayerCamera.enabled, "This will cause a leak and performance issues, InputMaster.PlayerCamera.Disable() has not been called.");
     }
 
     /// <summary>
@@ -3359,6 +3433,124 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="ScriptEditorActions" /> instance referencing this action map.
     /// </summary>
     public ScriptEditorActions @ScriptEditor => new ScriptEditorActions(this);
+
+    // PlayerCamera
+    private readonly InputActionMap m_PlayerCamera;
+    private List<IPlayerCameraActions> m_PlayerCameraActionsCallbackInterfaces = new List<IPlayerCameraActions>();
+    private readonly InputAction m_PlayerCamera_TogglePerspective;
+    private readonly InputAction m_PlayerCamera_ZoomAmount;
+    private readonly InputAction m_PlayerCamera_ZoomUse;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "PlayerCamera".
+    /// </summary>
+    public struct PlayerCameraActions
+    {
+        private @InputMaster m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public PlayerCameraActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "PlayerCamera/TogglePerspective".
+        /// </summary>
+        public InputAction @TogglePerspective => m_Wrapper.m_PlayerCamera_TogglePerspective;
+        /// <summary>
+        /// Provides access to the underlying input action "PlayerCamera/ZoomAmount".
+        /// </summary>
+        public InputAction @ZoomAmount => m_Wrapper.m_PlayerCamera_ZoomAmount;
+        /// <summary>
+        /// Provides access to the underlying input action "PlayerCamera/ZoomUse".
+        /// </summary>
+        public InputAction @ZoomUse => m_Wrapper.m_PlayerCamera_ZoomUse;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_PlayerCamera; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="PlayerCameraActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(PlayerCameraActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="PlayerCameraActions" />
+        public void AddCallbacks(IPlayerCameraActions instance)
+        {
+            if (instance == null || m_Wrapper.m_PlayerCameraActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_PlayerCameraActionsCallbackInterfaces.Add(instance);
+            @TogglePerspective.started += instance.OnTogglePerspective;
+            @TogglePerspective.performed += instance.OnTogglePerspective;
+            @TogglePerspective.canceled += instance.OnTogglePerspective;
+            @ZoomAmount.started += instance.OnZoomAmount;
+            @ZoomAmount.performed += instance.OnZoomAmount;
+            @ZoomAmount.canceled += instance.OnZoomAmount;
+            @ZoomUse.started += instance.OnZoomUse;
+            @ZoomUse.performed += instance.OnZoomUse;
+            @ZoomUse.canceled += instance.OnZoomUse;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="PlayerCameraActions" />
+        private void UnregisterCallbacks(IPlayerCameraActions instance)
+        {
+            @TogglePerspective.started -= instance.OnTogglePerspective;
+            @TogglePerspective.performed -= instance.OnTogglePerspective;
+            @TogglePerspective.canceled -= instance.OnTogglePerspective;
+            @ZoomAmount.started -= instance.OnZoomAmount;
+            @ZoomAmount.performed -= instance.OnZoomAmount;
+            @ZoomAmount.canceled -= instance.OnZoomAmount;
+            @ZoomUse.started -= instance.OnZoomUse;
+            @ZoomUse.performed -= instance.OnZoomUse;
+            @ZoomUse.canceled -= instance.OnZoomUse;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="PlayerCameraActions.UnregisterCallbacks(IPlayerCameraActions)" />.
+        /// </summary>
+        /// <seealso cref="PlayerCameraActions.UnregisterCallbacks(IPlayerCameraActions)" />
+        public void RemoveCallbacks(IPlayerCameraActions instance)
+        {
+            if (m_Wrapper.m_PlayerCameraActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="PlayerCameraActions.AddCallbacks(IPlayerCameraActions)" />
+        /// <seealso cref="PlayerCameraActions.RemoveCallbacks(IPlayerCameraActions)" />
+        /// <seealso cref="PlayerCameraActions.UnregisterCallbacks(IPlayerCameraActions)" />
+        public void SetCallbacks(IPlayerCameraActions instance)
+        {
+            foreach (var item in m_Wrapper.m_PlayerCameraActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_PlayerCameraActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="PlayerCameraActions" /> instance referencing this action map.
+    /// </summary>
+    public PlayerCameraActions @PlayerCamera => new PlayerCameraActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -3802,5 +3994,34 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRedo(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "PlayerCamera" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="PlayerCameraActions.AddCallbacks(IPlayerCameraActions)" />
+    /// <seealso cref="PlayerCameraActions.RemoveCallbacks(IPlayerCameraActions)" />
+    public interface IPlayerCameraActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "TogglePerspective" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTogglePerspective(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ZoomAmount" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnZoomAmount(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ZoomUse" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnZoomUse(InputAction.CallbackContext context);
     }
 }

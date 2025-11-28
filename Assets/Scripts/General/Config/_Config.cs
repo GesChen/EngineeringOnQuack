@@ -3,6 +3,7 @@ using System.IO;
 
 public static partial class Config {
 	public static readonly int FPS_LIMIT = 120;
+	public static readonly float FOV = 80;
 
 	public static class Locations {
 		public static readonly string IconsFolder		= "Icons/";
