@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
 
 public static class HF {
@@ -678,4 +679,9 @@ public static class HF {
 		float f = finalValue * (finalAt + p) / finalAt * t / (t + p);
 		return Mathf.Clamp(f, 0, finalValue);
 	}
+
+	public static float AngleDiff(float a1, float a2) => (a1 - a2 + 180) % 360 - 180;
+
+	public static float AngleLerp(float a, float b, float t) =>
+		a + AngleDiff(b, a) * t;
 }

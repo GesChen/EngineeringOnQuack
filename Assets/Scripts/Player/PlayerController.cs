@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour{
 	public float Speed;
-	public PlayerVisualManager visuals;
+	public PlayerCameraManager visuals;
 
 	public Vector2 fpPitchLimits;
 	public Vector2 tpPitchLimits;
 
 	public float Sensitivity;
+
+	
+	public Transform HoldingTransform;
 
 	Rigidbody rb;
 
