@@ -14,6 +14,7 @@ public static class BottomBar {
 	static readonly float splitspacing = 5;
 	static readonly float splittextspace = 10;
 
+	public static Action OnExitPressed;
 	public static Action OnNewPressed;
 
 	public static WindowItem OutputButton;
@@ -137,6 +138,7 @@ public static class BottomBar {
 						padding: new(innerpadding)
 					),
 					new(){
+	UIBarUtils.DynamicBarButton	(1, "Exit", () => OnExitPressed?.Invoke()),
 	UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, 0, true),
 	UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, 0, true),
 	UIBarUtils.DynamicBarSpace	(2),

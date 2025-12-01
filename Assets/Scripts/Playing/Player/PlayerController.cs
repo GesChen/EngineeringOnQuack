@@ -25,7 +25,8 @@ public class PlayerController : MonoBehaviour{
 	}
 
 	void Update() {
-		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()) return;
+		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()
+			|| ) return;
 
 		Vector2 input = Conatrols.IM.Playing_Player.Move.ReadValue<Vector2>();
 

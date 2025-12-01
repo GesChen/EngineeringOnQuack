@@ -23,6 +23,8 @@ namespace Contexts {
 		public Type ParentType => typeof(Main);
 		public Playing(IContext parent) => ((IContext)this).SetParent(parent);
 		public Playing() { }
+
+		public bool Sitting;
 	}
 
 	public class Operating : IContext {
@@ -31,6 +33,14 @@ namespace Contexts {
 		public Type ParentType => typeof(Playing);
 		public Operating(IContext parent) => ((IContext)this).SetParent(parent);
 		public Operating() { }
+	}
+
+	public class InCamera : IContext {
+		public string Name => "InCamera";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(Operating);
+		public InCamera(IContext parent) => ((IContext)this).SetParent(parent);
+		public InCamera() { }
 	}
 
 	public class Editing : IContext {

@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayingManager : MonoBehaviour{
-
+public class PlayingManager : Singleton<PlayingManager>{
 	void Start() {
 		SubscribeToShortcuts();
 	}

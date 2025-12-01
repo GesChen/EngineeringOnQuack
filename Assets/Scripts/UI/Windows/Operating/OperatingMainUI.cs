@@ -1,4 +1,4 @@
-using System;
+`using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,7 +17,9 @@ public static class OperatingMainUI {
 
 		static readonly float listboxheight = 150;
 
-		public static Action OnReturnToEditing;
+		public static Action OnExitPressed;
+		public static Action OnEditPressed;
+		public static Action OnDestroyPressed;
 
 		private static TextMeshProUGUI NameText;
 		public static void SetName(string name) {
@@ -298,8 +300,10 @@ public static class OperatingMainUI {
 						padding: new(innerpadding)
 					),
 					new(){
-UIBarUtils.DynamicBarButton(2, "Return to Editing", () => OnReturnToEditing?.Invoke()),
-UIBarUtils.DynamicBarSpace(1),
+UIBarUtils.DynamicBarButton(2, "Stop Operating", () => OnExitPressed?.Invoke()),
+UIBarUtils.DynamicBarButton(2, "Edit Creation", () => OnEditPressed?.Invoke()),
+UIBarUtils.DynamicBarButton(1, "Destroy", () => OnDestroyPressed?.Invoke()),
+UIBarUtils.DynamicBarSpace(.5f),
 UIBarUtils.DynamicBarText(3, "name", .5f)
 	.OnRealized((_, wi) => { // get the ugui component off subitem 0 
 		NameText = wi.SubItems[0]

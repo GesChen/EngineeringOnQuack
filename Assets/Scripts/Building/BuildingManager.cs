@@ -18,7 +18,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	public event Action OnPartCreated;
 	public event Action OnNewAssemblyMade;
-	
+	public string ConstructToLoadPath;
+	public Construct ConstructToLoad;
+
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
@@ -53,14 +55,14 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
-		BottomBar.OnAssemble = AssemblePressed;
-
 		OperatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.BeginEditing;
 
+		BottomBar.OnExitPressed = GameManager.Instance.ReturnToPlaying;
+		BottomBar.OnNewPressed = New;
+		BottomBar.OnAssemble = AssemblePressed;
 		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
 
-		BottomBar.OnNewPressed = New;
 
 		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
@@ -91,20 +93,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 		}
 	}
 
-	// organize this later
-	public string AssemblyToLoadPath;
-	void TryLoad() {
-		if (!string.IsNullOrWhiteSpace(AssemblyToLoadPath))
-			SaveLoadManager.Instance.LoadFromPath(AssemblyToLoadPath);
-		else
-			Assembly = new();
-	}
-
-	void AssemblePressed() {
-		GameManager.Instance.AssembleFromEditing();
-		GameManager.Instance.Operate();
-	}
-
 	void HandleInput() {
 		if (Conatrols.IM.Editing_Building.Delete.WasPressedThisFrame() &&
 			ContextManager.CurrentlyInContext<Contexts.InWorld>(out _)) {
@@ -113,6 +101,69 @@ public class BuildingManager : Singleton<BuildingManager> {
 			RightClick.Instance.Hide();
 		}
 	}
+
+	#region Management
+	public void New() {
+		if (!Dirty) NewAssembly();
+		else {
+			UnsavedWorkMenu.Notify((choice) => {
+				switch (choice) {
+					case UnsavedWorkMenu.Choice.Save:
+						SaveLoadManager.Instance.Save();
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Discard:
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Cancel:
+						break; // do nothing
+				}
+			});
+		}
+	}
+
+	// organize this later
+	void TryLoad() {
+		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
+			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
+		else if (ConstructToLoad != null)
+			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad)
+		else 
+			Assembly = new();
+			
+		ConstructToLoadPath = null;
+		ConstructToLoad = null;
+	}
+
+	void AssemblePressed() {
+		GameManager.Instance.AssembleFromEditing();
+		GameManager.Instance.Operate();
+	}
+
+	public void ChangeName(string name) {
+		Assembly.Name = name;
+
+		BottomBar.UpdateNameText(name);
+	}
+
+	public void BeginEditing() {
+		SelectionManager.Instance.enabled = true;
+	}
+
+	public void ClearEditing() {
+		SelectionManager.Instance.Clear();
+		SelectionManager.Instance.enabled = false;
+		TransformTools.Instance.active = false;
+
+		DestroyEditingParts();
+	}
+
+	void DestroyEditingParts() {
+		foreach (Part part in Assembly.Parts) {
+			Destroy(part.gameObject);
+		}
+	}
+	#endregion
 
 	#region Part Functions
 	void UpdateParts() {
@@ -229,25 +280,16 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		return part;
 	}
+
+	void DeletePart(Part part) {
+		if (!Assembly.Parts.Contains(part)) 
+			Debug.LogError("Deleting part that isn't in the parts list");
+		else
+			Assembly.Parts.Remove(part);
+
+		Destroy(part.gameObject);
+	}
 	#endregion
-
-	public void BeginEditing() {
-		SelectionManager.Instance.enabled = true;
-	}
-
-	public void ClearEditing() {
-		SelectionManager.Instance.Clear();
-		SelectionManager.Instance.enabled = false;
-		TransformTools.Instance.active = false;
-
-		DestroyEditingParts();
-	}
-
-	void DestroyEditingParts() {
-		foreach (Part part in Assembly.Parts) {
-			Destroy(part.gameObject);
-		}
-	}
 
 	#region Selection
 	void DeselectAllParts() {
@@ -294,36 +336,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SetDirty();
 	}
-
-	void DeletePart(Part part) {
-		if (!Assembly.Parts.Contains(part)) 
-			Debug.LogError("Deleting part that isn't in the parts list");
-		else
-			Assembly.Parts.Remove(part);
-
-		Destroy(part.gameObject);
-	}
 	#endregion
 
-	public void New() {
-		if (!Dirty) NewAssembly();
-		else {
-			UnsavedWorkMenu.Notify((choice) => {
-				switch (choice) {
-					case UnsavedWorkMenu.Choice.Save:
-						SaveLoadManager.Instance.Save();
-						NewAssembly();
-						break;
-					case UnsavedWorkMenu.Choice.Discard:
-						NewAssembly();
-						break;
-					case UnsavedWorkMenu.Choice.Cancel:
-						break; // do nothing
-				}
-			});
-		}
-	}
-
+	#region Clipboard
 	void Copy() {
 		Assembly.Clipboard.Copy(); // uses the most current version of assembly
 	}
@@ -352,10 +367,5 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Clipboard.Copy();
 		Paste();
 	}
-
-	public void ChangeName(string name) {
-		Assembly.Name = name;
-
-		BottomBar.UpdateNameText(name);
-	}
+	#endregion
 }

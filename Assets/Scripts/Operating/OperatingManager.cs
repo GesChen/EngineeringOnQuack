@@ -18,8 +18,13 @@ public class OperatingManager : Singleton<OperatingManager> {
 		GameManager.Instance.OM_Assemble = Assemble;
 		GameManager.Instance.OM_AssembleFromEditing = AssembleFromEditing;
 		GameManager.Instance.OM_BeginOperating = BeginOperating;
+		GameManager.Instance.OM_DestroyCreation = DestroyCurrentCreation;
+		GameManager.Instance.OM_SetCurrentAsLoadTarget = () => BuildingManager.Instance.ConstructToLoad = CurrentlyOperating.Construct;
 
 		OperatingMainUI.TopBar.OnBarCreated = SetupTopBar;
+		OperatingMainUI.TopBar.OnExitPressed = () => StopOperating(false);
+		OperatingMainUI.TopBar.OnEditPressed = GameManager.Instance.BeginEditing;
+		OperatingMainUI.TopBar.OnDestroyPressed = () => StopOperating(true);
 
 		SubscribeToShortcuts();
 
@@ -71,11 +76,39 @@ public class OperatingManager : Singleton<OperatingManager> {
 		OperatingMainUI.TopBar.Outputs.RequestOutputWindowsGeneration = GenerateAllOutputWindows;
 	}
 
+	private static List<string> GetOutputNames() =>
+		Instance.CurrentlyOperating.Outputs.Select(o => o.Name).ToList();
+
+	void UpdateOutputs() {
+		OperatingMainUI.TopBar.Outputs.UpdateOutputs(GetOutputNames().ToArray());
+	}
+
+	void GenerateAllOutputWindows() {
+		var outs = Instance.CurrentlyOperating.Outputs;
+
+		foreach (var output in outs) {
+			var window =
+				OperatingMainUI.TopBar.Outputs.GenerateOutputWindow(output.Name, 0);
+
+			output.Setup(window);
+		}
+	}
+
+	void SetupTopBar() {
+		OperatingMainUI.TopBar.SetName(BuildingManager.Instance.Assembly.Name);
+	}
+
 	
 	void Update() {
 		if (!ContextManager.CurrentlyInContext<Contexts.Operating>()) return;
 
 
+	}
+
+	void StopOperating(bool destroy = false) {
+		CurrentlyOperating = null;
+
+		GameManager.Instance.ReturnToPlaying(destroy);
 	}
 
 	void BeginOperating() {
@@ -99,26 +132,10 @@ public class OperatingManager : Singleton<OperatingManager> {
 		Creations.Add(assembled);
 	}
 
-	void SetupTopBar() {
-		OperatingMainUI.TopBar.SetName(BuildingManager.Instance.Assembly.Name);
-	}
-
-	private static List<string> GetOutputNames() =>
-		Instance.CurrentlyOperating.Outputs.Select(o => o.Name).ToList();
-
-	void UpdateOutputs() {
-		OperatingMainUI.TopBar.Outputs.UpdateOutputs(GetOutputNames().ToArray());
-	}
-
-	void GenerateAllOutputWindows() {
-		var outs = Instance.CurrentlyOperating.Outputs;
-
-		foreach (var output in outs) {
-			var window =
-				OperatingMainUI.TopBar.Outputs.GenerateOutputWindow(output.Name, 0);
-
-			output.Setup(window);
-		}
+	public void DestroyCurrentCreation() {
+		DestroyCreation(CurrentlyOperating);
+		
+		CurrentlyOperating = null;
 	}
 
 	public void DestroyCreation(Creation creation) {

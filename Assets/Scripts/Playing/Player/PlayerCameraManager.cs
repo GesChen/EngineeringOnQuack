@@ -64,7 +64,10 @@ public class PlayerCameraManager : MonoBehaviour {
 	}
 
 	void Update() {
-		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()) return;
+		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()
+			|| (ContextManager.CurrentlyInContext<Contexts.Operating>()
+			&& !ContextManager.CurrentlyInContext<Contexts.InCamera>())) 
+			return;
 
 		HandlePerspectiveZoom();
 

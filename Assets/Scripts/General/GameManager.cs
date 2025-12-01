@@ -5,13 +5,14 @@ public class GameManager : Singleton<GameManager> {
 	public Transform MainPartsContainer;
 	public Transform CreationsContainer;
 
-	public Action OM_DestroyAssembly;
-	public Action BM_TryLoadAssembly;
 	public Action<string> WM_LoadCollection;
 	public Action BM_ClearEditing;
+	public Action BM_TryLoadAssembly;
+	public Action OM_DestroyCreation;
 	public Action OM_AssembleFromEditing;
 	public Action OM_Assemble;
 	public Action OM_BeginOperating;
+	public Action OM_SetCurrentAsLoadTarget;
 
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
@@ -37,7 +38,9 @@ public class GameManager : Singleton<GameManager> {
 	// or it will make a new one
 	public void BeginEditing() {
 		if (ContextManager.CurrentlyInContext<Contexts.Operating>()) {
-			OM_DestroyAssembly();
+			OM_SetCurrentAsLoadTarget();
+
+			OM_DestroyCreation();
 		}
 
 		BM_TryLoadAssembly();
@@ -54,7 +57,7 @@ public class GameManager : Singleton<GameManager> {
 			BM_ClearEditing();
 		} else {
 			if (destroyAssemblyIfOperating)
-				OM_DestroyAssembly();
+				OM_DestroyCreation();
 		}
 
 		Cursor.lockState = CursorLockMode.Locked;
