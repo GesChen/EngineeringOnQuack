@@ -13,5 +13,20 @@ public class Part_Axle : NonStaticPart {
 	public Transform endA; // scales well i guess? fast way to keep track of this stuff i guess
 	public Transform endB;
 
+	public class CPart : Construct.Part {
+		public Vector3 endAPos;
+		public Vector3 endBPos;
+	}
+
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var axle = new CPart();
+
+		axle.CopyMembers(CPart);
+		axle.endAPos = endA.position;
+		axle.endBPos = endB.position;
+
+		CPart = axle;
+	}
+
 	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 }

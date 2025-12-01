@@ -6,56 +6,43 @@ using UnityEngine;
 
 public class Part_Transceiver : NonStaticPart {
 	public override string PartName => "Transceiver";
-	public Output TargetOutput;
+	public string TargetOutputName;
 	
 	public static void Setup() {
+
+		// ----------editing-----------
 		Transceiver_UI.RequestOutputs = () => {
-			OutputsChanged();
 			return GetOutputs();
 		};
 
 		Transceiver_UI.InitialSelection = InitialSelection;
 		Transceiver_UI.OnItemSelected = OnItemSelected;
 
-		Transceiver_UI.OnManageOutputsPressed = OutputManager.Instance.OpenModifyOutputs;
+		Transceiver_UI.OnManageOutputsPressed = EditingOutputManager.Instance.OpenModifyOutputs;
 
-		SelectionManager.Instance.OnSelectionChanged += () => {
-			if (Transceiver_UI.OutputSelectionWindow.RealisedWindow.Open) {
-				OutputsChanged();
-				UpdateUI();
-			}
-		};
-
-		OutputManager.Instance.OnOutputsChanged = () => {
-			if (!Transceiver_UI.OutputSelectionWindow.RealisedWindow.gameObject.activeSelf)
-				return;
-
+		EditingOutputManager.Instance.OnOutputsChanged = () => {
 			OutputsChanged();
-			UpdateUI();
-		};
 
-		GameManager.Instance.OnStartSimulating += OutputsChanged;
+			if (Transceiver_UI.OutputSelectionWindow.RealisedWindow.Open)
+				UpdateUI();
+		};
 	}
 	static string[] GetOutputs() {
-		var transceivers = GetSelectedTransceivers();
+		var transceivers = GetSelectedTransceivers(); // make sure a trans is selected
 		if (transceivers.Length == 0)
 			return Array.Empty<string>();
 
-		var outs = BuildingManager.Instance.Assembly.Outputs;
-
-		// still cant figure out why i added the i when its just the index
-		// might remove it later for speed
-		return outs.Select(o => o.Name).ToArray();
+		return BuildingManager.Instance.Assembly.Outputs.ToArray();
 	}
 
 	static int InitialSelection() {
 		var transceivers = GetSelectedTransceivers();
 		if (transceivers.Length == 0
-			|| !transceivers.All(t => t.TargetOutput == transceivers[0].TargetOutput))
+			|| !transceivers.All(t => t.TargetOutputName == transceivers[0].TargetOutputName))
 			return -1;
 
 		return BuildingManager.Instance.Assembly.Outputs.IndexOf(
-			transceivers[0].TargetOutput);
+			transceivers[0].TargetOutputName);
 	}
 
 	static void UpdateUI() {
@@ -68,9 +55,13 @@ public class Part_Transceiver : NonStaticPart {
 			? null
 			: BuildingManager.Instance.Assembly.Outputs[0];
 
-		var transceivers = GetSelectedTransceivers();
+		var transceivers = BuildingManager.Instance.Assembly.Parts
+			.Select(p => p.GetComponent<Part_Transceiver>())
+			.Where(c => c != null);
+
 		foreach (var t in transceivers) {
-			t.TargetOutput ??= setOut;
+			if (string.IsNullOrEmpty(t.TargetOutputName) || setOut == null)
+				t.TargetOutputName = setOut;
 		}
 	}
 
@@ -84,7 +75,7 @@ public class Part_Transceiver : NonStaticPart {
 		foreach (var t in transceivers) {
 			var outputs = BuildingManager.Instance.Assembly.Outputs;
 
-			t.TargetOutput = outputs[index];
+			t.TargetOutputName = outputs[index];
 		}
 	}
 
@@ -115,47 +106,42 @@ public class Part_Transceiver : NonStaticPart {
 			() => new T_Data(Type_Transceiver).SetThisMember("id", new Primitive.Number(Part.ID))
 		);
 
+	public static Action<string, string> OnPrintRequested;
 	void Print(int id, string message) {
 		if (id != Part.ID) return;
 
-		//Debug.Log(args[0]?.ToString() ?? "null");
-		TargetOutput?.Print(message); // should already be a string obj
+		if (string.IsNullOrEmpty(TargetOutputName)) return;
+
+		OnPrintRequested?.Invoke(TargetOutputName, message);
 	}
 
 	#endregion
 
 	#region overrides
-	public class SPart_Transceiver : Assembly.SPart {
+	public class CPart : Construct.Part {
 		public string Output;
+
+		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+			var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
+
+			newTrans.TargetOutputName = Output;
+
+			PartInternalFunctions.Transceiver.OnPrintCalled += newTrans.Print;
+		}
 	}
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_Transceiver();
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var trans = new CPart();
 
-		sp.CopyMembers(SPart);
-		sp.Output = TargetOutput.Name;
+		trans.CopyMembers(CPart);
+		trans.Output = TargetOutputName;
 
-		SPart = sp;
+		CPart = trans;
 	}
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
-		var newTrans = unfinishedPart.GetComponent<Part_Transceiver>();
-		var part = (SPart_Transceiver)originalSPart;
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var cpa = originalCPart as CPart;
+		var newtrans = unfinishedPart.GetComponent<Part_Transceiver>();
 
-		newTrans.StartCoroutine(newTrans.DelaySetup(part));
-	}
-
-	IEnumerator DelaySetup(SPart_Transceiver spart) {
-		yield return null;
-
-		TargetOutput = BuildingManager.Instance.Assembly
-			.Outputs.FirstOrDefault(o => o.Name == spart.Output);
-	}
-
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
-
-		newTrans.TargetOutput = TargetOutput;
-
-		PartInternalFunctions.Transceiver.OnPrintCalled += newTrans.Print;
+		newtrans.TargetOutputName = cpa.Output;
 	}
 	#endregion
 }

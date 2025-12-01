@@ -35,42 +35,44 @@ public class Part_CableConnection : NonStaticPart {
 	}
 
 	// no extra processing needed
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		// see if this is very close to any port
-		// if so connect to it
 
-		var ports = BuildingManager.Instance.SimulationContainer.GetComponentsInChildren<Port>();
-
-		foreach (var port in ports) {
-			if (port.SnapTarget.CheckSnap(transform)) {
-				// connect up
-				var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
-
-				port.Connector = newCC; 
-				newCC.Port = port;
-				break;
-			}
-		}
-
-		// Cable moves its own reference in the cable field over to new
-	}
-
-	public class SPart_CC : Assembly.SPart {
+	public class CPart : Construct.Part {
 		public int CCID;
+
+		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+			// see if this is very close to any port
+			// if so connect to it
+			var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
+			newCC.CCID = CCID; 
+
+			var ports = GameManager.Instance.CreationsContainer.GetComponentsInChildren<Port>();
+
+			foreach (var port in ports) {
+				if (port.SnapTarget.CheckSnap(position)) {
+					// connect up
+
+					port.Connector = newCC;
+					newCC.Port = port;
+					break;
+				}
+			}
+
+			// Cable moves its own reference in the cable field over to new
+		}
 	}
 
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CC();
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var cc = new CPart();
 
-		sp.CopyMembers(SPart);
-		sp.CCID = CCID;
+		cc.CopyMembers(CPart);
+		cc.CCID = CCID;
 
-		SPart = sp;
+		CPart = cc;
 	}
 
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
 		var cc = unfinishedPart.GetComponent<Part_CableConnection>();
-		var part = (SPart_CC)originalSPart;
+		var part = (CPart)originalCPart;
 
 		cc.CCID = part.CCID;
 	}

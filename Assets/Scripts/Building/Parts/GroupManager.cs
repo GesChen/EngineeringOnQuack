@@ -6,11 +6,11 @@ using UnityEngine;
 public class GroupManager : Singleton<GroupManager> {
 
 	public void Subscribe() {
-		RightClickMenus.OnGroup				+= GroupCurrentSelection;
-		RightClickMenus.OnUnGroup			+= UngroupCurrentSelection;
-		RightClickMenus.OnAddToGroup		+= AddToGroupCurrentSelection;
-		RightClickMenus.OnRemoveFromGroup	+= RemoveFromGroupCurrentSelection;
-		RightClickMenus.OnCombineGroups		+= CombineGroupsCurrentSelection;
+		RightClickMenus.OnGroup				= GroupCurrentSelection;
+		RightClickMenus.OnUnGroup			= UngroupCurrentSelection;
+		RightClickMenus.OnAddToGroup		= AddToGroupCurrentSelection;
+		RightClickMenus.OnRemoveFromGroup	= RemoveFromGroupCurrentSelection;
+		RightClickMenus.OnCombineGroups		= CombineGroupsCurrentSelection;
 	}
 
 	private Assembly A => BuildingManager.Instance.Assembly;

@@ -45,7 +45,7 @@ public class SaveLoadMenus {
 	}
 	public static void HideSaveIcon() {
 		// may have been destroyed from context change so hidden already
-		if (SaveStatus.RealisedWindow == null) return;
+		if (!SaveStatus.RealisedExists) return;
 
 		SaveStatus.RealisedWindow.Hide();
 	}

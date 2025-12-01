@@ -139,11 +139,11 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	}
 
 	void SubscribeToShortcuts() {
-		Conatrols.IM.Editing.Copy.performed		+= _ => Clipboard.Copy();
-		Conatrols.IM.Editing.Cut.performed		+= _ => Clipboard.Cut();
-		Conatrols.IM.Editing.Paste.performed	+= _ => Clipboard.Paste();
-		Conatrols.IM.Editing.Undo.performed		+= _ => History.Undo();
-		Conatrols.IM.Editing.Redo.performed		+= _ => History.Redo();
+		Conatrols.IM.Editing_General.Copy	.Subscribe<Contexts.Editing>(Clipboard.Copy);
+		Conatrols.IM.Editing_General.Cut	.Subscribe<Contexts.Editing>(Clipboard.Cut);
+		Conatrols.IM.Editing_General.Paste	.Subscribe<Contexts.Editing>(Clipboard.Paste);
+		Conatrols.IM.Editing_General.Undo	.Subscribe<Contexts.Editing>(History.Undo);
+		Conatrols.IM.Editing_General.Redo	.Subscribe<Contexts.Editing>(History.Redo);
 
 		OnCopyPressed = () => Clipboard.Copy();
 		OnCutPressed = () => Clipboard.Cut();

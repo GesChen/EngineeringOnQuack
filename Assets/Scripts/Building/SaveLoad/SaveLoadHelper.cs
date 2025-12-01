@@ -270,9 +270,13 @@ public static class SaveLoadHelper {
 		Debug.Log(pretty);
 #endif
 
-		var assembly = JsonConvert.DeserializeObject<Assembly.SAssembly>(json, Settings);
+		var assembly = JsonConvert.DeserializeObject<Construct>(json, Settings);
 
-		var reconstructed = Assembly.Reconstruct(assembly);
+		Load(assembly);
+	}
+
+	public static void Load(Construct construct) {
+		var reconstructed = Assembly.Reconstruct(construct);
 
 		BuildingManager.Instance.Assembly = reconstructed;
 	}

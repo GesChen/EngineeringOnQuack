@@ -41,16 +41,13 @@ public class Part_Cable : NonStaticPart {
 		ccB.transform.position = transform.position;
 	}
 
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		instantiatedPart.GetComponent<Part_Cable>().ReconnectToCCs();
-	}
-
 	// connect to simulation ccs
-	public void ReconnectToCCs() {
-		var allccs = BuildingManager.Instance.SimulationContainer.GetComponentsInChildren<Part_CableConnection>();
-		if (!allccs.TryFind(cc => cc.CCID == connectionA.CCID, out var simA))
+	public void ReconnectToCCs(int aid, int bid) {
+		// might redo this
+		var allccs = GameManager.Instance.CreationsContainer.GetComponentsInChildren<Part_CableConnection>();
+		if (!allccs.TryFind(cc => cc.CCID == aid, out var simA))
 			throw new("couldn't find new connection A on sim start");
-		if (!allccs.TryFind(cc => cc.CCID == connectionB.CCID, out var simB))
+		if (!allccs.TryFind(cc => cc.CCID == bid, out var simB))
 			throw new("couldn't find new connection B on sim start");
 
 		connectionA = simA;
@@ -73,32 +70,38 @@ public class Part_Cable : NonStaticPart {
 		return $"Cable connecting {connectionA.Port.MainNSP.GetType().Name} -- {connectionB.Port.MainNSP.GetType().Name}";
 	}
 
-	public class SPart_Cable : Assembly.SPart {
+	public class CPart : Construct.Part {
 		public int AID;
 		public int BID;
+
+		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+			var cable = instantiatedPart.GetComponent<Part_Cable>();
+
+			cable.ReconnectToCCs(AID, BID);
+		}
 	}
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_Cable();
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var cable = new CPart();
 
-		sp.CopyMembers(SPart);
-		sp.AID = connectionA.CCID;
-		sp.BID = connectionB.CCID;
+		cable.CopyMembers(CPart);
+		cable.AID = connectionA.CCID;
+		cable.BID = connectionB.CCID;
 
-		SPart = sp;
+		CPart = cable;
 	}
 
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
 		var newCable = unfinishedPart.GetComponent<Part_Cable>();
-		newCable.StartCoroutine(DelaySetup(originalSPart, unfinishedPart, unfinishedAssembly));
+		newCable.StartCoroutine(DelaySetup(originalCPart, unfinishedPart, unfinishedAssembly));
 	}
 
-	IEnumerator DelaySetup(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+	IEnumerator DelaySetup(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
 		var newCable = unfinishedPart.GetComponent<Part_Cable>();
 		newCable.SetUp = false;
 		yield return null;
 		newCable.SetUp = true;
 
-		var part = (SPart_Cable)originalSPart;
+		var part = (CPart)originalCPart;
 		var cA = unfinishedAssembly.Parts.First(p => {
 			p.IsNonStaticPart(out var nsp);
 			return nsp is Part_CableConnection cc && cc.CCID == part.AID;

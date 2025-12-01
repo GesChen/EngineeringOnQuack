@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,7 @@ using System.Linq;
 // garbage so i added an a so itd be the first result or close to
 // so i dont have to keep JDFLKJLK:DSLK:JFL stupid thing
 
+// execution order already updated before everything after GM
 public class Conatrols : MonoBehaviour {
 	public static InputMaster IM;
 	Keyboard CurrentKeyboard;
@@ -35,18 +37,6 @@ public class Conatrols : MonoBehaviour {
 		CurrentMouse.Update();
 		CurrentKeyboard.Update();
 	}
-
-
-	#region Shortcut Methods
-	/// <summary>
-	/// Repeating
-	/// </summary>
-	public static bool IsUsed(Key key) => Keyboard.Presses.Contains(key);
-	/// <summary>
-	/// Non-Repeating
-	/// </summary>
-	public static bool IsPressed(Key key) => Keyboard.Pressed.Contains(key);
-	#endregion
 
 	public class Mouse {
 		public static Vector2 Position;
@@ -482,5 +472,18 @@ public class Conatrols : MonoBehaviour {
 			}
 */
 		}
+	}
+}
+
+public static class ControlSubscribeShortcut {
+	public static void Subscribe<Context>(this InputAction action, Action target, bool strict = false) where Context : IContext {
+		if (!strict)
+			action.performed += _ => {
+				if (ContextManager.CurrentlyInContext<Context>()) target();
+			};
+		else
+			action.performed += _ => {
+				if (ContextManager.CurrentlyInContextStrict<Context>()) target();
+			};
 	}
 }

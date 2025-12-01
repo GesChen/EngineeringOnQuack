@@ -24,6 +24,13 @@ public class PortVisualizer : Singleton<PortVisualizer> {
 	}
 
 	void Update() {
+		if (!ContextManager.CurrentlyInContext<Contexts.Editing>()) {
+			if (Visualizing)
+				DestroyAllNumbers();
+			Visualizing = false;
+			return;
+		}
+
 		CheckVisualizing();
 
 		if (Visualizing != LastVisualizing) {

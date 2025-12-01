@@ -22,8 +22,6 @@ public class WindowManager : Singleton<WindowManager> {
 
 	public bool anyDragging = false;
 
-	IContext LastContext = null;
-
 	// only good way i can think of for now to ensure that the 
 	// other awakes are called before init is to just delay this script's 
 	// execution order cuz every other method doesn't make sense or this class
@@ -35,42 +33,18 @@ public class WindowManager : Singleton<WindowManager> {
 		Windows.Clear();
 		Menus.Clear();
 
-		// todo:investigate why this static constructor thing
-		// didnt null occ properly and we have to do this hack
-		// to get it to rest properly
-		ContextManager.ResetContextChanged();
-		ContextManager.OnContextChanged += ContextChanged;
+		GameManager.Instance.WM_LoadCollection = 
+			name => RealiseCollection(ContextWindows.GetCollection(name));
 	}
 
-	void ContextChanged(IContext newContext) {
-		if (newContext is Contexts.Main) return; // ignore main switch
+	public void RealiseCollection(ContextWindows.WindowCollection collection) {
+		ResetAllMenus();
+		Menus.AddRange(collection.Menus);
 
-		if (LastContext == null || !ContextManager.RelatedWithoutMain(newContext, LastContext)) {
-			SwitchCollectionsByContext(newContext);
-		}
-
-		LastContext = newContext;
+		DestroyAllWindows();
+		RealiseWindows(collection.Windows);
 	}
 
-	private void SwitchCollectionsByContext(IContext newContext) {
-		var collection = ContextWindows.FindCollectionByContext(newContext);
-
-		if (collection != null) {
-			ResetAllMenus();
-			Menus.AddRange(collection.Value.Menus);
-
-			DestroyAllWindows();
-			//ReSetAllValues(collection.Value.Sets);
-			RealiseWindows(collection.Value.Windows);
-		} else {
-			Debug.LogWarning($"window collection not found for context {newContext.GetType().Name}");
-		}
-	}
-
-	/// <summary>
-	/// stop calling this from individual classes, instead put them all into
-	/// allwindows and windowmanager will do it
-	/// </summary>
 	public void RealiseWindows(params CWindow[] torealise) {
 		Windows ??= new();
 		foreach (var window in torealise) {
@@ -82,7 +56,7 @@ public class WindowManager : Singleton<WindowManager> {
 		Menus.AddRange(menus);
 	}
 
-	void DestroyAllWindows() {
+	public void DestroyAllWindows() {
 		// destroy these for good measure and non grouped
 		foreach (var window in Windows) {
 			Destroy(window.RealisedWindow.gameObject);

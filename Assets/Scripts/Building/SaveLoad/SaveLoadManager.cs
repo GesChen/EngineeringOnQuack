@@ -16,7 +16,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 		SaveLoadMenus.OnSave = Save;
 		SaveLoadMenus.OnSaveAs = SaveAs;
-		SaveLoadMenus.OnLoad = Load;
+		SaveLoadMenus.OnLoad = LoadFromPath;
 
 		OnLoaded = null;
 	}
@@ -57,7 +57,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.HideSaveIcon();
 	}
 
-	void Load(string path) {
+	public void LoadFromPath(string path) {
 		SelectionManager.Instance.Clear();
 
 		// hope name conflicts arent a thing

@@ -10,24 +10,19 @@ public class ContextObserver : Singleton<ContextObserver> {
 	// tbd and finished all the way cuz this is very temporary
 	void Start() {
 		ContextManager.ForceEnterContext(new Main());
-		ContextManager.EnterContext<Editing>();
-
-		GameManager.Instance.OnStartSimulating += StartSimulating;
-		GameManager.Instance.OnStopSimulating += StartEditing;
+		ContextManager.EnterContext<Playing>();
 	}
 
 	void Update() {
-		if (ContextManager.IsInContext<Editing>(out _))
+		if (ContextManager.CurrentlyInContextStrict<Playing>())
+			CheckPlaying();
+
+		if (ContextManager.CurrentlyInContext<Editing>())
 			CheckEditing();
 
-		if (ContextManager.IsInContext<Simulating>(out _))
-			CheckSimulating();
 
 		debug_currentContext = ContextManager.Current.GetType().Name;
 	}
-
-	public void StartEditing() { ContextManager.EnterContext<Editing>(); }
-	public void StartSimulating() { ContextManager.EnterContext<Simulating>(); }
 
 	public Func<int> RequestSelectionCount;
 	private int selectionCount;
@@ -64,7 +59,7 @@ public class ContextObserver : Singleton<ContextObserver> {
 		}
 	}
 	
-	void CheckSimulating() {
+	void CheckPlaying() {
 
 	}
 }

@@ -16,7 +16,7 @@ public class Assembly {
 	public List<Part> Parts = new();
 	public List<PartGroup> Groups = new();
 	public BuildingClipboard Clipboard = new(); // might move to main
-	public List<Output> Outputs = new();
+	public List<string> Outputs = new();
 
 	// putting this code in here violates SRP btw dude
 	// somehow put the S classes into their own files
@@ -26,127 +26,47 @@ public class Assembly {
 	// S prefix for serializable
 	// they need to be converted this way because newtonsoft json
 	// just fucking hates me i guess
-	public class SVector3 {
-		public float x, y, z;
-		public SVector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
-		public static implicit operator Vector3(SVector3 other) =>
-			new(other.x, other.y, other.z);
-		public static implicit operator SVector3(Vector3 other) =>
-			new(other.x, other.y, other.z);
-		public static implicit operator Color(SVector3 other) =>
-			new(other.x, other.y, other.z);
-		public static implicit operator SVector3(Color other) =>
-			new(other.r, other.g, other.b);
-		public override bool Equals(object obj) {
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj is not SVector3 v) return false;
-			return v.x == x && v.y == y && v.z == z;
-		}
-		public override int GetHashCode() => HashCode.Combine(x, y, z);
-	}
-	public class SVector4 {
-		public float x, y, z, w;
-		public SVector4(float X, float Y, float Z, float W) { x = X; y = Y; z = Z; w = W; }
-		public static implicit operator Quaternion(SVector4 other) =>
-			new(other.x, other.y, other.z, other.w);
-		public static implicit operator SVector4(Quaternion other) =>
-			new(other.x, other.y, other.z, other.w);
 
-		public override bool Equals(object obj) {
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj is not SVector4 v) return false;
-			return v.x == x && v.y == y && v.z == z && v.w == w;
-		}
-		public override int GetHashCode() => HashCode.Combine(x, y, z, w);
-	}
-	public class SPart {
-		public int basePartID;
-		public int id;
-		public SVector3 position;
-		public SVector4 rotation;
-		public SVector3 scale;
-
-		public SVector3 color;
-		public int compositionID;
-
-		public void CopyMembers(SPart other) {
-			basePartID = other.basePartID;
-			id = other.id;
-			position = other.position;
-			rotation = other.rotation;
-			scale = other.scale;
-
-			color = other.color;
-			compositionID = other.compositionID;
-		}
-	}
-	public class SGroup {
-		public List<int> PartIDs;
-
-		public static explicit operator SGroup(PartGroup other) => new() {
-			PartIDs = other.Parts.Select(p => p.ID).ToList(),
-		};
-	}
-	public class SOutput {
-		public string Name;
-
-		public static explicit operator SOutput(Output other) => new() {
-			Name = other.Name,
-		};
-	}
-
-	public class SAssembly {
-		public string Name;
-		public List<SPart> Parts;
-		public List<SGroup> Groups;
-		public BuildingClipboard Clipboard; // should serialize just fine
-		public List<SOutput> Outputs;
-	}
-
-	public SAssembly ConvertToSerializable() => new() {
+	public Construct ConvertToConstruct() => new() {
 		Name = Name,
-		Parts = Parts.Select(p => ConvertPartToSPart(p)).ToList(),
-		Groups = Groups.Select(group => (SGroup)group).ToList(),
+		Parts = Parts.Select(p => ConvertToCPart(p)).ToList(),
+		Groups = Groups.Select(group => (Construct.Group)group).ToList(),
 		Clipboard = Config.Building.Saving.SaveClipboard ? Clipboard : null,
-		Outputs = Outputs.Select(o => (SOutput)o).ToList()
+		Outputs = Outputs
 	};
 
 	public static string Serialize(Assembly assembly) => 
-		JsonConvert.SerializeObject(assembly.ConvertToSerializable(), SaveLoadHelper.Settings);
-	public static Assembly Reconstruct(SAssembly assembly) {
+		JsonConvert.SerializeObject(assembly.ConvertToConstruct(), SaveLoadHelper.Settings);
+	public static Assembly Reconstruct(Construct construct) {
 		var reconstructed = new Assembly {
-			Name = assembly.Name
+			Name = construct.Name
 		};
 
-		foreach (SPart part in assembly.Parts) {
+		foreach (Construct.Part part in construct.Parts) {
 			ReconstructPart(reconstructed, part);
 		}
 
 		var partIDlookup = reconstructed.Parts.ToDictionary(p => p.ID);
 
 		// reconstruct groups
-		foreach (var group in assembly.Groups) {
+		foreach (var group in construct.Groups) {
 			// make a new partgroup by finding all the new parts with the ids
 			var parts = group.PartIDs.Select(i => partIDlookup[i]).ToList();
 			
 			reconstructed.Groups.Add(new(parts));
 		}
 
-		reconstructed.Clipboard = assembly.Clipboard ?? new(); // hope it serializes well
+		reconstructed.Clipboard = construct.Clipboard ?? new(); // hope it serializes well
 
 		// reconstruct outputs
-		reconstructed.Outputs = assembly.Outputs.Select(o =>
-			new Output() {
-				Name = o.Name
-			}
-		).ToList();
+		reconstructed.Outputs = construct.Outputs;
 
 		return reconstructed;
 	}
 
-	internal static SPart ConvertPartToSPart(Part other) {
-		Vector3 localOrigin = BuildingManager.Instance.MainPartsContainer.transform.position;
-		SPart sp = new() {
+	internal static Construct.Part ConvertToCPart(Part other) {
+		Vector3 localOrigin = GameManager.Instance.MainPartsContainer.transform.position;
+		Construct.Part cpa = new() {
 			basePartID = other.basePart.ID,
 			id = other.ID,
 			position = other.transform.position - localOrigin,
@@ -158,13 +78,13 @@ public class Assembly {
 		};
 
 		if (other.IsNonStaticPart(out var nsp)) {
-			nsp.FinalizeSPartConversion(ref sp);
+			nsp.FinalizeCPartConversion(ref cpa);
 		}
 
-		return sp;
+		return cpa;
 	}
 
-	private static void ReconstructPart(Assembly reconstructed, SPart part) {
+	private static void ReconstructPart(Assembly reconstructed, Construct.Part part) {
 		Part newPart = BuildingManager.Instance.MakeNewPart(part.basePartID, false);
 
 		newPart.transform.localPosition = new(part.position.x, part.position.y, part.position.z);
@@ -185,7 +105,7 @@ public class Assembly {
 		}
 
 		if (newPart.IsNonStaticPart(out var nsp)) {
-			nsp.FinalizeSPartReconstruction(part, newPart, reconstructed);
+			nsp.FinalizeCPartReconstruction(part, newPart, reconstructed);
 		}
 	}
 }

@@ -6,8 +6,8 @@ using static Assembly;
 
 public class BuildingClipboard {
 	public struct Clip {
-		public SPart[] Parts;
-		public SGroup[] Groups;
+		public Construct.Part[] Parts;
+		public Construct.Group[] Groups;
 	}
 	public Clip Clipboard;
 	public List<Clip> History = new();
@@ -48,14 +48,14 @@ public class BuildingClipboard {
 
 		parts.AddRange(moreParts);
 
-		clip.Parts = parts.Select(p => ConvertPartToSPart(p)).ToArray();
+		clip.Parts = parts.Select(p => ConvertToCPart(p)).ToArray();
 
 		// rerandomize the ccs in the board
 		var cbCCs = clip.Parts
-			.Select(p => p as Part_CableConnection.SPart_CC)
+			.Select(p => p as Part_CableConnection.CPart)
 			.Where(cc => cc != null);
 		var cbCables = clip.Parts
-			.Select(p => p as Part_Cable.SPart_Cable)
+			.Select(p => p as Part_Cable.CPart)
 			.Where(c => c != null);
 
 		// randomize
@@ -91,7 +91,7 @@ public class BuildingClipboard {
 			.Where(p => p.Group != null)
 			.Select(p => p.Group)
 			.Distinct() // gets a list of all groups from selected
-			.Select(g => (SGroup)g).ToArray();
+			.Select(g => (Construct.Group)g).ToArray();
 
 		History.Add(Clipboard);
 		if (History.Count >= Config.Building.ClipboardHistorySize)
@@ -135,7 +135,7 @@ public class BuildingClipboard {
 			newTransforms[i] = transform;
 			
 			if (newPart.IsNonStaticPart(out var nsp)) {
-				nsp.FinalizeSPartReconstruction(
+				nsp.FinalizeCPartReconstruction(
 					origPart,
 					newPart,
 					BuildingManager.Instance.Assembly);

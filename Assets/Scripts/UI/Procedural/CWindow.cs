@@ -117,6 +117,7 @@ public class CWindow {
 			return m_realisedWindow;
 		}
 	}
+	public bool RealisedExists => m_realisedWindow != null;
 	public LiveWindow GetRealisedOrNull() => m_realisedWindow;
 	public void SetRealised(LiveWindow live) {
 		m_realisedWindow = live;

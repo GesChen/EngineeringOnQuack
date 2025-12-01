@@ -25,7 +25,7 @@ public static class ContextManager {
 	}
 
 	public static C EnterContext<C>() where C : IContext {
-		if (IsInContext(out C instance)) {
+		if (CurrentlyInContext(out C instance)) {
 			return instance;
 		}
 		
@@ -84,19 +84,19 @@ public static class ContextManager {
 		return targetInstance;
 	}
 
-	public static void ExitContext() {
-		_current = _current?.Parent;
-	}
+	public static bool CurrentlyInContextStrict<C>() where C : IContext =>
+		Current is C;
 
-	public static bool IsInContext<C>() where C : IContext => 
-		IsInContext<C>(out _);
+	public static bool CurrentlyInContext<C>() where C : IContext =>
+		CurrentlyInContext<C>(out _);
 
-	public static bool IsInContext<C>(out C instance) where C : IContext {
+	public static bool CurrentlyInContext<C>(out C instance) where C : IContext {
 		bool isIn = IsInContext(_current, out C tcon);
 		instance = tcon;
 		return isIn;
 	}
 
+	// returns true if a lower context is the target
 	static bool IsInContext<C>(IContext context, out C instance) {
 		instance = default;
 

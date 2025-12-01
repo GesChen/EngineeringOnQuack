@@ -69,10 +69,36 @@ public class Part_LED : NonStaticPart {
 		Part.dontUpdateMaterialsFor = new[] { glowRenderer.transform };
 	}
 
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newLED = instantiatedPart.GetComponent<Part_LED>();
+	public class CPart : Construct.Part {
+		public Construct.SVector3 Color;
+		public float Intensity;
 
-		PartInternalFunctions.LED.OnToggleCalled += newLED.IF_Toggle;
-		PartInternalFunctions.LED.OnSetCalled += newLED.IF_Set;
+		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+			var newLED = instantiatedPart.GetComponent<Part_LED>();
+
+			newLED.Color = Color;
+			newLED.Intensity = Intensity;
+
+			PartInternalFunctions.LED.OnToggleCalled += newLED.IF_Toggle;
+			PartInternalFunctions.LED.OnSetCalled += newLED.IF_Set;
+		}
+	}
+
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var led = new CPart();
+
+		led.CopyMembers(CPart);
+		led.Color = Color;
+		led.Intensity = Intensity;
+
+		CPart = led;
+	}
+
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var cpa = originalCPart as CPart;
+		var newled = unfinishedPart.GetComponent<Part_LED>();
+
+		newled.Color = cpa.Color;
+		newled.Intensity = cpa.Intensity;
 	}
 }

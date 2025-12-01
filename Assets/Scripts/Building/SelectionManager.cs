@@ -100,25 +100,28 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void Update() {
-		HandleInput();
-		bool changed = selectionChanged;
-		UpdatePartSelection();
+		if (!ContextManager.CurrentlyInContext<Contexts.Editing>()) return;
 
-		// ?????????????
-		while (selectionChanged) {
+		HandleInput();
+
+		bool originallyChanged = selectionChanged;
+		if (selectionChanged) {
+			selectionChanged = false;
+			UpdatePartSelection();
 			CheckForGroups();
 			CheckForSnaps();
 			CheckForLinks();
 			RemoveDuplicates();
-
-			if (selectionChanged)
-				changed = true;
-
-			UpdatePartSelection();
 		}
 
-		if (changed)
+		SpecialCCHandle();
+
+		if (selectionChanged) UpdatePartSelection();
+		
+		if (selectionChanged || originallyChanged)
 			UpdateContainer(); // selection might have changed from groups and snaps
+
+		selectionChanged = false;
 	}
 
 	void HandleInput() {
@@ -171,19 +174,15 @@ public class SelectionManager : Singleton<SelectionManager> {
 	}
 
 	void CheckCancel() {
-		if (Conatrols.IM.Building.CancelSelection.WasPressedThisFrame()) {
+		if (Conatrols.IM.Editing_Building.CancelSelection.WasPressedThisFrame()) {
 			Selection.Clear(); // it cant be this simple rights
 			selectionChanged = true;
 		}
 	}
 
 	void UpdatePartSelection() {
-		if (!selectionChanged) return;
-
 		PartSelection = Selection.Select(t => t.GetComponent<Part>()).ToArray();
 		PartSelectionHS = PartSelection.ToHashSet();
-
-		selectionChanged = false;
 	}
 
 	void CheckForGroups() {
@@ -217,7 +216,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 				.SelectMany(cst => 
 					BuildingManager.Instance.Assembly.Parts.Where(p => // any 
 					p != part // self check for good 
-					&& cst.CheckSnap(p.transform))) // which meet the checksnap
+					&& cst.CheckSnap(p.transform.position))) // which meet the checksnap
 			).Select(p => p.transform)
 		);
 
@@ -242,6 +241,39 @@ public class SelectionManager : Singleton<SelectionManager> {
 		Selection = Selection.Distinct().ToList();
 	}
 
+	void SpecialCCHandle() {
+		// check on mouse release i guess
+		if (!Conatrols.Mouse.Left.ReleasedThisFrame) return;
+
+		// deselect one cc if both are selected and both are on a port
+
+		// find all ccs on ports
+		var ccsOnPorts = BuildingManager.Instance.Assembly.Parts.SelectMany(part => // any selected part's
+			part.GetComponentsInChildren<Port>() // find all ports
+			.SelectMany(port =>
+				PartSelection.Where(p => // any selected
+					p.GetComponent<Part_CableConnection>() != null // cc
+					&& port.SnapTarget.CheckSnap(p.transform.position)) // that snapping to a port
+				)
+			).ToHashSet();
+
+		// find all cables where both ccs are in the list
+		var cablesMeetingCriterion =
+			BuildingManager.Instance.Assembly.Parts.Where(part => 
+				part.IsNonStaticPart(out var nsp)
+				&& nsp is Part_Cable cable
+				&& ccsOnPorts.Contains(cable.connectionA.Part)
+				&& ccsOnPorts.Contains(cable.connectionB.Part)
+			).Select(part => part.GetNSP<Part_Cable>()).ToArray();
+
+		// deselect cona 
+		foreach (var cable in cablesMeetingCriterion)
+			Selection.Remove(cable.connectionA.transform);
+
+		if (cablesMeetingCriterion.Length > 0)
+			selectionChanged = true;
+	}
+
 	void HandleBox() {
 		Vector2 size = dragStart - mousePos;
 		UIBox.position = (dragStart + mousePos) / 2;
@@ -250,7 +282,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	void FindObjectsInsideBounds(Vector2 boundsStart, Vector2 boundsEnd) {
 		// handle multiselection
-		if (Conatrols.IM.Building.Multiselect.IsPressed())
+		if (Conatrols.IM.Editing_Building.Multiselect.IsPressed())
 			Selection = dragStartSelections;
 		else
 			Selection = new();
@@ -360,12 +392,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 		}
 
 		if (selected == null) {
-			if (!Conatrols.IM.Building.Multiselect.IsPressed())
+			if (!Conatrols.IM.Editing_Building.Multiselect.IsPressed())
 				Selection = new();
 			return;
 		}
 
-		if (Conatrols.IM.Building.Multiselect.IsPressed()) { // toggle object in selection
+		if (Conatrols.IM.Editing_Building.Multiselect.IsPressed()) { // toggle object in selection
 			if (Selection.Contains(selected))
 				Selection.Remove(selected);
 			else
@@ -403,7 +435,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		foreach (Part p in BuildingManager.Instance.Assembly.Parts) {
 			Transform t = p.transform;
 			if (!Selection.Contains(t)) {
-				t.SetParent(BuildingManager.Instance.MainPartsContainer, true);
+				t.SetParent(GameManager.Instance.MainPartsContainer, true);
 			}
 		}
 
@@ -421,7 +453,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// handle position
 		Vector3 totalPosition = Vector3.zero;
 		foreach (Transform t in Selection) {
-			t.SetParent(BuildingManager.Instance.MainPartsContainer, true);
+			t.SetParent(GameManager.Instance.MainPartsContainer, true);
 			totalPosition += t.position;
 		}
 

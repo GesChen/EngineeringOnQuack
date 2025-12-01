@@ -6,9 +6,6 @@ using UnityEngine;
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
 
-	public Transform MainPartsContainer;
-	public Transform SimulationContainer;
-
 	public event Action OnModified; // only sub to this in start, its cleared in awake
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
@@ -38,32 +35,27 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// hit that bell for more epic code (this is garbage)
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
-		RightClickMenus.ClearEvents();
+		GameManager.Instance.BM_TryLoadAssembly = TryLoad;
+		GameManager.Instance.BM_ClearEditing = ClearEditing;
 
-		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
-		RightClickMenus.OnDelete		+= DeleteSelection;
-		RightClickMenus.OnCopy			+= Copy;
-		RightClickMenus.OnPaste			+= Paste;
-		RightClickMenus.OnDuplicate		+= Duplicate;
+		RightClickMenus.OnNewPartMade	= name => MakeNewPart(name, true);
+		RightClickMenus.OnDelete		= DeleteSelection;
+		RightClickMenus.OnCopy			= Copy;
+		RightClickMenus.OnPaste			= Paste;
+		RightClickMenus.OnDuplicate		= Duplicate;
 
-		Conatrols.IM.Editing.Copy.performed += _ => Copy();
-		Conatrols.IM.Editing.Cut.performed += _ => Cut();
-		Conatrols.IM.Editing.Paste.performed += _ => Paste();
-		Conatrols.IM.Editing.Duplicate.performed += _ => Duplicate();
-
-		GameManager.Instance.OnStartSimulating += StartSimulating;
-		GameManager.Instance.OnStopSimulating += StopSimulating;
-
-		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
-		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
+		Conatrols.IM.Editing_General.Copy		.Subscribe<Contexts.Editing>(Copy);
+		Conatrols.IM.Editing_General.Cut		.Subscribe<Contexts.Editing>(Cut);
+		Conatrols.IM.Editing_General.Paste		.Subscribe<Contexts.Editing>(Paste);
+		Conatrols.IM.Editing_General.Duplicate	.Subscribe<Contexts.Editing>(Duplicate);
 
 		MaterialEditingMenu.OnStart = MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
-		BottomBar.OnAssemble = GameManager.Instance.StartSimulating;
+		BottomBar.OnAssemble = AssemblePressed;
 
-		SimulatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.StopSimulating;
+		OperatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.BeginEditing;
 
 		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
@@ -89,6 +81,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	#endregion
 
 	void Update() {
+		if (!ContextManager.CurrentlyInContext<Contexts.Editing>()) return;
+
 		HandleInput();
 
 		// set selection state of parts
@@ -97,10 +91,23 @@ public class BuildingManager : Singleton<BuildingManager> {
 		}
 	}
 
-	void HandleInput() {
+	// organize this later
+	public string AssemblyToLoadPath;
+	void TryLoad() {
+		if (!string.IsNullOrWhiteSpace(AssemblyToLoadPath))
+			SaveLoadManager.Instance.LoadFromPath(AssemblyToLoadPath);
+		else
+			Assembly = new();
+	}
 
-		if (Conatrols.IM.Building.Delete.WasPressedThisFrame() &&
-			ContextManager.IsInContext<Contexts.InWorld>(out _)) {
+	void AssemblePressed() {
+		GameManager.Instance.AssembleFromEditing();
+		GameManager.Instance.Operate();
+	}
+
+	void HandleInput() {
+		if (Conatrols.IM.Editing_Building.Delete.WasPressedThisFrame() &&
+			ContextManager.CurrentlyInContext<Contexts.InWorld>(out _)) {
 
 			DeleteSelection();
 			RightClick.Instance.Hide();
@@ -168,7 +175,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		ResetPartsAndGroups();
 		Assembly = new();
 
-		OutputManager.Instance.UpdateMenu();
+		EditingOutputManager.Instance.UpdateMenu();
 		OutputsMenu.Hide();
 
 		BottomBar.UpdateNameText("");
@@ -213,7 +220,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	// main generatepart method (notice its private)
 	private Part GeneratePart(BasePart bp) {
-		GameObject newPart = Instantiate(bp.Prefab, MainPartsContainer);
+		GameObject newPart = Instantiate(bp.Prefab, GameManager.Instance.MainPartsContainer);
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
@@ -224,65 +231,23 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 	#endregion
 
-	#region Simulation
-	public void StartSimulating() {
+	public void BeginEditing() {
+		SelectionManager.Instance.enabled = true;
+	}
+
+	public void ClearEditing() {
 		SelectionManager.Instance.Clear();
 		SelectionManager.Instance.enabled = false;
 		TransformTools.Instance.active = false;
-		//TransformTools.enabled = false;
 
-		DeselectAllParts();
-		ReturnAllPartsToMain();
-		HideAllPartsForSimulation();
+		DestroyEditingParts();
 	}
 
-	public void StopSimulating() {
-		SelectionManager.Instance.enabled = true;
-		//TransformTools.enabled = true;
-
-		ShowAllPartsAfterSimulation();
-	}
-
-	public void ReturnAllPartsToMain() {
+	void DestroyEditingParts() {
 		foreach (Part part in Assembly.Parts) {
-			part.transform.parent = MainPartsContainer;
+			Destroy(part.gameObject);
 		}
 	}
-
-	void HideAllPartsForSimulation() {
-		foreach (Part part in Assembly.Parts) {
-			part.gameObject.SetActive(false);
-		}
-	}
-
-	void ShowAllPartsAfterSimulation() {
-		foreach (Part part in Assembly.Parts) {
-			part.gameObject.SetActive(true);
-		}
-	}
-
-	/// <summary>
-	/// Find and trigger all parts with nonstatic components, call the functions based on the state
-	/// </summary>
-	/// <param name="state">0-start simulating 1-stop simulating</param>
-	void TriggerNonStaticFunctions(int state) {
-		NonStaticPart[] nonStaticParts = Assembly.Parts
-			.Where(p => p.GetComponent<NonStaticPart>() != null) // optimize this
-			.Select(p => p.GetComponent<NonStaticPart>())
-			.ToArray();
-
-		switch (state) {
-		case 0: //start
-			foreach (var part in nonStaticParts)
-				part.OnStartSimulating();
-			break;
-		case 1:
-			foreach (var part in nonStaticParts)
-				part.OnStopSimulating();
-			break;
-		}
-	}
-	#endregion
 
 	#region Selection
 	void DeselectAllParts() {

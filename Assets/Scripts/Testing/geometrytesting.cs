@@ -60,7 +60,7 @@ public class geometrytesting : MonoBehaviour {
 				? Color.green 
 				: Color.red;
 
-			DebugExtra.DrawPoint(points[i], pointsize, color);
+			DebugExtra.DrawPoint(points[i], color, pointsize);
 		}
 	}
 }

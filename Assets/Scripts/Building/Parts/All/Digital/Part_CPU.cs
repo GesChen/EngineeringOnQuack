@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using static PartInternalFunctions;
 
 public class Part_CPU : NonStaticPart {
 	public override string PartName => "CPU";
@@ -419,55 +420,45 @@ public class Part_CPU : NonStaticPart {
 	}
 
 
-	public class SPart_CPU : Assembly.SPart {
+	public class CPart : Construct.Part {
 		public string Script; // could use bytearray but dont wanna risk issues w encoding into json
+
+		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+			var newCPU = instantiatedPart.GetComponent<Part_CPU>();
+
+			newCPU.Script = 
+				Script != null
+				? ScriptSaveLoad.ConvertStringToScript(Script)
+				: null;
+
+			// subscribe to print on a delay
+			// need to delay so internalfunctions.onprint is guaranteed
+			// to have been nulled
+			// cuz it all runs off the same onstartsimulating event
+			// and the order is random
+			// but the fields can be copied over first so that's what we do here 
+			newCPU.StartCoroutine(newCPU.DelayScriptSetup());
+		}
 	}
 
-	public override void OnStopSimulating() {
-		running = false;
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var cpu = new CPart();
 
-		hasTick = false;
-		tickFunc = null;
-	}
-
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
-
-		newCPU.Script = Script;
-		newCPU.running = running;
-		newCPU.Interpreter = Interpreter;
-		newCPU.Memory = Memory;
-		newCPU.Evaluator = Evaluator;
-		newCPU.hasTick = hasTick;
-		newCPU.tickFunc = tickFunc;
-
-		// subscribe to print on a delay
-		// need to delay so internalfunctions.onprint is guaranteed
-		// to have been nulled
-		// cuz it all runs off the same onstartsimulating event
-		// and the order is random
-		// but the fields can be copied over first so that's what we do here 
-		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
-	}
-
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CPU();
-
-		sp.CopyMembers(SPart);
-		sp.Script =
+		cpu.CopyMembers(CPart);
+		cpu.Script =
 			Script != null
 			? ScriptSaveLoad.ConvertScriptToString(Script)
 			: null;
 
-		SPart = sp;
+		CPart = cpu;
 	}
 
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
-		var sp = (SPart_CPU)originalSPart; // if this errors then something has gone wrong
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var cpa = (CPart)originalCPart; // if this errors then something has gone wrong
 
 		Script = 
-			sp.Script != null
-			? ScriptSaveLoad.ConvertStringToScript(sp.Script)
+			cpa.Script != null
+			? ScriptSaveLoad.ConvertStringToScript(cpa.Script)
 			: null;
 	}
 }

@@ -100,9 +100,9 @@ public class TransformTools : Singleton<TransformTools> {
 		else if (!local)
 			transform.rotation = Quaternion.identity;
 
-		snapping = Conatrols.IM.Building.Snap.IsPressed();
+		snapping = Conatrols.IM.Editing_Building.Snap.IsPressed();
 
-		aligning = Conatrols.IM.Building.Align.IsPressed();
+		aligning = Conatrols.IM.Editing_Building.Align.IsPressed();
 
 		// may change later
 		if (aligning) snapping = false;

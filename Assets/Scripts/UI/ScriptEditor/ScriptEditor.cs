@@ -115,11 +115,11 @@ public class ScriptEditor : MonoBehaviour {
 	
 	#region Setup
 	void SubscribeToShortcuts() {
-		Conatrols.IM.Editing.Copy.performed		+= _ => Copy();
-		Conatrols.IM.Editing.Cut.performed		+= _ => Cut();
-		Conatrols.IM.Editing.Paste.performed	+= _ => Paste();
-		Conatrols.IM.Editing.Undo.performed		+= _ => history.Undo();
-		Conatrols.IM.Editing.Redo.performed		+= _ => history.Redo();
+		Conatrols.IM.Editing_General.Copy.performed		+= _ => Copy();
+		Conatrols.IM.Editing_General.Cut.performed		+= _ => Cut();
+		Conatrols.IM.Editing_General.Paste.performed	+= _ => Paste();
+		Conatrols.IM.Editing_General.Undo.performed		+= _ => history.Undo();
+		Conatrols.IM.Editing_General.Redo.performed		+= _ => history.Redo();
 	}
 	#endregion
 
@@ -1088,15 +1088,15 @@ public class ScriptEditor : MonoBehaviour {
 	void HandleKeyboardNavgation() {
 		if (carets.Count == 0) return;
 
-		if (Conatrols.IsPressed(Key.Escape))
+		if (Conatrols.Keyboard.Presses.Contains(Key.Escape))
 			Escape();
 
 		// normal arrow keys only for now, move to seperate if needed
 		Vector2Int movement = Vector2Int.zero;
-		if (Conatrols.IsUsed(Key.UpArrow)) movement.y--;
-		if (Conatrols.IsUsed(Key.DownArrow)) movement.y++;
-		if (Conatrols.IsUsed(Key.LeftArrow)) movement.x--;
-		if (Conatrols.IsUsed(Key.RightArrow)) movement.x++;
+		if (Conatrols.Keyboard.Presses.Contains(Key.UpArrow)) movement.y--;
+		if (Conatrols.Keyboard.Presses.Contains(Key.DownArrow)) movement.y++;
+		if (Conatrols.Keyboard.Presses.Contains(Key.LeftArrow)) movement.x--;
+		if (Conatrols.Keyboard.Presses.Contains(Key.RightArrow)) movement.x++;
 
 		if (movement.sqrMagnitude == 0) return;
 
@@ -1483,16 +1483,16 @@ public class ScriptEditor : MonoBehaviour {
 		if (c.HasSelection)
 			DeleteSelection(c, line);
 
-		else if (Conatrols.IsUsed(Key.Backspace))
+		else if (Conatrols.Keyboard.Presses.Contains(Key.Backspace))
 			Backspace(c, line);
 
-		else if (Conatrols.IsUsed(Key.Delete))
+		else if (Conatrols.Keyboard.Presses.Contains(Key.Delete))
 			Delete(c, line);
 
 		line = lines[c.head.y];
 		
 		// adders
-		if (Conatrols.IsUsed(Key.Enter)) {
+		if (Conatrols.Keyboard.Presses.Contains(Key.Enter)) {
 			bool splitText = !Conatrols.Keyboard.Modifiers.Shift;
 			bool addDownwards = !Conatrols.Keyboard.Modifiers.Ctrl;
 
@@ -1500,7 +1500,7 @@ public class ScriptEditor : MonoBehaviour {
 
 			history.RecordChange(); // after adding
 		} else 
-		if (Conatrols.IsUsed(Key.Tab))
+		if (Conatrols.Keyboard.Presses.Contains(Key.Tab))
 			Tab(c, line);
 
 		else

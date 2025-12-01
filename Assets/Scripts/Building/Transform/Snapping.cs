@@ -35,8 +35,7 @@ public class Snapping {
 			rayDir = -hit.normal;
 		}
 
-		var verts = new Vector3[part.basePart.AllVerts.Length];
-		part.basePart.AllVerts.CopyTo(verts, 0);
+		var verts = part.basePart.AllVerts;
 
 		part.transform.TransformPoints(verts);
 

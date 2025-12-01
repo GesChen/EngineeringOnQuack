@@ -2,14 +2,20 @@ using System;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager> {
+	public Transform MainPartsContainer;
+	public Transform CreationsContainer;
+
+	public Action OM_DestroyAssembly;
+	public Action BM_TryLoadAssembly;
+	public Action<string> WM_LoadCollection;
+	public Action BM_ClearEditing;
+	public Action OM_AssembleFromEditing;
+	public Action OM_Assemble;
+	public Action OM_BeginOperating;
 
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
 		base.Awake();
-
-		// reset events
-		OnStartSimulating = null;
-		OnStopSimulating = null;
 
 		Config.Fonts.Reset();
 	}
@@ -17,17 +23,61 @@ public class GameManager : Singleton<GameManager> {
 	void Start() {
 		UnityEngine.Rendering.DebugManager.instance.enableRuntimeUI = false;
 		Application.targetFrameRate = Config.FPS_LIMIT;
+
+		// manually enter playing to start for test
+		WM_LoadCollection("playing");
+		// context is handled by CO
+
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
 	}
 
-	public void StartSimulating() {
-		OnStartSimulating?.Invoke();
+	// someone should call this to begin 
+	// store a desired assembly in BM before calling
+	// or it will make a new one
+	public void BeginEditing() {
+		if (ContextManager.CurrentlyInContext<Contexts.Operating>()) {
+			OM_DestroyAssembly();
+		}
+
+		BM_TryLoadAssembly();
+
+		Cursor.lockState = CursorLockMode.None;
+		Cursor.visible = true;
+
+		WM_LoadCollection("editing");
+		ContextManager.EnterContext<Contexts.Editing>();
 	}
 
-	public void StopSimulating() {
-		OnStopSimulating?.Invoke();
+	public void ReturnToPlaying(bool destroyAssemblyIfOperating = false) {
+		if (ContextManager.CurrentlyInContext<Contexts.Editing>()) {
+			BM_ClearEditing();
+		} else {
+			if (destroyAssemblyIfOperating)
+				OM_DestroyAssembly();
+		}
+
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
+
+		WM_LoadCollection("playing");
+		ContextManager.EnterContext<Contexts.Playing>();
 	}
 
-	// should hopefully call its awake and nulling before everything else
-	public event Action OnStartSimulating; 
-	public event Action OnStopSimulating;
+	// put it here bc
+	// 1. might add extra processing
+	// 2. consolidate all into gm
+	// OM expects to assemble to be set before calling this btw
+	public void AssembleFromEditing() {
+		BM_ClearEditing();
+
+		OM_AssembleFromEditing();
+	}
+
+	public void Operate() {
+		OM_BeginOperating();
+
+		WM_LoadCollection("operating");
+		ContextManager.EnterContext<Contexts.Operating>();
+	}
 }

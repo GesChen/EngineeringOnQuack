@@ -114,7 +114,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 	/// dont call this except from windowmanager, otherwise generated windows
 	/// wont get cleaned up properly
 	/// </summary>
-	public LiveWindow Realise(CWindow window) {
+	internal LiveWindow Realise(CWindow window) {
 #if DEBUGMODE
 		var sw = new System.Diagnostics.Stopwatch();
 		sw.Start();
@@ -150,6 +150,7 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		SetFull(contentParent);
 
 		// items
+		if (window.Items != null) 
 		foreach (var item in window.Items) {
 			RealiseItem(item, contentParent);
 		}

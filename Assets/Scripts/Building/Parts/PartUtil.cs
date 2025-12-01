@@ -11,7 +11,7 @@ public static class PartUtil {
 	public static Vector3[] WorldSpaceVertsOfPart(Part part) {
 		Transform obj = part.transform;
 
-		Vector3[] verts = part.basePart.AllVerts.ToArray();
+		Vector3[] verts = part.basePart.AllVerts;
 /*
 		for (int v = 0; v < rawVerts.Length; v++)
 			transformed[v] = obj.TransformPoint(rawVerts[v]);*/

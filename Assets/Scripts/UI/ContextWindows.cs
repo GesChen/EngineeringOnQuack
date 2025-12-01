@@ -6,52 +6,27 @@ using UnityEngine;
 
 public static class ContextWindows {
 	// i highk cant think of a better name for this 
-	public struct WindowCollection {
-		public Type Context;
-		public CWindow[] Windows;
-		public PMenu.Window[] Menus; 
-		public Action[] Sets;
 
-		public WindowCollection(
-			Type context,
-			CWindow[] windows,
-			PMenu.Window[] menus,
-			Action[] sets) {
+	internal static WindowCollection GetCollection(string name) =>
+		name switch {
+			"playing" => PlayingWindows,
+			"editing" => EditingWindows,
+			"operating" => OperatingWindows
+		};
 
-			Context = context;
-			Windows = windows;
-			Menus = menus;
-			Sets = sets;
-		}
-	}
-
-	// possibly the most cursed thing ever written. however? it works? 
-	// because the issue is that the custom setters need to be called
-	// before the things can be accessed and like at all accessed
-	// kinda complicated yeah but it works so
-	public static WindowCollection MakeCollection(
-		Type context,
-		Action[] sets,
-		Func<(CWindow[] windows, PMenu.Window[] menus)> getter
-		) {
-
-		foreach (var setter in sets) {
-			setter();
-		}
-
-		var (windows, menus) = getter();
-
-		return new(context, windows, menus, sets);
-	}
-
-	static T[] Conglomerate<T>(params T[][] lists) =>
-		lists
-		.SelectMany(l => l)
-		.ToArray();
+	static WindowCollection PlayingWindows =>
+		MakeCollection(
+		new Action[] {
+			PlayingMainUI.Set
+		},
+		() => (
+		Conglomerate(
+			PlayingMainUI.Windows
+		),
+		new PMenu.Window[0]));
 
 	static WindowCollection EditingWindows => 
 		MakeCollection(
-		typeof(Contexts.Editing),
 		new Action[] {
 			RightClickMenus.Set,
 			TransformToolsMenu.Set,
@@ -82,47 +57,56 @@ public static class ContextWindows {
 		))
 	);
 
-	static WindowCollection SimulatingWindows => 
+	static WindowCollection OperatingWindows => 
 		MakeCollection(
-		typeof(Contexts.Simulating),
 		new Action[] {
-			SimulatingMainUI.Set
+			OperatingMainUI.Set
 		},
 		() => (
 		Conglomerate(
-			SimulatingMainUI.Windows
+			OperatingMainUI.Windows
 		),
 		Conglomerate(
-			SimulatingMainUI.Menus
+			OperatingMainUI.Menus
 		))
 	);
 
-	public static WindowCollection[] WindowCollections => new[] {
-		EditingWindows,
-		SimulatingWindows
-	};
+	public struct WindowCollection {
+		public CWindow[] Windows;
+		public PMenu.Window[] Menus;
+		public Action[] Sets;
 
-	public static WindowCollection? FindCollectionByContext(IContext context) {
-		// search for closest window candidate
-		// for now we just search downwards cuz idk how we'd search up
+		public WindowCollection(
+			CWindow[] windows,
+			PMenu.Window[] menus,
+			Action[] sets) {
 
-		while (context != null) {
-			var tryget = GetCollectionStrict(context);
-			if (tryget.HasValue) {
-				return tryget.Value;
-			}
-
-			context = context.Parent;
+			Windows = windows;
+			Menus = menus;
+			Sets = sets;
 		}
-		return null;
 	}
 
-	static WindowCollection? GetCollectionStrict(IContext context) {
-		Type type = context.GetType();
-		
-		return 
-			WindowCollections
-			.Select<WindowCollection, WindowCollection?>(wc => wc)
-			.FirstOrDefault(wc => wc.Value.Context == type);
+	// possibly the most cursed thing ever written. however? it works? 
+	// because the issue is that the custom setters need to be called
+	// before the things can be accessed and like at all accessed
+	// kinda complicated yeah but it works so
+	public static WindowCollection MakeCollection(
+		Action[] sets,
+		Func<(CWindow[] windows, PMenu.Window[] menus)> getter
+		) {
+
+		foreach (var setter in sets) {
+			setter();
+		}
+
+		var (windows, menus) = getter();
+
+		return new(windows, menus, sets);
 	}
+
+	static T[] Conglomerate<T>(params T[][] lists) =>
+		lists
+		.SelectMany(l => l)
+		.ToArray();
 }
