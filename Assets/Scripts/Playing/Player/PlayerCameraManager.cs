@@ -69,7 +69,7 @@ public class PlayerCameraManager : MonoBehaviour {
 
 	bool criterion => ContextManager.CurrentlyInContextStrict<Contexts.Playing>()
 			|| (ContextManager.CurrentlyInContext<Contexts.Operating>()
-			&& !ContextManager.CurrentlyInContext<Contexts.InCamera>());
+			&& !ContextManager.CurrentlyInContext<Contexts.Operating.InCamera>());
 	void Update() {
 		if (!criterion) return;
 

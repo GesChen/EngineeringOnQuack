@@ -32,11 +32,11 @@ public class ContextObserver : Singleton<ContextObserver> {
 		int count = selectedTransforms.Length;
 
 		if (UIHovers.AnyHovers()) {
-			ContextManager.EnterContext<OverUI>();
+			ContextManager.EnterContext<Editing.OverUI>();
 		} else {
-			ContextManager.EnterContext<InWorld>();
+			ContextManager.EnterContext<Editing>();
 
-			if (count == 0) ContextManager.EnterContext<NoSelection>();
+			if (count == 0) ContextManager.EnterContext<Editing.NoSelection>();
 			else {
 				// groupcheck in selectionmanager will enter groupselection 
 				// by itself so only if it fails then enter 
@@ -44,11 +44,11 @@ public class ContextObserver : Singleton<ContextObserver> {
 
 				if (!isGroup) {
 					if (count == 1) {
-						var c = ContextManager.EnterContext<SingleSelection>();
+						var c = ContextManager.EnterContext<Editing.SingleSelection>();
 						c.Selected = selectedTransforms[0];
 						c.SelectedBasePartID = BPids[0];
 					} else {
-						var c = ContextManager.EnterContext<MultiSelection>();
+						var c = ContextManager.EnterContext<Editing.MultiSelection>();
 						c.Selected = selectedTransforms;
 						c.SelectedBasePartIDs = BPids;
 					}

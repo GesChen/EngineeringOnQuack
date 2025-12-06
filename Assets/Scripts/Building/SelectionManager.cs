@@ -80,7 +80,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 		// group should not be null if any were in group
 		if (group == null) return false;
 
-		var context = ContextManager.EnterContext<Contexts.GroupSelection>();
+		var context = ContextManager.EnterContext<Contexts.Editing.GroupSelection>();
 		context.AllGroupedParts = allGroupedParts;
 		context.AllPartsOfOneGroup = allPartsOfOneGroup;
 		context.AllGroupPartsSelected = false;

@@ -94,9 +94,9 @@ public class Part_CPU : NonStaticPart {
 
 	static List<Transform> GetSelectedCPUs() {
 		List<Transform> cpus = new();
-		if (RightClick.Instance.ContextAtClick is Contexts.SingleSelection ss)
+		if (RightClick.Instance.ContextAtClick is Contexts.Editing.SingleSelection ss)
 			cpus = new() { ss.Selected };
-		else if (RightClick.Instance.ContextAtClick is Contexts.MultiSelection ms)
+		else if (RightClick.Instance.ContextAtClick is Contexts.Editing.MultiSelection ms)
 			cpus = new(ms.Selected);
 
 		return cpus.Where(t => t.GetComponent<Part_CPU>() != null).ToList();

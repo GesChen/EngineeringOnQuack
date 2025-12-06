@@ -65,11 +65,11 @@ public class RightClick : Singleton<RightClick> {
 		out PMenu.Window.CustomizationData customization) { 
 		PMenu.Window window =
 			context switch {
-				C.InWorld or 
-				C.NoSelection or 
-				C.SingleSelection or 
-				C.MultiSelection or
-				C.GroupSelection => RCM.inWorldUniversalMenu,
+				C.Editing or 
+				C.Editing.NoSelection or 
+				C.Editing.SingleSelection or 
+				C.Editing.MultiSelection or
+				C.Editing.GroupSelection => RCM.inWorldUniversalMenu,
 				_ => null,
 			};
 
@@ -79,28 +79,28 @@ public class RightClick : Singleton<RightClick> {
 		}
 
 		int[] indices = context switch {
-			C.InWorld or C.NoSelection	=> RCM.Customizations.Indices.Default,
-			C.SingleSelection			=> RCM.Customizations.Indices.SingleSelection,
-			C.MultiSelection			=> RCM.Customizations.Indices.MultiSelection,
-			C.GroupSelection gc			=> GetGroupIndices(gc),
+			C.Editing or C.Editing.NoSelection	=> RCM.Customizations.Indices.Default,
+			C.Editing.SingleSelection			=> RCM.Customizations.Indices.SingleSelection,
+			C.Editing.MultiSelection			=> RCM.Customizations.Indices.MultiSelection,
+			C.Editing.GroupSelection gc			=> GetGroupIndices(gc),
 			_ => Enumerable.Range(0, window.Items.Count).ToArray() // default just select everything
 		};
 
 		float? width = context switch {
-			C.InWorld or C.NoSelection	=> RCM.Customizations.Widths.Default,
-			C.SingleSelection			=> RCM.Customizations.Widths.SingleSelection,
-			C.MultiSelection			=> RCM.Customizations.Widths.MultiSelection,
-			C.GroupSelection gc			=> GetGroupWidths(gc),
+			C.Editing or C.Editing.NoSelection	=> RCM.Customizations.Widths.Default,
+			C.Editing.SingleSelection			=> RCM.Customizations.Widths.SingleSelection,
+			C.Editing.MultiSelection			=> RCM.Customizations.Widths.MultiSelection,
+			C.Editing.GroupSelection gc			=> GetGroupWidths(gc),
 			_ => null
 		};
 
 		// part extensions (only on ss for now?)
-		if (context is C.SingleSelection or C.MultiSelection) {
+		if (context is C.Editing.SingleSelection or C.Editing.MultiSelection) {
 			List<int> selectedBPIDs = new();
-			if (context is C.SingleSelection ss)
+			if (context is C.Editing.SingleSelection ss)
 				selectedBPIDs = new() { ss.SelectedBasePartID };
 			else 
-				selectedBPIDs = ((C.MultiSelection)context).SelectedBasePartIDs.ToList();
+				selectedBPIDs = ((C.Editing.MultiSelection)context).SelectedBasePartIDs.ToList();
 
 			// find part extension(s)
 			var pExs = RCM_Extensions.PartExtensions
@@ -130,7 +130,7 @@ public class RightClick : Singleton<RightClick> {
 	/// Gets the universal indices for the group contexts
 	/// which needs special processing
 	/// </summary>
-	int[] GetGroupIndices(C.GroupSelection context) {
+	int[] GetGroupIndices(C.Editing.GroupSelection context) {
 		switch ((context.AllGroupedParts, context.AllPartsOfOneGroup)) {
 			case (false, false):	return RCM.Customizations.Indices.AGPF_APOOGF;
 			case (true, false):		return RCM.Customizations.Indices.AGPT_APOOGF;
@@ -143,7 +143,7 @@ public class RightClick : Singleton<RightClick> {
 	}
 
 	// we wet cuz i cant be fucked to figure out a dryer solution atm
-	float GetGroupWidths(C.GroupSelection context) {
+	float GetGroupWidths(C.Editing.GroupSelection context) {
 		switch ((context.AllGroupedParts, context.AllPartsOfOneGroup)) {
 			case (false, false):	return RCM.Customizations.Widths.AGPF_APOOGF;
 			case (true, false):		return RCM.Customizations.Widths.AGPT_APOOGF;

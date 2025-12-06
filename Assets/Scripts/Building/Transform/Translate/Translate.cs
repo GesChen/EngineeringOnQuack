@@ -242,7 +242,7 @@ public class Translate : MonoBehaviour {
 			HandleSnapping();
 
 		if (main.aligning 
-			&& ContextManager.CurrentlyInContext<Contexts.SingleSelection>()
+			&& ContextManager.CurrentlyInContext<Contexts.Editing.SingleSelection>()
 			&& numaxes == 3)
 			HandleAligning(cameraPos, cameraVec);
 
@@ -322,7 +322,7 @@ public class Translate : MonoBehaviour {
 
 		DebugExtra.DrawArrow(cameraPos, cameraVec);
 
-		ContextManager.CurrentlyInContext<Contexts.SingleSelection>(out var ss);
+		ContextManager.CurrentlyInContext<Contexts.Editing.SingleSelection>(out var ss);
 		var sel = ss.Selected;
 		var selP = sel.GetComponent<Part>();
 

@@ -95,7 +95,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void HandleInput() {
 		if (Conatrols.IM.Editing_Building.Delete.WasPressedThisFrame() &&
-			ContextManager.CurrentlyInContext<Contexts.InWorld>(out _)) {
+			ContextManager.CurrentlyInContext<Contexts.Editing>(out _)) {
 
 			DeleteSelection();
 			RightClick.Instance.Hide();
