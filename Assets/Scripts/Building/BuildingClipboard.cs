@@ -48,7 +48,7 @@ public class BuildingClipboard {
 
 		parts.AddRange(moreParts);
 
-		clip.Parts = parts.Select(p => ConvertToCPart(p)).ToArray();
+		clip.Parts = parts.Select(p => (Construct.Part)p).ToArray();
 
 		// rerandomize the ccs in the board
 		var cbCCs = clip.Parts

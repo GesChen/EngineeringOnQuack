@@ -25,27 +25,25 @@ public class ContextObserver : Singleton<ContextObserver> {
 	}
 
 	public Func<int> RequestSelectionCount;
-	private int selectionCount;
 	public Func<bool> GroupCheck;
 	public Func<(Transform[] selectedTransforms, int[] BPids)> GetCurrentSelectionInfo;
 	void CheckEditing() {
-		selectionCount = RequestSelectionCount?.Invoke() ?? throw new("RequestSelectionCount not subscribed to");
+		var (selectedTransforms, BPids) = GetCurrentSelectionInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to");
+		int count = selectedTransforms.Length;
 
 		if (UIHovers.AnyHovers()) {
 			ContextManager.EnterContext<OverUI>();
 		} else {
 			ContextManager.EnterContext<InWorld>();
 
-			if (selectionCount == 0) ContextManager.EnterContext<NoSelection>();
+			if (count == 0) ContextManager.EnterContext<NoSelection>();
 			else {
 				// groupcheck in selectionmanager will enter groupselection 
 				// by itself so only if it fails then enter 
 				bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
 
 				if (!isGroup) {
-					var (selectedTransforms, BPids) = GetCurrentSelectionInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to"); ;
-
-					if (selectionCount == 1) {
+					if (count == 1) {
 						var c = ContextManager.EnterContext<SingleSelection>();
 						c.Selected = selectedTransforms[0];
 						c.SelectedBasePartID = BPids[0];

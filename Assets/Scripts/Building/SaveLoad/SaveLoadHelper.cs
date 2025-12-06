@@ -308,26 +308,6 @@ public static class SaveLoadHelper {
 		return reconstructed;
 	}
 
-	internal static Construct.Part ConvertToCPart(Part other) {
-		Vector3 localOrigin = GameManager.Instance.MainPartsContainer.transform.position;
-		Construct.Part cpa = new() {
-			basePartID = other.basePart.ID,
-			id = other.ID,
-			position = other.transform.position - localOrigin,
-			rotation = other.transform.rotation,
-			scale = other.transform.localScale,
-
-			color = other.color,
-			compositionID = other.composition.ID
-		};
-
-		if (other.IsNonStaticPart(out var nsp)) {
-			nsp.FinalizeCPartConversion(ref cpa);
-		}
-
-		return cpa;
-	}
-
 	private static void ReconstructPart(Assembly reconstructed, Construct.Part part) {
 		Part newPart = BuildingManager.Instance.MakeNewPart(part.basePartID, false);
 

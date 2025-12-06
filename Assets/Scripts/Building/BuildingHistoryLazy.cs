@@ -31,7 +31,7 @@ public class BuildingHistory {
 		// find additions
 		var assem = BuildingManager.Instance.Assembly;
 		var newParts = assem.Parts.Where(p => !LastVersion.Parts.Any(lp => lp.id == p.ID))
-			.Select(np => Assembly.ConvertToCPart(np)).ToList();
+			.Select(np => (Construct.Part)np).ToList();
 
 		// find deletions
 		var delParts = LastVersion.Parts.Where(p => !assem.Parts.Any(lp => lp.ID == p.id))
@@ -40,7 +40,7 @@ public class BuildingHistory {
 		// find modifications
 		// things where id is the same but the properties arent
 		var modParts = assem.Parts.Where(p => LastVersion.Parts.Any(lp => lp.id == p.ID))
-			.Select(p => Assembly.ConvertToCPart(p))
+			.Select(p => (Construct.Part)p)
 			.Select(p => 
 				GetChangesForObject(
 					LastVersion.Parts.FirstOrDefault(op => op.id == p.id), // matching cpa in last version

@@ -138,7 +138,6 @@ public static class BottomBar {
 						padding: new(innerpadding)
 					),
 					new(){
-	UIBarUtils.DynamicBarButton	(1, "Exit", () => OnExitPressed?.Invoke()),
 	UIBarUtils.DynamicBarFlyout	(1, "File", FileMenu.CWindow, 0, true),
 	UIBarUtils.DynamicBarFlyout	(1, "Tools", ToolsMenu.CWindow, 0, true),
 	UIBarUtils.DynamicBarSpace	(2),
@@ -148,6 +147,7 @@ public static class BottomBar {
 		.GetComponent<PComponents.InputField>().RealComponent 
 		as TMP_InputField),
 	UIBarUtils.DynamicBarSpace	(2),
+	UIBarUtils.DynamicBarButton	(1, "Exit", () => OnExitPressed?.Invoke()),
 	UIBarUtils.DynamicBarButton	(2, "Assemble", Assemble)
 					})
 			},

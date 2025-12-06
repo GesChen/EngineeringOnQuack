@@ -13,6 +13,7 @@ public class GameManager : Singleton<GameManager> {
 	public Action OM_Assemble;
 	public Action OM_BeginOperating;
 	public Action OM_SetCurrentAsLoadTarget;
+	public Action SM_ResetState;
 
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
@@ -43,6 +44,8 @@ public class GameManager : Singleton<GameManager> {
 			OM_DestroyCreation();
 		}
 
+		SM_ResetState();
+
 		BM_TryLoadAssembly();
 
 		Cursor.lockState = CursorLockMode.None;
@@ -64,7 +67,7 @@ public class GameManager : Singleton<GameManager> {
 		Cursor.visible = false;
 
 		WM_LoadCollection("playing");
-		ContextManager.EnterContext<Contexts.Playing>();
+		ContextManager.EnterContextStrict<Contexts.Playing>();
 	}
 
 	// put it here bc

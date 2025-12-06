@@ -41,6 +41,8 @@ public class PortVisualizer : Singleton<PortVisualizer> {
 	}
 
 	public void ForceVizUpdate() {
+		if (!Visualizing) return;
+
 		DestroyAllNumbers();
 		CreateNumbers();
 	}

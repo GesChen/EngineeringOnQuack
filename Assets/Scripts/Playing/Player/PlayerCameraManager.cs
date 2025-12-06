@@ -16,6 +16,7 @@ public class PlayerCameraManager : MonoBehaviour {
 	public Transform Stick; 
 	public float StickAngle;
 	public float stickCameraOffset;
+	public GameObject FaceGroup;
 
 	[Header("perspective")]
 	public bool FirstPerson;
@@ -34,6 +35,7 @@ public class PlayerCameraManager : MonoBehaviour {
 	public float tpDistSmooth = 5;
 	public float tpNeckRotationCoef;
 	public float tpCollisionOutset;
+	public float hideFaceTpDist;
 
 	public Vector4 tpCloseFalloff;
 
@@ -56,18 +58,20 @@ public class PlayerCameraManager : MonoBehaviour {
 	public float firstPersonYawFreedom;
 	public float thirdPersonYawFreedom;
 	public float movingYawMatchSmooth;
+	public float bodyYawSmooth;
 
 	float bodyYaw;
+	float smoothedBodyYaw;
 
 	void Start() {
 		transSFov = 2 * R;
 	}
 
-	void Update() {
-		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()
+	bool criterion => ContextManager.CurrentlyInContextStrict<Contexts.Playing>()
 			|| (ContextManager.CurrentlyInContext<Contexts.Operating>()
-			&& !ContextManager.CurrentlyInContext<Contexts.InCamera>())) 
-			return;
+			&& !ContextManager.CurrentlyInContext<Contexts.InCamera>());
+	void Update() {
+		if (!criterion) return;
 
 		HandlePerspectiveZoom();
 
@@ -189,6 +193,10 @@ public class PlayerCameraManager : MonoBehaviour {
 				pos, 
 				Quaternion.Euler(controller.pitch, controller.yaw, 0));
 		}
+	}
+
+	void UpdateModel() {
+		FaceGroup.SetActive(tpDistance > hideFaceTpDist);
 
 		Neck.localRotation = Quaternion.Euler(controller.pitch * (FirstPerson ? 1 : tpNeckRotationCoef), 0, 0);
 
@@ -208,11 +216,10 @@ public class PlayerCameraManager : MonoBehaviour {
 		if (controller.movement.sqrMagnitude > 0)
 			bodyYaw = HF.AngleLerp(bodyYaw, controller.yaw, movingYawMatchSmooth * Time.deltaTime);
 
-		transform.rotation = Quaternion.Euler(0, bodyYaw, 0);
-	}
+		smoothedBodyYaw = HF.AngleLerp(smoothedBodyYaw, bodyYaw, bodyYawSmooth * Time.deltaTime);
+		transform.rotation = Quaternion.Euler(0, smoothedBodyYaw, 0);
 
-	void UpdateModel() {
-		bool tpLeft = HF.AngleDiff(controller.yaw, bodyYaw) > 0;
+		bool tpLeft = HF.AngleDiff(controller.yaw, smoothedBodyYaw) > 0;
 
 		//Stick.localRotation = Quaternion.Euler(90, tpLeft ? -StickAngle : StickAngle, 0);
 

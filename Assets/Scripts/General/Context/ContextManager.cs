@@ -24,6 +24,14 @@ public static class ContextManager {
 		Changed();
 	}
 
+	public static void EnterContextStrict<C>() where C : IContext {
+		if (CurrentlyInContextStrict<C>()) return;
+
+		_current = Activator.CreateInstance<C>();
+
+		Changed();
+	}
+
 	public static C EnterContext<C>() where C : IContext {
 		if (CurrentlyInContext(out C instance)) {
 			return instance;

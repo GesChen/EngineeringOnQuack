@@ -54,6 +54,8 @@ public class SelectionManager : Singleton<SelectionManager> {
 			(PartSelection.Select(p => p.transform).ToArray(),
 			PartSelection.Select(p => p.basePart.ID).ToArray());
 
+		GameManager.Instance.SM_ResetState = ResetState;
+
 		// do processing in here since ui doesnt depend on language
 	}
 
@@ -97,6 +99,12 @@ public class SelectionManager : Singleton<SelectionManager> {
 			context.AllGroupPartsSelected = allSelected;
 		}
 		return true;
+	}
+
+	void ResetState() {
+		Selection = new();
+		PartSelection = Array.Empty<Part>();
+		PartSelectionHS = new();
 	}
 
 	void Update() {

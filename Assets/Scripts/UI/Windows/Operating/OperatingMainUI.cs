@@ -1,4 +1,4 @@
-`using System;
+using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -300,8 +300,8 @@ public static class OperatingMainUI {
 						padding: new(innerpadding)
 					),
 					new(){
-UIBarUtils.DynamicBarButton(2, "Stop Operating", () => OnExitPressed?.Invoke()),
-UIBarUtils.DynamicBarButton(2, "Edit Creation", () => OnEditPressed?.Invoke()),
+UIBarUtils.DynamicBarButton(1, "Exit", () => OnExitPressed?.Invoke()),
+UIBarUtils.DynamicBarButton(1, "Edit", () => OnEditPressed?.Invoke()),
 UIBarUtils.DynamicBarButton(1, "Destroy", () => OnDestroyPressed?.Invoke()),
 UIBarUtils.DynamicBarSpace(.5f),
 UIBarUtils.DynamicBarText(3, "name", .5f)

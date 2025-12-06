@@ -55,9 +55,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
-		OperatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.BeginEditing;
+		OperatingMainUI.TopBar.OnEditPressed = GameManager.Instance.BeginEditing;
 
-		BottomBar.OnExitPressed = GameManager.Instance.ReturnToPlaying;
+		BottomBar.OnExitPressed = () => GameManager.Instance.ReturnToPlaying();
 		BottomBar.OnNewPressed = New;
 		BottomBar.OnAssemble = AssemblePressed;
 		BottomBar.OnNameChanged = ChangeName;
@@ -127,8 +127,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
 			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
 		else if (ConstructToLoad != null)
-			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad)
-		else 
+			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad);
+		else
 			Assembly = new();
 			
 		ConstructToLoadPath = null;
@@ -146,13 +146,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.UpdateNameText(name);
 	}
 
-	public void BeginEditing() {
-		SelectionManager.Instance.enabled = true;
-	}
-
 	public void ClearEditing() {
 		SelectionManager.Instance.Clear();
-		SelectionManager.Instance.enabled = false;
 		TransformTools.Instance.active = false;
 
 		DestroyEditingParts();

@@ -30,7 +30,7 @@ public class Assembly {
 
 	public Construct ConvertToConstruct() => new() {
 		Name = Name,
-		Parts = Parts.Select(p => ConvertToCPart(p)).ToList(),
+		Parts = Parts.Select(p => (Construct.Part)p).ToList(),
 		Groups = Groups.Select(group => (Construct.Group)group).ToList(),
 		Clipboard = Config.Building.Saving.SaveClipboard ? Clipboard : null,
 		Outputs = Outputs

@@ -106,9 +106,9 @@ public class OperatingManager : Singleton<OperatingManager> {
 	}
 
 	void StopOperating(bool destroy = false) {
-		CurrentlyOperating = null;
-
 		GameManager.Instance.ReturnToPlaying(destroy);
+
+		CurrentlyOperating = null;
 	}
 
 	void BeginOperating() {
