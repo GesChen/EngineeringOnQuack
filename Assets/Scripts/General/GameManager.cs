@@ -83,6 +83,9 @@ public class GameManager : Singleton<GameManager> {
 	public void Operate() {
 		OM_BeginOperating();
 
+		Cursor.lockState = CursorLockMode.None;
+		Cursor.visible = true;
+
 		WM_LoadCollection("operating");
 		ContextManager.EnterContext<Contexts.Operating>();
 	}

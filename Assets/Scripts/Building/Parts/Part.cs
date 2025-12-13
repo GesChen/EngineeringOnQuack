@@ -17,26 +17,6 @@ public class Part : MonoBehaviour {
 		}
 	}
 
-	public static explicit operator Construct.Part(Part other) {
-		Vector3 localOrigin = GameManager.Instance.MainPartsContainer.transform.position;
-		Construct.Part cpa = new() {
-			basePartID = other.basePart.ID,
-			id = other.ID,
-			position = other.transform.position - localOrigin,
-			rotation = other.transform.rotation,
-			scale = other.transform.localScale,
-
-			color = other.color,
-			compositionID = other.composition.ID
-		};
-
-		if (other.IsNonStaticPart(out var nsp)) {
-			nsp.FinalizeCPartConversion(ref cpa);
-		}
-
-		return cpa;
-	}
-
 	public PartGroup Group;
 
 	// might turn this into a separate class later but somehow not conflict or confuse with 

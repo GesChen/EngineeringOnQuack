@@ -325,7 +325,7 @@ public class Assembler : Singleton<Assembler> {
 						AxleAssembly = assemblyofpart,
 						ConnectedAssemblyIndex = connectionI,
 						JointPos = jointPos,
-						axis = (axle.endBPos - axle.endAPos).normalized
+						axis = ((Vector3)axle.endBPos - axle.endAPos).normalized
 					});
 				}
 			}

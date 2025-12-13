@@ -79,7 +79,28 @@ public class Construct {
 			for (int i = 0; i < points.Length; i++)
 				points[i] = m.MultiplyPoint3x4(points[i]);
 		}
+
+		public static explicit operator Part(global::Part other) {
+			Vector3 localOrigin = GameManager.Instance.MainPartsContainer.transform.position;
+			Part cpa = new() {
+				basePartID = other.basePart.ID,
+				id = other.ID,
+				position = other.transform.position - localOrigin,
+				rotation = other.transform.rotation,
+				scale = other.transform.localScale,
+
+				color = other.color,
+				compositionID = other.composition.ID
+			};
+
+			if (other.IsNonStaticPart(out var nsp)) {
+				nsp.FinalizeCPartConversion(ref cpa);
+			}
+
+			return cpa;
+		}
 	}
+
 	public class Group {
 		public List<int> PartIDs;
 
