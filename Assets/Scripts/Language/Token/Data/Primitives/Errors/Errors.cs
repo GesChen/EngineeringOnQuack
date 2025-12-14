@@ -4,11 +4,13 @@ public static class Errors {
 	public static Error NoScriptLoaded() => 
 		new($"[INTERNAL] No script loaded");
 	public static Error BadCode() => 
-		new($"[INTERNAL] How did this happen?");
+		new($"[INTERNAL] This error should never appear. If it does, congrats, my code sucks.");
 	public static Error InvalidArgumentCount(string funcName, int expected, int got) => 
 		new($"Function \"{funcName}\" expects {expected} args, got {got}");
 	public static Error InvalidArgumentType(string funcName, int index, string expected, string got) => 
 		new($"Function \"{funcName}\" expects {expected} in argument {index}, got {got} instead");
+	public static Error BadArgument(string funcName, int index, string reason) =>
+		new($"Bad argument in function \"{funcName}\" arg {index}: {reason}");
 	public static Error UnknownName(Token.T_Reference reference) => 
 		new($"Unknown name \"{reference.Name}\"");
 	public static Error UnknownName(string name) => 

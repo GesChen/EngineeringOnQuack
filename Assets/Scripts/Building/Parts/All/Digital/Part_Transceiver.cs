@@ -106,13 +106,13 @@ public class Part_Transceiver : NonStaticPart {
 			() => new T_Data(Type_Transceiver).SetThisMember("id", new Primitive.Number(Part.ID))
 		);
 
-	public static Action<string, string> OnPrintRequested;
+	public static Action<int, string, string> OnPrintRequested;
 	void Print(int id, string message) {
 		if (id != Part.ID) return;
 
 		if (string.IsNullOrEmpty(TargetOutputName)) return;
 
-		OnPrintRequested?.Invoke(TargetOutputName, message);
+		OnPrintRequested?.Invoke(CreationID, TargetOutputName, message);
 	}
 
 	#endregion

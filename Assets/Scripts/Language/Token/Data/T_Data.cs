@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static Primitive;
 
 public class T_Data : Token {
 	public string Name;
@@ -31,8 +30,8 @@ public class T_Data : Token {
 	}
 
 	// statics
-	public static T_Data Success = new Bool(true);
-	public static T_Data Fail = new Bool(false);
+	public static T_Data Success = new Primitive.Bool(true);
+	public static T_Data Fail = new Primitive.Bool(false);
 
 	#region methods
 	public virtual T_Data Copy() {
@@ -117,7 +116,7 @@ public class T_Data : Token {
 			// tostring global override
 			if (TTNC == 'S') {
 				// taking a page from python again
-				return new String($"<{FTN} object>"); // wo mnemory address
+				return new Primitive.String($"<{FTN} object>"); // wo mnemory address
 			}
 
 			// user defined, give reason

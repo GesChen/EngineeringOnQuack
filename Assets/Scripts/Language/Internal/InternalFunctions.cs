@@ -1,11 +1,13 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public static class InternalFunctions
-{
+public static class InternalFunctions {
+	public static Interpreter CurrentCaller; // set when the interpreter calls an IF
+
 	// for all internal functions, throwaway the arg at thisref since there is no "this"
 
 	// normal internal methods
@@ -25,9 +27,25 @@ public static class InternalFunctions
 			Debug.Log(message); // lol dont delete this debug log LMAO
 #endif
 
-		OnPrintCalled?.Invoke(T_Data.currentUseMemory.Interpreter.ID, message);
+		OnPrintCalled?.Invoke(CurrentCaller.ID, message);
 		
 		return T_Data.Success;
+	}
+
+	public static Func<int, double?> OnRequestTime;
+	public static T_Data time(T_Data _, List<T_Data> args) {
+		if (args.Count != 0) return Errors.InvalidArgumentCount("time", 0, args.Count);
+
+		int intID = CurrentCaller.ID;
+
+		foreach (var handler in OnRequestTime
+				.GetInvocationList().Cast<Func<int, double?>>()) {
+
+			double? call = handler(intID);
+
+			if (call != null) return new Primitive.Number(call.Value);
+		}
+		return Errors.BadCode();
 	}
 
 	// castings
@@ -117,7 +135,7 @@ public static class InternalFunctions
 	}
 
 	public static T_Data breakpoint(T_Data _, List<T_Data> __) {
-		Debug.Log(	"[INTERNAL] breakpoint hit");
+		Debug.Log("[INTERNAL] breakpoint hit");
 		return T_Data.Success;
 	}
 }

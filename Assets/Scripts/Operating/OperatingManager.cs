@@ -26,6 +26,9 @@ public class OperatingManager : Singleton<OperatingManager> {
 		OperatingMainUI.TopBar.OnEditPressed = GameManager.Instance.BeginEditing;
 		OperatingMainUI.TopBar.OnDestroyPressed = () => StopOperating(true);
 
+		InternalInputType.RequestCurrentlyOperatingID = () => 
+			CurrentlyOperating != null ? CurrentlyOperating.ID : -1;
+
 		SubscribeToShortcuts();
 
 		SetupOutputting();
@@ -36,9 +39,13 @@ public class OperatingManager : Singleton<OperatingManager> {
 	}
 
 	void SetupOutputting() {
-		Part_Transceiver.OnPrintRequested = (outname, message) => 
-			Instance.CurrentlyOperating.Outputs.FirstOrDefault(o => o.Name == outname)
-			.Print(message);
+		Part_Transceiver.OnPrintRequested = (cid, outname, message) => {
+			if (Instance.CurrentlyOperating != null
+				&& Instance.CurrentlyOperating.ID == cid) {
+				Instance.CurrentlyOperating.Outputs.FirstOrDefault(o => o.Name == outname)
+				.Print(message);
+			}
+		};
 		
 
 		static void UpdateAllOutputStates() {

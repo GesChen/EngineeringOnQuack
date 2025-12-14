@@ -5,8 +5,6 @@ using System.Linq;
 using UnityEngine;
 
 public static class PartInternalFunctions {
-	
-	
 	public static void ClearSubscriptions() {
 		CPU.ClearSubs();
 		Transceiver.ClearSubs();

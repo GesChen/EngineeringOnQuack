@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static PartInternalFunctions;
 
 public class Part_CPU : NonStaticPart {
 	public override string PartName => "CPU";
 
 	public Script Script;
 	public string DEBUG_CurrentScriptText; // for debugging purposes
+	public double CreationTime;
+
 	void Update() {
 		if (Script != null)
 			DEBUG_CurrentScriptText = Script.OriginalText;
@@ -271,7 +272,10 @@ public class Part_CPU : NonStaticPart {
 	IEnumerator DelayScriptSetup() {
 		yield return null;
 
+		CreationTime = Time.timeAsDouble;
+
 		InternalFunctions.OnPrintCalled += TryPrint;
+		InternalFunctions.OnRequestTime += TryGiveTime;
 		PartInternalFunctions.CPU.OnPortCalled += GetPort;
 		Memory.CPUGet += CPUGet;
 
@@ -301,7 +305,7 @@ public class Part_CPU : NonStaticPart {
 		Script = tryTokenize.Item1;
 
 		// reset modules
-		Interpreter = new();
+		Interpreter = new(CreationID);
 		Evaluator = new();
 		Memory = new(Interpreter, "main");
 
@@ -363,6 +367,12 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 
+	double? TryGiveTime(int intID) {
+		if (intID != Interpreter.ID) return null;
+
+		return Time.timeAsDouble - CreationTime;
+	}
+
 	T_Data GetPort(int interpreterID, int id) {
 		if (Interpreter == null) return null;
 		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
@@ -418,7 +428,6 @@ public class Part_CPU : NonStaticPart {
 			TryRun(tickFunc);
 		}
 	}
-
 
 	public class CPart : Construct.Part {
 		public string Script; // could use bytearray but dont wanna risk issues w encoding into json

@@ -9,6 +9,8 @@ public class Creation : MonoBehaviour {
 
 	public List<SubAssembled> SubAssemblies;
 
+	public int ID;
+
 	public struct SubAssembled {
 		public Transform Parent;
 		public List<(int pi, Transform Part)> Parts;

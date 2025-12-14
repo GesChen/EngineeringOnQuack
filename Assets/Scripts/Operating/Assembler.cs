@@ -35,6 +35,8 @@ public class Assembler : Singleton<Assembler> {
 		SetupPhysics(assembledSubs, parts);
 
 		assembled = CreateCreation(construct, assembledSubs);
+
+		SetAllNSPCreationIDS(assembledSubs, assembled);
 	}
 
 	// wrote this way if perhaps in the future cables or other
@@ -240,10 +242,19 @@ public class Assembler : Singleton<Assembler> {
 			new Output() {
 				Name = o
 			}).ToList();
+		component.ID = HF.UIDHashFunction();
 
 		return component;
 	}
 
+	void SetAllNSPCreationIDS(List<Creation.SubAssembled> subs, Creation creation) {
+		foreach (var sub in subs)
+			foreach (var part in sub.Parts)
+				if (part.Part.TryGetComponent(typeof(NonStaticPart), out var nsp))
+					((NonStaticPart)nsp).CreationID = creation.ID;
+	}
+
+	// --------- helper functs-----------------
 	void CalculateAssemblyMasses(List<Creation.SubAssembled> assembleds, List<Construct.Part> parts) {
 		for (int i = 0; i < assembleds.Count; i++) {
 			Creation.SubAssembled assembled = assembleds[i];

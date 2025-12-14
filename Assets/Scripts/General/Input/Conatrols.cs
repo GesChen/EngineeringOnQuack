@@ -49,11 +49,15 @@ public class Conatrols : MonoBehaviour {
 		public static MouseButton Right;
 
 		// add more when needed like the side ones
+		public static MouseButton Forward;
+		public static MouseButton Back;
 
 		public void Initialize() {
 			Left = new(IM.Mouse.Left);
 			Middle = new(IM.Mouse.Middle);
 			Right = new(IM.Mouse.Right);
+			Forward = new(IM.Mouse.Forward);
+			Back = new(IM.Mouse.Back);
 		}
 
 		public void Update() {
@@ -65,6 +69,8 @@ public class Conatrols : MonoBehaviour {
 			Left.Update();
 			Middle.Update();
 			Right.Update();
+			Forward.Update();
+			Back.Update();
 		}
 
 		public class MouseButton {
@@ -76,7 +82,6 @@ public class Conatrols : MonoBehaviour {
 			public bool DoubleClicked;
 
 			public MouseButton(InputAction binding) { Binding = binding; }
-
 
 			float lastClickTime;
 			Vector2 lastClickPos;
@@ -471,6 +476,51 @@ public class Conatrols : MonoBehaviour {
 				N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,
 			}
 */
+		}
+
+		// only real purpose of chatgpt
+		static readonly Dictionary<Key, string> KeyToNameLUT = new() {
+			// letters
+			{ Key.A,"a" },{ Key.B,"b" },{ Key.C,"c" },{ Key.D,"d" },{ Key.E,"e" },
+			{ Key.F,"f" },{ Key.G,"g" },{ Key.H,"h" },{ Key.I,"i" },{ Key.J,"j" },
+			{ Key.K,"k" },{ Key.L,"l" },{ Key.M,"m" },{ Key.N,"n" },{ Key.O,"o" },
+			{ Key.P,"p" },{ Key.Q,"q" },{ Key.R,"r" },{ Key.S,"s" },{ Key.T,"t" },
+			{ Key.U,"u" },{ Key.V,"v" },{ Key.W,"w" },{ Key.X,"x" },{ Key.Y,"y" },
+			{ Key.Z,"z" },
+
+			// number row
+			{ Key.Digit0,"0" },{ Key.Digit1,"1" },{ Key.Digit2,"2" },
+			{ Key.Digit3,"3" },{ Key.Digit4,"4" },{ Key.Digit5,"5" },
+			{ Key.Digit6,"6" },{ Key.Digit7,"7" },{ Key.Digit8,"8" },
+			{ Key.Digit9,"9" },
+
+			// numpad
+			{ Key.Numpad0,"n0" },{ Key.Numpad1,"n1" },{ Key.Numpad2,"n2" },
+			{ Key.Numpad3,"n3" },{ Key.Numpad4,"n4" },{ Key.Numpad5,"n5" },
+			{ Key.Numpad6,"n6" },{ Key.Numpad7,"n7" },{ Key.Numpad8,"n8" },
+			{ Key.Numpad9,"n9" },
+
+			// core keys
+			{ Key.Space,"space" },
+			{ Key.Enter,"enter" },
+			{ Key.Tab,"tab" },
+			{ Key.Escape,"esc" },
+			{ Key.Backspace,"backspace" },
+			{ Key.Delete,"delete" },
+		};
+
+		static Dictionary<string, Key> NameToKeyLUT = null;
+
+		public static Key NameToKey(string name) {
+			NameToKeyLUT ??= KeyToNameLUT.ToDictionary(kv => kv.Value, kv => kv.Key);
+
+			if (NameToKeyLUT.TryGetValue(name, out Key key)) return key;
+			return Key.None;
+		}
+
+		public static string KeyToName(Key key) {
+			if (KeyToNameLUT.TryGetValue(key, out string name)) return name;
+			return "";
 		}
 	}
 }

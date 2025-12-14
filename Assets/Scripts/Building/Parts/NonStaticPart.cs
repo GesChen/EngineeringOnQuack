@@ -15,6 +15,7 @@ using static Part_Cable;
  */
 public abstract class NonStaticPart : MonoBehaviour {
 	[HideInNormalInspector] public Part Part;
+	[HideInNormalInspector] public int CreationID;
 
 	public Port[] Ports;
 
