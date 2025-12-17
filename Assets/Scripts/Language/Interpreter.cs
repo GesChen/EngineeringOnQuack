@@ -8,8 +8,11 @@ public class Interpreter {
 	public Evaluator Evaluator;
 	public Memory Memory;
 
-	public Interpreter() {
+	public int CreationID;
+
+	public Interpreter(int creationID) {
 		ID = HF.UIDHashFunction();
+		CreationID = creationID;
 	}
 
 	// need memory so run call can have a copy of it
@@ -25,6 +28,9 @@ public class Interpreter {
 		// handle different function types
 		switch (function.FunctionType) {
 			case Primitive.Function.FunctionTypeEnum.Internal:
+				
+				InternalFunctions.CurrentCaller = this;
+
 				return function.InternalFunction.Invoke(thisReference, args);
 
 			case Primitive.Function.FunctionTypeEnum.Constructor:

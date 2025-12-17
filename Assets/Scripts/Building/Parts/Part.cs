@@ -37,6 +37,8 @@ public class Part : MonoBehaviour {
 
 		return NSPComponent != null;
 	}
+	public NSPType GetNSP<NSPType>() where NSPType : NonStaticPart
+		=> gameObject.GetComponent<NonStaticPart>() as NSPType;
 
 	void Start() {
 		renderers = GetComponentsInChildren<MeshRenderer>(); // includes self

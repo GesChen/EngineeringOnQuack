@@ -8,13 +8,13 @@ using UnityEngine;
 // i really dont want to do outputs and whatnot
 public class BuildingHistory {
 	public class Change {
-		public List<Assembly.SPart> Additions;
-		public List<Assembly.SPart> Deletions;
-		public List<(Assembly.SPart part, List<(string name, object newValue)>)> Modifications;
+		public List<Construct.Part> Additions;
+		public List<Construct.Part> Deletions;
+		public List<(Construct.Part part, List<(string name, object newValue)>)> Modifications;
 	}
 
 	public List<Change> Changes;
-	public Assembly.SAssembly LastVersion;
+	public Construct LastVersion;
 
 	int undos = 0;
 
@@ -31,7 +31,7 @@ public class BuildingHistory {
 		// find additions
 		var assem = BuildingManager.Instance.Assembly;
 		var newParts = assem.Parts.Where(p => !LastVersion.Parts.Any(lp => lp.id == p.ID))
-			.Select(np => Assembly.ConvertPartToSPart(np)).ToList();
+			.Select(np => (Construct.Part)np).ToList();
 
 		// find deletions
 		var delParts = LastVersion.Parts.Where(p => !assem.Parts.Any(lp => lp.ID == p.id))
@@ -40,20 +40,20 @@ public class BuildingHistory {
 		// find modifications
 		// things where id is the same but the properties arent
 		var modParts = assem.Parts.Where(p => LastVersion.Parts.Any(lp => lp.id == p.ID))
-			.Select(p => Assembly.ConvertPartToSPart(p))
+			.Select(p => (Construct.Part)p)
 			.Select(p => 
 				GetChangesForObject(
-					LastVersion.Parts.FirstOrDefault(op => op.id == p.id), // matching sp in last version
+					LastVersion.Parts.FirstOrDefault(op => op.id == p.id), // matching cpa in last version
 					p))
 			.Where(changes => changes.Count > 0)
 			.ToList();
 
-		LastVersion = assem.ConvertToSerializable();
+		LastVersion = assem.ConvertToConstruct();
 	}
 
-	static List<(string Property, object Value)> GetChangesForObject(Assembly.SPart oldObj, Assembly.SPart newObj) {
+	static List<(string Property, object Value)> GetChangesForObject(Construct.Part oldObj, Construct.Part newObj) {
 		// base type: use provided default comparison
-		if (newObj.GetType() == typeof(Assembly.SPart))
+		if (newObj.GetType() == typeof(Construct.Part))
 			return DefaultCompare(oldObj, newObj);
 
 		// derived type: reflect all readable/writable properties
@@ -74,7 +74,7 @@ public class BuildingHistory {
 		return changes;
 	}
 
-	static List<(string Property, object Value)> DefaultCompare(Assembly.SPart oldObj, Assembly.SPart newObj) {
+	static List<(string Property, object Value)> DefaultCompare(Construct.Part oldObj, Construct.Part newObj) {
 		var changes = new List<(string, object)>();
 
 		if(oldObj.basePartID		!= newObj.basePartID)		changes.Add(("basePartID",		newObj.basePartID		));

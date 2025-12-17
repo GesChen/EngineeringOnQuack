@@ -10,6 +10,8 @@ public class Part_CPU : NonStaticPart {
 
 	public Script Script;
 	public string DEBUG_CurrentScriptText; // for debugging purposes
+	public double CreationTime;
+
 	void Update() {
 		if (Script != null)
 			DEBUG_CurrentScriptText = Script.OriginalText;
@@ -41,7 +43,9 @@ public class Part_CPU : NonStaticPart {
 			"CPU Type Snapshot"
 			)
 		);
-	public T_Data InternalDataObject = new(Type_CPU);
+
+	readonly T_Data InternalDataObject = new(Type_CPU);
+
 	public override T_Data GetInternalLanguageDataObject() => InternalDataObject;
 	#endregion
 
@@ -93,9 +97,9 @@ public class Part_CPU : NonStaticPart {
 
 	static List<Transform> GetSelectedCPUs() {
 		List<Transform> cpus = new();
-		if (RightClick.Instance.ContextAtClick is Contexts.SingleSelection ss)
+		if (RightClick.Instance.ContextAtClick is Contexts.Editing.SingleSelection ss)
 			cpus = new() { ss.Selected };
-		else if (RightClick.Instance.ContextAtClick is Contexts.MultiSelection ms)
+		else if (RightClick.Instance.ContextAtClick is Contexts.Editing.MultiSelection ms)
 			cpus = new(ms.Selected);
 
 		return cpus.Where(t => t.GetComponent<Part_CPU>() != null).ToList();
@@ -270,7 +274,10 @@ public class Part_CPU : NonStaticPart {
 	IEnumerator DelayScriptSetup() {
 		yield return null;
 
+		CreationTime = Time.timeAsDouble;
+
 		InternalFunctions.OnPrintCalled += TryPrint;
+		InternalFunctions.OnRequestTime += TryGiveTime;
 		PartInternalFunctions.CPU.OnPortCalled += GetPort;
 		Memory.CPUGet += CPUGet;
 
@@ -300,7 +307,7 @@ public class Part_CPU : NonStaticPart {
 		Script = tryTokenize.Item1;
 
 		// reset modules
-		Interpreter = new();
+		Interpreter = new(CreationID);
 		Evaluator = new();
 		Memory = new(Interpreter, "main");
 
@@ -362,6 +369,12 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 
+	double? TryGiveTime(int intID) {
+		if (intID != Interpreter.ID) return null;
+
+		return Time.timeAsDouble - CreationTime;
+	}
+
 	T_Data GetPort(int interpreterID, int id) {
 		if (Interpreter == null) return null;
 		if (interpreterID != Interpreter.ID) return null; // it will handle nulls 
@@ -418,56 +431,45 @@ public class Part_CPU : NonStaticPart {
 		}
 	}
 
-
-	public class SPart_CPU : Assembly.SPart {
+	public class CPart : Construct.Part {
 		public string Script; // could use bytearray but dont wanna risk issues w encoding into json
+
+		public override void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) {
+			var newCPU = instantiatedPart.GetComponent<Part_CPU>();
+
+			newCPU.Script = 
+				Script != null
+				? ScriptSaveLoad.ConvertStringToScript(Script)
+				: null;
+
+			// subscribe to print on a delay
+			// need to delay so internalfunctions.onprint is guaranteed
+			// to have been nulled
+			// cuz it all runs off the same onstartsimulating event
+			// and the order is random
+			// but the fields can be copied over first so that's what we do here 
+			newCPU.StartCoroutine(newCPU.DelayScriptSetup());
+		}
 	}
 
-	public override void OnStopSimulating() {
-		running = false;
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var cpu = new CPart();
 
-		hasTick = false;
-		tickFunc = null;
-	}
-
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		var newCPU = instantiatedPart.GetComponent<Part_CPU>();
-
-		newCPU.Script = Script;
-		newCPU.running = running;
-		newCPU.Interpreter = Interpreter;
-		newCPU.Memory = Memory;
-		newCPU.Evaluator = Evaluator;
-		newCPU.hasTick = hasTick;
-		newCPU.tickFunc = tickFunc;
-
-		// subscribe to print on a delay
-		// need to delay so internalfunctions.onprint is guaranteed
-		// to have been nulled
-		// cuz it all runs off the same onstartsimulating event
-		// and the order is random
-		// but the fields can be copied over first so that's what we do here 
-		newCPU.StartCoroutine(newCPU.DelayScriptSetup());
-	}
-
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CPU();
-
-		sp.CopyMembers(SPart);
-		sp.Script =
+		cpu.CopyMembers(CPart);
+		cpu.Script =
 			Script != null
 			? ScriptSaveLoad.ConvertScriptToString(Script)
 			: null;
 
-		SPart = sp;
+		CPart = cpu;
 	}
 
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
-		var sp = (SPart_CPU)originalSPart; // if this errors then something has gone wrong
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var cpa = (CPart)originalCPart; // if this errors then something has gone wrong
 
 		Script = 
-			sp.Script != null
-			? ScriptSaveLoad.ConvertStringToScript(sp.Script)
+			cpa.Script != null
+			? ScriptSaveLoad.ConvertStringToScript(cpa.Script)
 			: null;
 	}
 }

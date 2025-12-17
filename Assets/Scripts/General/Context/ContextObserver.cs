@@ -10,52 +10,45 @@ public class ContextObserver : Singleton<ContextObserver> {
 	// tbd and finished all the way cuz this is very temporary
 	void Start() {
 		ContextManager.ForceEnterContext(new Main());
-		ContextManager.EnterContext<Editing>();
-
-		GameManager.Instance.OnStartSimulating += StartSimulating;
-		GameManager.Instance.OnStopSimulating += StartEditing;
+		ContextManager.EnterContext<Playing>();
 	}
 
 	void Update() {
-		if (ContextManager.IsInContext<Editing>(out _))
+		if (ContextManager.CurrentlyInContextStrict<Playing>())
+			CheckPlaying();
+
+		if (ContextManager.CurrentlyInContext<Editing>())
 			CheckEditing();
 
-		if (ContextManager.IsInContext<Simulating>(out _))
-			CheckSimulating();
 
 		debug_currentContext = ContextManager.Current.GetType().Name;
 	}
 
-	public void StartEditing() { ContextManager.EnterContext<Editing>(); }
-	public void StartSimulating() { ContextManager.EnterContext<Simulating>(); }
-
 	public Func<int> RequestSelectionCount;
-	private int selectionCount;
 	public Func<bool> GroupCheck;
 	public Func<(Transform[] selectedTransforms, int[] BPids)> GetCurrentSelectionInfo;
 	void CheckEditing() {
-		selectionCount = RequestSelectionCount?.Invoke() ?? throw new("RequestSelectionCount not subscribed to");
+		var (selectedTransforms, BPids) = GetCurrentSelectionInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to");
+		int count = selectedTransforms.Length;
 
 		if (UIHovers.AnyHovers()) {
-			ContextManager.EnterContext<OverUI>();
+			ContextManager.EnterContext<Editing.OverUI>();
 		} else {
-			ContextManager.EnterContext<InWorld>();
+			ContextManager.EnterContext<Editing>();
 
-			if (selectionCount == 0) ContextManager.EnterContext<NoSelection>();
+			if (count == 0) ContextManager.EnterContext<Editing.NoSelection>();
 			else {
 				// groupcheck in selectionmanager will enter groupselection 
 				// by itself so only if it fails then enter 
 				bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
 
 				if (!isGroup) {
-					var (selectedTransforms, BPids) = GetCurrentSelectionInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to"); ;
-
-					if (selectionCount == 1) {
-						var c = ContextManager.EnterContext<SingleSelection>();
+					if (count == 1) {
+						var c = ContextManager.EnterContext<Editing.SingleSelection>();
 						c.Selected = selectedTransforms[0];
 						c.SelectedBasePartID = BPids[0];
 					} else {
-						var c = ContextManager.EnterContext<MultiSelection>();
+						var c = ContextManager.EnterContext<Editing.MultiSelection>();
 						c.Selected = selectedTransforms;
 						c.SelectedBasePartIDs = BPids;
 					}
@@ -64,7 +57,7 @@ public class ContextObserver : Singleton<ContextObserver> {
 		}
 	}
 	
-	void CheckSimulating() {
+	void CheckPlaying() {
 
 	}
 }

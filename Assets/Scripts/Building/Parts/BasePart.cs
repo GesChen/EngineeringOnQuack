@@ -24,21 +24,21 @@ public class BasePart {
 	/// Processing verts
 	/// </summary>
 	public Vector3[] AllVerts => // copy
-		HF.LoadCached(ref m_allVerts, () => ProcessingMesh.vertices.ToArray());
+		HF.LoadCached(ref m_allVerts, () => ProcessingMesh.vertices).ToArray();
 
 	private int[] m_allTris; 
 	/// <summary>
 	/// Processing triangle indices
 	/// </summary>
 	public int[] AllTris => // copy
-		HF.LoadCached(ref m_allTris, () => ProcessingMesh.triangles.ToArray());
+		HF.LoadCached(ref m_allTris, () => ProcessingMesh.triangles).ToArray();
 
 	private Vector3[] m_allTriPositions;
 	public Vector3[] AllTriPositions => //copy
 		HF.LoadCached(ref m_allTriPositions, () => {
 			Vector3[] verts = AllVerts;
 			return AllTris.Select(i => verts[i]).ToArray();
-		});
+		}).ToArray();
 
 	/// <summary>
 	/// Only give names, paths are resolved automatically. 

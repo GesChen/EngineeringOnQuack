@@ -14,6 +14,7 @@ public static class BottomBar {
 	static readonly float splitspacing = 5;
 	static readonly float splittextspace = 10;
 
+	public static Action OnExitPressed;
 	public static Action OnNewPressed;
 
 	public static WindowItem OutputButton;
@@ -146,6 +147,7 @@ public static class BottomBar {
 		.GetComponent<PComponents.InputField>().RealComponent 
 		as TMP_InputField),
 	UIBarUtils.DynamicBarSpace	(2),
+	UIBarUtils.DynamicBarButton	(1, "Exit", () => OnExitPressed?.Invoke()),
 	UIBarUtils.DynamicBarButton	(2, "Assemble", Assemble)
 					})
 			},

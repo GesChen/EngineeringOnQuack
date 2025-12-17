@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using static Token;
 
@@ -39,7 +38,11 @@ public class Memory {
 
 		// bool 
 		{ "true",		new Primitive.Bool(true) },
-		{ "false",		new Primitive.Bool(false) }
+		{ "false",		new Primitive.Bool(false) },
+
+		// extra
+		{ "time",		new Primitive.Function("time",		InternalFunctions.time) },
+		{ "input",		new InternalInputType() }
 	});
 
 	public static Dictionary<string, Type> StaticTypes = new() {
@@ -49,7 +52,8 @@ public class Memory {
 		{ "List",		Primitive.List.		InternalType },
 		{ "Dict",		Primitive.Dict.		InternalType },
 		{ "Function",	Primitive.Function.	InternalType },
-		{ "Error",				  Error.	InternalType }
+		{ "Error",				  Error.	InternalType },
+		{ "input",		InternalInputType	.InternalType }
 	};
 
 
@@ -141,7 +145,7 @@ public class Memory {
 
 		Data[name] = data;
 
-		return global::T_Data.Success;
+		return T_Data.Success;
 	}
 
 	public T_Data Set(T_Reference reference, T_Data data) {
@@ -161,7 +165,7 @@ public class Memory {
 		if (StaticTypes.ContainsKey(name))
 			return Errors.CannotOverwriteBuiltin(name);
 		Types[name] = type;
-		return global::T_Data.Success;
+		return T_Data.Success;
 	}
 
 	public override string ToString() {
@@ -174,6 +178,6 @@ public class Memory {
 		Interpreter interpreter = memory.Interpreter;
 		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
 		evaluator = interpreter.Evaluator;
-		return global::T_Data.Success;
+		return T_Data.Success;
 	}
 }

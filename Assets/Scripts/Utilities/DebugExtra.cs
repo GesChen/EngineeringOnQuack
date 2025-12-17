@@ -74,8 +74,8 @@ public class DebugExtra {
 
 	public static void DrawPoint(
 		Vector3 pos,
-		float size = .1f,
 		Color? color = null,
+		float size = .1f,
 		float duration = 0,
 		bool drawScene = true,
 		bool drawGame = false) {
@@ -102,6 +102,17 @@ public class DebugExtra {
 		DrawLine(py, nz, col, duration, drawScene, drawGame);
 		DrawLine(ny, pz, col, duration, drawScene, drawGame);
 		DrawLine(ny, nz, col, duration, drawScene, drawGame);
+	}
+
+	public static void DrawPoints(
+		Vector3[] points,
+		float size = .1f,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+		foreach (Vector3 point in points)
+			DrawPoint(point, color, size, duration, drawScene, drawGame);
 	}
 
 	public static void DrawGrid(

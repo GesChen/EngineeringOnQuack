@@ -6,9 +6,6 @@ using UnityEngine;
 public class BuildingManager : Singleton<BuildingManager> {
 	public Assembly Assembly;
 
-	public Transform MainPartsContainer;
-	public Transform SimulationContainer;
-
 	public event Action OnModified; // only sub to this in start, its cleared in awake
 	[HideInNormalInspector] public bool Dirty;
 	/// <summary>
@@ -21,7 +18,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	public event Action OnPartCreated;
 	public event Action OnNewAssemblyMade;
-	
+	public string ConstructToLoadPath;
+	public Construct ConstructToLoad;
+
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
@@ -38,37 +37,32 @@ public class BuildingManager : Singleton<BuildingManager> {
 	// hit that bell for more epic code (this is garbage)
 	// i made this at like 12 am with box on call lmao
 	void Subscribe() {
-		RightClickMenus.ClearEvents();
+		GameManager.Instance.BM_TryLoadAssembly = TryLoad;
+		GameManager.Instance.BM_ClearEditing = ClearEditing;
 
-		RightClickMenus.OnNewPartMade	+= name => MakeNewPart(name, true);
-		RightClickMenus.OnDelete		+= DeleteSelection;
-		RightClickMenus.OnCopy			+= Copy;
-		RightClickMenus.OnPaste			+= Paste;
-		RightClickMenus.OnDuplicate		+= Duplicate;
+		RightClickMenus.OnNewPartMade	= name => MakeNewPart(name, true);
+		RightClickMenus.OnDelete		= DeleteSelection;
+		RightClickMenus.OnCopy			= Copy;
+		RightClickMenus.OnPaste			= Paste;
+		RightClickMenus.OnDuplicate		= Duplicate;
 
-		Conatrols.IM.Editing.Copy.performed += _ => Copy();
-		Conatrols.IM.Editing.Cut.performed += _ => Cut();
-		Conatrols.IM.Editing.Paste.performed += _ => Paste();
-		Conatrols.IM.Editing.Duplicate.performed += _ => Duplicate();
-
-		GameManager.Instance.OnStartSimulating += StartSimulating;
-		GameManager.Instance.OnStopSimulating += StopSimulating;
-
-		GameManager.Instance.OnStartSimulating += () => TriggerNonStaticFunctions(0);
-		GameManager.Instance.OnStopSimulating += () => TriggerNonStaticFunctions(1);
+		Conatrols.IM.Editing_General.Copy		.Subscribe<Contexts.Editing>(Copy);
+		Conatrols.IM.Editing_General.Cut		.Subscribe<Contexts.Editing>(Cut);
+		Conatrols.IM.Editing_General.Paste		.Subscribe<Contexts.Editing>(Paste);
+		Conatrols.IM.Editing_General.Duplicate	.Subscribe<Contexts.Editing>(Duplicate);
 
 		MaterialEditingMenu.OnStart = MaterialEditor.SetupComponent;
 		MaterialEditingMenu.OnRequestCompositionItems = GenerateWindowItems;
 		GroupManager.Instance.Subscribe();
 
-		BottomBar.OnAssemble = GameManager.Instance.StartSimulating;
+		OperatingMainUI.TopBar.OnEditPressed = GameManager.Instance.BeginEditing;
 
-		SimulatingMainUI.TopBar.OnReturnToEditing = GameManager.Instance.StopSimulating;
-
+		BottomBar.OnExitPressed = () => GameManager.Instance.ReturnToPlaying();
+		BottomBar.OnNewPressed = New;
+		BottomBar.OnAssemble = AssemblePressed;
 		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
 
-		BottomBar.OnNewPressed = New;
 
 		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
@@ -89,6 +83,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	#endregion
 
 	void Update() {
+		if (!ContextManager.CurrentlyInContext<Contexts.Editing>()) return;
+
 		HandleInput();
 
 		// set selection state of parts
@@ -98,14 +94,72 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	void HandleInput() {
-
-		if (Conatrols.IM.Building.Delete.WasPressedThisFrame() &&
-			ContextManager.IsInContext<Contexts.InWorld>(out _)) {
+		if (Conatrols.IM.Editing_Building.Delete.WasPressedThisFrame() &&
+			ContextManager.CurrentlyInContext<Contexts.Editing>(out _)) {
 
 			DeleteSelection();
 			RightClick.Instance.Hide();
 		}
 	}
+
+	#region Management
+	public void New() {
+		if (!Dirty) NewAssembly();
+		else {
+			UnsavedWorkMenu.Notify((choice) => {
+				switch (choice) {
+					case UnsavedWorkMenu.Choice.Save:
+						SaveLoadManager.Instance.Save();
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Discard:
+						NewAssembly();
+						break;
+					case UnsavedWorkMenu.Choice.Cancel:
+						break; // do nothing
+				}
+			});
+		}
+	}
+
+	// organize this later
+	void TryLoad() {
+		// reset it before loaders fuck everything up
+		Assembly = new();
+
+		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
+			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
+		else if (ConstructToLoad != null)
+			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad);
+			
+		ConstructToLoadPath = null;
+		ConstructToLoad = null;
+	}
+
+	void AssemblePressed() {
+		GameManager.Instance.AssembleFromEditing();
+		GameManager.Instance.Operate();
+	}
+
+	public void ChangeName(string name) {
+		Assembly.Name = name;
+
+		BottomBar.UpdateNameText(name);
+	}
+
+	public void ClearEditing() {
+		SelectionManager.Instance.Clear();
+		TransformTools.Instance.active = false;
+
+		DestroyEditingParts();
+	}
+
+	void DestroyEditingParts() {
+		foreach (Part part in Assembly.Parts) {
+			Destroy(part.gameObject);
+		}
+	}
+	#endregion
 
 	#region Part Functions
 	void UpdateParts() {
@@ -168,7 +222,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		ResetPartsAndGroups();
 		Assembly = new();
 
-		OutputManager.Instance.UpdateMenu();
+		EditingOutputManager.Instance.UpdateMenu();
 		OutputsMenu.Hide();
 
 		BottomBar.UpdateNameText("");
@@ -213,7 +267,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	// main generatepart method (notice its private)
 	private Part GeneratePart(BasePart bp) {
-		GameObject newPart = Instantiate(bp.Prefab, MainPartsContainer);
+		GameObject newPart = Instantiate(bp.Prefab, GameManager.Instance.MainPartsContainer);
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
@@ -222,65 +276,18 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		return part;
 	}
-	#endregion
 
-	#region Simulation
-	public void StartSimulating() {
-		SelectionManager.Instance.Clear();
-		SelectionManager.Instance.enabled = false;
-		TransformTools.Instance.active = false;
-		//TransformTools.enabled = false;
+	internal void DeletePart(Part part, bool callNSPs = true) {
+		if (!Assembly.Parts.Contains(part)) 
+			Debug.LogError("Deleting part that isn't in the parts list");
+		else
+			Assembly.Parts.Remove(part);
 
-		DeselectAllParts();
-		ReturnAllPartsToMain();
-		HideAllPartsForSimulation();
-	}
-
-	public void StopSimulating() {
-		SelectionManager.Instance.enabled = true;
-		//TransformTools.enabled = true;
-
-		ShowAllPartsAfterSimulation();
-	}
-
-	public void ReturnAllPartsToMain() {
-		foreach (Part part in Assembly.Parts) {
-			part.transform.parent = MainPartsContainer;
+		if (part.IsNonStaticPart(out var nsp) && callNSPs) {
+			nsp.OnPartDeletion();
 		}
-	}
 
-	void HideAllPartsForSimulation() {
-		foreach (Part part in Assembly.Parts) {
-			part.gameObject.SetActive(false);
-		}
-	}
-
-	void ShowAllPartsAfterSimulation() {
-		foreach (Part part in Assembly.Parts) {
-			part.gameObject.SetActive(true);
-		}
-	}
-
-	/// <summary>
-	/// Find and trigger all parts with nonstatic components, call the functions based on the state
-	/// </summary>
-	/// <param name="state">0-start simulating 1-stop simulating</param>
-	void TriggerNonStaticFunctions(int state) {
-		NonStaticPart[] nonStaticParts = Assembly.Parts
-			.Where(p => p.GetComponent<NonStaticPart>() != null) // optimize this
-			.Select(p => p.GetComponent<NonStaticPart>())
-			.ToArray();
-
-		switch (state) {
-		case 0: //start
-			foreach (var part in nonStaticParts)
-				part.OnStartSimulating();
-			break;
-		case 1:
-			foreach (var part in nonStaticParts)
-				part.OnStopSimulating();
-			break;
-		}
+		Destroy(part.gameObject);
 	}
 	#endregion
 
@@ -291,74 +298,18 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void DeleteSelection() {
 		// delete current selection
-		List<Transform> additionalToDelete = new();
-
 		foreach (var part in SelectionManager.Instance.PartSelection) {
-			// if (part.IsNonStaticPart(out var nsp)) {
-			// 	additionalToDelete.AddRange(nsp.LinkedParts.Select(p => p.transform));
-			// }
-
-			// manually handle cc deletion for now 
-			if (part.IsNonStaticPart(out var nsp)) {
-				if (nsp is Part_CableConnection cc) {
-					// delete cable and other cc if not selected
-					Part_Cable cable = cc.Cable;
-					if (Assembly.Parts.Contains(cable.Part)) {
-						DeletePart(cable.Part);
-						cc.Cable = null;
-					}
-					
-					Part other = cable.OtherCC(cc).Part;
-					if (!SelectionManager.Instance.PartSelectionHS.Contains(other)){
-						DeletePart(other);
-					}
-				}
-			}
-
 			DeletePart(part);
 		}
-
-		// if (additionalToDelete.Length > 0) {
-		// 	SelectionManager.Instance.SetSelection(additionalToDelete.ToArray());
-		// 	SelectionManager.Instance.HandleContainer(); // force update
-		// 	DeleteSelection();
-		// }
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
 
 		SetDirty();
 	}
-
-	void DeletePart(Part part) {
-		if (!Assembly.Parts.Contains(part)) 
-			Debug.LogError("Deleting part that isn't in the parts list");
-		else
-			Assembly.Parts.Remove(part);
-
-		Destroy(part.gameObject);
-	}
 	#endregion
 
-	public void New() {
-		if (!Dirty) NewAssembly();
-		else {
-			UnsavedWorkMenu.Notify((choice) => {
-				switch (choice) {
-					case UnsavedWorkMenu.Choice.Save:
-						SaveLoadManager.Instance.Save();
-						NewAssembly();
-						break;
-					case UnsavedWorkMenu.Choice.Discard:
-						NewAssembly();
-						break;
-					case UnsavedWorkMenu.Choice.Cancel:
-						break; // do nothing
-				}
-			});
-		}
-	}
-
+	#region Clipboard
 	void Copy() {
 		Assembly.Clipboard.Copy(); // uses the most current version of assembly
 	}
@@ -376,8 +327,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 			!Conatrols.Keyboard.Modifiers.Shift);
 		if (newparts == null) return; // failed, no objects to paste
 
-		Assembly.Parts.AddRange(newparts);
-
 		UpdateParts();
 
 		SetDirty();
@@ -387,10 +336,5 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Assembly.Clipboard.Copy();
 		Paste();
 	}
-
-	public void ChangeName(string name) {
-		Assembly.Name = name;
-
-		BottomBar.UpdateNameText(name);
-	}
+	#endregion
 }

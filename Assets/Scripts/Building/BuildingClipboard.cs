@@ -6,8 +6,8 @@ using static Assembly;
 
 public class BuildingClipboard {
 	public struct Clip {
-		public SPart[] Parts;
-		public SGroup[] Groups;
+		public Construct.Part[] Parts;
+		public Construct.Group[] Groups;
 	}
 	public Clip Clipboard;
 	public List<Clip> History = new();
@@ -48,27 +48,7 @@ public class BuildingClipboard {
 
 		parts.AddRange(moreParts);
 
-		clip.Parts = parts.Select(p => ConvertPartToSPart(p)).ToArray();
-
-		// rerandomize the ccs in the board
-		var cbCCs = clip.Parts
-			.Select(p => p as Part_CableConnection.SPart_CC)
-			.Where(cc => cc != null);
-		var cbCables = clip.Parts
-			.Select(p => p as Part_Cable.SPart_Cable)
-			.Where(c => c != null);
-
-		// randomize
-		var CCIDs = cbCCs.Select(cc => cc.CCID);
-		Dictionary<int, int> RemappedCCIDs = 
-			CCIDs.ToDictionary(id => id, _ => HF.UIDHashFunction());
-
-		// remap new ids
-		foreach (var cc in cbCCs) cc.CCID = RemappedCCIDs[cc.CCID];
-		foreach (var c in cbCables) {
-			c.AID = RemappedCCIDs[c.AID];
-			c.BID = RemappedCCIDs[c.BID];
-		}
+		clip.Parts = parts.Select(p => (Construct.Part)p).ToArray();
 		#endregion
 
 		/*
@@ -91,7 +71,7 @@ public class BuildingClipboard {
 			.Where(p => p.Group != null)
 			.Select(p => p.Group)
 			.Distinct() // gets a list of all groups from selected
-			.Select(g => (SGroup)g).ToArray();
+			.Select(g => (Construct.Group)g).ToArray();
 
 		History.Add(Clipboard);
 		if (History.Count >= Config.Building.ClipboardHistorySize)
@@ -122,11 +102,14 @@ public class BuildingClipboard {
 		// generate
 		Transform[] newTransforms = new Transform[Clipboard.Parts.Length];
 		Part[] newParts = new Part[Clipboard.Parts.Length];
+		Dictionary<int, int> IDRemappings = new();
 
 		for (int i = 0; i < Clipboard.Parts.Length; i++) {
 			var origPart = Clipboard.Parts[i];
 			var newPart = BuildingManager.Instance.MakeNewPart(origPart.basePartID, selectNew, !overrideSelection);
 			newParts[i] = newPart;
+
+			IDRemappings[origPart.id] = newPart.ID;
 
 			var transform = newPart.transform;
 			transform.SetPositionAndRotation(origPart.position + offset, origPart.rotation);
@@ -135,14 +118,17 @@ public class BuildingClipboard {
 			newTransforms[i] = transform;
 			
 			if (newPart.IsNonStaticPart(out var nsp)) {
-				nsp.FinalizeSPartReconstruction(
+				nsp.FinalizeCPartReconstruction(
 					origPart,
 					newPart,
 					BuildingManager.Instance.Assembly);
 			}
 		}
 
-
+		foreach (var p in newParts) {
+			if (p.IsNonStaticPart(out var nsp))
+				nsp.RebindReferences(IDRemappings, newParts);
+		}
 
 		return (newParts, newTransforms);
 	}

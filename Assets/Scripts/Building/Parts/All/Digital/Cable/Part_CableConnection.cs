@@ -7,10 +7,6 @@ using UnityEngine;
 public class Part_CableConnection : NonStaticPart {
 	public override string PartName => "Cable Connection";
 
-	// distinction between part.id 
-	public int CCID = -1; // needed for cable to reconnect on simulation start
-	// might just use part.id?? idk why not
-
 	public Part_Cable Cable;
 	public Port Port;
 
@@ -30,48 +26,37 @@ public class Part_CableConnection : NonStaticPart {
 		}
 	}
 
-	public void RandomizeID() {
-		CCID = HF.UIDHashFunction();
-	}
-
 	// no extra processing needed
-	public override void FinalizeInstantiation(GameObject instantiatedPart) {
-		// see if this is very close to any port
-		// if so connect to it
 
-		var ports = BuildingManager.Instance.SimulationContainer.GetComponentsInChildren<Port>();
+	public class CPart : Construct.Part {
+		public override void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) {
+			// see if this is very close to any port
+			// if so connect to it
+			var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
 
-		foreach (var port in ports) {
-			if (port.SnapTarget.CheckSnap(transform)) {
-				// connect up
-				var newCC = instantiatedPart.GetComponent<Part_CableConnection>();
+			var ports = creation.GetComponentsInChildren<Port>();
 
-				port.Connector = newCC; 
-				newCC.Port = port;
-				break;
+			foreach (var port in ports) {
+				if (port.SnapTarget.CheckSnap(position)) {
+					// connect up
+
+					port.Connector = newCC;
+					newCC.Port = port;
+					break;
+				}
 			}
+
+			// Cable moves its own reference in the cable field over to new
 		}
-
-		// Cable moves its own reference in the cable field over to new
 	}
 
-	public class SPart_CC : Assembly.SPart {
-		public int CCID;
+	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
+		var cpa = new CPart();
+		cpa.CopyMembers(CPart);
+		CPart = cpa;
 	}
 
-	public override void FinalizeSPartConversion(ref Assembly.SPart SPart) {
-		var sp = new SPart_CC();
-
-		sp.CopyMembers(SPart);
-		sp.CCID = CCID;
-
-		SPart = sp;
-	}
-
-	public override void FinalizeSPartReconstruction(Assembly.SPart originalSPart, Part unfinishedPart, Assembly unfinishedAssembly) {
-		var cc = unfinishedPart.GetComponent<Part_CableConnection>();
-		var part = (SPart_CC)originalSPart;
-
-		cc.CCID = part.CCID;
+	public override void RebindReferences(Dictionary<int, int> Mappings, Part[] PartPool) {
+		Cable = PartPool.First(p => p.ID == Mappings[Cable.Part.ID]).GetComponent<Part_Cable>();
 	}
 }

@@ -25,7 +25,7 @@ public class Port : MonoBehaviour {
 		// snap exclusivity
 
 		foreach (var p in BuildingManager.Instance.Assembly.Parts) {
-			if (SnapTarget.CheckSnap(p.transform)) {
+			if (SnapTarget.CheckSnap(p.transform.position)) {
 				SnapTarget.enabled = false;
 				return;
 			}

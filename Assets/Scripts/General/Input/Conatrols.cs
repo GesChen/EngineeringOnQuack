@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,7 @@ using System.Linq;
 // garbage so i added an a so itd be the first result or close to
 // so i dont have to keep JDFLKJLK:DSLK:JFL stupid thing
 
+// execution order already updated before everything after GM
 public class Conatrols : MonoBehaviour {
 	public static InputMaster IM;
 	Keyboard CurrentKeyboard;
@@ -36,18 +38,6 @@ public class Conatrols : MonoBehaviour {
 		CurrentKeyboard.Update();
 	}
 
-
-	#region Shortcut Methods
-	/// <summary>
-	/// Repeating
-	/// </summary>
-	public static bool IsUsed(Key key) => Keyboard.Presses.Contains(key);
-	/// <summary>
-	/// Non-Repeating
-	/// </summary>
-	public static bool IsPressed(Key key) => Keyboard.Pressed.Contains(key);
-	#endregion
-
 	public class Mouse {
 		public static Vector2 Position;
 		public static Vector2 LastPos;
@@ -59,11 +49,15 @@ public class Conatrols : MonoBehaviour {
 		public static MouseButton Right;
 
 		// add more when needed like the side ones
+		public static MouseButton Forward;
+		public static MouseButton Back;
 
 		public void Initialize() {
 			Left = new(IM.Mouse.Left);
 			Middle = new(IM.Mouse.Middle);
 			Right = new(IM.Mouse.Right);
+			Forward = new(IM.Mouse.Forward);
+			Back = new(IM.Mouse.Back);
 		}
 
 		public void Update() {
@@ -75,6 +69,8 @@ public class Conatrols : MonoBehaviour {
 			Left.Update();
 			Middle.Update();
 			Right.Update();
+			Forward.Update();
+			Back.Update();
 		}
 
 		public class MouseButton {
@@ -86,7 +82,6 @@ public class Conatrols : MonoBehaviour {
 			public bool DoubleClicked;
 
 			public MouseButton(InputAction binding) { Binding = binding; }
-
 
 			float lastClickTime;
 			Vector2 lastClickPos;
@@ -482,5 +477,63 @@ public class Conatrols : MonoBehaviour {
 			}
 */
 		}
+
+		// only real purpose of chatgpt
+		static readonly Dictionary<Key, string> KeyToNameLUT = new() {
+			// letters
+			{ Key.A,"a" },{ Key.B,"b" },{ Key.C,"c" },{ Key.D,"d" },{ Key.E,"e" },
+			{ Key.F,"f" },{ Key.G,"g" },{ Key.H,"h" },{ Key.I,"i" },{ Key.J,"j" },
+			{ Key.K,"k" },{ Key.L,"l" },{ Key.M,"m" },{ Key.N,"n" },{ Key.O,"o" },
+			{ Key.P,"p" },{ Key.Q,"q" },{ Key.R,"r" },{ Key.S,"s" },{ Key.T,"t" },
+			{ Key.U,"u" },{ Key.V,"v" },{ Key.W,"w" },{ Key.X,"x" },{ Key.Y,"y" },
+			{ Key.Z,"z" },
+
+			// number row
+			{ Key.Digit0,"0" },{ Key.Digit1,"1" },{ Key.Digit2,"2" },
+			{ Key.Digit3,"3" },{ Key.Digit4,"4" },{ Key.Digit5,"5" },
+			{ Key.Digit6,"6" },{ Key.Digit7,"7" },{ Key.Digit8,"8" },
+			{ Key.Digit9,"9" },
+
+			// numpad
+			{ Key.Numpad0,"n0" },{ Key.Numpad1,"n1" },{ Key.Numpad2,"n2" },
+			{ Key.Numpad3,"n3" },{ Key.Numpad4,"n4" },{ Key.Numpad5,"n5" },
+			{ Key.Numpad6,"n6" },{ Key.Numpad7,"n7" },{ Key.Numpad8,"n8" },
+			{ Key.Numpad9,"n9" },
+
+			// core keys
+			{ Key.Space,"space" },
+			{ Key.Enter,"enter" },
+			{ Key.Tab,"tab" },
+			{ Key.Escape,"esc" },
+			{ Key.Backspace,"backspace" },
+			{ Key.Delete,"delete" },
+		};
+
+		static Dictionary<string, Key> NameToKeyLUT = null;
+
+		public static Key NameToKey(string name) {
+			NameToKeyLUT ??= KeyToNameLUT.ToDictionary(kv => kv.Value, kv => kv.Key);
+
+			if (NameToKeyLUT.TryGetValue(name, out Key key)) return key;
+			return Key.None;
+		}
+
+		public static string KeyToName(Key key) {
+			if (KeyToNameLUT.TryGetValue(key, out string name)) return name;
+			return "";
+		}
+	}
+}
+
+public static class ControlSubscribeShortcut {
+	public static void Subscribe<Context>(this InputAction action, Action target, bool strict = false) where Context : IContext {
+		if (!strict)
+			action.performed += _ => {
+				if (ContextManager.CurrentlyInContext<Context>()) target();
+			};
+		else
+			action.performed += _ => {
+				if (ContextManager.CurrentlyInContextStrict<Context>()) target();
+			};
 	}
 }

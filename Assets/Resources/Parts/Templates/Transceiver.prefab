@@ -108,7 +108,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: c5827bf05855470459205dbc48c55835, type: 2}
+  m_Mesh: {fileID: 4300000, guid: e0ac15e747116114f9ed4f90a616c861, type: 2}
 --- !u!114 &5720584220106716956
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,8 +139,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Part: {fileID: 5720584220106716956}
+  CreationID: 0
   Ports:
   - {fileID: 8527337828351603693}
+  TargetOutputName: 
 --- !u!1001 &3215236474708067023
 PrefabInstance:
   m_ObjectHideFlags: 0

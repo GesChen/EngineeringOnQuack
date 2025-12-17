@@ -1,0 +1,21 @@
+{
+    "name": "PlayingAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1b37b5d0dc8a2c147bc43b3e56ad8620",
+        "GUID:8b1422db0a2d86644ae981a26e813290",
+        "GUID:59682221470403d43bb2c1120cdbc4b3",
+        "GUID:457756d89b35d2941b3e7b37b4ece6f1",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

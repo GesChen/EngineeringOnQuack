@@ -9,38 +9,22 @@ using W = PMenu.Window;
 public class RightClickMenus : MonoBehaviour {
 
 	public delegate void NewPartEvent(string name);
-	public static event NewPartEvent OnNewPartMade;
+	public static NewPartEvent OnNewPartMade;
 
 	// at some point if this gets too extreme we can do an enum based event approach
 	// but would require more processing from the subscriber
-	public static event Action OnUndo;
-	public static event Action OnRedo;
-	public static event Action OnCopy;
-	public static event Action OnPaste;
-	public static event Action OnDuplicate;
-	public static event Action OnDelete;
-	public static event Action OnGroup;
-	public static event Action OnUnGroup;
-	public static event Action OnCombineGroups;
-	public static event Action OnAddToGroup;
-	public static event Action OnRemoveFromGroup;
+	public static Action OnUndo;
+	public static Action OnRedo;
+	public static Action OnCopy;
+	public static Action OnPaste;
+	public static Action OnDuplicate;
+	public static Action OnDelete;
+	public static Action OnGroup;
+	public static Action OnUnGroup;
+	public static Action OnCombineGroups;
+	public static Action OnAddToGroup;
+	public static Action OnRemoveFromGroup;
 	public static Action<WindowItem> OnMaterialOpened;
-
-	public static void ClearEvents() {
-		// theres no reason to align them i just think it looks funny
-		OnNewPartMade			= null;
-		OnUndo					= null;
-		OnRedo					= null;
-		OnCopy					= null;
-		OnPaste					= null;
-		OnDuplicate				= null;
-		OnDelete				= null;
-		OnGroup					= null;
-		OnUnGroup				= null;
-		OnCombineGroups			= null;
-		OnAddToGroup			= null;
-		OnRemoveFromGroup		= null;
-	}
 
 	static void MakeNewPart(string name) {
 		RightClick.Instance.Hide(); // hide the menu
@@ -83,13 +67,10 @@ public class RightClickMenus : MonoBehaviour {
 			"Mechanical",
 			120, true,
 			new(){
-				new W.Button(() => MakeNewPart("axle"),			"axle",			iconName: "parts/axle"), // TODO
-				new W.Button(() => MakeNewPart("motor i"),		"motor i",		iconName: "Parts/motor 1"),
-				new W.Button(() => MakeNewPart("motor ii"),		"motor ii",		iconName: "Parts/motor 2"),
-				new W.Button(() => MakeNewPart("piston i"),		"piston i",		iconName: "Parts/piston 1"),
-				new W.Button(() => MakeNewPart("piston ii"),	"piston ii",	iconName: "Parts/piston 2"),
-				new W.Button(() => MakeNewPart("servo i"),		"servo i",		iconName: "Parts/servo 1"),
-				new W.Button(() => MakeNewPart("servo ii"),		"servo ii",		iconName: "Parts/servo 2")
+				new W.Button(() => MakeNewPart("axle"),	 	"axle",		iconName: "parts/axle"), // TODO
+				new W.Button(() => MakeNewPart("motor"), 	"motor",	iconName: "Parts/motor"),
+				new W.Button(() => MakeNewPart("piston"),	"piston",	iconName: "Parts/piston"),
+				new W.Button(() => MakeNewPart("servo"), 	"servo",	iconName: "Parts/servo"),
 			},
 			showTitle: false
 		);
