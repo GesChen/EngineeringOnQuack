@@ -49,26 +49,6 @@ public class BuildingClipboard {
 		parts.AddRange(moreParts);
 
 		clip.Parts = parts.Select(p => (Construct.Part)p).ToArray();
-
-		// rerandomize the ccs in the board
-		var cbCCs = clip.Parts
-			.Select(p => p as Part_CableConnection.CPart)
-			.Where(cc => cc != null);
-		var cbCables = clip.Parts
-			.Select(p => p as Part_Cable.CPart)
-			.Where(c => c != null);
-
-		// randomize
-		var CCIDs = cbCCs.Select(cc => cc.CCID);
-		Dictionary<int, int> RemappedCCIDs = 
-			CCIDs.ToDictionary(id => id, _ => HF.UIDHashFunction());
-
-		// remap new ids
-		foreach (var cc in cbCCs) cc.CCID = RemappedCCIDs[cc.CCID];
-		foreach (var c in cbCables) {
-			c.AID = RemappedCCIDs[c.AID];
-			c.BID = RemappedCCIDs[c.BID];
-		}
 		#endregion
 
 		/*
@@ -122,11 +102,14 @@ public class BuildingClipboard {
 		// generate
 		Transform[] newTransforms = new Transform[Clipboard.Parts.Length];
 		Part[] newParts = new Part[Clipboard.Parts.Length];
+		Dictionary<int, int> IDRemappings = new();
 
 		for (int i = 0; i < Clipboard.Parts.Length; i++) {
 			var origPart = Clipboard.Parts[i];
 			var newPart = BuildingManager.Instance.MakeNewPart(origPart.basePartID, selectNew, !overrideSelection);
 			newParts[i] = newPart;
+
+			IDRemappings[origPart.id] = newPart.ID;
 
 			var transform = newPart.transform;
 			transform.SetPositionAndRotation(origPart.position + offset, origPart.rotation);
@@ -142,7 +125,10 @@ public class BuildingClipboard {
 			}
 		}
 
-
+		foreach (var p in newParts) {
+			if (p.IsNonStaticPart(out var nsp))
+				nsp.RebindReferences(IDRemappings, newParts);
+		}
 
 		return (newParts, newTransforms);
 	}

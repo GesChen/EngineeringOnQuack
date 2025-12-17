@@ -66,7 +66,7 @@ public class Construct {
 		/// <para>For Assembling</para>
 		/// Copy over ALL fields to the instantiated object
 		/// </summary>
-		public virtual void FinalizeInstantiation(GameObject instantiatedPart) { }
+		public virtual void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) { }
 
 		public Vector3 TransformPoint(Vector3 p) {
 			Vector3 sp = new(p.x * scale.x, p.y * scale.y, p.z * scale.z);

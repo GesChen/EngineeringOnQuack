@@ -684,4 +684,9 @@ public static class HF {
 
 	public static float AngleLerp(float a, float b, float t) =>
 		a + AngleDiff(b, a) * t;
+
+	public static Rigidbody GetOrMakeRigidBody(GameObject o) {
+		if (o.TryGetComponent<Rigidbody>(out var rb)) return rb;
+		return o.AddComponent<Rigidbody>();
+	}
 }

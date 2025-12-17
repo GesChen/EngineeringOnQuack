@@ -23,20 +23,22 @@ public class Assembler : Singleton<Assembler> {
 	/// <summary>
 	/// the main method
 	/// </summary>
-	public void Assemble(Construct construct, out Creation assembled) {
+	public void Assemble(Construct construct, out Creation creation) {
 		var parts = construct.Parts;
 
 		// lmao WTF
 		//SetupPhysics(CopyToSimulation(ConnectionsToSubAssemblies(FindAllConnections())));
+		
+		creation = CreateCreation(construct);
 
 		var connections = FindAllConnections(parts);
 		var subassemblies = ConnectionsToSubAssemblies(connections, parts);
-		var assembledSubs = CopyToSimulation(subassemblies, parts);
+		var assembledSubs = CopyToSimulation(creation, subassemblies, parts);
 		SetupPhysics(assembledSubs, parts);
 
-		assembled = CreateCreation(construct, assembledSubs);
+		SetupCreation(creation, construct, assembledSubs);
 
-		SetAllNSPCreationIDS(assembledSubs, assembled);
+		FinalizeNSPSetup(assembledSubs, creation);
 	}
 
 	// wrote this way if perhaps in the future cables or other
@@ -162,13 +164,13 @@ public class Assembler : Singleton<Assembler> {
 	}
 
 	// can we rewrite this?????
-	List<Creation.SubAssembled> CopyToSimulation(List<Creation.SubAssemblyParts> subassemblies, List<Construct.Part> Parts) {
+	List<Creation.SubAssembled> CopyToSimulation(Creation creation, List<Creation.SubAssemblyParts> subassemblies, List<Construct.Part> Parts) {
 		// also a straight port
 
 		List<Creation.SubAssembled> assembleds = new();
 		foreach (Creation.SubAssemblyParts sub in subassemblies) {
 			Transform subParent = new GameObject($"SubAssembly ({sub.Parts.Count})").transform;
-			subParent.SetParent(GameManager.Instance.CreationsContainer); // te,p
+			subParent.SetParent(creation.transform);
 
 			List<Transform> parts = new();
 			Vector3 accumPos = Vector3.zero;
@@ -186,6 +188,7 @@ public class Assembler : Singleton<Assembler> {
 				newObject.gameObject.SetActive(true);
 				var partComp = newObject.GetComponent<Part>();
 				partComp.enabled = false;
+				partComp.ID = part.id;
 
 				//????
 				BuildingManager.Instance.Assembly.Parts.Remove(partComp);
@@ -195,6 +198,7 @@ public class Assembler : Singleton<Assembler> {
 				accumPos += newObject.transform.position;
 			}
 
+			// doesnt matter where it is but might as well
 			subParent.position = accumPos / sub.Parts.Count;
 			foreach (Transform part in parts)
 				part.parent = subParent;
@@ -204,7 +208,7 @@ public class Assembler : Singleton<Assembler> {
 				var origPart = Parts[origPartI];
 
 				var newPart = partMap[origPart];
-				origPart.FinalizeInstantiation(newPart.gameObject);
+				origPart.FinalizeInstantiation(newPart.gameObject, creation.gameObject);
 			}
 
 			assembleds.Add(new() {
@@ -227,31 +231,31 @@ public class Assembler : Singleton<Assembler> {
 		ApplyAxleConnections(joints, assembleds);
 	}
 
-	Creation CreateCreation(Construct construct, List<Creation.SubAssembled> assembleds) {
+	Creation CreateCreation(Construct construct) {
 		GameObject newObj = new(construct.Name);
 		newObj.transform.SetParent(GameManager.Instance.CreationsContainer);
+		return newObj.AddComponent<Creation>();
+	}
 
-		foreach (var sub in assembleds) {
-			sub.Parent.SetParent(newObj.transform);
-		}
-
-		var component = newObj.AddComponent<Creation>();
-		component.SubAssemblies = assembleds;
-		component.Construct = construct;
-		component.Outputs = construct.Outputs.Select(o =>
+	void SetupCreation(Creation creation, Construct construct, List<Creation.SubAssembled> assembleds) {
+		creation.SubAssemblies = assembleds;
+		creation.Construct = construct;
+		creation.Outputs = construct.Outputs.Select(o =>
 			new Output() {
 				Name = o
 			}).ToList();
-		component.ID = HF.UIDHashFunction();
-
-		return component;
+		creation.ID = HF.UIDHashFunction();
 	}
 
-	void SetAllNSPCreationIDS(List<Creation.SubAssembled> subs, Creation creation) {
+	void FinalizeNSPSetup(List<Creation.SubAssembled> subs, Creation creation) {
+		// set all nsp creationids
 		foreach (var sub in subs)
 			foreach (var part in sub.Parts)
-				if (part.Part.TryGetComponent(typeof(NonStaticPart), out var nsp))
-					((NonStaticPart)nsp).CreationID = creation.ID;
+				if (part.Part.TryGetComponent(typeof(NonStaticPart), out var nsp)) {
+					var nspComp = ((NonStaticPart)nsp);
+					nspComp.CreationID = creation.ID;
+					nspComp.BecomeAssembled();
+				}
 	}
 
 	// --------- helper functs-----------------
@@ -269,9 +273,8 @@ public class Assembler : Singleton<Assembler> {
 		for (int i = 0; i < assembleds.Count; i++) {
 			Creation.SubAssembled assembled = assembleds[i];
 
-			var rb = assembled.Parent.gameObject.AddComponent<Rigidbody>();
-			assembled.RB = rb;
-			rb.mass = assembled.Mass;
+			assembled.RB = HF.GetOrMakeRigidBody(assembled.Parent.gameObject);
+			assembled.RB.mass = assembled.Mass;
 			
 			assembleds[i] = assembled;
 		}
@@ -324,7 +327,7 @@ public class Assembler : Singleton<Assembler> {
 
 				if (subAssembly.ID == assemblyofpart) continue; // dont check itself
 
-				if (AxleCalculationHelper.AxleIntersectionTest(
+				if (AxleIntersectionTest(
 					subAssembly,
 					axle.endAPos,
 					axle.endBPos,
@@ -343,6 +346,72 @@ public class Assembler : Singleton<Assembler> {
 		}
 
 		return connections;
+	}
+
+	 static bool AxleIntersectionTest(
+		Creation.SubAssemblyParts subassembly,
+		Vector3 axleEndA,
+		Vector3 axleEndB,
+		out Vector3 jointPos) {
+
+		var parts = BuildingManager.Instance.Assembly.Parts;
+
+		// get all intersections between both ends
+		Vector3 direction = (axleEndB - axleEndA).normalized;
+		List<float> points = new();
+
+		foreach (int pi in subassembly.Parts) {
+			var part = parts[pi];
+
+			points.AddRange(PartIntersectionsWithRay(part, axleEndA, direction));
+		}
+
+		jointPos = Vector3.zero;
+
+		// dont include intersections that extend outside the range
+		float maxDistSquared = (axleEndA - axleEndB).sqrMagnitude;
+
+		var intersectionPoints =
+			points
+			.Where(t => t * t < maxDistSquared)
+			.Select(t => axleEndA + direction * t).ToArray();
+
+		if (intersectionPoints.Length == 0) return false;
+
+		// lots of debugging potential and probably need here :}
+		var average = Vector3.zero;
+		int count = 0;
+		foreach (var point in intersectionPoints) {
+			average += point;
+			count++;
+		}
+		average /= count;
+		jointPos = average;
+
+		return true;
+	}
+
+	static List<float> PartIntersectionsWithRay(
+		Part part,
+		Vector3 origin,
+		Vector3 direction) {
+
+		Triangle[] wsTris = PartUtil.PartToWSTriList(part);
+
+		List<float> dists = new();
+		foreach (var tri in wsTris) {
+			float intersect = Intersections.RayTriIntersectDist(
+				origin,
+				direction,
+				tri.p1,
+				tri.p2,
+				tri.p3);
+
+			if (intersect != -1)
+				dists.Add(intersect);
+		}
+
+		return dists;
 	}
 
 	void ApplyAxleConnections(List<AxleConnection> axleConnections, List<Creation.SubAssembled> assembleds) {

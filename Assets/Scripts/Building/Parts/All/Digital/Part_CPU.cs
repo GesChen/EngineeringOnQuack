@@ -43,7 +43,9 @@ public class Part_CPU : NonStaticPart {
 			"CPU Type Snapshot"
 			)
 		);
-	public T_Data InternalDataObject = new(Type_CPU);
+
+	readonly T_Data InternalDataObject = new(Type_CPU);
+
 	public override T_Data GetInternalLanguageDataObject() => InternalDataObject;
 	#endregion
 
@@ -432,7 +434,7 @@ public class Part_CPU : NonStaticPart {
 	public class CPart : Construct.Part {
 		public string Script; // could use bytearray but dont wanna risk issues w encoding into json
 
-		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		public override void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) {
 			var newCPU = instantiatedPart.GetComponent<Part_CPU>();
 
 			newCPU.Script = 

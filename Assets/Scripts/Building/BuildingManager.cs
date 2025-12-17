@@ -124,12 +124,13 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	// organize this later
 	void TryLoad() {
+		// reset it before loaders fuck everything up
+		Assembly = new();
+
 		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
 			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
 		else if (ConstructToLoad != null)
 			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad);
-		else
-			Assembly = new();
 			
 		ConstructToLoadPath = null;
 		ConstructToLoad = null;
@@ -276,11 +277,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		return part;
 	}
 
-	void DeletePart(Part part) {
+	internal void DeletePart(Part part, bool callNSPs = true) {
 		if (!Assembly.Parts.Contains(part)) 
 			Debug.LogError("Deleting part that isn't in the parts list");
 		else
 			Assembly.Parts.Remove(part);
+
+		if (part.IsNonStaticPart(out var nsp) && callNSPs) {
+			nsp.OnPartDeletion();
+		}
 
 		Destroy(part.gameObject);
 	}
@@ -293,38 +298,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 	void DeleteSelection() {
 		// delete current selection
-		List<Transform> additionalToDelete = new();
-
 		foreach (var part in SelectionManager.Instance.PartSelection) {
-			// if (part.IsNonStaticPart(out var nsp)) {
-			// 	additionalToDelete.AddRange(nsp.LinkedParts.Select(p => p.transform));
-			// }
-
-			// manually handle cc deletion for now 
-			if (part.IsNonStaticPart(out var nsp)) {
-				if (nsp is Part_CableConnection cc) {
-					// delete cable and other cc if not selected
-					Part_Cable cable = cc.Cable;
-					if (Assembly.Parts.Contains(cable.Part)) {
-						DeletePart(cable.Part);
-						cc.Cable = null;
-					}
-					
-					Part other = cable.OtherCC(cc).Part;
-					if (!SelectionManager.Instance.PartSelectionHS.Contains(other)){
-						DeletePart(other);
-					}
-				}
-			}
-
 			DeletePart(part);
 		}
-
-		// if (additionalToDelete.Length > 0) {
-		// 	SelectionManager.Instance.SetSelection(additionalToDelete.ToArray());
-		// 	SelectionManager.Instance.HandleContainer(); // force update
-		// 	DeleteSelection();
-		// }
 
 		SelectionManager.Instance.Clear();
 		UpdateParts();
@@ -350,8 +326,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 			true,
 			!Conatrols.Keyboard.Modifiers.Shift);
 		if (newparts == null) return; // failed, no objects to paste
-
-		Assembly.Parts.AddRange(newparts);
 
 		UpdateParts();
 

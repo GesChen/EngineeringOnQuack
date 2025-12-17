@@ -104,6 +104,8 @@ public class TransformTools : Singleton<TransformTools> {
 
 		aligning = Conatrols.IM.Editing_Building.Align.IsPressed();
 
+		local = Conatrols.IM.Editing_Building.Local.IsPressed();
+
 		// may change later
 		if (aligning) snapping = false;
 	}

@@ -46,7 +46,7 @@ public class Part_LED : NonStaticPart {
 			"LED Type Snapshot"
 			)
 		);
-	T_Data m_IDO;
+	public T_Data m_IDO;
 	public override T_Data GetInternalLanguageDataObject() =>
 		HF.LoadCached(
 			ref m_IDO,
@@ -73,7 +73,7 @@ public class Part_LED : NonStaticPart {
 		public Construct.SVector3 Color;
 		public float Intensity;
 
-		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		public override void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) {
 			var newLED = instantiatedPart.GetComponent<Part_LED>();
 
 			newLED.Color = Color;

@@ -823,6 +823,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Local"",
+                    ""type"": ""Button"",
+                    ""id"": ""07796f2f-468c-4626-b2a9-fff1618edad1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -911,6 +920,17 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Align"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f43a0814-4299-4f94-a12e-f753a4148e81"",
+                    ""path"": ""<Keyboard>/alt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Local"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1225,7 +1245,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             ""id"": ""c04f3146-f7fa-42b0-b628-dd0833060aed"",
             ""actions"": [
                 {
-                    ""name"": ""New action"",
+                    ""name"": ""RotateCamera"",
                     ""type"": ""Button"",
                     ""id"": ""9701bf82-f514-4765-bb7c-a34a3526f4b4"",
                     ""expectedControlType"": """",
@@ -1238,11 +1258,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""0246e91f-563a-44fb-a744-9b7a94e3b161"",
-                    ""path"": """",
+                    ""path"": ""<Mouse>/rightButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""New action"",
+                    ""action"": ""RotateCamera"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1352,6 +1372,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Editing_Building_CancelSelection = m_Editing_Building.FindAction("CancelSelection", throwIfNotFound: true);
         m_Editing_Building_Delete = m_Editing_Building.FindAction("Delete", throwIfNotFound: true);
         m_Editing_Building_Align = m_Editing_Building.FindAction("Align", throwIfNotFound: true);
+        m_Editing_Building_Local = m_Editing_Building.FindAction("Local", throwIfNotFound: true);
         // Editing_General
         m_Editing_General = asset.FindActionMap("Editing_General", throwIfNotFound: true);
         m_Editing_General_Copy = m_Editing_General.FindAction("Copy", throwIfNotFound: true);
@@ -1362,7 +1383,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Editing_General_Duplicate = m_Editing_General.FindAction("Duplicate", throwIfNotFound: true);
         // Operating_Player
         m_Operating_Player = asset.FindActionMap("Operating_Player", throwIfNotFound: true);
-        m_Operating_Player_Newaction = m_Operating_Player.FindAction("New action", throwIfNotFound: true);
+        m_Operating_Player_RotateCamera = m_Operating_Player.FindAction("RotateCamera", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -2123,6 +2144,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputAction m_Editing_Building_CancelSelection;
     private readonly InputAction m_Editing_Building_Delete;
     private readonly InputAction m_Editing_Building_Align;
+    private readonly InputAction m_Editing_Building_Local;
     /// <summary>
     /// Provides access to input actions defined in input action map "Editing_Building".
     /// </summary>
@@ -2158,6 +2180,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Editing_Building/Align".
         /// </summary>
         public InputAction @Align => m_Wrapper.m_Editing_Building_Align;
+        /// <summary>
+        /// Provides access to the underlying input action "Editing_Building/Local".
+        /// </summary>
+        public InputAction @Local => m_Wrapper.m_Editing_Building_Local;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2202,6 +2228,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Align.started += instance.OnAlign;
             @Align.performed += instance.OnAlign;
             @Align.canceled += instance.OnAlign;
+            @Local.started += instance.OnLocal;
+            @Local.performed += instance.OnLocal;
+            @Local.canceled += instance.OnLocal;
         }
 
         /// <summary>
@@ -2231,6 +2260,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Align.started -= instance.OnAlign;
             @Align.performed -= instance.OnAlign;
             @Align.canceled -= instance.OnAlign;
+            @Local.started -= instance.OnLocal;
+            @Local.performed -= instance.OnLocal;
+            @Local.canceled -= instance.OnLocal;
         }
 
         /// <summary>
@@ -2419,7 +2451,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     // Operating_Player
     private readonly InputActionMap m_Operating_Player;
     private List<IOperating_PlayerActions> m_Operating_PlayerActionsCallbackInterfaces = new List<IOperating_PlayerActions>();
-    private readonly InputAction m_Operating_Player_Newaction;
+    private readonly InputAction m_Operating_Player_RotateCamera;
     /// <summary>
     /// Provides access to input actions defined in input action map "Operating_Player".
     /// </summary>
@@ -2432,9 +2464,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// </summary>
         public Operating_PlayerActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
         /// <summary>
-        /// Provides access to the underlying input action "Operating_Player/Newaction".
+        /// Provides access to the underlying input action "Operating_Player/RotateCamera".
         /// </summary>
-        public InputAction @Newaction => m_Wrapper.m_Operating_Player_Newaction;
+        public InputAction @RotateCamera => m_Wrapper.m_Operating_Player_RotateCamera;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2461,9 +2493,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_Operating_PlayerActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_Operating_PlayerActionsCallbackInterfaces.Add(instance);
-            @Newaction.started += instance.OnNewaction;
-            @Newaction.performed += instance.OnNewaction;
-            @Newaction.canceled += instance.OnNewaction;
+            @RotateCamera.started += instance.OnRotateCamera;
+            @RotateCamera.performed += instance.OnRotateCamera;
+            @RotateCamera.canceled += instance.OnRotateCamera;
         }
 
         /// <summary>
@@ -2475,9 +2507,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="Operating_PlayerActions" />
         private void UnregisterCallbacks(IOperating_PlayerActions instance)
         {
-            @Newaction.started -= instance.OnNewaction;
-            @Newaction.performed -= instance.OnNewaction;
-            @Newaction.canceled -= instance.OnNewaction;
+            @RotateCamera.started -= instance.OnRotateCamera;
+            @RotateCamera.performed -= instance.OnRotateCamera;
+            @RotateCamera.canceled -= instance.OnRotateCamera;
         }
 
         /// <summary>
@@ -2819,6 +2851,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAlign(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Local" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLocal(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Editing_General" which allows adding and removing callbacks.
@@ -2878,11 +2917,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     public interface IOperating_PlayerActions
     {
         /// <summary>
-        /// Method invoked when associated input action "New action" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "RotateCamera" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnNewaction(InputAction.CallbackContext context);
+        void OnRotateCamera(InputAction.CallbackContext context);
     }
 }

@@ -121,7 +121,7 @@ public class Part_Transceiver : NonStaticPart {
 	public class CPart : Construct.Part {
 		public string Output;
 
-		public override void FinalizeInstantiation(GameObject instantiatedPart) {
+		public override void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) {
 			var newTrans = instantiatedPart.GetComponent<Part_Transceiver>();
 
 			newTrans.TargetOutputName = Output;

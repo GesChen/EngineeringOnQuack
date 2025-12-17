@@ -309,7 +309,7 @@ public static class SaveLoadHelper {
 	}
 
 	private static void ReconstructPart(Assembly reconstructed, Construct.Part part) {
-		Part newPart = BuildingManager.Instance.MakeNewPart(part.basePartID, false);
+		Part newPart = BuildingManager.Instance.MakeNewPart(part.basePartID, false, false);
 
 		newPart.transform.localPosition = new(part.position.x, part.position.y, part.position.z);
 		newPart.transform.rotation = new(part.rotation.x, part.rotation.y, part.rotation.z, part.rotation.w);

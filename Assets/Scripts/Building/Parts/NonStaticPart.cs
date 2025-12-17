@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.MemoryProfiler;
 using UnityEngine;
-using static Part_Cable;
 
 /*
  * nsp file layout
@@ -16,6 +14,9 @@ using static Part_Cable;
 public abstract class NonStaticPart : MonoBehaviour {
 	[HideInNormalInspector] public Part Part;
 	[HideInNormalInspector] public int CreationID;
+
+	protected bool IsAssembled;
+	public void BecomeAssembled() { IsAssembled = true; }
 
 	public Port[] Ports;
 
@@ -37,7 +38,11 @@ public abstract class NonStaticPart : MonoBehaviour {
 	/// </summary>
 	public virtual void OnPartCreation() { } // this codebase gets worse by the minute
 
-	#region Serialization
+	/// <summary>
+	/// During editing
+	/// </summary>
+	public virtual void OnPartDeletion() { }
+
 	/// <summary>
 	/// <para>While editing, clipboard and saving</para>
 	/// <para>Method that converts an CPa object into a type deriving from CPa for more specificity in 
@@ -87,5 +92,11 @@ public abstract class NonStaticPart : MonoBehaviour {
 	public virtual void FinalizeCPartReconstruction(
 		Construct.Part originalCPart,
 		Part unfinishedPart, Assembly unfinishedAssembly) { }
-	#endregion
+
+	/// <summary>
+	/// used with the buildingclipboard to remap id references in things
+	/// </summary>
+	/// <param name="Mappings">old id -> new id</param>
+	/// <param name="PartPool">list of new parts to look through to rebind</param>
+	public virtual void RebindReferences(Dictionary<int, int> Mappings, Part[] PartPool) { }
 }

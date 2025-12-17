@@ -38,8 +38,11 @@ public class PlayerController : MonoBehaviour{
 
 		rb.velocity = movement + rb.velocity.y * Vector3.up;
 
-		yaw += Conatrols.Mouse.Delta.x * Sensitivity;
-		pitch -= Conatrols.Mouse.Delta.y * Sensitivity;
+		if (ContextManager.CurrentlyInContextStrict<Contexts.Playing>() ||
+			Conatrols.IM.Operating_Player.RotateCamera.IsPressed()) {
+			yaw += Conatrols.Mouse.Delta.x * Sensitivity;
+			pitch -= Conatrols.Mouse.Delta.y * Sensitivity;
+		}
 
 		pitch = Mathf.Clamp(pitch,
 			visuals.FirstPerson ? fpPitchLimits.x : tpPitchLimits.x,

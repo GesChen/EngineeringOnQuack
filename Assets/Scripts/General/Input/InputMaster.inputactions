@@ -737,6 +737,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Local",
+                    "type": "Button",
+                    "id": "07796f2f-468c-4626-b2a9-fff1618edad1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -825,6 +834,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Align",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f43a0814-4299-4f94-a12e-f753a4148e81",
+                    "path": "<Keyboard>/alt",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Local",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -1139,7 +1159,7 @@
             "id": "c04f3146-f7fa-42b0-b628-dd0833060aed",
             "actions": [
                 {
-                    "name": "New action",
+                    "name": "RotateCamera",
                     "type": "Button",
                     "id": "9701bf82-f514-4765-bb7c-a34a3526f4b4",
                     "expectedControlType": "",
@@ -1152,11 +1172,11 @@
                 {
                     "name": "",
                     "id": "0246e91f-563a-44fb-a744-9b7a94e3b161",
-                    "path": "",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "New action",
+                    "action": "RotateCamera",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

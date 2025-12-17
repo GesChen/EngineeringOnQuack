@@ -111,4 +111,10 @@ public static class PartInternalFunctions {
 			return T_Data.Success;
 		}
 	}
+
+	public static class Motor {
+		internal static void ClearSubs() {
+
+		}
+	}
 }

@@ -249,11 +249,10 @@ public class SelectionManager : Singleton<SelectionManager> {
 		Selection = Selection.Distinct().ToList();
 	}
 
+	// deselect one cc if both are selected and both are on a port
 	void SpecialCCHandle() {
 		// check on mouse release i guess
 		if (!Conatrols.Mouse.Left.ReleasedThisFrame) return;
-
-		// deselect one cc if both are selected and both are on a port
 
 		// find all ccs on ports
 		var ccsOnPorts = BuildingManager.Instance.Assembly.Parts.SelectMany(part => // any selected part's
