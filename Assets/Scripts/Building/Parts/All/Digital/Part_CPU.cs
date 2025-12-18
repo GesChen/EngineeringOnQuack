@@ -385,6 +385,7 @@ public class Part_CPU : NonStaticPart {
 
 		var other = Ports[id].OtherPart;
 		// somehow return null
+		if (other == null) return null;
 
 		other.IsNonStaticPart(out var connectedPart);
 		var data = connectedPart.GetInternalLanguageDataObject();

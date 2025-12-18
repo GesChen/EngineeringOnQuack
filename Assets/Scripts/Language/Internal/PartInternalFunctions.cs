@@ -38,6 +38,7 @@ public static class PartInternalFunctions {
 				if (call != null) return call;
 			}
 
+			// todo: figure out how to do nulls
 			return Errors.BadCode();
 		}
 	}

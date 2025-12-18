@@ -63,7 +63,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
 
-
 		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
 	}
@@ -278,8 +277,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	}
 
 	internal void DeletePart(Part part, bool callNSPs = true) {
-		if (!Assembly.Parts.Contains(part)) 
-			Debug.LogError("Deleting part that isn't in the parts list");
+		if (!Assembly.Parts.Contains(part))
+			return; // other processes may have already deleted it 
 		else
 			Assembly.Parts.Remove(part);
 
@@ -290,11 +289,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Destroy(part.gameObject);
 	}
 	#endregion
-
-	#region Selection
-	void DeselectAllParts() {
-		Assembly.Parts.ForEach(p => { p.Selected = false; p.gameObject.layer = LayerMask.NameToLayer("Part"); });
-	}
 
 	void DeleteSelection() {
 		// delete current selection
@@ -307,7 +301,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SetDirty();
 	}
-	#endregion
 
 	#region Clipboard
 	void Copy() {

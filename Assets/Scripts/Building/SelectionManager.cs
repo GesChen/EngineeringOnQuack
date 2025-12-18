@@ -269,6 +269,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 			BuildingManager.Instance.Assembly.Parts.Where(part => 
 				part.IsNonStaticPart(out var nsp)
 				&& nsp is Part_Cable cable
+				&& cable.connectionA != null // valid cable
 				&& ccsOnPorts.Contains(cable.connectionA.Part)
 				&& ccsOnPorts.Contains(cable.connectionB.Part)
 			).Select(part => part.GetNSP<Part_Cable>()).ToArray();
@@ -493,10 +494,20 @@ public class SelectionManager : Singleton<SelectionManager> {
 
 	public void AddSelection(params Transform[] transforms) {
 		foreach (var t in transforms) {
-			if (!Selection.Contains(t))
+			if (!Selection.Contains(t)) {
+				selectionChanged = true;
 				Selection.Add(t);
+			}
 		}
 
-		selectionChanged = true;
+	}
+
+	public void RemoveSelection(params Transform[] transforms) {
+		foreach (var t in transforms) {
+			if (Selection.Contains(t)) {
+				selectionChanged = true;
+				Selection.Remove(t);
+			}
+		}
 	}
 }

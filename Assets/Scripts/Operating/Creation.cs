@@ -13,7 +13,7 @@ public class Creation : MonoBehaviour {
 
 	public struct SubAssembled {
 		public Transform Parent;
-		public List<(int pi, Transform Part)> Parts;
+		public List<(int pid, Transform Part)> Parts;
 		public Rigidbody RB;
 		public float Mass;
 		public SubAssemblyParts Source;
@@ -21,6 +21,6 @@ public class Creation : MonoBehaviour {
 	
 	public struct SubAssemblyParts {
 		public int ID;
-		public List<int> Parts;
+		public List<int> Parts; // changed to ids instaed of indexes now
 	}
 }

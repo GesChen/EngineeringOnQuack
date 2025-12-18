@@ -9,10 +9,6 @@ public class Assembler : Singleton<Assembler> {
 	// rewritten assembler with basically the same methods as before but
 	// just better because the old code sucks so much wtf
 
-	public struct Connection {
-		public int A;
-		public int B;
-	}
 	public struct AxleConnection {
 		public int AxleAssembly;
 		public int ConnectedAssemblyIndex;
@@ -31,8 +27,9 @@ public class Assembler : Singleton<Assembler> {
 		
 		creation = CreateCreation(construct);
 
-		var connections = FindAllConnections(parts);
-		var subassemblies = ConnectionsToSubAssemblies(connections, parts);
+		//var connections = FindAllConnections(parts);
+		//var subassemblies = ConnectionsToSubAssemblies(connections, parts);
+		var subassemblies = FindSubassemblies(parts);
 		var assembledSubs = CopyToSimulation(creation, subassemblies, parts);
 		SetupPhysics(assembledSubs, parts);
 
@@ -47,23 +44,46 @@ public class Assembler : Singleton<Assembler> {
 	bool PartIsAxle(Construct.Part part) =>
 		part is Part_Axle.CPart; // also this check will be changed later 
 
-	List<Connection> FindAllConnections(List<Construct.Part> parts) {
-		List<Connection> connections = new();
+	List<Creation.SubAssemblyParts> FindSubassemblies(List<Construct.Part> parts) {
+		// find subassemblies by choosing a part and finding anything that touches it
 
-		for (int a = 0; a < parts.Count; a++) {
-			for (int b = a + 1; b < parts.Count; b++) {
-				if (TestTwoPartConnection(
-					parts[a],
-					parts[b]))
-					connections.Add(
-						new() {
-							A = a,
-							B = b,
-						});
+		List<List<int>> Groups = new();
+
+		HashSet<int> checkedParts = new();
+		foreach (var part in parts) {
+			if (checkedParts.Contains(part.id)) continue;
+
+			var group = GroupCheck(part, parts, checkedParts);
+
+			Groups.Add(group);
+		}
+
+		// turn groups into subs
+		return Groups.Select((g, i) =>
+			new Creation.SubAssemblyParts() {
+				ID = i,
+				Parts = g.Select(i => parts.Find(p => p.id == i).id).ToList()
+			}).ToList();
+
+	}
+
+	List<int> GroupCheck(Construct.Part part, List<Construct.Part> parts, HashSet<int> checkedParts) {
+		checkedParts.Add(part.id); // add self
+
+		List<int> group = new() {part.id};
+
+		// test on all nonfound and nonself parts
+		foreach (var check in parts) {
+			if (check.id == part.id
+				|| checkedParts.Contains(check.id)) continue;
+
+			if (TestTwoPartConnection(part, check)) {
+				// check further
+				group.AddRange(GroupCheck(check, parts, checkedParts));
 			}
 		}
 
-		return connections;
+		return group;
 	}
 
 	// method does extra check for axles in the following manner: ---------
@@ -106,67 +126,16 @@ public class Assembler : Singleton<Assembler> {
 
 			if (Intersections.PointInMesh(pointA, partTris)) return true;
 			if (Intersections.PointInMesh(pointB, partTris)) return true;
+
 			return false;
 		}
-	}
-
-	List<Creation.SubAssemblyParts> ConnectionsToSubAssemblies(List<Connection> connections, List<Construct.Part> parts) {
-		// i COULD use the old method
-		// i was gonna rewrite this but actually fuck nah im lazy
-		// we porting bruh fts
-
-		int subI = 0;
-
-		Dictionary<int, bool> partsInAssemblies = 
-			Enumerable.Range(0, parts.Count).ToDictionary(part => part, value => false);
-		List<Creation.SubAssemblyParts> assemblies = new();
-
-		foreach (var connection in connections) {
-			int A = connection.A;
-			int B = connection.B;
-
-			partsInAssemblies[A] = true;
-			partsInAssemblies[B] = true;
-
-			// if no assembly contains part a or b
-			bool containsA = assemblies.Any(a => a.Parts.Contains(A));
-			bool containsB = assemblies.Any(a => a.Parts.Contains(B));
-			if (!(containsA || containsB)) {
-				Creation.SubAssemblyParts newAssembly = new() {
-					Parts = new() { A, B },
-					ID = subI++
-				};
-
-				assemblies.Add(newAssembly);
-			} else {
-				int assemblyIndex = -1;
-				if (containsA) assemblyIndex = assemblies.FindIndex(a => a.Parts.Contains(A));
-				if (containsB) assemblyIndex = assemblies.FindIndex(a => a.Parts.Contains(B)); // could be optimized but im lazy + it looks better
-
-				if (!containsA) assemblies[assemblyIndex].Parts.Add(A);
-				if (!containsB) assemblies[assemblyIndex].Parts.Add(B);
-			}
-		}
-
-		List<int> partsLeft = partsInAssemblies.Where(kvp => kvp.Value == false).Select(kvp => kvp.Key).ToList();
-		foreach (int part in partsLeft) {
-			Creation.SubAssemblyParts sub = new() {
-				Parts = new() { part },
-				ID = subI++
-			};
-
-			assemblies.Add(sub); // solo parts become own assembly
-		}
-
-		// number subassemblies
-
-		return assemblies;
 	}
 
 	// can we rewrite this?????
 	List<Creation.SubAssembled> CopyToSimulation(Creation creation, List<Creation.SubAssemblyParts> subassemblies, List<Construct.Part> Parts) {
 		// also a straight port
 
+		Dictionary<Construct.Part, Transform> partMap = new();
 		List<Creation.SubAssembled> assembleds = new();
 		foreach (Creation.SubAssemblyParts sub in subassemblies) {
 			Transform subParent = new GameObject($"SubAssembly ({sub.Parts.Count})").transform;
@@ -175,9 +144,8 @@ public class Assembler : Singleton<Assembler> {
 			List<Transform> parts = new();
 			Vector3 accumPos = Vector3.zero;
 
-			Dictionary<Construct.Part, Transform> partMap = new();
-			foreach (int partIndex in sub.Parts) {
-				Construct.Part part = Parts[partIndex];
+			foreach (int partID in sub.Parts) {
+				Construct.Part part = Parts.Find(p => p.id == partID);
 
 				Transform newObject = Instantiate(part.GetBasePart().Prefab).transform;
 				newObject.SetLocalPositionAndRotation(part.position, part.rotation);
@@ -203,20 +171,21 @@ public class Assembler : Singleton<Assembler> {
 			foreach (Transform part in parts)
 				part.parent = subParent;
 
+			assembleds.Add(new() {
+				Parent = subParent,
+				Parts = sub.Parts.Zip(parts, (pid, part) => (pid, part)).ToList(),
+				Source = sub
+			});
+		}
+
+		foreach (var sub in subassemblies)
 			// finalize all
-			foreach (int origPartI in sub.Parts) {
-				var origPart = Parts[origPartI];
+			foreach (int origPartID in sub.Parts) {
+				var origPart = Parts.Find(p => p.id == origPartID);
 
 				var newPart = partMap[origPart];
 				origPart.FinalizeInstantiation(newPart.gameObject, creation.gameObject);
 			}
-
-			assembleds.Add(new() {
-				Parent = subParent,
-				Parts = sub.Parts.Zip(parts, (pi, part) => (pi, part)).ToList(),
-				Source = sub
-			});
-		}
 
 		return assembleds;
 	}
@@ -282,8 +251,8 @@ public class Assembler : Singleton<Assembler> {
 
 	float SubassemblyTotalMass(Creation.SubAssemblyParts asm, List<Construct.Part> parts) {
 		float total = 0;
-		foreach (var pi in asm.Parts) {
-			var part = parts[pi];
+		foreach (var pid in asm.Parts) {
+			var part = parts.Find(p => p.id == pid);
 
 			total += CalculatePartMass(part);
 		}
@@ -308,18 +277,18 @@ public class Assembler : Singleton<Assembler> {
 	}
 
 	List<AxleConnection> CalculateAxleJoints(List<Creation.SubAssembled> assembleds, List<Construct.Part> parts) {
-		List<int> axleParts = new();
+		List<int> axlePartIDS = new();
 		foreach (var assembly in assembleds)
-			axleParts.AddRange(
-				assembly.Source.Parts.Where(pi => PartIsAxle(parts[pi])));
+			axlePartIDS.AddRange(
+				assembly.Source.Parts.Where(pid => PartIsAxle(parts.Find(p => p.id == pid))));
 
 		List<AxleConnection> connections = new();
 
-		foreach (int api in axleParts) {
+		foreach (int apid in axlePartIDS) {
 			int assemblyofpart = assembleds
-				.First(a => a.Source.Parts.Contains(api)).Source.ID;
+				.First(a => a.Source.Parts.Any(p => p == apid)).Source.ID;
 
-			var axle = parts[api] as Part_Axle.CPart;
+			var axle = parts.Find(p => p.id == apid) as Part_Axle.CPart;
 
 			for (int connectionI = 0; connectionI < assembleds.Count; connectionI++) {
 				Creation.SubAssembled assembled = assembleds[connectionI];
@@ -360,8 +329,8 @@ public class Assembler : Singleton<Assembler> {
 		Vector3 direction = (axleEndB - axleEndA).normalized;
 		List<float> points = new();
 
-		foreach (int pi in subassembly.Parts) {
-			var part = parts[pi];
+		foreach (int pid in subassembly.Parts) {
+			var part = parts.Find(p => p.ID == pid);
 
 			points.AddRange(PartIntersectionsWithRay(part, axleEndA, direction));
 		}

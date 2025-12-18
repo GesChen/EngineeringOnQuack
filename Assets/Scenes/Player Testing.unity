@@ -4819,6 +4819,7 @@ MonoBehaviour:
   fpPitchLimits: {x: -60, y: 80}
   tpPitchLimits: {x: -10, y: 85}
   Sensitivity: 0.05
+  OperatingSensitivity: 0.1
   HoldingTransform: {fileID: 0}
   yaw: 0
   pitch: 0

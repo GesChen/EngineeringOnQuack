@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour{
 	public Vector2 tpPitchLimits;
 
 	public float Sensitivity;
-
+	public float OperatingSensitivity;
 	
 	public Transform HoldingTransform;
 
@@ -38,10 +38,13 @@ public class PlayerController : MonoBehaviour{
 
 		rb.velocity = movement + rb.velocity.y * Vector3.up;
 
-		if (ContextManager.CurrentlyInContextStrict<Contexts.Playing>() ||
-			Conatrols.IM.Operating_Player.RotateCamera.IsPressed()) {
+		if (ContextManager.CurrentlyInContextStrict<Contexts.Playing>()) {
 			yaw += Conatrols.Mouse.Delta.x * Sensitivity;
 			pitch -= Conatrols.Mouse.Delta.y * Sensitivity;
+		}else 
+		if (Conatrols.IM.Operating_Player.RotateCamera.IsPressed()) {
+			yaw += Conatrols.Mouse.Delta.x * OperatingSensitivity;
+			pitch -= Conatrols.Mouse.Delta.y * OperatingSensitivity;
 		}
 
 		pitch = Mathf.Clamp(pitch,

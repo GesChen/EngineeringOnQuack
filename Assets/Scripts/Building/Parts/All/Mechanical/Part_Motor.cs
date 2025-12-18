@@ -101,7 +101,9 @@ public class Part_Motor : NonStaticPart {
 			// wild guess and hope that the parent is always the subassembly
 			var joint =  instantiatedPart.transform.parent.gameObject.AddComponent<HingeJoint>();
 			joint.connectedBody = HF.GetOrMakeRigidBody(comp.Axle.Part.transform.parent.gameObject);
-			joint.anchor = comp.AxleEndTarget.position - instantiatedPart.transform.position;
+			joint.anchor = 
+				comp.AxleEndTarget.position - 
+				instantiatedPart.transform.parent.position;
 			joint.axis = comp.AxleEndTarget.forward;
 
 			comp.Joint = joint;
@@ -116,6 +118,14 @@ public class Part_Motor : NonStaticPart {
 		motor.AxlePartID = Axle.Part.ID;
 
 		CPart = motor;
+	}
+
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var cpa = originalCPart as CPart;
+		var newMotor = unfinishedPart.GetComponent<Part_Motor>();
+
+		newMotor.Strength = cpa.Strength;
+		newMotor.Axle = unfinishedAssembly.Parts.First(p => p.ID == cpa.AxlePartID).GetNSP<Part_Axle>();
 	}
 
 	public override void RebindReferences(Dictionary<int, int> Mappings, Part[] PartPool) {

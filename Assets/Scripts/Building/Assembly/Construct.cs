@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Construct;
 
 public class Construct {
 	public class SVector3 {
@@ -98,6 +99,19 @@ public class Construct {
 			}
 
 			return cpa;
+		}
+
+		public (Vector3[] verts, int[] tris) GetGeometry() {
+			Vector3[] verts = GetBasePart().AllVerts;
+			TransformPoints(verts);
+
+			return (verts, GetBasePart().AllTris);
+		}
+
+		public Geometry.Triangle[] GetTris() {
+			var (verts, tris) = GetGeometry();
+			return tris.Select(t => verts[t]).Chunk(3).Select(
+				c => new Geometry.Triangle(c[0], c[1], c[2])).ToArray();
 		}
 	}
 

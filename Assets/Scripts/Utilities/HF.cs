@@ -31,7 +31,30 @@ public static class HF {
 		sb.Append("]");
 		return sb.ToString();
 	}
-	
+
+	public static IEnumerable<T[]> Chunk<T>(this IEnumerable<T> source, int size) {
+		if (size <= 0) throw new ArgumentOutOfRangeException();
+
+		using var e = source.GetEnumerator();
+
+		while (true) {
+			var buffer = new T[size];
+			int i = 0;
+
+			for (; i < size && e.MoveNext(); i++) {
+				buffer[i] = e.Current;
+			}
+
+			if (i == 0)
+				yield break;
+
+			if (i != size)
+				Array.Resize(ref buffer, i);
+
+			yield return buffer;
+		}
+	}
+
 	public static bool TryFind<T>(this IEnumerable<T> source, Func<T, bool> predicate, out T result) {
 		foreach (var item in source) {
 			if (predicate(item)) {

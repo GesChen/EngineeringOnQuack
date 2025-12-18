@@ -336,7 +336,7 @@ public static class Intersections {
 		Vector3 ray_cross_e2 = Vector3.Cross(dir, edge2);
 
 		float det = Vector3.Dot(edge1, ray_cross_e2);
-		if (Mathf.Abs(det) < 1e-8)
+		if (Mathf.Abs(det) < 1e-6)
 			return -1;
 
 		float inv_det = 1f / det;
@@ -352,8 +352,9 @@ public static class Intersections {
 		if (v < 0 || u + v > 1)
 			return -1;
 
-		// At this stage we can compute t to find out where the intersection point is on the line.
-		return inv_det * Vector3.Dot(edge2, s_cross_e1);
+		float t = inv_det * Vector3.Dot(edge2, s_cross_e1);
+		if (t < 0f) return -1;
+		return t;
 	}
 
 	// projects points of tri onto plane of other, if projected outside of tri's bounds, then return
@@ -480,13 +481,6 @@ public static class Intersections {
 		
 		// transform points if relative to 
 		if (relativeTo != null) {
-			/*for (int i = 0; i < tris.Length; i++) {
-				var tri = tris[i];
-				tris[i].p1 = relativeTo.TransformPoint(tri.p1);
-				tris[i].p2 = relativeTo.TransformPoint(tri.p2);
-				tris[i].p3 = relativeTo.TransformPoint(tri.p3);
-			}*/
-
 			// fast transformpoints and put everything into one big array for SPEED
 			Vector3[] points = new Vector3[triangles.Length * 3];
 			for (int i = 0; i < triangles.Length; i++) {
@@ -512,6 +506,7 @@ public static class Intersections {
 		// actualy we dont have to do this as long as we just use v2s in the code
 		// nevermind i just made a triangle2d class so im gonna use it lmao
 		Vector2 p = point;
+		float epsilon = 1e-5f;
 
 		// check for 2d triangle aabb intersects with point
 		// store indexes of tris that passed
@@ -519,9 +514,17 @@ public static class Intersections {
 		for (int i = 0; i < tris.Length; i++) {
 			Triangle2D tri = (Triangle2D)tris[i]; // flatten here
 
-			if (tri.Bounds.Test(p))
+			var bounds = tri.Bounds;
+
+			// add some tolerance
+			bounds.Min -= epsilon * Vector2.one;
+			bounds.Max += epsilon * Vector2.one;
+
+			if (bounds.Test(p)) {
 				flatIntersects.Add(i);
+			}
 		}
+
 
 		// perform 3d ray intersection along flattened axis and count intersections
 		// in the positive direction
@@ -531,7 +534,7 @@ public static class Intersections {
 		foreach (int index in flatIntersects) {
 			Triangle tri = tris[index];
 
-			float d = RayTriIntersectDist(point, Vector3.forward, tri.p1, tri.p2, tri.p3);
+			float d = RayTriIntersectDist(point, new(epsilon, epsilon, 1), tri.p1, tri.p2, tri.p3);
 			if (d > 0) count++;
 		}
 
