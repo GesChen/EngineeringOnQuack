@@ -15,6 +15,7 @@ public static class AllParts {
 		new(5,	"cc",			"Sphere",		"Sphere",		"CableConnection"),
 		new(6,	"transceiver",	"Transceiver",	"Transceiver",	"Transceiver"),
 		new(7,	"led",			"LED",			"LED",			"LED"),
-		new(8,	"motor",		"Motor",		"Motor",		"Motor")
+		new(8,	"motor",		"Motor",		"Motor",		"Motor"),
+		new(9,	"seat",			"Seat",			"Seat",			"Seat")
 	};
 }

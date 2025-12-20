@@ -19,6 +19,9 @@ public class Part_Cable : NonStaticPart {
 			connectionA.transform.position,
 			connectionB.transform.position
 		});
+
+		// prevent selection
+		transform.position = (connectionA.transform.position + connectionB.transform.position) / 2;
 	}
 
 	public override void OnPartDeletion() {
@@ -32,7 +35,7 @@ public class Part_Cable : NonStaticPart {
 	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
 	public override void OnPartCreation() {
-		if (SaveLoadManager.Loading) return; // dont do this for loading
+		if (BuildingManager.Instance.LoadingConstruct)return; // dont do this for loading
 
 		var ccA = BuildingManager.Instance.MakeNewPart("cc", true, true);
 		var ccB = BuildingManager.Instance.MakeNewPart("cc", true, true);

@@ -21,6 +21,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	public string ConstructToLoadPath;
 	public Construct ConstructToLoad;
 
+	public bool LoadingConstruct;
+
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
@@ -126,11 +128,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		// reset it before loaders fuck everything up
 		Assembly = new();
 
+		LoadingConstruct = true;
+
 		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
 			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
 		else if (ConstructToLoad != null)
 			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad);
-			
+
+		LoadingConstruct = false;
+
 		ConstructToLoadPath = null;
 		ConstructToLoad = null;
 	}
@@ -271,7 +277,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		part.basePart = bp;
 
 		part.ID = HF.UIDHashFunction(); // may change this
-		// 10-19-25 changed to random instead of datettime
+										// 10-19-25 changed to random instead of datettime
 
 		return part;
 	}

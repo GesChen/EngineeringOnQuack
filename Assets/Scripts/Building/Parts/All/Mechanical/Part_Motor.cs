@@ -54,7 +54,7 @@ public class Part_Motor : NonStaticPart {
 	}
 
 	public override void OnPartCreation() {
-		if (SaveLoadManager.Loading) return; // dont do this for loading
+		if (BuildingManager.Instance.LoadingConstruct) return; // dont do this for loading
 		var newAxlePart = BuildingManager.Instance.MakeNewPart("axle", true, true);
 
 		newAxlePart.IsNonStaticPart(out var nsp);

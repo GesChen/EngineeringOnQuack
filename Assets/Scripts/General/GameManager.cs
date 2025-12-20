@@ -15,11 +15,15 @@ public class GameManager : Singleton<GameManager> {
 	public Action OM_SetCurrentAsLoadTarget;
 	public Action SM_ResetState;
 
+	public Action WorldUpdated;
+
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
 		base.Awake();
 
 		Config.Fonts.Reset();
+
+		WorldUpdated = null;
 	}
 
 	void Start() {
@@ -42,6 +46,8 @@ public class GameManager : Singleton<GameManager> {
 			OM_SetCurrentAsLoadTarget();
 
 			OM_DestroyCreation();
+
+			WorldUpdated();
 		}
 
 		SM_ResetState();
@@ -59,8 +65,10 @@ public class GameManager : Singleton<GameManager> {
 		if (ContextManager.CurrentlyInContext<Contexts.Editing>()) {
 			BM_ClearEditing();
 		} else {
-			if (destroyAssemblyIfOperating)
+			if (destroyAssemblyIfOperating) {
 				OM_DestroyCreation();
+				WorldUpdated();
+			}
 		}
 
 		Cursor.lockState = CursorLockMode.Locked;
@@ -78,6 +86,8 @@ public class GameManager : Singleton<GameManager> {
 		BM_ClearEditing();
 
 		OM_AssembleFromEditing();
+
+		WorldUpdated();
 	}
 
 	public void Operate() {

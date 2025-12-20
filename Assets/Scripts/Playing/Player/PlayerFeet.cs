@@ -1,23 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using cfg = Config.Player.Feet;
 
 public class PlayerFeet : MonoBehaviour {
-	public PlayerController controller;
-
-	public float maxDist = .5f;
-	public float stepForward = .5f;
-	public float maxStepForward = 1;
-	public float distanceInfluence = .5f;
-	public float stepUp = 1f;
-	public float angleUp = .5f;
-	public float hipWidth = 1;
-
-	public float animSpeed = 5f;
-	public float animSSin = 1.5f;
-	public float animSSout = 4;
-	public float velSmoothing = 1f;
-
 	public Transform leftFoot;
 	public Transform rightFoot;
 
@@ -36,22 +22,22 @@ public class PlayerFeet : MonoBehaviour {
 				Compare = hit.point;
 
 
-			if ((Compare - Target).sqrMagnitude > controller.maxDist * controller.maxDist
+			if ((Compare - Target).sqrMagnitude > cfg.maxDist * cfg.maxDist
 				&& Vector3.Dot(dir, Target - Compare) < 0
 				&& other.Grounded && Grounded && !justWent) {
 
-				float speed = (Compare - Target).magnitude / controller.maxDist;
-				speed = Mathf.Pow(speed, controller.distanceInfluence);
+				float speed = (Compare - Target).magnitude / cfg.maxDist;
+				speed = Mathf.Pow(speed, cfg.distanceInfluence);
 
-				float fwd = Mathf.Min(controller.stepForward * speed, controller.maxStepForward);
+				float fwd = Mathf.Min(cfg.stepForward * speed, cfg.maxStepForward);
 
-				controller.StartCoroutine(Step(controller, other, fwd, joint, up, dir, right));
+				controller.StartCoroutine(Step(other, fwd, joint, up, dir, right));
 
 				justWent = true;
 			}
 		}
 
-		public IEnumerator Step(PlayerFeet controller, Foot other, float forward, Vector3 joint, Vector3 up, Vector3 dir, Vector3 right) {
+		public IEnumerator Step (Foot other, float forward, Vector3 joint, Vector3 up, Vector3 dir, Vector3 right) {
 			Grounded = false;
 
 			if (Physics.Raycast(
@@ -63,18 +49,18 @@ public class PlayerFeet : MonoBehaviour {
 			}
 
 			while (t <= 1) {
-				float ts = HF.VariableSmoothStep01(t, controller.animSSin, controller.animSSout);
-				Pos = Curves.Bezier(new[] { Old, Old + up * controller.stepUp, Target + up * controller.stepUp, Target }, ts);
+				float ts = HF.VariableSmoothStep01(t, cfg.animSSin, cfg.animSSout);
+				Pos = Curves.Bezier(new[] { Old, Old + up * cfg.stepUp, Target + up * cfg.stepUp, Target }, ts);
 
 				// dont fix with angleaxis :|
-				float lift = -4 * ts * (ts - 1) * controller.angleUp;
+				float lift = -4 * ts * (ts - 1) * cfg.angleUp;
 				Rot = Quaternion.LookRotation(dir + Vector3.up * lift, up);
 
 				// continuously update speed
-				float speed = (Compare - Target).magnitude / controller.maxDist;
-				speed = Mathf.Pow(speed, controller.distanceInfluence);
+				float speed = (Compare - Target).magnitude / cfg.maxDist;
+				speed = Mathf.Pow(speed, cfg.distanceInfluence);
 
-				t += Time.deltaTime * controller.animSpeed * speed;
+				t += Time.deltaTime * cfg.animSpeed * speed;
 				yield return null;
 			}
 
@@ -94,7 +80,7 @@ public class PlayerFeet : MonoBehaviour {
 
 	void Update() {
 		Vector3 vel = transform.position - lastPos;
-		smoothVel = Vector3.Lerp(smoothVel, lastNonZeroVel, velSmoothing * Time.deltaTime);
+		smoothVel = Vector3.Lerp(smoothVel, lastNonZeroVel, cfg.velSmoothing * Time.deltaTime);
 		dir = smoothVel.normalized;
 
 		if (Physics.Raycast(new(transform.position, -transform.up), out var hit)) {
@@ -102,8 +88,8 @@ public class PlayerFeet : MonoBehaviour {
 		}
 		Vector3 right = -Vector3.Cross(dir, up);
 
-		Vector3 Ljoint = transform.position - right * hipWidth / 2f;
-		Vector3 Rjoint = transform.position + right * hipWidth / 2f;
+		Vector3 Ljoint = transform.position - right * cfg.hipWidth / 2f;
+		Vector3 Rjoint = transform.position + right * cfg.hipWidth / 2f;
 
 		Left.Check(this, Right, Ljoint, dir, right, up);
 		Right.Check(this, Left, Rjoint, dir, right, up);
@@ -122,7 +108,5 @@ public class PlayerFeet : MonoBehaviour {
 			Right.Pos,
 			Right.Rot
 			);
-
 	}
-
 }

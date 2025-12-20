@@ -393,6 +393,15 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Sit"",
+                    ""type"": ""Button"",
+                    ""id"": ""96d0545d-96a2-4516-acdb-6cfad4a76247"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -531,11 +540,22 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""8c831f75-ec0e-482e-9019-0115f3715a16"",
-                    ""path"": ""<Keyboard>/e"",
+                    ""path"": ""<Keyboard>/tab"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Edit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""19282226-cde6-4fc8-8c4e-96cc6e5c8b68"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Sit"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1355,6 +1375,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         m_Playing_Player = asset.FindActionMap("Playing_Player", throwIfNotFound: true);
         m_Playing_Player_Move = m_Playing_Player.FindAction("Move", throwIfNotFound: true);
         m_Playing_Player_Edit = m_Playing_Player.FindAction("Edit", throwIfNotFound: true);
+        m_Playing_Player_Sit = m_Playing_Player.FindAction("Sit", throwIfNotFound: true);
         // Editing_Camera
         m_Editing_Camera = asset.FindActionMap("Editing_Camera", throwIfNotFound: true);
         m_Editing_Camera_FocusSelection = m_Editing_Camera.FindAction("FocusSelection", throwIfNotFound: true);
@@ -1871,6 +1892,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private List<IPlaying_PlayerActions> m_Playing_PlayerActionsCallbackInterfaces = new List<IPlaying_PlayerActions>();
     private readonly InputAction m_Playing_Player_Move;
     private readonly InputAction m_Playing_Player_Edit;
+    private readonly InputAction m_Playing_Player_Sit;
     /// <summary>
     /// Provides access to input actions defined in input action map "Playing_Player".
     /// </summary>
@@ -1890,6 +1912,10 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Playing_Player/Edit".
         /// </summary>
         public InputAction @Edit => m_Wrapper.m_Playing_Player_Edit;
+        /// <summary>
+        /// Provides access to the underlying input action "Playing_Player/Sit".
+        /// </summary>
+        public InputAction @Sit => m_Wrapper.m_Playing_Player_Sit;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1922,6 +1948,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Edit.started += instance.OnEdit;
             @Edit.performed += instance.OnEdit;
             @Edit.canceled += instance.OnEdit;
+            @Sit.started += instance.OnSit;
+            @Sit.performed += instance.OnSit;
+            @Sit.canceled += instance.OnSit;
         }
 
         /// <summary>
@@ -1939,6 +1968,9 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Edit.started -= instance.OnEdit;
             @Edit.performed -= instance.OnEdit;
             @Edit.canceled -= instance.OnEdit;
+            @Sit.started -= instance.OnSit;
+            @Sit.performed -= instance.OnSit;
+            @Sit.canceled -= instance.OnSit;
         }
 
         /// <summary>
@@ -2744,6 +2776,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEdit(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Sit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSit(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Editing_Camera" which allows adding and removing callbacks.

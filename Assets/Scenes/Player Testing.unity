@@ -2296,6 +2296,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Dirty: 0
   ConstructToLoadPath: 
+  LoadingConstruct: 0
 --- !u!114 &825630088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4666,13 +4667,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1736544907}
+  - component: {fileID: 1736544914}
   - component: {fileID: 1736544911}
+  - component: {fileID: 1736544915}
   - component: {fileID: 1736544908}
   - component: {fileID: 1736544913}
   - component: {fileID: 1736544912}
   - component: {fileID: 1736544910}
   - component: {fileID: 1736544909}
-  - component: {fileID: 1736544914}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -4713,47 +4715,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1736544906}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0271b929d0fbd2242ae87452ebf56615, type: 3}
+  m_Script: {fileID: 11500000, guid: cff272af558bc3c41bdf076a1d425c03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 1736544911}
-  Neck: {fileID: 847723368}
-  Eyes: {fileID: 1533982288}
-  StickBase: {fileID: 940584280}
-  BasePosL: {fileID: 1333735702}
-  BasePosR: {fileID: 1313452973}
-  CameraTransform: {fileID: 1681030642}
   Camera: {fileID: 1681030641}
-  Stick: {fileID: 1068331735}
-  StickAngle: 6
-  stickCameraOffset: 0.1
-  FaceGroup: {fileID: 77313404}
-  FirstPerson: 1
-  L: 0.13
-  R: 2.56
-  S: 0.92
-  transitionScrollStrength: 1
-  transitionFovSmoothing: 1
-  transitionFovEffect: 10
-  transitionResidual: 5
-  tpDistMin: 2
-  tpDistMax: 5
-  tpOuterFovExtra: 10
-  tpFovExtraPow: 5
-  tpScrollSensitivity: 0.007
-  tpDistSmooth: 5
-  tpNeckRotationCoef: 0.1
-  tpCollisionOutset: 0.5
-  hideFaceTpDist: 0.7
-  tpCloseFalloff: {x: 0.98, y: 0.24, z: 1.61, w: 2.18}
-  zoomSens: 0.0005
-  zoomCurveSlope: 5
-  maxZoom: 60
-  zoomSmooth: 10
-  firstPersonYawFreedom: 30
-  thirdPersonYawFreedom: 170
-  movingYawMatchSmooth: 7
-  bodyYawSmooth: 10
+  CameraTransform: {fileID: 1681030642}
 --- !u!135 &1736544909
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -4814,12 +4781,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb04017e72977c54eaa12e8bcd93d833, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 3
-  visuals: {fileID: 1736544908}
-  fpPitchLimits: {x: -60, y: 80}
-  tpPitchLimits: {x: -10, y: 85}
-  Sensitivity: 0.05
-  OperatingSensitivity: 0.1
+  Camera: {fileID: 1736544908}
+  Model: {fileID: 1736544915}
   HoldingTransform: {fileID: 0}
   yaw: 0
   pitch: 0
@@ -4836,12 +4799,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ee775b8d5072cd44be4ccc19d13c385, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controller: {fileID: 1736544911}
   BeakTop: {fileID: 6627240502373206375}
   BeakBottom: {fileID: 486948946723742445}
-  TopOpenAngle: 9
-  BottomOpenAngle: 28
-  OpenSmoothness: 5
   ItemHoldingArea: {fileID: 1825822369}
 --- !u!114 &1736544913
 MonoBehaviour:
@@ -4855,18 +4814,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a5d91a468db55c4facce4b949da1b14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controller: {fileID: 1736544911}
-  maxDist: 0.5
-  stepForward: 0.5
-  maxStepForward: 1.5
-  distanceInfluence: 0.5
-  stepUp: 1
-  angleUp: 0.5
-  hipWidth: 1
-  animSpeed: 5
-  animSSin: 1.5
-  animSSout: 4
-  velSmoothing: 10
   leftFoot: {fileID: 91699994}
   rightFoot: {fileID: 344501269}
 --- !u!114 &1736544914
@@ -4881,6 +4828,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2576cce4438373e49a03db087c5aac39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Player: {fileID: 1736544911}
+--- !u!114 &1736544915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1736544906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90c13ed26b555a74793ac3ce0ddfe664, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Controller: {fileID: 1736544911}
+  Feet: {fileID: 1736544913}
+  Beak: {fileID: 1736544912}
+  Neck: {fileID: 847723368}
+  Eyes: {fileID: 1533982288}
+  StickBase: {fileID: 940584280}
+  BasePosL: {fileID: 1333735702}
+  BasePosR: {fileID: 1313452973}
+  Stick: {fileID: 1068331735}
+  FaceGroup: {fileID: 77313404}
 --- !u!1 &1748898712
 GameObject:
   m_ObjectHideFlags: 0

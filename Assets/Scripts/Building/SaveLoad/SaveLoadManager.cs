@@ -5,8 +5,6 @@ using System.Linq;
 using UnityEngine;
 
 public class SaveLoadManager : Singleton<SaveLoadManager> {
-	public static bool Loading = false;
-
 	static readonly float SaveTextHideDelay = 1.5f;
 
 	public event Action OnLoaded;
@@ -62,9 +60,9 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 
 		// hope name conflicts arent a thing
 		string name = System.IO.Path.GetFileNameWithoutExtension(path);
-		Loading = true;
+		BuildingManager.Instance.LoadingConstruct = true;
 		SaveLoadHelper.LoadFromFile(name);
-		Loading = false;
+		BuildingManager.Instance.LoadingConstruct = false;
 
 		BottomBar.UpdateNameText(BuildingManager.Instance.Assembly.Name);
 
