@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
@@ -241,9 +242,7 @@ public class Translate : MonoBehaviour {
 		if (main.snapping)
 			HandleSnapping();
 
-		if (main.aligning 
-			&& ContextManager.CurrentlyInContext<Contexts.Editing.SingleSelection>()
-			&& numaxes == 3)
+		if (main.aligning && numaxes == 3)
 			HandleAligning(cameraPos, cameraVec);
 
 		CheckSnapTarget(cameraPos, cameraVec);
@@ -313,6 +312,8 @@ public class Translate : MonoBehaviour {
 	}
 
 	void HandleAligning(Vector3 cameraPos, Vector3 cameraVec) {
+		if (ContextManager.CurrentlyInContext<Contexts.Editing.NoSelection>()) return;
+
 		// find surface
 		if (!Physics.Raycast(
 			new(cameraPos, cameraVec),
@@ -322,17 +323,34 @@ public class Translate : MonoBehaviour {
 
 		DebugExtra.DrawArrow(cameraPos, cameraVec);
 
-		ContextManager.CurrentlyInContext<Contexts.Editing.SingleSelection>(out var ss);
-		var sel = ss.Selected;
-		var selP = sel.GetComponent<Part>();
+		Part[] selection;
+		if (ContextManager.CurrentlyInContext<Contexts.Editing.SingleSelection>(out var ss))
+			selection = new[] { ss.Selected.GetComponent<Part>() };
+		else if (ContextManager.CurrentlyInContext<Contexts.Editing.MultiSelection>(out var ms))
+			selection = ms.Selected.Select(t => t.GetComponent<Part>()).ToArray();
+		else
+			throw new("fix time");
 
-		sel.up = hit.normal;
-		var lp = sel.localPosition;
+		var container = SelectionManager.Instance.selectionContainer;
 
-		if (Snapping.FastSnap(selP, cameraPos, cameraVec, true)) {
-			SelectionManager.Instance.selectionContainer.SetPositionAndRotation(sel.position, sel.rotation);
+		// put point most negative in the direction of the normal 
+
+		// this intentionally ignores children of parts btw
+		float selector(Part p) {
+			var verts = p.basePart.AllVerts;
+			p.transform.TransformPoints(verts);
+			float dist(Vector3 v) => HF.DistanceInDirection(v, container.position, hit.normal);
+			return verts.Min(dist);
 		}
-		sel.localPosition = lp;
+
+		float minDistInNormal = selection.Min(selector);
+
+		Vector3 pointInSelection = container.position + hit.normal * minDistInNormal;
+
+		DebugExtra.DrawPoint(pointInSelection, Color.red);
+
+		container.up = hit.normal;
+		container.position = container.position - pointInSelection + hit.point;
 	}
 
 	void CheckSnapTarget(Vector3 cameraPos, Vector3 cameraVec) {
