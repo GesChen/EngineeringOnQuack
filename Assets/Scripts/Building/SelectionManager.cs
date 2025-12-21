@@ -54,7 +54,7 @@ public class SelectionManager : Singleton<SelectionManager> {
 			(PartSelection.Select(p => p.transform).ToArray(),
 			PartSelection.Select(p => p.basePart.ID).ToArray());
 
-		GameManager.Instance.SM_ResetState = ResetState;
+		GameManager.Instance.SelM_ResetState = ResetState;
 
 		// do processing in here since ui doesnt depend on language
 	}

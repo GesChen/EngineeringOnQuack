@@ -99,6 +99,11 @@ public class Part_Motor : NonStaticPart {
 			// setup the hinge joint now
 			// assuming they didnt weld together
 			// wild guess and hope that the parent is always the subassembly
+
+			// actually dont do this is the axle is in the same subassembly 
+			// aka shares the same parent cuz that js causes problems
+			if (comp.Axle.transform.parent == instantiatedPart.transform.parent) return;
+
 			var joint =  instantiatedPart.transform.parent.gameObject.AddComponent<HingeJoint>();
 			joint.connectedBody = HF.GetOrMakeRigidBody(comp.Axle.Part.transform.parent.gameObject);
 			joint.anchor = 

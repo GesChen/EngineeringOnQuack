@@ -14,16 +14,12 @@ public class Part_Axle : NonStaticPart {
 	public Transform endB;
 
 	public class CPart : Construct.Part {
-		public Construct.SVector3 endAPos;
-		public Construct.SVector3 endBPos;
 	}
 
 	public override void FinalizeCPartConversion(ref Construct.Part CPart) {
 		var axle = new CPart();
 
 		axle.CopyMembers(CPart);
-		axle.endAPos = endA.position;
-		axle.endBPos = endB.position;
 
 		CPart = axle;
 	}

@@ -23,9 +23,12 @@ public class PlayingManager : Singleton<PlayingManager>{
 	}
 
 	void Update() {
+		if (ContextManager.CurrentlyInContext<Contexts.Playing>()
+			&& !ContextManager.CurrentlyInContext<Contexts.Editing>())
+			CheckIndicators();
+
 		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()) return;
 
-		CheckIndicators();
 	}
 
 	void UpdateSeatsList() {
@@ -35,6 +38,12 @@ public class PlayingManager : Singleton<PlayingManager>{
 	Part_Seat[] AllSeats;
 	internal Part_Seat TargetedSeat;
 	void CheckIndicators() {
+		if (ContextManager.GetCurrent<Contexts.Playing>().Sitting) {
+			TargetedSeat = null;
+			PlayingMainUI.SitIndicator.RealisedWindow.SetState(false);
+			return;
+		}
+
 		// check for seats
 		float seatDistSquared = Config.Player.Behaviour.SitDistance * Config.Player.Behaviour.SitDistance;
 
@@ -46,8 +55,8 @@ public class PlayingManager : Singleton<PlayingManager>{
 			if (sqrdist < seatDistSquared) {
 				// angle relative to view
 				float dot = Vector3.Dot(
-					Player.Camera.CameraTransform.forward,
-					(seat.transform.position - Player.Camera.CameraTransform.position).normalized
+					Player.Camera.Camera.transform.forward,
+					(seat.transform.position - Player.Camera.Camera.transform.position).normalized
 					);
 
 				if (dot > bestDot) {

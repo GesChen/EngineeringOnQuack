@@ -14,6 +14,12 @@ public static class ContextManager {
 
 	public static IContext Current => _current;
 
+	public static TargetContextType GetCurrent<TargetContextType>(bool strict = false) where TargetContextType : IContext {
+		if (strict && _current is not TargetContextType) return default;
+		if (!CurrentlyInContext<TargetContextType>(out var current)) return default;
+		return current;
+	}
+
 	public static void ResetContextChanged() { OnContextChanged = null; }
 	static void Changed() { OnContextChanged?.Invoke(_current); }
 	public static event Action<IContext> OnContextChanged;

@@ -6,6 +6,8 @@ public static partial class Config {
 	public static class Player {
 		public static class Behaviour {
 			public static float SitDistance = 3;
+			public static float UnsitDistance = 3;
+			public static float UnsitRaycastMaxDist = 4;
 		}
 
 		public static class Controller {

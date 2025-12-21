@@ -13,7 +13,9 @@ public class GameManager : Singleton<GameManager> {
 	public Action OM_Assemble;
 	public Action OM_BeginOperating;
 	public Action OM_SetCurrentAsLoadTarget;
-	public Action SM_ResetState;
+	public Action SelM_ResetState;
+	public Action PC_AutoSit;
+	public Action PC_Unsit;
 
 	public Action WorldUpdated;
 
@@ -47,10 +49,12 @@ public class GameManager : Singleton<GameManager> {
 
 			OM_DestroyCreation();
 
+			PC_Unsit();
+
 			WorldUpdated();
 		}
 
-		SM_ResetState();
+		SelM_ResetState();
 
 		BM_TryLoadAssembly();
 
@@ -86,6 +90,8 @@ public class GameManager : Singleton<GameManager> {
 		BM_ClearEditing();
 
 		OM_AssembleFromEditing();
+
+		PC_AutoSit();
 
 		WorldUpdated();
 	}

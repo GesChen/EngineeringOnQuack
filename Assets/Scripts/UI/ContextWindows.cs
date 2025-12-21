@@ -60,11 +60,13 @@ public static class ContextWindows {
 	static WindowCollection OperatingWindows => 
 		MakeCollection(
 		new Action[] {
-			OperatingMainUI.Set
+			OperatingMainUI.Set,
+			PlayingMainUI.SetSI
 		},
 		() => (
 		Conglomerate(
-			OperatingMainUI.Windows
+			OperatingMainUI.Windows,
+			new[] { PlayingMainUI.SitIndicator }
 		),
 		Conglomerate(
 			OperatingMainUI.Menus

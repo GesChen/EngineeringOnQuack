@@ -4,11 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using cfg = Config.Player.Camera;
 
-public class PlayerCameraController : MonoBehaviour {
+public class PlayerCamera : MonoBehaviour {
 	public PlayerController controller;
 
 	public Camera Camera;
-	public Transform CameraTransform;
 
 	internal bool FirstPerson;
 	internal float tpDistance;
@@ -128,7 +127,7 @@ public class PlayerCameraController : MonoBehaviour {
 
 	void UpdateCamera() {
 		if (FirstPerson) {
-			CameraTransform.SetPositionAndRotation(
+			Camera.transform.SetPositionAndRotation(
 				controller.Model.Eyes.position,
 				Quaternion.Euler(controller.pitch, controller.yaw, 0));
 		} else {
@@ -144,7 +143,7 @@ public class PlayerCameraController : MonoBehaviour {
 					pos,
 					Mathf.InverseLerp(0, cfg.tpDistMin, tpDistance));
 
-			CameraTransform.SetPositionAndRotation(
+			Camera.transform.SetPositionAndRotation(
 				pos,
 				Quaternion.Euler(controller.pitch, controller.yaw, 0));
 		}

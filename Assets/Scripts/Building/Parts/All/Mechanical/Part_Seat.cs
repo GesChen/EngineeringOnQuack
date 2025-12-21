@@ -5,6 +5,8 @@ using UnityEngine;
 public class Part_Seat : NonStaticPart {
 	public override string PartName => "Seat";
 
+	public Transform SitTarget;
+
 	public class CPart : Construct.Part {
 
 	}

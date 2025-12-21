@@ -7,7 +7,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
 
 public static class HF {
@@ -658,9 +657,15 @@ public static class HF {
 		float alpha = 2.0f / (n + 1); // smoothing factor
 		return prevAvg + alpha * (currentValue - prevAvg);
 	}
-	
+
 	// probably insecure but not going for security
-	public static int UIDHashFunction() => UnityEngine.Random.value.GetHashCode();
+	static uint s = 2463534242u;
+	public static int GenerateUID() {
+		s ^= s << 13;
+		s ^= s >> 17;
+		s ^= s << 5;
+		return (int)s;
+	}
 
 	/// <summary>
 	/// Local space

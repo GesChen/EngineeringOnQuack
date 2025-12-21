@@ -8,7 +8,7 @@ public static class PlayingMainUI {
 	// might turn ts generic but for now we will have ts
 	public static CWindow SitIndicator;
 
-	static void SetSI() {
+	public static void SetSI() {
 		SitIndicator = new() {
 			Name = "Sit Indicator",
 			Config = new() {

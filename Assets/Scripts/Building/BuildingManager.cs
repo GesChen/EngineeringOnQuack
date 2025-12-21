@@ -276,7 +276,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
-		part.ID = HF.UIDHashFunction(); // may change this
+		part.ID = HF.GenerateUID(); // may change this
 										// 10-19-25 changed to random instead of datettime
 
 		return part;

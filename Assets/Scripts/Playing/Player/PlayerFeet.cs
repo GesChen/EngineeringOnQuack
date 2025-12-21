@@ -7,6 +7,9 @@ public class PlayerFeet : MonoBehaviour {
 	public Transform leftFoot;
 	public Transform rightFoot;
 
+	public Transform SittingPosL;
+	public Transform SittingPosR;
+
 	public class Foot {
 		public bool Grounded = true;
 		public Vector3 Compare;
@@ -37,7 +40,7 @@ public class PlayerFeet : MonoBehaviour {
 			}
 		}
 
-		public IEnumerator Step (Foot other, float forward, Vector3 joint, Vector3 up, Vector3 dir, Vector3 right) {
+		public IEnumerator Step(Foot other, float forward, Vector3 joint, Vector3 up, Vector3 dir, Vector3 right) {
 			Grounded = false;
 
 			if (Physics.Raycast(
@@ -78,7 +81,13 @@ public class PlayerFeet : MonoBehaviour {
 	Vector3 smoothVel;
 	Vector3 dir;
 
-	void Update() {
+	void LateUpdate() {
+		if (ContextManager.CurrentlyInContext<Contexts.Playing>(out var playing) && playing.Sitting) {
+			leftFoot.SetPositionAndRotation(SittingPosL.position, SittingPosL.rotation);
+			rightFoot.SetPositionAndRotation(SittingPosR.position, SittingPosR.rotation);
+			return;
+		}
+
 		Vector3 vel = transform.position - lastPos;
 		smoothVel = Vector3.Lerp(smoothVel, lastNonZeroVel, cfg.velSmoothing * Time.deltaTime);
 		dir = smoothVel.normalized;
