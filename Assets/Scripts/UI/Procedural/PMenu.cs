@@ -396,8 +396,8 @@ public class PMenu {
 			title = WindowItem.NewText(
 				new(
 					rcw.Title,
-					fontSize: M.FontSize,
-					alignment: TextAlignmentOptions.Center
+					TextAlignmentOptions.Center,
+					fontSize: M.FontSize
 					),
 				WindowItem.LayoutConfig.FixedLayout(
 					UIPosition.AnchoredAt(UIPosition.TopLeft),
@@ -457,6 +457,7 @@ public class PMenu {
 				"Label",
 				new(
 					item.Label,
+					TextAlignmentOptions.Left,
 					fontSize: M.FontSize
 				),
 				WindowItem.LayoutConfig.DynamicLayout(

@@ -61,12 +61,12 @@ public static class ContextWindows {
 		MakeCollection(
 		new Action[] {
 			OperatingMainUI.Set,
-			PlayingMainUI.SetSI
+			PlayingMainUI.SetSC
 		},
 		() => (
 		Conglomerate(
 			OperatingMainUI.Windows,
-			new[] { PlayingMainUI.SitIndicator }
+			new[] { PlayingMainUI.SitControl }
 		),
 		Conglomerate(
 			OperatingMainUI.Menus

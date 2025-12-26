@@ -65,8 +65,9 @@ public class PDialog {
 		WindowItem generateOption(Option option) =>
 			WindowItem.NewButtonCustomText(
 				new PComponents.Button(() => ChooseOption(option)),
-				new PComponents.Text(option.Label,
-					alignment: TMPro.TextAlignmentOptions.Center),
+				new PComponents.Text(
+					option.Label,
+					TMPro.TextAlignmentOptions.Center),
 				WindowItem.LayoutConfig.LayoutElementDynamic()
 			);
 
@@ -89,7 +90,7 @@ public class PDialog {
 						WindowItem.NewText(
 							new PComponents.Text(
 								DialogMessage,
-								alignment: TMPro.TextAlignmentOptions.Center,
+								TMPro.TextAlignmentOptions.Center,
 								wrap: true),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(

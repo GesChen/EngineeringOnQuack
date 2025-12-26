@@ -407,6 +407,7 @@ public class Part_CPU : NonStaticPart {
 				WindowItem.NewText(
 					new PComponents.Text(
 						'\"' + err.Value + '\"',
+						TMPro.TextAlignmentOptions.Left,
 						color: Config.ScriptEditor.SyntaxColors.Literal
 					),
 					WindowItem.LayoutConfig.LayoutElementDynamic()

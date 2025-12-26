@@ -23,9 +23,16 @@ public class PlayingManager : Singleton<PlayingManager>{
 	}
 
 	void Update() {
-		if (ContextManager.CurrentlyInContext<Contexts.Playing>()
-			&& !ContextManager.CurrentlyInContext<Contexts.Editing>())
-			CheckIndicators();
+
+		// needed cuz some of these get pretty resource intensive
+		if (Time.frameCount % Config.Player.Behaviour.LiveUIUpdateRate == 0) {
+			if (ContextManager.CurrentlyInContext<Contexts.Playing>()
+				&& !ContextManager.CurrentlyInContext<Contexts.Editing>())
+				UpdateTargetedSeat();
+
+			if (ContextManager.CurrentlyInContextStrict<Contexts.Playing>())
+				UpdateTargetedCreation();
+		}
 
 		if (!ContextManager.CurrentlyInContextStrict<Contexts.Playing>()) return;
 
@@ -37,10 +44,9 @@ public class PlayingManager : Singleton<PlayingManager>{
 
 	Part_Seat[] AllSeats;
 	internal Part_Seat TargetedSeat;
-	void CheckIndicators() {
+	void UpdateTargetedSeat() {
 		if (ContextManager.GetCurrent<Contexts.Playing>().Sitting) {
 			TargetedSeat = null;
-			PlayingMainUI.SitIndicator.RealisedWindow.SetState(false);
 			return;
 		}
 
@@ -67,15 +73,35 @@ public class PlayingManager : Singleton<PlayingManager>{
 		}
 
 		TargetedSeat = bestSeat;
+	}
 
-		if (bestSeat == null) {
-			PlayingMainUI.SitIndicator.RealisedWindow.SetState(false);
-			return;
+	internal Creation TargetedCreation;
+	void UpdateTargetedCreation() {
+		float targetDistSquared = Config.Player.Behaviour.CreationTargetDistance * Config.Player.Behaviour.CreationTargetDistance;
+
+		float bestDot = -1;
+		Creation bestCreation = null;
+		foreach (var creation in OperatingManager.Instance.Creations) {
+
+			// crucial to use the COM not the creation pos cuz that never changes
+
+			Vector3 com = creation.GetCenterOfMassApprox();
+
+			float sqrdist = (com - Player.transform.position).sqrMagnitude;
+			if (sqrdist < targetDistSquared) {
+				// angle relative to view
+				float dot = Vector3.Dot(
+					Player.Camera.Camera.transform.forward,
+					(com - Player.Camera.Camera.transform.position).normalized
+					);
+
+				if (dot > bestDot) {
+					bestCreation = creation;
+					bestDot = dot;
+				}
+			}
 		}
 
-		PlayingMainUI.SitIndicator.RealisedWindow.SetState(true);
-
-		Vector2 seatScreenPos = Player.Camera.Camera.WorldToScreenPoint(bestSeat.transform.position);
-		PlayingMainUI.SitIndicator.RealisedWindow.PlaceAt(seatScreenPos, 0, false);
+		TargetedCreation = bestCreation;
 	}
 }

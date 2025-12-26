@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour{
 		rb = GetComponent<Rigidbody>();
 
 		Conatrols.IM.Playing_Player.Sit.Subscribe<Contexts.Playing>(HandleSitting);
+		Conatrols.IM.Playing_Player.Operate.Subscribe<Contexts.Playing>(OperateControlPressed, true);
 
 		GameManager.Instance.PC_AutoSit = AutoSit;
 		GameManager.Instance.PC_Unsit = Unsit;
@@ -164,5 +165,13 @@ public class PlayerController : MonoBehaviour{
 		transform.rotation = Quaternion.identity;
 
 		ContextManager.GetCurrent<Contexts.Playing>().Sitting = false;
+	}
+
+	void OperateControlPressed() {
+		if (PlayingManager.Instance.TargetedCreation != null
+			&& OperatingManager.Instance.CurrentlyOperating == null) {
+			OperatingManager.Instance.CurrentlyOperating = PlayingManager.Instance.TargetedCreation;
+			GameManager.Instance.Operate();
+		}
 	}
 }

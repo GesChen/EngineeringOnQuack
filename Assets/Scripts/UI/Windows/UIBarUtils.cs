@@ -18,7 +18,7 @@ public static class UIBarUtils {
 		WindowItem.NewText(
 			new PComponents.Text(
 				label,
-				alignment: TextAlignmentOptions.Center),
+				TextAlignmentOptions.Center),
 			WindowItem.LayoutConfig.FillLayout
 			)
 		).AddComponents(
@@ -43,7 +43,7 @@ public static class UIBarUtils {
 			WindowItem.NewText(
 				new PComponents.Text(
 					text,
-					alignment: TextAlignmentOptions.Center),
+					TextAlignmentOptions.Center),
 				WindowItem.LayoutConfig.FillLayout
 			)
 		).AddComponents(
@@ -55,7 +55,7 @@ public static class UIBarUtils {
 			new PComponents.Button(target),
 			new PComponents.Text(
 				label,
-				alignment: TextAlignmentOptions.Center
+				TextAlignmentOptions.Center
 			),
 			WindowItem.LayoutConfig.LayoutElementDynamic()
 		).AddComponents(

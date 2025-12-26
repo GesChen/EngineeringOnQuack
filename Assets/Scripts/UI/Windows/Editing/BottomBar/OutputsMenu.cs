@@ -32,7 +32,7 @@ public static class OutputsMenu {
 				WindowItem.NewText(
 					new PComponents.Text(
 						"Manage Outputs",
-						alignment:TMPro.TextAlignmentOptions.Center
+						TMPro.TextAlignmentOptions.Center
 					),
 					WindowItem.LayoutConfig.Custom(
 						position: new(1, 0, 0, 0),
@@ -112,8 +112,8 @@ public static class OutputsMenu {
 								),
 								new PComponents.Text(
 									"Rename",
-									fontSize: Config.UI.Menu.FontSize,
-									alignment: TMPro.TextAlignmentOptions.Center
+									TMPro.TextAlignmentOptions.Center,
+									fontSize: Config.UI.Menu.FontSize
 								),
 								WindowItem.LayoutConfig.LayoutElementDynamic(
 									new(Config.UI.Menu.ItemPadding)
@@ -160,6 +160,7 @@ public static class OutputsMenu {
 			),
 			new PComponents.Text(
 				name,
+				TMPro.TextAlignmentOptions.Left,
 				fontSize: Config.UI.Menu.FontSize
 			),
 			WindowItem.LayoutConfig.LayoutElement(

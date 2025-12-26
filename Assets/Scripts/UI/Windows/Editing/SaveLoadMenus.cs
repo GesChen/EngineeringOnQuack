@@ -70,8 +70,8 @@ public class SaveLoadMenus {
 						new PComponents.Button(() => OnNameEnterPressed?.Invoke()),
 						new PComponents.Text(
 							"Save!",
-							fontSize: Config.UI.Menu.FontSize,
-							alignment: TextAlignmentOptions.Center
+							TextAlignmentOptions.Center,
+							fontSize: Config.UI.Menu.FontSize
 						),
 						PMenu.WindowItemLayout(220)
 					)
@@ -122,7 +122,7 @@ public class SaveLoadMenus {
 						"Status text",
 						new PComponents.Text(
 							"",
-							alignment: TextAlignmentOptions.Center,
+							TextAlignmentOptions.Center,
 							fontSize: 16),
 						WindowItem.LayoutConfig.FixedLayout(
 							UIPosition.AnchoredOffset(

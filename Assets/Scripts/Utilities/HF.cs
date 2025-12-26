@@ -367,7 +367,30 @@ public static class HF {
 		return preferredSize;
 	}
 
-	public static float TextWidthApproximation(string text, TMP_FontAsset fontAsset, int fontSize) {
+	public static Vector2 TextWidthExact(string text, TMP_FontAsset fontAsset, float fontSize) {
+		var go = new GameObject("TMP_Measure_Temp");
+		var tmp = go.AddComponent<TextMeshProUGUI>();
+
+		// minimal setup
+		tmp.font = fontAsset;
+		tmp.fontSize = fontSize;
+		tmp.enableWordWrapping = false;
+		tmp.richText = true;
+		tmp.text = text;
+
+		// force layout
+		tmp.ForceMeshUpdate();
+
+		float w = LayoutUtility.GetPreferredWidth(tmp.rectTransform);
+		float h = LayoutUtility.GetPreferredHeight(tmp.rectTransform);
+
+		UnityEngine.Object.DestroyImmediate(go);
+
+		return new Vector2(w, h);
+	}
+
+
+	public static float TextWidthApproximation(string text, TMP_FontAsset fontAsset, float fontSize) {
 		// Compute scale of the target point size relative to the sampling point size of the font asset.
 		float pointSizeScale = fontSize / (fontAsset.faceInfo.pointSize * fontAsset.faceInfo.scale);
 		float emScale = fontSize * 0.01f;
@@ -716,5 +739,18 @@ public static class HF {
 	public static Rigidbody GetOrMakeRigidBody(GameObject o) {
 		if (o.TryGetComponent<Rigidbody>(out var rb)) return rb;
 		return o.AddComponent<Rigidbody>();
+	}
+
+	public static string ToHex(this Color c, bool incAlpha = true, bool incHash = true) {
+		byte r = (byte)Mathf.Clamp((int)(c.r * 255f), 0, 255);
+		byte g = (byte)Mathf.Clamp((int)(c.g * 255f), 0, 255);
+		byte b = (byte)Mathf.Clamp((int)(c.b * 255f), 0, 255);
+		byte a = (byte)Mathf.Clamp((int)(c.a * 255f), 0, 255);
+
+		
+		return 
+			(incHash ? "#" : "")
+			+ $"{r:X2}{g:X2}{b:X2}"
+			+ (incAlpha ? $"{a:X2}" : "");
 	}
 }

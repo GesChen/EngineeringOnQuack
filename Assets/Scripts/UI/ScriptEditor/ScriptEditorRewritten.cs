@@ -1622,7 +1622,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 							),
 							new PComponents.Text(
 								"File",
-								alignment: TextAlignmentOptions.Center
+								TextAlignmentOptions.Center
 							),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(
@@ -1637,7 +1637,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 							),
 							new PComponents.Text(
 								"Edit",
-								alignment: TextAlignmentOptions.Center
+								TextAlignmentOptions.Center
 							),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(
@@ -1649,9 +1649,8 @@ public class ScriptEditorRewritten : MonoBehaviour {
 								n => OnFileNameChanged?.Invoke(n),
 								placeholderText: "File Name",
 								alignment: TextAlignmentOptions.Center
-							).OnRealised<PComponents.InputField>(c =>
-								FileNameField = (TMP_InputField)c
-							),
+							)
+							.OnRealised<PComponents.InputField, TMP_InputField>(c => FileNameField = c),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(
 							new PComponents.LayoutElement(cfg.MenuNameRelWidth)
@@ -1661,7 +1660,7 @@ public class ScriptEditorRewritten : MonoBehaviour {
 				WindowItem.NewScrollView(
 					"Editor",
 					new PComponents.ScrollView()
-						.OnRealised<PComponents.ScrollView>(c => MainEditorScrollRect = (BetterScrollRect)c),
+						.OnRealised<PComponents.ScrollView, BetterScrollRect>(c => MainEditorScrollRect = c),
 					WindowItem.LayoutConfig.DynamicLayout(
 						margin: (cfg.NavBarHeight + cfg.NavBarGap) * FourSides.UpConst
 					),
@@ -1670,9 +1669,9 @@ new() {
 			"Line Numbers",
 			new PComponents.Text(
 				"0",
+				TextAlignmentOptions.TopRight,
 				cfg.Font,
-				fontSize: cfg.FontSize,
-				alignment: TextAlignmentOptions.TopRight
+				fontSize: cfg.FontSize
 			),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.AnchoredAt(UIPosition.TopLeft),
@@ -1683,9 +1682,11 @@ new() {
 			"Code",
 			new PComponents.Text(
 				"",
+				TextAlignmentOptions.Left,
 				cfg.Font,
 				fontSize: cfg.FontSize
-			).OnRealised<PComponents.Text>(c => CodeText = (TextMeshProUGUI)c),
+			)
+			.OnRealised<PComponents.Text, TextMeshProUGUI>(c => CodeText = c),
 			WindowItem.LayoutConfig.FixedLayout(
 				UIPosition.AnchoredAt(UIPosition.TopLeft),
 				new(100000, 100000) // real scaling happens on the contents object so this can be any size

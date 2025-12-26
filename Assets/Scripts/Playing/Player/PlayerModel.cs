@@ -34,7 +34,9 @@ public class PlayerModel : MonoBehaviour {
 			|| Camera.tpDistance > cfg.hideFaceTpDist);
 
 
-		if (ContextManager.CurrentlyInContextStrict<Contexts.Playing>()) {
+		if (ContextManager.CurrentlyInContext<Contexts.Playing>(out var playing)
+			&& !ContextManager.CurrentlyInContext<Contexts.Editing>()
+			&& !playing.Sitting) {
 			// constrain camera rotation to limits, rotate body
 			yawFreedom =
 				Camera.FirstPerson

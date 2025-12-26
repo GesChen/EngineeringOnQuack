@@ -94,7 +94,7 @@ public class Assembler : Singleton<Assembler> {
 				gpart.transform.parent = subParent;
 
 			subs.Add(new() {
-				Parent = subParent,
+				Transform = subParent,
 				Parts = subParts
 			});
 		}
@@ -222,7 +222,7 @@ public class Assembler : Singleton<Assembler> {
 		for (int i = 0; i < assembleds.Count; i++) {
 			Creation.SubAssembly assembled = assembleds[i];
 
-			assembled.RB = HF.GetOrMakeRigidBody(assembled.Parent.gameObject);
+			assembled.RB = HF.GetOrMakeRigidBody(assembled.Transform.gameObject);
 			assembled.RB.mass = assembled.Mass;
 			
 			assembleds[i] = assembled;
@@ -357,7 +357,7 @@ public class Assembler : Singleton<Assembler> {
 	void ApplyAxleConnections(List<AxleConnection> axleConnections, List<Creation.SubAssembly> assembleds) {
 		foreach (var ac in axleConnections) {
 			int assembly = ac.AxleAssembly;
-			var parentsub = assembleds[assembly].Parent;
+			var parentsub = assembleds[assembly].Transform;
 			var joint = parentsub.gameObject.AddComponent<HingeJoint>();
 
 			int connectedIndex = ac.ConnectedAssembly;

@@ -84,7 +84,7 @@ public static class OperatingMainUI {
 									new PComponents.Button(() => OnHideAll?.Invoke()),
 									new PComponents.Text(
 										"Hide All",
-										alignment: TextAlignmentOptions.Center
+										TextAlignmentOptions.Center
 									),
 									WindowItem.LayoutConfig.LayoutElementDynamic()
 								),
@@ -92,7 +92,7 @@ public static class OperatingMainUI {
 									new PComponents.Button(() => OnShowAll?.Invoke()),
 									new PComponents.Text(
 										"Show All",
-										alignment: TMPro.TextAlignmentOptions.Center
+										TextAlignmentOptions.Center
 									),
 									WindowItem.LayoutConfig.LayoutElementDynamic()
 								)
@@ -159,7 +159,7 @@ public static class OperatingMainUI {
 						ToggleIcons[name] = rt.GetComponent<Image>()
 					),
 					WindowItem.NewText( // label
-						new PComponents.Text(name),
+						new PComponents.Text(name, TextAlignmentOptions.Left),
 						WindowItem.LayoutConfig.DynamicLayout(
 							margin: new FourSides(0, 0, 0, Config.UI.Menu.IconSize + Config.UI.Menu.IconLabelSpacing)
 						)
@@ -177,7 +177,7 @@ public static class OperatingMainUI {
 						WindowItem.NewText(
 							new PComponents.Text(
 								data,
-								alignment: TextAlignmentOptions.Left
+								TextAlignmentOptions.Left
 							),
 							WindowItem.LayoutConfig.LayoutElement(
 								new(0, Config.UI.Menu.ItemHeight)
@@ -221,7 +221,7 @@ public static class OperatingMainUI {
 									"Name",
 									new PComponents.Text(
 										$"{name} <sub>{uses} uses</sub>", // may be changed
-										alignment: TextAlignmentOptions.Left
+										TextAlignmentOptions.Left
 									),
 									WindowItem.LayoutConfig.Custom(
 										position: new(1, 0, 0, 0),

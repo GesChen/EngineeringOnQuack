@@ -69,6 +69,8 @@ public class GameManager : Singleton<GameManager> {
 		if (ContextManager.CurrentlyInContext<Contexts.Editing>()) {
 			BM_ClearEditing();
 		} else {
+			PC_Unsit();
+
 			if (destroyAssemblyIfOperating) {
 				OM_DestroyCreation();
 				WorldUpdated();
@@ -91,16 +93,17 @@ public class GameManager : Singleton<GameManager> {
 
 		OM_AssembleFromEditing();
 
-		PC_AutoSit();
-
 		WorldUpdated();
 	}
 
-	public void Operate() {
+	public void Operate(bool autoSit = true) {
 		OM_BeginOperating();
 
 		Cursor.lockState = CursorLockMode.None;
 		Cursor.visible = true;
+
+		if (autoSit)
+			PC_AutoSit();
 
 		WM_LoadCollection("operating");
 		ContextManager.EnterContext<Contexts.Operating>();

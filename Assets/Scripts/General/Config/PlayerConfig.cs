@@ -5,9 +5,14 @@ using UnityEngine;
 public static partial class Config {
 	public static class Player {
 		public static class Behaviour {
+			public static float LiveUIUpdateRate = 1; // every n frames
+
 			public static float SitDistance = 3;
 			public static float UnsitDistance = 3;
 			public static float UnsitRaycastMaxDist = 4;
+
+			public static float CreationTargetDistance = 7;
+			public static float CreationOperateDistance = 5;
 		}
 
 		public static class Controller {

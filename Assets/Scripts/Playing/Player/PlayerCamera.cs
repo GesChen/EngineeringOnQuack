@@ -9,7 +9,7 @@ public class PlayerCamera : MonoBehaviour {
 
 	public Camera Camera;
 
-	internal bool FirstPerson;
+	internal bool FirstPerson = true;
 	internal float tpDistance;
 	float transSFov = 0;
 	float tpDistTarget;

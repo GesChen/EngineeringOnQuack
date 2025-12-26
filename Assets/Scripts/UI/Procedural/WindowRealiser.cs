@@ -349,6 +349,10 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 					rt.pivot = item.Layout.FixedPosition.Pivot;
 				if (item.Layout.FixedPosition.Position != Vector2.zero)
 					rt.anchoredPosition = item.Layout.FixedPosition.Position;
+				if (item.Layout.FixedPosition.AnchorMin != Vector2.zero)
+					rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
+				if (item.Layout.FixedPosition.AnchorMax != Vector2.zero)
+					rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
 			}
 
 			if (item.Layout.SizeDelta != Vector2.zero)

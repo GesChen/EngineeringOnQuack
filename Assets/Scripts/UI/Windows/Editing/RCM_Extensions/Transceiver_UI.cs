@@ -70,7 +70,7 @@ public static class Transceiver_UI {
 				ToggleIcons[i] = rt.GetComponent<Image>()
 			),
 			WindowItem.NewText( // label
-				new PComponents.Text(name),
+				new PComponents.Text(name, TMPro.TextAlignmentOptions.Left),
 				WindowItem.LayoutConfig.DynamicLayout(
 					margin: new FourSides(0, 0, 0, Config.UI.Menu.IconSize + Config.UI.Menu.IconLabelSpacing)
 				)
@@ -91,7 +91,7 @@ public static class Transceiver_UI {
 				WindowItem.NewText(
 					new PComponents.Text(
 						"Set Transceiver Output",
-						alignment:TMPro.TextAlignmentOptions.Center
+						TMPro.TextAlignmentOptions.Center
 					),
 					WindowItem.LayoutConfig.Custom(
 						position: new(1, 0, 0, 0),
@@ -128,7 +128,7 @@ public static class Transceiver_UI {
 					new PComponents.Button(() => OnManageOutputsPressed?.Invoke()),
 					new PComponents.Text(
 						"Manage Outputs",
-						alignment: TMPro.TextAlignmentOptions.Center
+						TMPro.TextAlignmentOptions.Center
 					),
 					WindowItem.LayoutConfig.Custom(
 						position: new(0, 0, 1, 0),

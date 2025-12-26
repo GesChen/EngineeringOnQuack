@@ -39,7 +39,7 @@ public static class BottomBar {
 							new PComponents.Button(SaveLoadMenus.Save),
 							new PComponents.Text(
 								"Save",
-								alignment: TextAlignmentOptions.Right
+								TextAlignmentOptions.Right
 							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, splitspacing / 2, 0, 0),
@@ -50,7 +50,7 @@ public static class BottomBar {
 							new PComponents.Button(SaveLoadMenus.SaveAs),
 							new PComponents.Text(
 								"As",
-								alignment: TextAlignmentOptions.Left
+								TextAlignmentOptions.Left
 							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, 0, 0, splitspacing / 2),
@@ -67,7 +67,7 @@ public static class BottomBar {
 							new PComponents.Button(SaveLoadMenus.ShowLoadMenu),
 							new PComponents.Text(
 								"Load",
-								alignment: TextAlignmentOptions.Right
+								TextAlignmentOptions.Right
 							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, splitspacing / 2, 0, 0),
@@ -78,7 +78,7 @@ public static class BottomBar {
 							new PComponents.Button(null),
 							new PComponents.Text(
 								"Recent",
-								alignment: TextAlignmentOptions.Left
+								TextAlignmentOptions.Left
 							),
 							WindowItem.LayoutConfig.DynamicLayout(
 								margin: new(0, 0, 0, splitspacing / 2),
