@@ -16,6 +16,7 @@ namespace Contexts {
 		public IContext Parent { get; set; }
 		public Type ParentType => null;
 		public Main() { }
+		public bool OverUI = false;
 	}
 
 	public class Playing : IContext {
@@ -95,13 +96,6 @@ namespace Contexts {
 			 *   AGPS T - all parts in one group 
 			 *   AGPS F - invididual member(s) of only one group 
 			 */
-		}
-
-		public class OverUI : IContext {
-			public IContext Parent { get; set; }
-			public Type ParentType => typeof(Editing);
-			public OverUI(IContext parent) => ((IContext)this).SetParent(parent);
-			public OverUI() { }
 		}
 	}
 }

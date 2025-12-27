@@ -1,15 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using cfg = Config.Player.Beak;
 
 public class PlayerBeak : MonoBehaviour {
-	public PlayerController controller;
-
 	public Transform BeakTop;
 	public Transform BeakBottom;
-	public float TopOpenAngle;
-	public float BottomOpenAngle;
-	public float OpenSmoothness;
 	public Transform ItemHoldingArea;
 
 	bool open = false;
@@ -21,8 +17,8 @@ public class PlayerBeak : MonoBehaviour {
 	Transform itemOriginalParent;
 
 	void Update() {
-		topAngle = Mathf.Lerp(topAngle, open ? TopOpenAngle : 0, OpenSmoothness * Time.deltaTime);
-		bottomAngle = Mathf.Lerp(bottomAngle, open ? BottomOpenAngle : 0, OpenSmoothness * Time.deltaTime);
+		topAngle = Mathf.Lerp(topAngle, open ? cfg.TopOpenAngle : 0, cfg.OpenSmoothness * Time.deltaTime);
+		bottomAngle = Mathf.Lerp(bottomAngle, open ? cfg.BottomOpenAngle : 0, cfg.OpenSmoothness * Time.deltaTime);
 
 		BeakTop.localRotation = Quaternion.Euler(topAngle, 0, 0);
 		BeakBottom.localRotation = Quaternion.Euler(bottomAngle, 0, 0);

@@ -21,6 +21,8 @@ public class BuildingManager : Singleton<BuildingManager> {
 	public string ConstructToLoadPath;
 	public Construct ConstructToLoad;
 
+	public bool LoadingConstruct;
+
 	#region Setup
 	protected override void Awake() {
 		base.Awake();
@@ -62,7 +64,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 		BottomBar.OnAssemble = AssemblePressed;
 		BottomBar.OnNameChanged = ChangeName;
 		BottomBar.OnNameChanged += _ => SetDirty();
-
 
 		Part_CPU.SetupUI();
 		Part_Transceiver.Setup();
@@ -109,7 +110,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 			UnsavedWorkMenu.Notify((choice) => {
 				switch (choice) {
 					case UnsavedWorkMenu.Choice.Save:
-						SaveLoadManager.Instance.Save();
+						AssemblySaveLoadManager.Instance.Save();
 						NewAssembly();
 						break;
 					case UnsavedWorkMenu.Choice.Discard:
@@ -127,11 +128,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		// reset it before loaders fuck everything up
 		Assembly = new();
 
+		LoadingConstruct = true;
+
 		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
-			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
+			AssemblySaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
 		else if (ConstructToLoad != null)
-			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad);
-			
+			Assembly = AssemblySaveLoadHelper.Reconstruct(ConstructToLoad);
+
+		LoadingConstruct = false;
+
 		ConstructToLoadPath = null;
 		ConstructToLoad = null;
 	}
@@ -271,15 +276,15 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Part part = newPart.GetComponent<Part>();
 		part.basePart = bp;
 
-		part.ID = HF.UIDHashFunction(); // may change this
-		// 10-19-25 changed to random instead of datettime
+		part.ID = HF.GenerateUID(); // may change this
+										// 10-19-25 changed to random instead of datettime
 
 		return part;
 	}
 
 	internal void DeletePart(Part part, bool callNSPs = true) {
-		if (!Assembly.Parts.Contains(part)) 
-			Debug.LogError("Deleting part that isn't in the parts list");
+		if (!Assembly.Parts.Contains(part))
+			return; // other processes may have already deleted it 
 		else
 			Assembly.Parts.Remove(part);
 
@@ -290,11 +295,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 		Destroy(part.gameObject);
 	}
 	#endregion
-
-	#region Selection
-	void DeselectAllParts() {
-		Assembly.Parts.ForEach(p => { p.Selected = false; p.gameObject.layer = LayerMask.NameToLayer("Part"); });
-	}
 
 	void DeleteSelection() {
 		// delete current selection
@@ -307,7 +307,6 @@ public class BuildingManager : Singleton<BuildingManager> {
 
 		SetDirty();
 	}
-	#endregion
 
 	#region Clipboard
 	void Copy() {

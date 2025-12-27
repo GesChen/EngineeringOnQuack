@@ -33,7 +33,7 @@ public class FileExplorer {
 	/// Primary constructor. A directory must be manually loaded after creation.
 	/// </summary>
 	/// <param name="extensions">Include the . Null for all</param>
-	/// <param name="onUsePressed">Returns the chosen file's full path</param>
+	/// <param name="onUsePressed">Returns the chosen file's full path for both saving and loading</param>
 	/// <example>
 	/// <code>
 	/// // example metadata getter for bytes
@@ -46,7 +46,6 @@ public class FileExplorer {
 	/// }
 	/// </code>
 	/// </example>
-	/// </param>
 	public FileExplorer(
 		Type type,
 		string[] extensions,
@@ -70,7 +69,7 @@ public class FileExplorer {
 
 	#region Config
 	public string UseButtonLabel = "Load"; // to be changed per instance
-	public event Action<string> OnUsePressed; // returns the file full path
+	public event Action<string> OnUsePressed; // returns the file full path both saving and loading
 	public float NameWidth = 5;
 	public string[] Extensions; // include the . null for all
 	public Func<string, (string data, float width)[]> MetadataGetter;
@@ -95,7 +94,7 @@ public class FileExplorer {
 	Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
 
 	// 0 is most recent
-	List<string> DirectoryHistory = new();
+	readonly List<string> DirectoryHistory = new();
 	int HistoryPosition;
 	#endregion
 
@@ -409,7 +408,7 @@ public class FileExplorer {
 				WindowItem.NewText(
 					new PComponents.Text(
 						CurrentlySelected.Name,
-						alignment:TextAlignmentOptions.Center),
+						TextAlignmentOptions.Center),
 					WindowItem.LayoutConfig.LayoutElementDynamic()
 				)
 			)
@@ -575,8 +574,7 @@ public class FileExplorer {
 	WindowItem.NewButtonCustomImageOverlay( // new folder
 		"New Folder",
 		new PComponents.Button(NewFolder)
-			.OnRealised<PComponents.Button>(
-			c => NewFolderButton = (Button)c),
+			.OnRealised<PComponents.Button, Button>(c => NewFolderButton = c),
 		new PComponents.Image(
 			 Config.FileExplorer.NewFolderIcon
 		),
@@ -594,7 +592,8 @@ public class FileExplorer {
 			onEndEdit: TryChangeDirectories,
 			placeholderText: "",
 			alignment: TextAlignmentOptions.Right
-			).OnRealised<PComponents.InputField>(c => AddressBar = (TMP_InputField)c),
+			)
+		.OnRealised<PComponents.InputField, TMP_InputField>(c => AddressBar = c),
 		WindowItem.LayoutConfig.DynamicLayout(
 			FourSides.LeftConst * (Config.FileExplorer.NavgationHeight * 5 + Config.UI.Visual.DefaultLayoutSpacing * 3)
 		)
@@ -653,25 +652,25 @@ public class FileExplorer {
 						WindowItem.NewButtonCustomText(
 							"Cancel",
 							new PComponents.Button(() => Cancel()),
-							new("Cancel", alignment: TextAlignmentOptions.Center),
+							new("Cancel", TextAlignmentOptions.Center),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						),
 						WindowItem.NewButtonCustomText(
 							"Rename",
 							new PComponents.Button(() => RequestRename()),
-							new("Rename", alignment: TextAlignmentOptions.Center),
+							new("Rename", TextAlignmentOptions.Center),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						),
 						WindowItem.NewButtonCustomText(
 							"Delete",
 							new PComponents.Button(() => RequestDelete()),
-							new("Delete", alignment: TextAlignmentOptions.Center),
+							new("Delete", TextAlignmentOptions.Center),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						),
 						WindowItem.NewButtonCustomText(
 							"Use", // naming will be changed later to more specific
 							new PComponents.Button(() => UseButton()),
-							new(UseButtonLabel, alignment: TextAlignmentOptions.Center), 
+							new(UseButtonLabel, TextAlignmentOptions.Center), 
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						)
 					}
@@ -722,7 +721,7 @@ public class FileExplorer {
 						WindowItem.LayoutConfig.LayoutElementDynamic(),
 						new() {
 							WindowItem.NewText(
-							new PComponents.Text(entry.Name),
+							new PComponents.Text(entry.Name, TextAlignmentOptions.Left),
 							WindowItem.LayoutConfig.DynamicLayout(
 								FourSides.LeftConst * 
 								(Config.FileExplorer.ItemHeight + Config.FileExplorer.IconNameSpacing) // room for icon
@@ -745,7 +744,7 @@ public class FileExplorer {
 
 				}.Concat(entry.Metadata.Select(md =>
 					WindowItem.NewText(
-						new PComponents.Text(md.label),
+						new PComponents.Text(md.label, TextAlignmentOptions.Left),
 						WindowItem.LayoutConfig.LayoutElementDynamic()
 					).AddComponents(new PComponents.LayoutElement(md.width))
 					.Wrap()

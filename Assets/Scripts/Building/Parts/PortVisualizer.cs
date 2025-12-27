@@ -20,7 +20,7 @@ public class PortVisualizer : Singleton<PortVisualizer> {
 		BuildingManager.Instance.OnPartCreated += ForceVizUpdate;
 		BuildingManager.Instance.OnNewAssemblyMade += DestroyAllNumbers;
 
-		SaveLoadManager.Instance.OnLoaded += DestroyAllNumbers;
+		AssemblySaveLoadManager.Instance.OnLoaded += DestroyAllNumbers;
 	}
 
 	void Update() {

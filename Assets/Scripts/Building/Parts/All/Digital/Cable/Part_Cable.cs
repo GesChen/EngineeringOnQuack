@@ -19,12 +19,23 @@ public class Part_Cable : NonStaticPart {
 			connectionA.transform.position,
 			connectionB.transform.position
 		});
+
+		// prevent selection
+		transform.position = (connectionA.transform.position + connectionB.transform.position) / 2;
+	}
+
+	public override void OnPartDeletion() {
+		if (BuildingManager.Instance.Assembly.Parts.Contains(connectionA.Part)) 
+			BuildingManager.Instance.DeletePart(connectionA.Part, false);
+
+		if (BuildingManager.Instance.Assembly.Parts.Contains(connectionB.Part)) 
+			BuildingManager.Instance.DeletePart(connectionB.Part, false);
 	}
 
 	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
 	public override void OnPartCreation() {
-		if (SaveLoadManager.Loading) return; // dont do this for loading
+		if (BuildingManager.Instance.LoadingConstruct)return; // dont do this for loading
 
 		var ccA = BuildingManager.Instance.MakeNewPart("cc", true, true);
 		var ccB = BuildingManager.Instance.MakeNewPart("cc", true, true);
@@ -37,6 +48,8 @@ public class Part_Cable : NonStaticPart {
 
 		ccA.transform.position = transform.position;
 		ccB.transform.position = transform.position;
+
+		SelectionManager.Instance.RemoveSelection(transform);
 	}
 
 	// connect to simulation ccs
@@ -90,7 +103,22 @@ public class Part_Cable : NonStaticPart {
 
 	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
 		var newCable = unfinishedPart.GetComponent<Part_Cable>();
-		newCable.StartCoroutine(DelaySetup(originalCPart, unfinishedPart, unfinishedAssembly));
+		//newCable.StartCoroutine(DelaySetup(originalCPart, unfinishedPart, unfinishedAssembly));
+
+		var part = (CPart)originalCPart;
+		var cA = unfinishedAssembly.Parts.First(p =>
+			p.GetNSP<NonStaticPart>() is Part_CableConnection cc && cc.Part.ID == part.AID
+		).GetComponent<Part_CableConnection>();
+
+		var cB = unfinishedAssembly.Parts.First(p =>
+			p.GetNSP<NonStaticPart>() is Part_CableConnection cc && cc.Part.ID == part.BID
+		).GetComponent<Part_CableConnection>();
+
+		newCable.connectionA = cA;
+		newCable.connectionB = cB;
+
+		cA.Cable = newCable;
+		cB.Cable = newCable;
 	}
 
 	IEnumerator DelaySetup(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {

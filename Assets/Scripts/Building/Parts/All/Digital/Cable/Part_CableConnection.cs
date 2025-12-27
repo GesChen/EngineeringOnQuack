@@ -12,6 +12,11 @@ public class Part_CableConnection : NonStaticPart {
 
 	public override T_Data GetInternalLanguageDataObject() => Errors.BadCode();
 
+	public override void OnPartDeletion() {
+		// keep as true to delete the other cc too 
+		BuildingManager.Instance.DeletePart(Cable.Part, true);
+	}
+
 	public Part_CableConnection(Part_Cable cable, Port port) {
 		Cable = cable;
 		Port = port;

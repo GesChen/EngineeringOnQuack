@@ -23,11 +23,16 @@ public class PComponents {
 		protected void FinaliseRealise() {
 			RealisedEvent?.Invoke(RealComponent);
 		}
-		public SelfComponentType OnRealised<SelfComponentType>(
-			Action<UnityEngine.Component> realComponentCallback
-			) where SelfComponentType : Component {
+		public SelfComponentType OnRealised<SelfComponentType, RealisedComponentType>(
+			Action<RealisedComponentType> realComponentCallback
+			) 
+			where SelfComponentType : Component 
+			where RealisedComponentType : UnityEngine.Component {
 
-			RealisedEvent += realComponentCallback;
+			RealisedEvent += c => {
+				if (c is RealisedComponentType r)
+					realComponentCallback(r);
+			};
 
 			return (SelfComponentType)this;
 		}
@@ -164,31 +169,31 @@ public class PComponents {
 
 	public class Text : Component {
 		public string				Content;
+		public TextAlignmentOptions	Alignment;
 		public TMP_FontAsset		Font		= Config.UI.Visual.DefaultFont;
 		public FontStyles			Style		= FontStyles.Normal;
 		public FontWeight			Weight		= Config.UI.Visual.DefaultWeight;
 		public float				FontSize	= Config.UI.Visual.FontSize;
 		public Color				Color		= Config.UI.Visual.TextColor;
-		public TextAlignmentOptions	Alignment	= TextAlignmentOptions.Left;
 		public bool					Wrap		= false;
 
 		public Text(
 				string					content,
+				TextAlignmentOptions	alignment,
 				TMP_FontAsset			font		= null,
 				FontStyles?				style		= null,
 				FontWeight?				weight		= null,
 				float?					fontSize	= null,
 				Color?					color		= null,
-				TextAlignmentOptions?	alignment	= null,
 				bool					wrap		= false) {
 			Content = content;
 
 			Font		= font != null ? font : Config.UI.Visual.DefaultFont;
+			Alignment	= alignment;
 			Style		= style		?? FontStyles.Normal;
 			Weight		= weight	?? Config.UI.Visual.DefaultWeight;
 			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
 			Color		= color		?? Config.UI.Visual.TextColor;
-			Alignment	= alignment	?? TextAlignmentOptions.TopLeft;
 			Wrap = wrap;
 		}
 

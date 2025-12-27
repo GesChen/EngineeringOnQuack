@@ -386,10 +386,19 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Edit"",
+                    ""name"": ""Sit"",
                     ""type"": ""Button"",
-                    ""id"": ""0981dd51-55e9-4366-ab16-6cd486aea441"",
-                    ""expectedControlType"": """",
+                    ""id"": ""96d0545d-96a2-4516-acdb-6cfad4a76247"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Operate"",
+                    ""type"": ""Button"",
+                    ""id"": ""217c5c56-a23a-40ed-9cc8-0d57782d54a6"",
+                    ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -530,12 +539,23 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""8c831f75-ec0e-482e-9019-0115f3715a16"",
+                    ""id"": ""19282226-cde6-4fc8-8c4e-96cc6e5c8b68"",
                     ""path"": ""<Keyboard>/e"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Edit"",
+                    ""action"": ""Sit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c8fe85c5-5593-492f-a21e-c129a5792a3d"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Operate"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1267,6 +1287,118 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Playing_Game"",
+            ""id"": ""afb60a83-d909-4adc-8f9d-418a32005968"",
+            ""actions"": [
+                {
+                    ""name"": ""Edit"",
+                    ""type"": ""Button"",
+                    ""id"": ""417f7e59-c93a-4d78-8761-8f18b230c252"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SaveWorld"",
+                    ""type"": ""Button"",
+                    ""id"": ""a982e2b3-7d09-4dff-aadf-8ccb9327ffea"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LoadWorld"",
+                    ""type"": ""Button"",
+                    ""id"": ""d655e0f1-4aeb-44a6-9269-5dd809ec376c"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""88998085-607b-4e09-b5b5-ded5667a75d3"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Edit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""10d220d6-f8ff-433e-966c-08d9ae8afbde"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SaveWorld"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""c985dc74-dbf4-4532-8159-3ebb5cc4bbba"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SaveWorld"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""c2290abf-0ebe-4e22-b3de-5118d2641964"",
+                    ""path"": ""<Keyboard>/p"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SaveWorld"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""a0e8152c-dd95-4d51-ba24-9d6e1a7e2839"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LoadWorld"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""4f8cf3b2-aed5-45c6-9983-4e719eaa5526"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LoadWorld"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""b38d9a1d-4da5-4424-b4d1-3d0bca15d220"",
+                    ""path"": ""<Keyboard>/o"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LoadWorld"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -1354,7 +1486,8 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         // Playing_Player
         m_Playing_Player = asset.FindActionMap("Playing_Player", throwIfNotFound: true);
         m_Playing_Player_Move = m_Playing_Player.FindAction("Move", throwIfNotFound: true);
-        m_Playing_Player_Edit = m_Playing_Player.FindAction("Edit", throwIfNotFound: true);
+        m_Playing_Player_Sit = m_Playing_Player.FindAction("Sit", throwIfNotFound: true);
+        m_Playing_Player_Operate = m_Playing_Player.FindAction("Operate", throwIfNotFound: true);
         // Editing_Camera
         m_Editing_Camera = asset.FindActionMap("Editing_Camera", throwIfNotFound: true);
         m_Editing_Camera_FocusSelection = m_Editing_Camera.FindAction("FocusSelection", throwIfNotFound: true);
@@ -1384,6 +1517,11 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         // Operating_Player
         m_Operating_Player = asset.FindActionMap("Operating_Player", throwIfNotFound: true);
         m_Operating_Player_RotateCamera = m_Operating_Player.FindAction("RotateCamera", throwIfNotFound: true);
+        // Playing_Game
+        m_Playing_Game = asset.FindActionMap("Playing_Game", throwIfNotFound: true);
+        m_Playing_Game_Edit = m_Playing_Game.FindAction("Edit", throwIfNotFound: true);
+        m_Playing_Game_SaveWorld = m_Playing_Game.FindAction("SaveWorld", throwIfNotFound: true);
+        m_Playing_Game_LoadWorld = m_Playing_Game.FindAction("LoadWorld", throwIfNotFound: true);
     }
 
     ~@InputMaster()
@@ -1396,6 +1534,7 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Editing_Building.enabled, "This will cause a leak and performance issues, InputMaster.Editing_Building.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Editing_General.enabled, "This will cause a leak and performance issues, InputMaster.Editing_General.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Operating_Player.enabled, "This will cause a leak and performance issues, InputMaster.Operating_Player.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Playing_Game.enabled, "This will cause a leak and performance issues, InputMaster.Playing_Game.Disable() has not been called.");
     }
 
     /// <summary>
@@ -1870,7 +2009,8 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Playing_Player;
     private List<IPlaying_PlayerActions> m_Playing_PlayerActionsCallbackInterfaces = new List<IPlaying_PlayerActions>();
     private readonly InputAction m_Playing_Player_Move;
-    private readonly InputAction m_Playing_Player_Edit;
+    private readonly InputAction m_Playing_Player_Sit;
+    private readonly InputAction m_Playing_Player_Operate;
     /// <summary>
     /// Provides access to input actions defined in input action map "Playing_Player".
     /// </summary>
@@ -1887,9 +2027,13 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Playing_Player_Move;
         /// <summary>
-        /// Provides access to the underlying input action "Playing_Player/Edit".
+        /// Provides access to the underlying input action "Playing_Player/Sit".
         /// </summary>
-        public InputAction @Edit => m_Wrapper.m_Playing_Player_Edit;
+        public InputAction @Sit => m_Wrapper.m_Playing_Player_Sit;
+        /// <summary>
+        /// Provides access to the underlying input action "Playing_Player/Operate".
+        /// </summary>
+        public InputAction @Operate => m_Wrapper.m_Playing_Player_Operate;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1919,9 +2063,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
-            @Edit.started += instance.OnEdit;
-            @Edit.performed += instance.OnEdit;
-            @Edit.canceled += instance.OnEdit;
+            @Sit.started += instance.OnSit;
+            @Sit.performed += instance.OnSit;
+            @Sit.canceled += instance.OnSit;
+            @Operate.started += instance.OnOperate;
+            @Operate.performed += instance.OnOperate;
+            @Operate.canceled += instance.OnOperate;
         }
 
         /// <summary>
@@ -1936,9 +2083,12 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
-            @Edit.started -= instance.OnEdit;
-            @Edit.performed -= instance.OnEdit;
-            @Edit.canceled -= instance.OnEdit;
+            @Sit.started -= instance.OnSit;
+            @Sit.performed -= instance.OnSit;
+            @Sit.canceled -= instance.OnSit;
+            @Operate.started -= instance.OnOperate;
+            @Operate.performed -= instance.OnOperate;
+            @Operate.canceled -= instance.OnOperate;
         }
 
         /// <summary>
@@ -2543,6 +2693,124 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="Operating_PlayerActions" /> instance referencing this action map.
     /// </summary>
     public Operating_PlayerActions @Operating_Player => new Operating_PlayerActions(this);
+
+    // Playing_Game
+    private readonly InputActionMap m_Playing_Game;
+    private List<IPlaying_GameActions> m_Playing_GameActionsCallbackInterfaces = new List<IPlaying_GameActions>();
+    private readonly InputAction m_Playing_Game_Edit;
+    private readonly InputAction m_Playing_Game_SaveWorld;
+    private readonly InputAction m_Playing_Game_LoadWorld;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "Playing_Game".
+    /// </summary>
+    public struct Playing_GameActions
+    {
+        private @InputMaster m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public Playing_GameActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Playing_Game/Edit".
+        /// </summary>
+        public InputAction @Edit => m_Wrapper.m_Playing_Game_Edit;
+        /// <summary>
+        /// Provides access to the underlying input action "Playing_Game/SaveWorld".
+        /// </summary>
+        public InputAction @SaveWorld => m_Wrapper.m_Playing_Game_SaveWorld;
+        /// <summary>
+        /// Provides access to the underlying input action "Playing_Game/LoadWorld".
+        /// </summary>
+        public InputAction @LoadWorld => m_Wrapper.m_Playing_Game_LoadWorld;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_Playing_Game; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="Playing_GameActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(Playing_GameActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="Playing_GameActions" />
+        public void AddCallbacks(IPlaying_GameActions instance)
+        {
+            if (instance == null || m_Wrapper.m_Playing_GameActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_Playing_GameActionsCallbackInterfaces.Add(instance);
+            @Edit.started += instance.OnEdit;
+            @Edit.performed += instance.OnEdit;
+            @Edit.canceled += instance.OnEdit;
+            @SaveWorld.started += instance.OnSaveWorld;
+            @SaveWorld.performed += instance.OnSaveWorld;
+            @SaveWorld.canceled += instance.OnSaveWorld;
+            @LoadWorld.started += instance.OnLoadWorld;
+            @LoadWorld.performed += instance.OnLoadWorld;
+            @LoadWorld.canceled += instance.OnLoadWorld;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="Playing_GameActions" />
+        private void UnregisterCallbacks(IPlaying_GameActions instance)
+        {
+            @Edit.started -= instance.OnEdit;
+            @Edit.performed -= instance.OnEdit;
+            @Edit.canceled -= instance.OnEdit;
+            @SaveWorld.started -= instance.OnSaveWorld;
+            @SaveWorld.performed -= instance.OnSaveWorld;
+            @SaveWorld.canceled -= instance.OnSaveWorld;
+            @LoadWorld.started -= instance.OnLoadWorld;
+            @LoadWorld.performed -= instance.OnLoadWorld;
+            @LoadWorld.canceled -= instance.OnLoadWorld;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="Playing_GameActions.UnregisterCallbacks(IPlaying_GameActions)" />.
+        /// </summary>
+        /// <seealso cref="Playing_GameActions.UnregisterCallbacks(IPlaying_GameActions)" />
+        public void RemoveCallbacks(IPlaying_GameActions instance)
+        {
+            if (m_Wrapper.m_Playing_GameActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="Playing_GameActions.AddCallbacks(IPlaying_GameActions)" />
+        /// <seealso cref="Playing_GameActions.RemoveCallbacks(IPlaying_GameActions)" />
+        /// <seealso cref="Playing_GameActions.UnregisterCallbacks(IPlaying_GameActions)" />
+        public void SetCallbacks(IPlaying_GameActions instance)
+        {
+            foreach (var item in m_Wrapper.m_Playing_GameActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_Playing_GameActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="Playing_GameActions" /> instance referencing this action map.
+    /// </summary>
+    public Playing_GameActions @Playing_Game => new Playing_GameActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -2738,12 +3006,19 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Edit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Sit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnEdit(InputAction.CallbackContext context);
+        void OnSit(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Operate" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnOperate(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Editing_Camera" which allows adding and removing callbacks.
@@ -2923,5 +3198,34 @@ public partial class @InputMaster: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRotateCamera(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Playing_Game" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="Playing_GameActions.AddCallbacks(IPlaying_GameActions)" />
+    /// <seealso cref="Playing_GameActions.RemoveCallbacks(IPlaying_GameActions)" />
+    public interface IPlaying_GameActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Edit" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnEdit(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SaveWorld" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSaveWorld(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LoadWorld" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLoadWorld(InputAction.CallbackContext context);
     }
 }

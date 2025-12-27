@@ -12,9 +12,6 @@ public class SnapTarget : MonoBehaviour {
 	}
 
 	public bool CheckSnap(Vector3 otherPos) {
-		DebugExtra.DrawPoint(transform.position, Color.red);
-		DebugExtra.DrawPoint(otherPos, Color.blue);
-
 		float dist = (transform.position - otherPos).sqrMagnitude;
 		return dist < Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance;
 	}

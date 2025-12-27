@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,19 +40,5 @@ public static partial class Config {
 		private static Sprite m_ColorIcon;
 		public static Sprite ColorIcon =>
 			HF.LoadResource(ref m_ColorIcon, Locations.IconsFolder + "Composition/color1");
-
-		public static class Saving {
-			public static readonly ushort VERSION = 1;
-
-			public static readonly bool SaveAsText = true;
-			public static readonly string SaveExtension = ".assembly";
-
-			public static readonly bool SaveClipboard = true;
-			
-			public static string AssembliesLocation =>
-				HF.GuaranteePath(
-					Path.LocalPath("Assemblies").ToString()
-				);
-		}
 	}
 }

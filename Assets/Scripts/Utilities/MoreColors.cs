@@ -2,6 +2,7 @@ using UnityEngine;
 
 public static class MoreColors
 {
+	public static Color Random			=> UnityEngine.Random.ColorHSV();
 	// Default
 	public static Color Black			=> new(0, 0, 0);
 	public static Color White			=> new(1, 1, 1);

@@ -70,7 +70,7 @@ public class Part_LED : NonStaticPart {
 	}
 
 	public class CPart : Construct.Part {
-		public Construct.SVector3 Color;
+		public SVector3 Color;
 		public float Intensity;
 
 		public override void FinalizeInstantiation(GameObject instantiatedPart, GameObject creation) {

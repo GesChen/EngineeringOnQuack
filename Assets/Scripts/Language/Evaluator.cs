@@ -911,19 +911,19 @@ public class Evaluator {
 			{ T_Operator.Ops.Plus,		"ad" },
 			{ T_Operator.Ops.Minus,		"su" },
 			{ T_Operator.Ops.Multiply,	"mu" },
-			{ T_Operator.Ops.Divide,		"di" },
-			{ T_Operator.Ops.Mod,			"mo" },
+			{ T_Operator.Ops.Divide,	"di" },
+			{ T_Operator.Ops.Mod,		"mo" },
 			{ T_Operator.Ops.Power,		"po" } 
 		};
 
 		string operationName = opNames[op.Value];
-		T_Data tryGetLeftMember = leftData.GetMember(operationName);
-		if (tryGetLeftMember is Error)
+		T_Data tryGetOperator = rightData.GetMember(operationName);
+		if (tryGetOperator is Error)
 			return Errors.UnsupportedOperation(
 				op.StringValue, 
 				leftRef.ThisReference.Type.Name, 
 				rightRef.ThisReference.Type.Name);
-		if (tryGetLeftMember is not Primitive.Function F)
+		if (tryGetOperator is not Primitive.Function F)
 			return Errors.MemberIsNotMethod(operationName, leftData.Type.Name);
 
 		T_Data runFunction = Interpreter.RunFunction(

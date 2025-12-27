@@ -15,7 +15,7 @@ public class ProceduralScriptEditor {
 				WindowItem.NewText( // line number
 					new PComponents.Text(
 						num.ToString(),
-						alignment: TMPro.TextAlignmentOptions.Right
+						TMPro.TextAlignmentOptions.Right
 					),
 					WindowItem.LayoutConfig.FixedLayout(
 						UIPosition.AnchoredAt(UIPosition.MiddleLeft),
@@ -23,7 +23,8 @@ public class ProceduralScriptEditor {
 				),
 				WindowItem.NewText( // line content
 					new PComponents.Text(
-						contents
+						contents,
+						TMPro.TextAlignmentOptions.Left
 					),
 					WindowItem.LayoutConfig.DynamicLayout(
 						LineNumbersWidth * FourSides.LeftConst // modify the left spacing

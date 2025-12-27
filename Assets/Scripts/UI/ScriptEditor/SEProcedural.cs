@@ -242,7 +242,7 @@ public static class SEProcedural {
 							),
 							new PComponents.Text(
 								"File",
-								alignment: TextAlignmentOptions.Center
+								TextAlignmentOptions.Center
 							),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(
@@ -257,7 +257,7 @@ public static class SEProcedural {
 							),
 							new PComponents.Text(
 								"Edit",
-								alignment: TextAlignmentOptions.Center
+								TextAlignmentOptions.Center
 							),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(
@@ -269,9 +269,8 @@ public static class SEProcedural {
 								n => OnFileNameChanged?.Invoke(n),
 								placeholderText: "File Name",
 								alignment: TextAlignmentOptions.Center
-							).OnRealised<PComponents.InputField>(c =>
-								FileNameField = (TMP_InputField)c
-							),
+							)
+							.OnRealised<PComponents.InputField, TMP_InputField>(c => FileNameField = c),
 							WindowItem.LayoutConfig.LayoutElementDynamic()
 						).AddComponents(
 							new PComponents.LayoutElement(menuNameRelWidth)

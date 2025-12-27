@@ -13,13 +13,21 @@ public class GameManager : Singleton<GameManager> {
 	public Action OM_Assemble;
 	public Action OM_BeginOperating;
 	public Action OM_SetCurrentAsLoadTarget;
-	public Action SM_ResetState;
+	public Action SelM_ResetState;
+	public Action PC_AutoSit;
+	public Action PC_Unsit;
+
+	public Action WorldUpdated;
+
+	bool CursorEnabled;
 
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
 		base.Awake();
 
 		Config.Fonts.Reset();
+
+		WorldUpdated = null;
 	}
 
 	void Start() {
@@ -30,6 +38,44 @@ public class GameManager : Singleton<GameManager> {
 		WM_LoadCollection("playing");
 		// context is handled by CO
 
+		DisableCursor();
+	}
+
+	void Update() {
+		HandleCursor();
+	}
+
+	void HandleCursor() {
+		bool over = ContextManager.GetCurrent<Contexts.Main>().OverUI;
+
+		// idk when to check
+		if (Conatrols.Mouse.Left.PressedThisFrame) {
+			if (over) {
+				ShowCursor();
+			} else {
+				if (!CursorEnabled) HideCursor();
+			}
+		}
+	}
+
+	void EnableCursor() {
+		CursorEnabled = true;
+
+		ShowCursor();
+	}
+
+	public void ShowCursor() {
+		Cursor.lockState = CursorLockMode.None;
+		Cursor.visible = true;
+	}
+
+	void DisableCursor() {
+		CursorEnabled = false;
+
+		HideCursor();
+	}
+
+	public void HideCursor() {
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = false;
 	}
@@ -42,14 +88,17 @@ public class GameManager : Singleton<GameManager> {
 			OM_SetCurrentAsLoadTarget();
 
 			OM_DestroyCreation();
+
+			PC_Unsit();
+
+			WorldUpdated();
 		}
 
-		SM_ResetState();
+		SelM_ResetState();
 
 		BM_TryLoadAssembly();
 
-		Cursor.lockState = CursorLockMode.None;
-		Cursor.visible = true;
+		EnableCursor();
 
 		WM_LoadCollection("editing");
 		ContextManager.EnterContext<Contexts.Editing>();
@@ -59,15 +108,18 @@ public class GameManager : Singleton<GameManager> {
 		if (ContextManager.CurrentlyInContext<Contexts.Editing>()) {
 			BM_ClearEditing();
 		} else {
-			if (destroyAssemblyIfOperating)
+			PC_Unsit();
+
+			if (destroyAssemblyIfOperating) {
 				OM_DestroyCreation();
+				WorldUpdated();
+			}
 		}
 
-		Cursor.lockState = CursorLockMode.Locked;
-		Cursor.visible = false;
+		DisableCursor();
 
 		WM_LoadCollection("playing");
-		ContextManager.EnterContextStrict<Contexts.Playing>();
+		ContextManager.EnterContext<Contexts.Playing>(true);
 	}
 
 	// put it here bc
@@ -78,13 +130,17 @@ public class GameManager : Singleton<GameManager> {
 		BM_ClearEditing();
 
 		OM_AssembleFromEditing();
+
+		WorldUpdated();
 	}
 
-	public void Operate() {
+	public void Operate(bool autoSit = true) {
 		OM_BeginOperating();
 
-		Cursor.lockState = CursorLockMode.None;
-		Cursor.visible = true;
+		EnableCursor();
+
+		if (autoSit)
+			PC_AutoSit();
 
 		WM_LoadCollection("operating");
 		ContextManager.EnterContext<Contexts.Operating>();

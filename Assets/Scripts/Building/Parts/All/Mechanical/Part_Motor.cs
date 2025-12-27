@@ -54,7 +54,7 @@ public class Part_Motor : NonStaticPart {
 	}
 
 	public override void OnPartCreation() {
-		if (SaveLoadManager.Loading) return; // dont do this for loading
+		if (BuildingManager.Instance.LoadingConstruct) return; // dont do this for loading
 		var newAxlePart = BuildingManager.Instance.MakeNewPart("axle", true, true);
 
 		newAxlePart.IsNonStaticPart(out var nsp);
@@ -99,9 +99,16 @@ public class Part_Motor : NonStaticPart {
 			// setup the hinge joint now
 			// assuming they didnt weld together
 			// wild guess and hope that the parent is always the subassembly
+
+			// actually dont do this is the axle is in the same subassembly 
+			// aka shares the same parent cuz that js causes problems
+			if (comp.Axle.transform.parent == instantiatedPart.transform.parent) return;
+
 			var joint =  instantiatedPart.transform.parent.gameObject.AddComponent<HingeJoint>();
 			joint.connectedBody = HF.GetOrMakeRigidBody(comp.Axle.Part.transform.parent.gameObject);
-			joint.anchor = comp.AxleEndTarget.position - instantiatedPart.transform.position;
+			joint.anchor = 
+				comp.AxleEndTarget.position - 
+				instantiatedPart.transform.parent.position;
 			joint.axis = comp.AxleEndTarget.forward;
 
 			comp.Joint = joint;
@@ -116,6 +123,14 @@ public class Part_Motor : NonStaticPart {
 		motor.AxlePartID = Axle.Part.ID;
 
 		CPart = motor;
+	}
+
+	public override void FinalizeCPartReconstruction(Construct.Part originalCPart, Part unfinishedPart, Assembly unfinishedAssembly) {
+		var cpa = originalCPart as CPart;
+		var newMotor = unfinishedPart.GetComponent<Part_Motor>();
+
+		newMotor.Strength = cpa.Strength;
+		newMotor.Axle = unfinishedAssembly.Parts.First(p => p.ID == cpa.AxlePartID).GetNSP<Part_Axle>();
 	}
 
 	public override void RebindReferences(Dictionary<int, int> Mappings, Part[] PartPool) {

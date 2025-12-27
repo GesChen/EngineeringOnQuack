@@ -7,7 +7,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
 
 public static class HF {
@@ -31,7 +30,30 @@ public static class HF {
 		sb.Append("]");
 		return sb.ToString();
 	}
-	
+
+	public static IEnumerable<T[]> Chunk<T>(this IEnumerable<T> source, int size) {
+		if (size <= 0) throw new ArgumentOutOfRangeException();
+
+		using var e = source.GetEnumerator();
+
+		while (true) {
+			var buffer = new T[size];
+			int i = 0;
+
+			for (; i < size && e.MoveNext(); i++) {
+				buffer[i] = e.Current;
+			}
+
+			if (i == 0)
+				yield break;
+
+			if (i != size)
+				Array.Resize(ref buffer, i);
+
+			yield return buffer;
+		}
+	}
+
 	public static bool TryFind<T>(this IEnumerable<T> source, Func<T, bool> predicate, out T result) {
 		foreach (var item in source) {
 			if (predicate(item)) {
@@ -345,7 +367,30 @@ public static class HF {
 		return preferredSize;
 	}
 
-	public static float TextWidthApproximation(string text, TMP_FontAsset fontAsset, int fontSize) {
+	public static Vector2 TextWidthExact(string text, TMP_FontAsset fontAsset, float fontSize) {
+		var go = new GameObject("TMP_Measure_Temp");
+		var tmp = go.AddComponent<TextMeshProUGUI>();
+
+		// minimal setup
+		tmp.font = fontAsset;
+		tmp.fontSize = fontSize;
+		tmp.enableWordWrapping = false;
+		tmp.richText = true;
+		tmp.text = text;
+
+		// force layout
+		tmp.ForceMeshUpdate();
+
+		float w = LayoutUtility.GetPreferredWidth(tmp.rectTransform);
+		float h = LayoutUtility.GetPreferredHeight(tmp.rectTransform);
+
+		UnityEngine.Object.DestroyImmediate(go);
+
+		return new Vector2(w, h);
+	}
+
+
+	public static float TextWidthApproximation(string text, TMP_FontAsset fontAsset, float fontSize) {
 		// Compute scale of the target point size relative to the sampling point size of the font asset.
 		float pointSizeScale = fontSize / (fontAsset.faceInfo.pointSize * fontAsset.faceInfo.scale);
 		float emScale = fontSize * 0.01f;
@@ -635,9 +680,15 @@ public static class HF {
 		float alpha = 2.0f / (n + 1); // smoothing factor
 		return prevAvg + alpha * (currentValue - prevAvg);
 	}
-	
+
 	// probably insecure but not going for security
-	public static int UIDHashFunction() => UnityEngine.Random.value.GetHashCode();
+	static uint s = 2463534242u;
+	public static int GenerateUID() {
+		s ^= s << 13;
+		s ^= s >> 17;
+		s ^= s << 5;
+		return (int)s;
+	}
 
 	/// <summary>
 	/// Local space
@@ -689,4 +740,20 @@ public static class HF {
 		if (o.TryGetComponent<Rigidbody>(out var rb)) return rb;
 		return o.AddComponent<Rigidbody>();
 	}
+
+	public static string ToHex(this Color c, bool incAlpha = true, bool incHash = true) {
+		byte r = (byte)Mathf.Clamp((int)(c.r * 255f), 0, 255);
+		byte g = (byte)Mathf.Clamp((int)(c.g * 255f), 0, 255);
+		byte b = (byte)Mathf.Clamp((int)(c.b * 255f), 0, 255);
+		byte a = (byte)Mathf.Clamp((int)(c.a * 255f), 0, 255);
+
+		
+		return 
+			(incHash ? "#" : "")
+			+ $"{r:X2}{g:X2}{b:X2}"
+			+ (incAlpha ? $"{a:X2}" : "");
+	}
+
+	public static string Depath(string path) => // turns path into name
+		Path.GetFileNameWithoutExtension(path);
 }

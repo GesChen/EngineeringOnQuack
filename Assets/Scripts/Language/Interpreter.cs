@@ -11,7 +11,7 @@ public class Interpreter {
 	public int CreationID;
 
 	public Interpreter(int creationID) {
-		ID = HF.UIDHashFunction();
+		ID = HF.GenerateUID();
 		CreationID = creationID;
 	}
 

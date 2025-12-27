@@ -32,10 +32,7 @@ public class Assembly {
 		Name = Name,
 		Parts = Parts.Select(p => (Construct.Part)p).ToList(),
 		Groups = Groups.Select(group => (Construct.Group)group).ToList(),
-		Clipboard = Config.Building.Saving.SaveClipboard ? Clipboard : null,
+		Clipboard = Config.SaveLoad.BuildingConfig_SaveClipboard ? Clipboard : null,
 		Outputs = Outputs
 	};
-
-	public static string Serialize(Assembly assembly) => 
-		JsonConvert.SerializeObject(assembly.ConvertToConstruct(), SaveLoadHelper.Settings);
 }

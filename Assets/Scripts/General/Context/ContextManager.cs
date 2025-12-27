@@ -14,6 +14,12 @@ public static class ContextManager {
 
 	public static IContext Current => _current;
 
+	public static TargetContextType GetCurrent<TargetContextType>(bool strict = false) where TargetContextType : IContext {
+		if (strict && _current is not TargetContextType) return default;
+		if (!CurrentlyInContext<TargetContextType>(out var current)) return default;
+		return current;
+	}
+
 	public static void ResetContextChanged() { OnContextChanged = null; }
 	static void Changed() { OnContextChanged?.Invoke(_current); }
 	public static event Action<IContext> OnContextChanged;
@@ -24,19 +30,14 @@ public static class ContextManager {
 		Changed();
 	}
 
-	public static void EnterContextStrict<C>() where C : IContext {
-		if (CurrentlyInContextStrict<C>()) return;
-
-		_current = Activator.CreateInstance<C>();
-
-		Changed();
-	}
-
-	public static C EnterContext<C>() where C : IContext {
-		if (CurrentlyInContext(out C instance)) {
-			return instance;
+	public static C EnterContext<C>(bool checkAlreadyInStrict = false) where C : IContext {
+		if (!checkAlreadyInStrict) {
+			if (CurrentlyInContext(out C instance))
+				return instance;
+		} else {
+			if (CurrentlyInContextStrict<C>())
+				return (C)Current;
 		}
-		
 		// ????
 		_current = RerouteContextTo<C>(_current);
 		
@@ -49,7 +50,7 @@ public static class ContextManager {
 	// this is the worst algorithm i have ever come up with
 	// this code is absolute dogshit just saying
 	// giving good speed tho ~.02ms or a bit hiehger
-	public static IContext RerouteContextTo<C>(IContext cur) where C : IContext {
+	static IContext RerouteContextTo<C>(IContext cur) where C : IContext {
 		// build the context ancestry for current
 		List<IContext> curAncestry = new();
 		List<Type> typeAncestry = new();

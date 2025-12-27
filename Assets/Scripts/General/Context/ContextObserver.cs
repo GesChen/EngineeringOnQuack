@@ -14,6 +14,9 @@ public class ContextObserver : Singleton<ContextObserver> {
 	}
 
 	void Update() {
+		var main = ContextManager.GetCurrent<Main>();
+		main.OverUI = UIHovers.AnyHovers();
+
 		if (ContextManager.CurrentlyInContextStrict<Playing>())
 			CheckPlaying();
 
@@ -31,29 +34,26 @@ public class ContextObserver : Singleton<ContextObserver> {
 		var (selectedTransforms, BPids) = GetCurrentSelectionInfo?.Invoke() ?? throw new("GCSSBPID not subscribed to");
 		int count = selectedTransforms.Length;
 
-		if (UIHovers.AnyHovers()) {
-			ContextManager.EnterContext<Editing.OverUI>();
-		} else {
-			ContextManager.EnterContext<Editing>();
+		ContextManager.EnterContext<Editing>();
 
-			if (count == 0) ContextManager.EnterContext<Editing.NoSelection>();
-			else {
-				// groupcheck in selectionmanager will enter groupselection 
-				// by itself so only if it fails then enter 
-				bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
+		if (count == 0) ContextManager.EnterContext<Editing.NoSelection>();
+		else {
+			// groupcheck in selectionmanager will enter groupselection 
+			// by itself so only if it fails then enter 
+			bool isGroup = GroupCheck?.Invoke() ?? throw new("GroupCheck not subscribed to!");
 
-				if (!isGroup) {
-					if (count == 1) {
-						var c = ContextManager.EnterContext<Editing.SingleSelection>();
-						c.Selected = selectedTransforms[0];
-						c.SelectedBasePartID = BPids[0];
-					} else {
-						var c = ContextManager.EnterContext<Editing.MultiSelection>();
-						c.Selected = selectedTransforms;
-						c.SelectedBasePartIDs = BPids;
-					}
+			if (!isGroup) {
+				if (count == 1) {
+					var c = ContextManager.EnterContext<Editing.SingleSelection>();
+					c.Selected = selectedTransforms[0];
+					c.SelectedBasePartID = BPids[0];
+				} else {
+					var c = ContextManager.EnterContext<Editing.MultiSelection>();
+					c.Selected = selectedTransforms;
+					c.SelectedBasePartIDs = BPids;
 				}
 			}
+			
 		}
 	}
 	

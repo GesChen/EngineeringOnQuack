@@ -144,9 +144,8 @@ MonoBehaviour:
   Ports:
   - {fileID: 7298589556038097359}
   AxleEndTarget: {fileID: 6113180967894106683}
-  Strength: 10
+  Strength: 100
   TargetVelocity: 0
-  Time: 0
   Axle: {fileID: 0}
   Joint: {fileID: 0}
 --- !u!1 &5699238147586019395

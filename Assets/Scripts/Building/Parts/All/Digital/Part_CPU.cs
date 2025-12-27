@@ -177,17 +177,15 @@ public class Part_CPU : NonStaticPart {
 
 	void RequestSave() {
 		FileExplorer.CreateNewFE(
-			HF.GuaranteePath(
-				Config.Path.LocalPath("Scripts").ToString()
-			),
+			Config.SaveLoad.ScriptsConfig.SaveLocation,
 			new(
 				FileExplorer.Type.SaveFile,
-				new string[] { ".qk" },
+				new string[] { Config.SaveLoad.ScriptsConfig.SaveExtension },
 				FileExplorer.MetadataGetters.GetBytes,
 				"Save",
 				TrySave,
 				5,
-				"New Script.qk",
+				"New Script" + Config.SaveLoad.ScriptsConfig.SaveExtension,
 				10
 			)
 		);
@@ -218,17 +216,15 @@ public class Part_CPU : NonStaticPart {
 
 	void RequestLoad() {
 		FileExplorer.CreateNewFE(
-			HF.GuaranteePath(
-				Config.Path.LocalPath("Scripts").ToString()
-			),
+			Config.SaveLoad.ScriptsConfig.SaveLocation,
 			new(
 				FileExplorer.Type.OpenFile,
-				new string[] { ".qk" },
+				new string[] { Config.SaveLoad.ScriptsConfig.SaveExtension },
 				FileExplorer.MetadataGetters.GetBytes,
 				"Load",
 				TryLoad,
 				5,
-				".qk",
+				Config.SaveLoad.ScriptsConfig.SaveExtension,
 				0
 			)
 		);
@@ -385,6 +381,7 @@ public class Part_CPU : NonStaticPart {
 
 		var other = Ports[id].OtherPart;
 		// somehow return null
+		if (other == null) return null;
 
 		other.IsNonStaticPart(out var connectedPart);
 		var data = connectedPart.GetInternalLanguageDataObject();
@@ -406,6 +403,7 @@ public class Part_CPU : NonStaticPart {
 				WindowItem.NewText(
 					new PComponents.Text(
 						'\"' + err.Value + '\"',
+						TMPro.TextAlignmentOptions.Left,
 						color: Config.ScriptEditor.SyntaxColors.Literal
 					),
 					WindowItem.LayoutConfig.LayoutElementDynamic()

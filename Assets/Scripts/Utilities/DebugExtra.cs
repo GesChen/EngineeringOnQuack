@@ -79,6 +79,11 @@ public class DebugExtra {
 		float duration = 0,
 		bool drawScene = true,
 		bool drawGame = false) {
+
+		// honestly an empty probably looks better 
+		DrawEmpty(pos, size, color, duration, drawScene, drawGame);
+		return;
+
 		Vector3 px = pos + size * Vector3.right;
 		Vector3 nx = pos + size * Vector3.left;
 		Vector3 py = pos + size * Vector3.up;
@@ -105,7 +110,7 @@ public class DebugExtra {
 	}
 
 	public static void DrawPoints(
-		Vector3[] points,
+		IEnumerable<Vector3> points,
 		float size = .1f,
 		Color? color = null,
 		float duration = 0,
@@ -328,6 +333,28 @@ public class DebugExtra {
 		}
 	}
 
+	public static void DrawMeshShaken(
+		Triangle[] tris,
+		float shake = .001f,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+
+		Color col = color ?? Color.white;
+
+		// i cant figure out how to do the edge duplication removal this time
+		// so this is just naive :( sorry performance 2x lines ig
+
+		Vector3 r() => UnityEngine.Random.insideUnitCircle * shake;
+
+		foreach (var tri in tris) {
+			DrawLine(tri.p1+r(), tri.p2+r(), col, duration, drawScene, drawGame);
+			DrawLine(tri.p2+r(), tri.p3+r(), col, duration, drawScene, drawGame);
+			DrawLine(tri.p3+r(), tri.p1+r(), col, duration, drawScene, drawGame);
+		}
+	}
+
 	public static void DrawMesh(
 		Triangle[] tris,
 		Color? color = null,
@@ -346,6 +373,42 @@ public class DebugExtra {
 			DrawLine(tri.p3, tri.p1, col, duration, drawScene, drawGame);
 		}
 	}
+
+	public static void DrawMesh(
+		Transform t,
+		Color? color = null,
+		float duration = 0,
+		bool drawScene = true,
+		bool drawGame = false) {
+		
+		if (!t.TryGetComponent<MeshFilter>(out var mf)) return;
+
+		var mesh = mf.sharedMesh;
+		if (mesh == null) return;
+
+		Vector3[] verts = mesh.vertices;
+		int[] tris = mesh.triangles;
+
+		Color col = color ?? Color.white;
+		var edges = new HashSet<(int a, int b)>();
+
+		for (int i = 0; i < tris.Length; i += 3) {
+			int a = tris[i];
+			int b = tris[i + 1];
+			int c = tris[i + 2];
+
+			edges.Add((Math.Min(a, b), Math.Max(a, b)));
+			edges.Add((Math.Min(b, c), Math.Max(b, c)));
+			edges.Add((Math.Min(c, a), Math.Max(c, a)));
+		}
+
+		foreach (var (a, b) in edges) {
+			Vector3 wa = t.TransformPoint(verts[a]);
+			Vector3 wb = t.TransformPoint(verts[b]);
+			DrawLine(wa, wb, col, duration, drawScene, drawGame);
+		}
+	}
+
 
 	public static void DrawPoly(
 		Vector3[] points,
