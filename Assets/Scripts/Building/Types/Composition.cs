@@ -2,6 +2,7 @@
 //public class Materials {
 // renaming may happen later
 using UnityEngine;
+using System.Linq;
 
 public class Composition {
 	public int ID;
@@ -78,4 +79,7 @@ public static class Compositions {
 		Metal,
 		Glass
 	};
+
+	public static Composition Get(int id) =>
+		All.FirstOrDefault(c => c.ID == id);
 }

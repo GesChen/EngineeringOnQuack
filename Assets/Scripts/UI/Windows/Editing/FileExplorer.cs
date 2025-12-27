@@ -33,7 +33,7 @@ public class FileExplorer {
 	/// Primary constructor. A directory must be manually loaded after creation.
 	/// </summary>
 	/// <param name="extensions">Include the . Null for all</param>
-	/// <param name="onUsePressed">Returns the chosen file's full path</param>
+	/// <param name="onUsePressed">Returns the chosen file's full path for both saving and loading</param>
 	/// <example>
 	/// <code>
 	/// // example metadata getter for bytes
@@ -46,7 +46,6 @@ public class FileExplorer {
 	/// }
 	/// </code>
 	/// </example>
-	/// </param>
 	public FileExplorer(
 		Type type,
 		string[] extensions,
@@ -70,7 +69,7 @@ public class FileExplorer {
 
 	#region Config
 	public string UseButtonLabel = "Load"; // to be changed per instance
-	public event Action<string> OnUsePressed; // returns the file full path
+	public event Action<string> OnUsePressed; // returns the file full path both saving and loading
 	public float NameWidth = 5;
 	public string[] Extensions; // include the . null for all
 	public Func<string, (string data, float width)[]> MetadataGetter;
@@ -95,7 +94,7 @@ public class FileExplorer {
 	Entry CurrentlySelected => CurrentEntries[CurrentlySelectedI];
 
 	// 0 is most recent
-	List<string> DirectoryHistory = new();
+	readonly List<string> DirectoryHistory = new();
 	int HistoryPosition;
 	#endregion
 

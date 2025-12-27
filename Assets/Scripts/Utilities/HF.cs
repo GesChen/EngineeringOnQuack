@@ -753,4 +753,7 @@ public static class HF {
 			+ $"{r:X2}{g:X2}{b:X2}"
 			+ (incAlpha ? $"{a:X2}" : "");
 	}
+
+	public static string Depath(string path) => // turns path into name
+		Path.GetFileNameWithoutExtension(path);
 }

@@ -19,6 +19,8 @@ public class GameManager : Singleton<GameManager> {
 
 	public Action WorldUpdated;
 
+	bool CursorEnabled;
+
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
 		base.Awake();
@@ -36,6 +38,44 @@ public class GameManager : Singleton<GameManager> {
 		WM_LoadCollection("playing");
 		// context is handled by CO
 
+		DisableCursor();
+	}
+
+	void Update() {
+		HandleCursor();
+	}
+
+	void HandleCursor() {
+		bool over = ContextManager.GetCurrent<Contexts.Main>().OverUI;
+
+		// idk when to check
+		if (Conatrols.Mouse.Left.PressedThisFrame) {
+			if (over) {
+				ShowCursor();
+			} else {
+				if (!CursorEnabled) HideCursor();
+			}
+		}
+	}
+
+	void EnableCursor() {
+		CursorEnabled = true;
+
+		ShowCursor();
+	}
+
+	public void ShowCursor() {
+		Cursor.lockState = CursorLockMode.None;
+		Cursor.visible = true;
+	}
+
+	void DisableCursor() {
+		CursorEnabled = false;
+
+		HideCursor();
+	}
+
+	public void HideCursor() {
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = false;
 	}
@@ -58,8 +98,7 @@ public class GameManager : Singleton<GameManager> {
 
 		BM_TryLoadAssembly();
 
-		Cursor.lockState = CursorLockMode.None;
-		Cursor.visible = true;
+		EnableCursor();
 
 		WM_LoadCollection("editing");
 		ContextManager.EnterContext<Contexts.Editing>();
@@ -77,11 +116,10 @@ public class GameManager : Singleton<GameManager> {
 			}
 		}
 
-		Cursor.lockState = CursorLockMode.Locked;
-		Cursor.visible = false;
+		DisableCursor();
 
 		WM_LoadCollection("playing");
-		ContextManager.EnterContextStrict<Contexts.Playing>();
+		ContextManager.EnterContext<Contexts.Playing>(true);
 	}
 
 	// put it here bc
@@ -99,8 +137,7 @@ public class GameManager : Singleton<GameManager> {
 	public void Operate(bool autoSit = true) {
 		OM_BeginOperating();
 
-		Cursor.lockState = CursorLockMode.None;
-		Cursor.visible = true;
+		EnableCursor();
 
 		if (autoSit)
 			PC_AutoSit();

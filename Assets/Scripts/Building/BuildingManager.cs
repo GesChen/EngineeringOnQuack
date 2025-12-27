@@ -110,7 +110,7 @@ public class BuildingManager : Singleton<BuildingManager> {
 			UnsavedWorkMenu.Notify((choice) => {
 				switch (choice) {
 					case UnsavedWorkMenu.Choice.Save:
-						SaveLoadManager.Instance.Save();
+						AssemblySaveLoadManager.Instance.Save();
 						NewAssembly();
 						break;
 					case UnsavedWorkMenu.Choice.Discard:
@@ -131,9 +131,9 @@ public class BuildingManager : Singleton<BuildingManager> {
 		LoadingConstruct = true;
 
 		if (!string.IsNullOrWhiteSpace(ConstructToLoadPath))
-			SaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
+			AssemblySaveLoadManager.Instance.LoadFromPath(ConstructToLoadPath);
 		else if (ConstructToLoad != null)
-			Assembly = SaveLoadHelper.Reconstruct(ConstructToLoad);
+			Assembly = AssemblySaveLoadHelper.Reconstruct(ConstructToLoad);
 
 		LoadingConstruct = false;
 

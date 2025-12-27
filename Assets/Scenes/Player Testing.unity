@@ -4928,6 +4928,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Player: {fileID: 1736544911}
+  CurrentWorldName: 
 --- !u!114 &1736544915
 MonoBehaviour:
   m_ObjectHideFlags: 0

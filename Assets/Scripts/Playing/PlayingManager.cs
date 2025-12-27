@@ -6,6 +6,8 @@ using UnityEngine;
 public class PlayingManager : Singleton<PlayingManager>{
 	public PlayerController Player;
 
+	public string CurrentWorldName; // idk where to put it 
+
 	void Start() {
 		UpdateSeatsList();
 		GameManager.Instance.WorldUpdated += UpdateSeatsList;
@@ -14,9 +16,10 @@ public class PlayingManager : Singleton<PlayingManager>{
 	}
 
 	void SubscribeToShortcuts() {
-		Conatrols.IM.Playing_Player.Edit.Subscribe<Contexts.Playing>(Edit, true);
+		Conatrols.IM.Playing_Game.Edit.Subscribe<Contexts.Playing>(Edit, true);
+		Conatrols.IM.Playing_Game.SaveWorld.Subscribe<Contexts.Playing>(TrySaveWorld, true);
+		Conatrols.IM.Playing_Game.LoadWorld.Subscribe<Contexts.Playing>(TryLoadWorld, true);
 	}
-
 
 	void Edit() {
 		GameManager.Instance.BeginEditing();
@@ -103,5 +106,50 @@ public class PlayingManager : Singleton<PlayingManager>{
 		}
 
 		TargetedCreation = bestCreation;
+	}
+
+	// temporaries till we get a proper full system
+	void TrySaveWorld() {
+		FileExplorer.CreateNewFE(
+			Config.SaveLoad.WorldConfig.SaveLocation,
+			new(
+				FileExplorer.Type.SaveFile,
+				new[] { Config.SaveLoad.WorldConfig.SaveExtension },
+				FileExplorer.MetadataGetters.GetBytes,
+				"Save",
+				SaveWorld,
+				5,
+				"New World" + Config.SaveLoad.WorldConfig.SaveExtension,
+				9
+				)
+			);
+
+		GameManager.Instance.ShowCursor();
+	}
+
+	void SaveWorld(string path) {
+		CurrentWorldName = HF.Depath(path);
+
+		WorldStateManager.SaveCurrentWSToFile();
+	}
+
+	void TryLoadWorld() {
+		FileExplorer.CreateNewFE(
+			Config.SaveLoad.WorldConfig.SaveLocation,
+			new(
+				FileExplorer.Type.OpenFile,
+				new string[] { Config.SaveLoad.WorldConfig.SaveExtension },
+				FileExplorer.MetadataGetters.GetBytes,
+				"Load",
+				LoadWorld,
+				5
+			)
+		);
+
+		GameManager.Instance.ShowCursor();
+	}
+
+	void LoadWorld(string path) {
+		WorldStateManager.LoadWorldState(HF.Depath(path));
 	}
 }

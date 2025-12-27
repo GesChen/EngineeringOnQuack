@@ -32,12 +32,50 @@ public class Creation : MonoBehaviour {
 		return positionMassSum / totalMass;
 	}
 
+	// cant just save the construct bc moving parts n shi
+	// plus destruction later
+	// but gotta keep construct for editing n whatever
 	public struct Serializable {
-		public Vector3 position;
-		public Quaternion rotation;
+		public int ID;
+		public Construct Construct;
+
+		// dont need to save outputs those come from the construct n cant change
+
+		public TransformData Transform;
+
+		public SubAssembly[] SubAssemblies;
 
 		public struct SubAssembly {
+			public int ID;
+			public Part[] Parts; // has all the states we need why not use it
+			public float Mass;
 
+			public TransformData Transform;
+
+			public struct Part {
+				public TransformData Transform; // use this world position/rotation instead
+
+				public Construct.Part source;
+
+				public static explicit operator Part(global::Part part) => new() {
+					Transform = (TransformData)part.transform,
+					source = (Construct.Part)part
+				};
+			}
+
+			public static explicit operator SubAssembly(Creation.SubAssembly sub) => new() {
+				ID = sub.ID,
+				Parts = sub.Parts.Select(p => (Part)p).ToArray(),
+				Mass = sub.Mass,
+				Transform = (TransformData)sub.Transform
+			};
 		}
 	}
+
+	public Serializable ConvertToSerializable() => new() {
+		ID = ID,
+		Construct = Construct,
+		Transform = (TransformData)transform,
+		SubAssemblies = SubAssemblies.Select(sa => (Serializable.SubAssembly)sa).ToArray()
+	};
 }

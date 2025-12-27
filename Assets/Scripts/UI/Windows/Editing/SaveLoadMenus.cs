@@ -29,10 +29,10 @@ public class SaveLoadMenus {
 
 	public static void ShowLoadMenu() {
 		FileExplorer.CreateNewFE(
-			Config.Building.Saving.AssembliesLocation
+			Config.SaveLoad.BuildingConfig.SaveLocation
 			, new(
 				FileExplorer.Type.OpenFile,
-				new[] { Config.Building.Saving.SaveExtension },
+				new[] { Config.SaveLoad.BuildingConfig.SaveExtension },
 				FileExplorer.MetadataGetters.GetBytes,
 				"Load",
 				Load,

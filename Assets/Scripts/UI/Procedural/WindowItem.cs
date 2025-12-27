@@ -98,18 +98,18 @@ public class WindowItem {
 				);
 
 		public static LayoutConfig Custom(
-			Vector2? sizeDelta = null,
-			UIPosition fixedPosition = null,
-			FourSides? padding = null,
-			FourSides? margins = null,
-			FourSides? position = null
+			Vector2 sizeDelta = default,
+			UIPosition fixedPosition = default,
+			FourSides padding = default,
+			FourSides margins = default,
+			FourSides position = default
 		) => new() {
-			IsCustom = true,
-			SizeDelta = sizeDelta ?? default,
-			FixedPosition = fixedPosition ?? default,
-			Padding = padding ?? default,
-			Margins = margins ?? default,
-			Position = position ?? default
+			IsCustom		= true,
+			SizeDelta		= sizeDelta,
+			FixedPosition	= fixedPosition,
+			Padding			= padding,
+			Margins			= margins,
+			Position		= position
 		};
 	}
 	public LayoutConfig Layout;

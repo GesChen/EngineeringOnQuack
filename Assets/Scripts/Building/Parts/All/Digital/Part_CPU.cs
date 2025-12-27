@@ -177,17 +177,15 @@ public class Part_CPU : NonStaticPart {
 
 	void RequestSave() {
 		FileExplorer.CreateNewFE(
-			HF.GuaranteePath(
-				Config.Path.LocalPath("Scripts").ToString()
-			),
+			Config.SaveLoad.ScriptsConfig.SaveLocation,
 			new(
 				FileExplorer.Type.SaveFile,
-				new string[] { ".qk" },
+				new string[] { Config.SaveLoad.ScriptsConfig.SaveExtension },
 				FileExplorer.MetadataGetters.GetBytes,
 				"Save",
 				TrySave,
 				5,
-				"New Script.qk",
+				"New Script" + Config.SaveLoad.ScriptsConfig.SaveExtension,
 				10
 			)
 		);
@@ -218,17 +216,15 @@ public class Part_CPU : NonStaticPart {
 
 	void RequestLoad() {
 		FileExplorer.CreateNewFE(
-			HF.GuaranteePath(
-				Config.Path.LocalPath("Scripts").ToString()
-			),
+			Config.SaveLoad.ScriptsConfig.SaveLocation,
 			new(
 				FileExplorer.Type.OpenFile,
-				new string[] { ".qk" },
+				new string[] { Config.SaveLoad.ScriptsConfig.SaveExtension },
 				FileExplorer.MetadataGetters.GetBytes,
 				"Load",
 				TryLoad,
 				5,
-				".qk",
+				Config.SaveLoad.ScriptsConfig.SaveExtension,
 				0
 			)
 		);

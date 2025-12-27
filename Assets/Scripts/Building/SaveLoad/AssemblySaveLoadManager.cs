@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class SaveLoadManager : Singleton<SaveLoadManager> {
+public class AssemblySaveLoadManager : Singleton<AssemblySaveLoadManager> {
 	static readonly float SaveTextHideDelay = 1.5f;
 
 	public event Action OnLoaded;
@@ -42,7 +42,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		SaveLoadMenus.SetSaveText("Saving...");
 
 		//await Task.Run(() => SaveLoadHelper.SaveCurrentBuild());
-		SaveLoadHelper.SaveCurrentBuild();
+		AssemblySaveLoadHelper.SaveCurrentBuild();
 
 		SaveLoadMenus.SetSaveText("Saved!");
 		StartCoroutine(SaveTextDelay());
@@ -61,7 +61,7 @@ public class SaveLoadManager : Singleton<SaveLoadManager> {
 		// hope name conflicts arent a thing
 		string name = System.IO.Path.GetFileNameWithoutExtension(path);
 		BuildingManager.Instance.LoadingConstruct = true;
-		SaveLoadHelper.LoadFromFile(name);
+		AssemblySaveLoadHelper.LoadFromFile(name);
 		BuildingManager.Instance.LoadingConstruct = false;
 
 		BottomBar.UpdateNameText(BuildingManager.Instance.Assembly.Name);

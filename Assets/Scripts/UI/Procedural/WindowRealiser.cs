@@ -339,20 +339,19 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 			rt.sizeDelta			= item.Layout.SizeDelta;
 
 		} else if (item.Layout.IsCustom) { // do everything that isnt zero
-			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
-			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
-
 			item.Layout.Margins.SetTransformOffsets(rt);
 
 			if (item.Layout.FixedPosition != null) {
-				if (item.Layout.FixedPosition.Pivot != Vector2.zero)
-					rt.pivot = item.Layout.FixedPosition.Pivot;
-				if (item.Layout.FixedPosition.Position != Vector2.zero)
-					rt.anchoredPosition = item.Layout.FixedPosition.Position;
-				if (item.Layout.FixedPosition.AnchorMin != Vector2.zero)
-					rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
-				if (item.Layout.FixedPosition.AnchorMax != Vector2.zero)
-					rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
+				rt.pivot = item.Layout.FixedPosition.Pivot;
+				rt.anchoredPosition = item.Layout.FixedPosition.Position;
+				rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
+				rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
+			}
+
+			// position take priority
+			if (item.Layout.Position != FourSides.Zero) {
+				rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
+				rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
 			}
 
 			if (item.Layout.SizeDelta != Vector2.zero)

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using Geometry;
 using UnityEditor.Hardware;
@@ -23,11 +24,13 @@ public class Assembler : Singleton<Assembler> {
 	public void Assemble(Construct construct, out Creation creation) {
 		var parts = construct.Parts;
 
-		creation = CreateCreation(construct);
+		creation = CreateCreation(construct.Name);
 
 		var createdParts = CopyToSimulation(parts);
 		
-		var subassemblies = GroupPartsIntoSubassemblies(creation, createdParts);
+		var groups = FindPartGroups(createdParts);
+
+		var subassemblies = MakeSubAssemblies(groups, creation, createdParts);
 
 		SetupPhysics(subassemblies, parts);
 
@@ -36,10 +39,55 @@ public class Assembler : Singleton<Assembler> {
 		FinalizeAllParts(creation, createdParts, parts);
 
 		FinalizeNSPSetup(subassemblies, creation);
+
+		RandomizeSAIDS(subassemblies);
 	}
 
-	Creation CreateCreation(Construct construct) {
-		GameObject newObj = new(construct.Name);
+	public void ReconstructCreation(Creation.Serializable creation, out Creation created) {
+		var allCreationParts = creation.SubAssemblies.SelectMany(sa => sa.Parts).Select(p => p.source).ToList();
+
+		var newCreation = CreateCreation(creation.Construct.Name);
+
+		var createdParts = CopyToSimulation(allCreationParts);
+
+		var groups = creation.SubAssemblies.Select(s => s.Parts.Select(p => p.source.id).ToList()).ToList();
+
+		var subassemblies = MakeSubAssemblies(groups, newCreation, createdParts);
+
+		// re set the ids
+		for (int i = 0; i < subassemblies.Count; i++) {
+			subassemblies[i].ID = creation.SubAssemblies[i].ID;
+		}
+
+		SetupPhysics(subassemblies, allCreationParts);
+
+		SetupCreation(newCreation, creation.Construct, subassemblies);
+
+		FinalizeAllParts(newCreation, createdParts, allCreationParts);
+
+		FinalizeNSPSetup(subassemblies, newCreation);
+
+		// restore creation daata
+		newCreation.ID = creation.ID;
+		creation.Transform.ApplyToTransform(newCreation.transform);
+
+		// restore sa transforms
+		foreach (var sa in creation.SubAssemblies) {
+			var newSA = newCreation.SubAssemblies.Find(ncsa => ncsa.ID == sa.ID);
+
+			sa.Transform.ApplyToTransform(newSA.Transform);
+
+			// restore part transforms
+			foreach (var part in sa.Parts)
+				part.Transform.ApplyToTransform(
+					newSA.Parts.Find(np => np.ID == part.source.id).transform);
+		}
+
+		created = newCreation;
+	}
+
+	Creation CreateCreation(string name) {
+		GameObject newObj = new(name);
 		newObj.transform.SetParent(GameManager.Instance.CreationsContainer);
 		return newObj.AddComponent<Creation>();
 	}
@@ -56,6 +104,9 @@ public class Assembler : Singleton<Assembler> {
 			var partComp = newObject.GetComponent<Part>();
 			partComp.basePart = part.GetBasePart();
 			partComp.ID = part.id;
+			partComp.color = part.color;
+			partComp.composition = Compositions.Get(part.compositionID);
+
 			partComp.enabled = false;
 
 			created.Add(partComp);
@@ -64,42 +115,22 @@ public class Assembler : Singleton<Assembler> {
 		return created;
 	}
 	
-	List<Creation.SubAssembly> GroupPartsIntoSubassemblies(Creation creation, List<Part> parts) {
-		// find subassemblies by choosing a part and finding anything that touches it
-		List<Creation.SubAssembly> subs = new();
+	// find groups by choosing a part and finding anything that touches it
+	List<List<int>> FindPartGroups(List<Part> parts) {
+
+		List<List<int>> groups = new();
 
 		HashSet<int> checkedParts = new();
+
 		foreach (var part in parts) {
 			if (checkedParts.Contains(part.ID)) continue;
 
 			var group = GroupCheck(part, parts, checkedParts);
 
-			Transform subParent = new GameObject($"SubAssembly ({group.Count})").transform;
-			subParent.SetParent(creation.transform);
-
-			List<Part> subParts = new();
-			Vector3 accumPos = Vector3.zero;
-
-			foreach (var partid in group) {
-				var gpart = parts.Find(p => p.ID == partid);
-
-				subParts.Add(gpart);
-
-				accumPos += gpart.transform.position;
-			}
-
-			// doesnt matter where it is but might as well
-			subParent.position = accumPos / group.Count;
-			foreach (var gpart in subParts)
-				gpart.transform.parent = subParent;
-
-			subs.Add(new() {
-				Transform = subParent,
-				Parts = subParts
-			});
+			groups.Add(group);
 		}
 
-		return subs;
+		return groups;
 	}
 	List<int> GroupCheck(Part part, List<Part> parts, HashSet<int> checkedParts) {
 		checkedParts.Add(part.ID); // add self
@@ -118,6 +149,44 @@ public class Assembler : Singleton<Assembler> {
 		}
 
 		return group;
+	}
+
+	List<Creation.SubAssembly> MakeSubAssemblies(List<List<int>> groups, Creation creation, List<Part> parts) {
+
+		List<Creation.SubAssembly> subs = new();
+
+		foreach (var group in groups) {
+			var sub = GenerateSA(group, creation, parts);
+			subs.Add(sub);
+		}
+
+		return subs;
+	}
+
+	Creation.SubAssembly GenerateSA(List<int> group, Creation creation, List<Part> parts) {
+		Transform subParent = new GameObject($"SubAssembly ({group.Count})").transform;
+		subParent.SetParent(creation.transform);
+
+		List<Part> subParts = new();
+		Vector3 accumPos = Vector3.zero;
+
+		foreach (var partid in group) {
+			var gpart = parts.Find(p => p.ID == partid);
+
+			subParts.Add(gpart);
+
+			accumPos += gpart.transform.position;
+		}
+
+		// doesnt matter where it is but might as well
+		subParent.position = accumPos / group.Count;
+		foreach (var gpart in subParts)
+			gpart.transform.parent = subParent;
+
+		return new() {
+			Transform = subParent,
+			Parts = subParts
+		};
 	}
 
 	void SetupPhysics(List<Creation.SubAssembly> assembleds, List<Construct.Part> parts) {
@@ -157,6 +226,11 @@ public class Assembler : Singleton<Assembler> {
 					nsp.CreationID = creation.ID;
 					nsp.BecomeAssembled();
 				}
+	}
+
+	void RandomizeSAIDS(List<Creation.SubAssembly> subs) {
+		foreach (var sub in subs)
+			sub.ID = HF.GenerateUID();
 	}
 
 	// --------- helper functs-----------------

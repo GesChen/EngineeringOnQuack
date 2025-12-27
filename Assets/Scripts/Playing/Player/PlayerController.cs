@@ -10,14 +10,15 @@ public class PlayerController : MonoBehaviour{
 	public PlayerModel Model;
 	public Transform HoldingTransform; // separate holding out too if needed i guess
 
-	Rigidbody rb;
 
 	[HideInNormalInspector] public float yaw;
 	[HideInNormalInspector] public float pitch;
 	[HideInNormalInspector] public Vector3 movement;
+	
+	internal Rigidbody rb;
 
 	// whole sitting system might have to be redone
-	Part_Seat CurrentlySittingOn;
+	internal Part_Seat CurrentlySittingOn;
 	FixedJoint SitJoint;
 	
 	void Start() {
@@ -116,7 +117,10 @@ public class PlayerController : MonoBehaviour{
 		SetupSit();
 	}
 
-	void SetupSit() {
+	// expects currentlysittingon to be set
+	internal void SetupSit() {
+		if (CurrentlySittingOn == null) return;
+
 		// place player's bum at sit target pos
 
 		if (SitJoint != null)
@@ -139,7 +143,7 @@ public class PlayerController : MonoBehaviour{
 		ContextManager.GetCurrent<Contexts.Playing>().Sitting = true;
 	}
 
-	void Unsit() {
+	internal void Unsit() {
 		if (SitJoint == null) return;
 
 		// try raycast

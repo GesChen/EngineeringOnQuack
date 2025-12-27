@@ -150,4 +150,14 @@ public class OperatingManager : Singleton<OperatingManager> {
 
 		Destroy(creation.gameObject);
 	}
+
+	// gulp.
+	public Part FindPartInWorld(int id) {
+		foreach (var creation in Creations)
+			foreach (var sub in creation.SubAssemblies)
+				foreach (var part in sub.Parts)
+					if (part.ID == id)
+						return part;
+		return null;
+	}
 }
