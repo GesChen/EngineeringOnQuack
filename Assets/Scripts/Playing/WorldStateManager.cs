@@ -16,6 +16,8 @@ public static class WorldStateManager {
 		public PlayerState Player;
 
 		public string CurrentContextSerialized;
+		public string CurrentWindowCollection;
+		public bool CursorEnabled;
 
 		internal static readonly JsonSerializerSettings ContextSerializationSettings = new(){
 			TypeNameHandling = TypeNameHandling.Auto,
@@ -35,6 +37,7 @@ public static class WorldStateManager {
 			return cwrapper.Context;
 		}
 
+		// store playerstate separately for multiplayer
 		public struct PlayerState {
 			public TransformData Transform;
 			
@@ -44,19 +47,22 @@ public static class WorldStateManager {
 			public SVector3 Velocity;
 
 			public int CurrentlySittingOnPartID;
+			public int CurrentlyOperatingCreationID;
 
 			public bool InFirstPerson;
 			public float TPDistance;
 		}
 	}
-
+		
 	public static WorldState GetCurrentWorldState() => new() {
 		Name = PlayingManager.Instance.CurrentWorldName,
 		Creations = OperatingManager.Instance.Creations.Select(c => c.ConvertToSerializable()).ToArray(),
 		Player = GetCurrentPlayerState(),
 		CurrentContextSerialized = JsonConvert.SerializeObject(
 			new WorldState.ContextWrapper(ContextManager.Current),
-			WorldState.ContextSerializationSettings)
+			WorldState.ContextSerializationSettings),
+		CurrentWindowCollection = WindowManager.Instance.currentlyLoadedCollection,
+		CursorEnabled = GameManager.Instance.CursorEnabled
 	};
 
 	public static WorldState.PlayerState GetCurrentPlayerState() {
@@ -110,17 +116,38 @@ public static class WorldStateManager {
 		
 		player.rb.velocity = state.Player.Velocity;
 
-		player.Unsit();
-		if (state.Player.CurrentlySittingOnPartID != -1)
-			player.CurrentlySittingOn = 
+		// restore operating
+		if (state.Player.CurrentlyOperatingCreationID != -1) {
+			OperatingManager.Instance.CurrentlyOperating =
+				OperatingManager.Instance.FindCreation(state.Player.CurrentlyOperatingCreationID);
+		}
+
+		// restore sit
+		player.Unsit(); // has null check
+		if (state.Player.CurrentlySittingOnPartID != -1) {
+			player.CurrentlySittingOn =
 				OperatingManager.Instance.FindPartInWorld(state.Player.CurrentlySittingOnPartID)
 				.GetNSP<Part_Seat>();
+			
+			player.SetupSit();
+		}
 
 		player.Camera.FirstPerson = state.Player.InFirstPerson;
 		player.Camera.tpDistance = state.Player.TPDistance;
 
+		
+
+
 		// restore context
 		var context = state.GetCurrentContext();
 		ContextManager.ForceEnterContext(context);
+
+		// restore ui 
+		WindowManager.Instance.RealiseCollection(state.CurrentWindowCollection);
+
+		// restore cursor
+		GameManager.Instance.CursorEnabled = state.CursorEnabled;
+
+		GameManager.Instance.WorldUpdated();
 	}
 }

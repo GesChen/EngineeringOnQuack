@@ -11,7 +11,8 @@ public static class ContextWindows {
 		name switch {
 			"playing" => PlayingWindows,
 			"editing" => EditingWindows,
-			"operating" => OperatingWindows
+			"operating" => OperatingWindows,
+			_ => throw new($"invalid collection name {name}")
 		};
 
 	static WindowCollection PlayingWindows =>

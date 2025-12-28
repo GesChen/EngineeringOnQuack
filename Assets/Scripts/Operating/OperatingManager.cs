@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class OperatingManager : Singleton<OperatingManager> {
 	// games gonna stay single player for now ig
-	public Creation CurrentlyOperating;
+	public Creation CurrentlyOperating; // can js move this to player for multi
 
 	// update this value 
 	public Construct ToAssemble;
@@ -158,6 +158,13 @@ public class OperatingManager : Singleton<OperatingManager> {
 				foreach (var part in sub.Parts)
 					if (part.ID == id)
 						return part;
+		return null;
+	}
+
+	public Creation FindCreation(int id) {
+		foreach (var creation in Creations)
+			if (creation.ID == id) return creation;	
+
 		return null;
 	}
 }

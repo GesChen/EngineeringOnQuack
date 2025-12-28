@@ -19,7 +19,7 @@ public class GameManager : Singleton<GameManager> {
 
 	public Action WorldUpdated;
 
-	bool CursorEnabled;
+	public bool CursorEnabled;
 
 	// guaranteed to run before everything else thankfully
 	protected override void Awake() {
@@ -45,6 +45,7 @@ public class GameManager : Singleton<GameManager> {
 		HandleCursor();
 	}
 
+	#region cursor
 	void HandleCursor() {
 		bool over = ContextManager.GetCurrent<Contexts.Main>().OverUI;
 
@@ -57,28 +58,25 @@ public class GameManager : Singleton<GameManager> {
 			}
 		}
 	}
-
 	void EnableCursor() {
 		CursorEnabled = true;
 
 		ShowCursor();
 	}
-
 	public void ShowCursor() {
 		Cursor.lockState = CursorLockMode.None;
 		Cursor.visible = true;
 	}
-
 	void DisableCursor() {
 		CursorEnabled = false;
 
 		HideCursor();
 	}
-
 	public void HideCursor() {
 		Cursor.lockState = CursorLockMode.Locked;
 		Cursor.visible = false;
 	}
+	#endregion
 
 	// someone should call this to begin 
 	// store a desired assembly in BM before calling

@@ -22,6 +22,8 @@ public class WindowManager : Singleton<WindowManager> {
 
 	public bool anyDragging = false;
 
+	[HideInNormalInspector] public string currentlyLoadedCollection;
+
 	// only good way i can think of for now to ensure that the 
 	// other awakes are called before init is to just delay this script's 
 	// execution order cuz every other method doesn't make sense or this class
@@ -33,9 +35,14 @@ public class WindowManager : Singleton<WindowManager> {
 		Windows.Clear();
 		Menus.Clear();
 
-		GameManager.Instance.WM_LoadCollection = 
-			name => RealiseCollection(ContextWindows.GetCollection(name));
+		GameManager.Instance.WM_LoadCollection =
+			name => {
+				currentlyLoadedCollection = name;
+				RealiseCollection(name);
+			};
 	}
+
+	public void RealiseCollection(string name) => RealiseCollection(ContextWindows.GetCollection(name));
 
 	public void RealiseCollection(ContextWindows.WindowCollection collection) {
 		ResetAllMenus();

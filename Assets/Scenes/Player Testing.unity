@@ -2664,6 +2664,7 @@ MonoBehaviour:
   Canvas: {fileID: 0}
   CanvasRect: {fileID: 0}
   anyDragging: 0
+  currentlyLoadedCollection: 
 --- !u!1 &940584279
 GameObject:
   m_ObjectHideFlags: 0
@@ -4173,6 +4174,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MainPartsContainer: {fileID: 1596101662}
   CreationsContainer: {fileID: 1062049965}
+  CursorEnabled: 0
 --- !u!114 &1569215801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4581,7 +4583,7 @@ Transform:
   m_GameObject: {fileID: 1681030639}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

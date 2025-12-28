@@ -881,7 +881,7 @@ MonoBehaviour:
   active: 1
   mode:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 4
   useFullACES:
     m_OverrideState: 0
     m_Value: 0
@@ -905,7 +905,7 @@ MonoBehaviour:
     m_Value: 1.85
   lutTexture:
     m_OverrideState: 1
-    m_Value: {fileID: 0}
+    m_Value: {fileID: 11700000, guid: 6b427d8765baab576830a89c03f27bda, type: 3}
   lutContribution:
     m_OverrideState: 1
     m_Value: 1
