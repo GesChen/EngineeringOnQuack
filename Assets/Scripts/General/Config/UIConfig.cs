@@ -22,6 +22,8 @@ public static partial class Config {
 			public static readonly float OutlineThickness		= 2;
 
 			public static readonly float DefaultLayoutSpacing	= 5; // might delete
+
+			public static readonly Color PauseTint				= new(.2f, .2f, .2f, .3f);
 		}
 
 		public static class Behaviour {

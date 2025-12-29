@@ -24,6 +24,8 @@ public class WindowManager : Singleton<WindowManager> {
 
 	[HideInNormalInspector] public string currentlyLoadedCollection;
 
+	CWindow[] pauseWindows;
+
 	// only good way i can think of for now to ensure that the 
 	// other awakes are called before init is to just delay this script's 
 	// execution order cuz every other method doesn't make sense or this class
@@ -40,6 +42,10 @@ public class WindowManager : Singleton<WindowManager> {
 				currentlyLoadedCollection = name;
 				RealiseCollection(name);
 			};
+
+		GameManager.Instance.WM_Pause = LoadPauseCollection;
+		GameManager.Instance.WM_UnPause = DestroyPauseCollection;
+
 	}
 
 	public void RealiseCollection(string name) => RealiseCollection(ContextWindows.GetCollection(name));
@@ -50,6 +56,21 @@ public class WindowManager : Singleton<WindowManager> {
 
 		DestroyAllWindows();
 		RealiseWindows(collection.Windows);
+	}
+
+	void LoadPauseCollection() {
+		var paused = ContextWindows.GetCollection("paused");
+
+		RealiseWindows(paused.Windows);
+
+		pauseWindows = paused.Windows;
+	}
+
+	void DestroyPauseCollection() {
+		foreach (var win in pauseWindows)
+			DestroyWindow(win);
+
+		pauseWindows = null;
 	}
 
 	public void RealiseWindows(params CWindow[] torealise) {

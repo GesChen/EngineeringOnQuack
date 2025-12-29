@@ -12,13 +12,15 @@ public static class ContextWindows {
 			"playing" => PlayingWindows,
 			"editing" => EditingWindows,
 			"operating" => OperatingWindows,
+			"paused" => PausedWC,
 			_ => throw new($"invalid collection name {name}")
 		};
 
 	static WindowCollection PlayingWindows =>
 		MakeCollection(
 		new Action[] {
-			PlayingMainUI.Set
+			PlayingMainUI.Set,
+			PauseUI.Set
 		},
 		() => (
 		Conglomerate(
@@ -73,6 +75,12 @@ public static class ContextWindows {
 			OperatingMainUI.Menus
 		))
 	);
+
+	static WindowCollection PausedWC =>
+		MakeCollection(
+		new Action[] { PauseUI.Set },
+		() => (PauseUI.Windows, new PMenu.Window[0])
+		);
 
 	public struct WindowCollection {
 		public CWindow[] Windows;

@@ -476,6 +476,138 @@
             ]
         },
         {
+            "name": "Playing_Game",
+            "id": "afb60a83-d909-4adc-8f9d-418a32005968",
+            "actions": [
+                {
+                    "name": "Edit",
+                    "type": "Button",
+                    "id": "417f7e59-c93a-4d78-8761-8f18b230c252",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SaveWorld",
+                    "type": "Button",
+                    "id": "a982e2b3-7d09-4dff-aadf-8ccb9327ffea",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "LoadWorld",
+                    "type": "Button",
+                    "id": "d655e0f1-4aeb-44a6-9269-5dd809ec376c",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "TogglePause",
+                    "type": "Button",
+                    "id": "ec8d2434-c11f-4145-be80-61a4cc607679",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "88998085-607b-4e09-b5b5-ded5667a75d3",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Edit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "One Modifier",
+                    "id": "10d220d6-f8ff-433e-966c-08d9ae8afbde",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SaveWorld",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "c985dc74-dbf4-4532-8159-3ebb5cc4bbba",
+                    "path": "<Keyboard>/ctrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SaveWorld",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "c2290abf-0ebe-4e22-b3de-5118d2641964",
+                    "path": "<Keyboard>/p",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SaveWorld",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "One Modifier",
+                    "id": "a0e8152c-dd95-4d51-ba24-9d6e1a7e2839",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LoadWorld",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "4f8cf3b2-aed5-45c6-9983-4e719eaa5526",
+                    "path": "<Keyboard>/ctrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LoadWorld",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "b38d9a1d-4da5-4424-b4d1-3d0bca15d220",
+                    "path": "<Keyboard>/o",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LoadWorld",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "7dd3a845-c597-4413-b420-424e0786b0be",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TogglePause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
             "name": "Editing_Camera",
             "id": "242ca290-21f9-4781-8792-e7fdc4ef943c",
             "actions": [
@@ -1199,118 +1331,6 @@
                     "action": "RotateCamera",
                     "isComposite": false,
                     "isPartOfComposite": false
-                }
-            ]
-        },
-        {
-            "name": "Playing_Game",
-            "id": "afb60a83-d909-4adc-8f9d-418a32005968",
-            "actions": [
-                {
-                    "name": "Edit",
-                    "type": "Button",
-                    "id": "417f7e59-c93a-4d78-8761-8f18b230c252",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "SaveWorld",
-                    "type": "Button",
-                    "id": "a982e2b3-7d09-4dff-aadf-8ccb9327ffea",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "LoadWorld",
-                    "type": "Button",
-                    "id": "d655e0f1-4aeb-44a6-9269-5dd809ec376c",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                }
-            ],
-            "bindings": [
-                {
-                    "name": "",
-                    "id": "88998085-607b-4e09-b5b5-ded5667a75d3",
-                    "path": "<Keyboard>/tab",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Edit",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "One Modifier",
-                    "id": "10d220d6-f8ff-433e-966c-08d9ae8afbde",
-                    "path": "OneModifier",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SaveWorld",
-                    "isComposite": true,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "modifier",
-                    "id": "c985dc74-dbf4-4532-8159-3ebb5cc4bbba",
-                    "path": "<Keyboard>/ctrl",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SaveWorld",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "binding",
-                    "id": "c2290abf-0ebe-4e22-b3de-5118d2641964",
-                    "path": "<Keyboard>/p",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SaveWorld",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "One Modifier",
-                    "id": "a0e8152c-dd95-4d51-ba24-9d6e1a7e2839",
-                    "path": "OneModifier",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "LoadWorld",
-                    "isComposite": true,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "modifier",
-                    "id": "4f8cf3b2-aed5-45c6-9983-4e719eaa5526",
-                    "path": "<Keyboard>/ctrl",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "LoadWorld",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "binding",
-                    "id": "b38d9a1d-4da5-4424-b4d1-3d0bca15d220",
-                    "path": "<Keyboard>/o",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "LoadWorld",
-                    "isComposite": false,
-                    "isPartOfComposite": true
                 }
             ]
         }

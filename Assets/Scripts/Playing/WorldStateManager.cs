@@ -135,9 +135,6 @@ public static class WorldStateManager {
 		player.Camera.FirstPerson = state.Player.InFirstPerson;
 		player.Camera.tpDistance = state.Player.TPDistance;
 
-		
-
-
 		// restore context
 		var context = state.GetCurrentContext();
 		ContextManager.ForceEnterContext(context);

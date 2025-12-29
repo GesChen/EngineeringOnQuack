@@ -2,10 +2,14 @@ using System;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager> {
+	public bool Paused;
+
 	public Transform MainPartsContainer;
 	public Transform CreationsContainer;
 
 	public Action<string> WM_LoadCollection;
+	public Action WM_Pause;
+	public Action WM_UnPause;
 	public Action BM_ClearEditing;
 	public Action BM_TryLoadAssembly;
 	public Action OM_DestroyCreation;
@@ -142,5 +146,25 @@ public class GameManager : Singleton<GameManager> {
 
 		WM_LoadCollection("operating");
 		ContextManager.EnterContext<Contexts.Operating>();
+	}
+
+	bool cursorStateBeforePause;
+	public void Pause() {
+		Paused = true;
+
+		cursorStateBeforePause = CursorEnabled;
+
+		EnableCursor();
+
+		WM_Pause();
+	}
+
+	public void UnPause() {
+		Paused = false;
+
+		if (!cursorStateBeforePause)
+			DisableCursor();
+
+		WM_UnPause();
 	}
 }

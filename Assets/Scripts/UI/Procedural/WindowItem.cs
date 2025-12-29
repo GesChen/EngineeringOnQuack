@@ -328,6 +328,7 @@ public class WindowItem {
 	public static WindowItem NewInputField(PComponents.InputField inputField, LayoutConfig layout) =>
 		NewInputField("InputField", inputField, layout);
 
+	/// <param name="layoutComponent">Use Pcomp.layout.direction. ...</param>
 	public static WindowItem NewLayout(string name, PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items) => 
 		new(
 			name,
@@ -335,6 +336,8 @@ public class WindowItem {
 			new() { layoutComponent },
 			items
 			);
+
+	/// <param name="layoutComponent">Use Pcomp.layout.direction. ...</param>
 	public static WindowItem NewLayout(PComponents.Layout layoutComponent, LayoutConfig layout, List<WindowItem> items) => 
 		NewLayout("Layout", layoutComponent, layout, items);
 

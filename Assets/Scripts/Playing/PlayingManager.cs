@@ -19,10 +19,19 @@ public class PlayingManager : Singleton<PlayingManager>{
 		Conatrols.IM.Playing_Game.Edit.Subscribe<Contexts.Playing>(Edit, true);
 		Conatrols.IM.Playing_Game.SaveWorld.Subscribe<Contexts.Playing>(TrySaveWorld, true);
 		Conatrols.IM.Playing_Game.LoadWorld.Subscribe<Contexts.Playing>(TryLoadWorld, true);
+
+		Conatrols.IM.Playing_Game.TogglePause.Subscribe<Contexts.Playing>(TogglePause);
 	}
 
 	void Edit() {
 		GameManager.Instance.BeginEditing();
+	}
+
+	void TogglePause() {
+		if (GameManager.Instance.Paused)
+			GameManager.Instance.UnPause();
+		else 
+			GameManager.Instance.Pause();
 	}
 
 	void Update() {
