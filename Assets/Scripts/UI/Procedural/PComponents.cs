@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Threading.Tasks;
 
-public class PComponents {
+public static class PComponents {
 	public abstract class Component {
 		public UnityEngine.Component RealComponent;
 
@@ -176,6 +176,7 @@ public class PComponents {
 		public float				FontSize	= Config.UI.Visual.FontSize;
 		public Color				Color		= Config.UI.Visual.TextColor;
 		public bool					Wrap		= false;
+		public bool					AutoSize	= false;
 
 		public Text(
 				string					content,
@@ -185,7 +186,8 @@ public class PComponents {
 				FontWeight?				weight		= null,
 				float?					fontSize	= null,
 				Color?					color		= null,
-				bool					wrap		= false) {
+				bool					wrap		= false,
+				bool					autoSize	= false) {
 			Content = content;
 
 			Font		= font != null ? font : Config.UI.Visual.DefaultFont;
@@ -194,7 +196,8 @@ public class PComponents {
 			Weight		= weight	?? Config.UI.Visual.DefaultWeight;
 			FontSize	= fontSize	?? Config.UI.Visual.FontSize;
 			Color		= color		?? Config.UI.Visual.TextColor;
-			Wrap = wrap;
+			Wrap		= wrap;
+			AutoSize	= autoSize;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
@@ -220,6 +223,8 @@ public class PComponents {
 
 			if (!originalItem.Layout.IsFixed)
 				text.margin = originalItem.Layout.Padding.ToTMProType();
+
+			text.enableAutoSizing = AutoSize;
 
 			RealComponent = text;
 			FinaliseRealise();
@@ -954,20 +959,37 @@ public class PComponents {
 	// just add a fill subcomponent with outline instead
 	public class Outline : Component {
 		public Color Color;
-		public Vector2 Size;
+		public float InnerWidth;
+		public float OuterWidth;
 
 		public Outline(
 			Color? color = null,
-			Vector2? size = null) {
+			float? innerWidth = null,
+			float? outerWidth = null) {
 
 			Color = color ?? Config.UI.Visual.OutlineColor;
-			Size = size ?? Config.UI.Visual.OutlineThickness * Vector2.one;
+			InnerWidth = innerWidth ?? 0;
+			OuterWidth = outerWidth ?? Config.UI.Visual.OutlineThickness;
 		}
 
 		public override void RealiseComponent(GameObject newObj, WindowItem originalItem) {
-			var olComp = newObj.AddComponent<UnityEngine.UI.Outline>();
-			olComp.effectColor = Color;
-			olComp.effectDistance = Size;
+			// have to add a new child fill layout to use the new outline component
+			var rt = newObj.GetComponent<RectTransform>();
+			var child = HF.CreateRectTransform(
+				"Outline",
+				rt,
+				new(0, 0),
+				new(1, 1),
+				new(.5f, .5f),
+				new(0, 0),
+				new(0, 0),
+				new(0, 0)
+			);
+
+			var olComp = child.gameObject.AddComponent<BetterOutline>();
+			olComp.color = Color;
+			olComp.InnerWidth = InnerWidth;
+			olComp.OuterWidth = OuterWidth;
 
 			RealComponent = olComp;
 			FinaliseRealise();

@@ -123,12 +123,6 @@ public class WindowManager : Singleton<WindowManager> {
 		Menus.Clear();
 	}
 
-	void ReSetAllValues(Action[] Sets) {
-		foreach (var setter in Sets) {
-			setter();
-		}
-	}
-
 	void Start() {
 		Canvas = GetComponent<Canvas>();
 		CanvasRect = Canvas.GetComponent<RectTransform>();

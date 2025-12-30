@@ -298,7 +298,7 @@ public class WindowItem {
 	public static WindowItem NewButtonCustomImageComponent(PComponents.Button button, PComponents.Image image, LayoutConfig layout) =>
 		NewButtonCustomImageComponent("Button", button, image, layout);
 
-	public static WindowItem NewButtonCustomText(string name, PComponents.Button button, PComponents.Text text, LayoutConfig layout) => new(
+	public static WindowItem NewButtonCustomText(string name, PComponents.Button button, PComponents.Text text, LayoutConfig layout, LayoutConfig? textLayout = null) => new(
 		name,
 		layout,
 		new() {
@@ -308,7 +308,7 @@ public class WindowItem {
 		new() {
 			NewText(
 				text,
-				LayoutConfig.FillLayout
+				textLayout ?? LayoutConfig.DynamicLayout(Config.UI.Button.CustomTextDefaultMargins * FourSides.One)
 			)
 		}
 	);

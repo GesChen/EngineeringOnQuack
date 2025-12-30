@@ -140,9 +140,23 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		SetFull(bgRT);
 
 		// add outline
-		var outline = bgRT.gameObject.AddComponent<Outline>();
-		outline.effectDistance = window.Config.Outline.size * Vector2.one;
-		outline.effectColor = window.Config.Outline.color;
+		if (window.Config.Outline.size != 0) {
+			var outlineRT = HF.CreateRectTransform(
+				"Outline",
+				windowRT,
+				new(0, 0),
+				new(1, 1),
+				new(.5f, .5f),
+				new(0, 0),
+				new(0, 0),
+				new(0, 0)
+			);
+			outlineRT.anchoredPosition = Vector2.zero;
+
+			var outline = outlineRT.gameObject.AddComponent<BetterOutline>();
+			outline.OuterWidth = window.Config.Outline.size;
+			outline.color = window.Config.Outline.color;
+		}
 
 		// content parent
 		var (_, contentParent) =

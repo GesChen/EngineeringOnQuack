@@ -16,7 +16,16 @@ namespace Contexts {
 		public IContext Parent { get; set; }
 		public Type ParentType => null;
 		public Main() { }
+		
 		public bool OverUI = false;
+	}
+
+	public class Menu : IContext {
+		public string Name => "Menu";
+		public IContext Parent { get; set; }
+		public Type ParentType => typeof(Main);
+		public Menu(IContext parent) => ((IContext)this).SetParent(parent);
+		public Menu() { }
 	}
 
 	public class Playing : IContext {

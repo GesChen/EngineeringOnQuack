@@ -483,6 +483,7 @@ public class LiveWindow : MonoBehaviour {
 	// so 4 is now center
 	/// <summary>
 	/// Puts a selected corner 1-3 or 4 for center at a position
+	/// <para>0-BL 1-TL 2-TR 3-BR</para>
 	/// </summary>
 	public void SetWorldCorner(Vector3 targetWorldPosition, int corner) {
 		Vector3[] worldCorners = new Vector3[4];

@@ -6,11 +6,20 @@ using UnityEngine;
 public class PlayingManager : Singleton<PlayingManager>{
 	public PlayerController Player;
 
-	public string CurrentWorldName; // idk where to put it 
-
 	void Start() {
 		UpdateSeatsList();
 		GameManager.Instance.WorldUpdated += UpdateSeatsList;
+
+		PauseUI.Save = TrySaveWorld;
+		PauseUI.SaveAndExit = () => {
+			TrySaveWorld();
+			GameManager.Instance.ReturnToMenu();
+		};
+		PauseUI.Exit = GameManager.Instance.ReturnToMenu;
+
+		MainMenuUI.OnNewWorldPressed = WorldStateManager.NewWorld;
+		MainMenuUI.OnLoadWorldPressed = TryLoadWorld;
+
 
 		SubscribeToShortcuts();
 	}
@@ -119,6 +128,12 @@ public class PlayingManager : Singleton<PlayingManager>{
 
 	// temporaries till we get a proper full system
 	void TrySaveWorld() {
+		if (!string.IsNullOrEmpty(WorldStateManager.CurrentWorldName)) {
+			SaveWorld();
+			return;
+		}
+
+		// open the file explorer if the current world isnt named and thus isnt saved
 		FileExplorer.CreateNewFE(
 			Config.SaveLoad.WorldConfig.SaveLocation,
 			new(
@@ -137,8 +152,12 @@ public class PlayingManager : Singleton<PlayingManager>{
 	}
 
 	void SaveWorld(string path) {
-		CurrentWorldName = HF.Depath(path);
+		WorldStateManager.CurrentWorldName = HF.Depath(path);
 
+		SaveWorld();
+	}
+
+	void SaveWorld() {
 		WorldStateManager.SaveCurrentWSToFile();
 	}
 

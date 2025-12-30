@@ -13,6 +13,7 @@ public static class ContextWindows {
 			"editing" => EditingWindows,
 			"operating" => OperatingWindows,
 			"paused" => PausedWC,
+			"mainmenu" => MainMenuWC,
 			_ => throw new($"invalid collection name {name}")
 		};
 
@@ -80,6 +81,12 @@ public static class ContextWindows {
 		MakeCollection(
 		new Action[] { PauseUI.Set },
 		() => (PauseUI.Windows, new PMenu.Window[0])
+		);
+
+	static WindowCollection MainMenuWC =>
+		MakeCollection(
+		new Action[] { MainMenuUI.Set },
+		() => (MainMenuUI.Windows, new PMenu.Window[0])
 		);
 
 	public struct WindowCollection {

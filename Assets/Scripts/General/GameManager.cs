@@ -167,4 +167,17 @@ public class GameManager : Singleton<GameManager> {
 
 		WM_UnPause();
 	}
+
+	public void BeginPlaying() {
+		DisableCursor();
+
+		WM_LoadCollection("playing");
+		ContextManager.EnterContext<Contexts.Playing>();
+	}
+
+	public void ReturnToMenu() {
+		WM_LoadCollection("mainmenu");
+
+		ContextManager.EnterContext<Contexts.Menu>();
+	}
 }

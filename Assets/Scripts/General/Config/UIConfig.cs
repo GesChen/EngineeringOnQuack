@@ -23,7 +23,18 @@ public static partial class Config {
 
 			public static readonly float DefaultLayoutSpacing	= 5; // might delete
 
+			// idk where to put these
 			public static readonly Color PauseTint				= new(.2f, .2f, .2f, .3f);
+
+			public static class MainMenu {
+				public static readonly float ItemSpacing		= 10;
+				public static readonly float MainMargins		= 40;
+				public static readonly float TitleFontSize		= 35;
+				public static readonly float ButtonsFontSize	= 27;
+
+				public static readonly float PlaceDistanceFromSides = 100;
+				public static readonly float ScreenWidthPercent = .3f;
+			}
 		}
 
 		public static class Behaviour {
@@ -79,6 +90,7 @@ public static partial class Config {
 		}
 
 		public static class Button {
+			public static float CustomTextDefaultMargins		= 5;
 		}
 
 		public static class InputField {

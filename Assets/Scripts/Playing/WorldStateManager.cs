@@ -8,6 +8,8 @@ public static class WorldStateManager {
 
 	public static SaveLoadHelper<WorldState> SaveLoadHelper = new(Config.SaveLoad.WorldConfig);
 
+	public static string CurrentWorldName = null;
+
 	// designed to b serializable
 	public class WorldState {
 		public string Name;
@@ -55,12 +57,10 @@ public static class WorldStateManager {
 	}
 		
 	public static WorldState GetCurrentWorldState() => new() {
-		Name = PlayingManager.Instance.CurrentWorldName,
+		Name = CurrentWorldName,
 		Creations = OperatingManager.Instance.Creations.Select(c => c.ConvertToSerializable()).ToArray(),
 		Player = GetCurrentPlayerState(),
-		CurrentContextSerialized = JsonConvert.SerializeObject(
-			new WorldState.ContextWrapper(ContextManager.Current),
-			WorldState.ContextSerializationSettings),
+		CurrentContextSerialized = SerializeContext(ContextManager.Current),
 		CurrentWindowCollection = WindowManager.Instance.currentlyLoadedCollection,
 		CursorEnabled = GameManager.Instance.CursorEnabled
 	};
@@ -77,10 +77,19 @@ public static class WorldStateManager {
 				player.CurrentlySittingOn == null
 				? -1
 				: player.CurrentlySittingOn.Part.ID,
+			CurrentlyOperatingCreationID = 
+				OperatingManager.Instance.CurrentlyOperating == null
+				? -1
+				: OperatingManager.Instance.CurrentlyOperating.ID,
 			InFirstPerson = player.Camera.FirstPerson,
 			TPDistance = player.Camera.tpDistance
 		};
 	}
+
+	static string SerializeContext(IContext context) =>
+		JsonConvert.SerializeObject(
+			new WorldState.ContextWrapper(context),
+			WorldState.ContextSerializationSettings);
 
 	// this is all gonna change soon 
 
@@ -146,5 +155,39 @@ public static class WorldStateManager {
 		GameManager.Instance.CursorEnabled = state.CursorEnabled;
 
 		GameManager.Instance.WorldUpdated();
+	}
+
+	static readonly IContext NewWorldContext = new Contexts.Playing() {
+		Parent = new Contexts.Main(){
+			Parent = null,
+			OverUI = false
+		},
+		Sitting = false
+	};
+
+	static readonly WorldState NewWorldWS = new(){
+		Name = null,
+		Creations = new Creation.Serializable[0],
+		Player = new() {
+			Transform = new() {
+				position = new(0, 1, 0),
+				rotation = new(0, 0, 0, 1),
+				localScale = new(1, 1, 1)
+			},
+			Yaw = 0,
+			Pitch = 0,
+			Velocity = new(0, 0, 0),
+			CurrentlySittingOnPartID = -1,
+			CurrentlyOperatingCreationID = -1,
+			InFirstPerson = true,
+			TPDistance = 0
+		},
+		CurrentContextSerialized = SerializeContext(NewWorldContext),
+		CurrentWindowCollection = "playing",
+		CursorEnabled = false
+	};
+
+	public static void NewWorld() {
+		ReconstructWorldState(NewWorldWS);
 	}
 }

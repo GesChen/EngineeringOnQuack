@@ -117,6 +117,7 @@ public static class BottomBar {
 			Config = new() {
 				Resizable = false,
 				Movable = false,
+				Outline = (0, Color.clear),
 				Size = CWindow.Configuration.FixedSize(new(0, size)),
 				Position = new(
 					new(0, 0),
