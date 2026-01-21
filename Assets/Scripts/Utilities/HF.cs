@@ -11,6 +11,9 @@ using UnityEngine.UI;
 
 public static class HF {
 	#region Base Class Extensions
+	public static Dictionary<TKey, TValue> ToDictionaryCopy<TKey, TValue>(this Dictionary<TKey, TValue> dict) =>
+		dict.ToDictionary(kv => kv.Key, kv => kv.Value);
+
 	public static string ToBetterString<T>(this IEnumerable<T> collection) {
 		if (collection == null) return "[]";
 

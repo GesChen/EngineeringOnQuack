@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.XR;
 
 public partial class Token {
 	public partial class T_Operator : Token {

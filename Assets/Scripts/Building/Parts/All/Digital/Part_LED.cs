@@ -37,15 +37,12 @@ public class Part_LED : NonStaticPart {
 
 	public static Type Type_LED = new(
 		"LED",
-		new Memory(
-			new Dictionary<string, T_Data>() {
-				{ "toggle",	new Primitive.Function("toggle", PartInternalFunctions.LED.toggle) },
-				{ "set",	new Primitive.Function("set", PartInternalFunctions.LED.set) }
-			},
-			new Dictionary<string, Type>(),
-			"LED Type Snapshot"
-			)
-		);
+		new Dictionary<string, T_Data>() {
+			{ "toggle",	new Primitive.Function("toggle", PartInternalFunctions.LED.toggle) },
+			{ "set",	new Primitive.Function("set", PartInternalFunctions.LED.set) }
+		}
+	);
+
 	public T_Data m_IDO;
 	public override T_Data GetInternalLanguageDataObject() =>
 		HF.LoadCached(

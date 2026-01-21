@@ -355,17 +355,17 @@ public class WindowRealiser : Singleton<WindowRealiser> {
 		} else if (item.Layout.IsCustom) { // do everything that isnt zero
 			item.Layout.Margins.SetTransformOffsets(rt);
 
+			rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
+			rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
+
 			if (item.Layout.FixedPosition != null) {
 				rt.pivot = item.Layout.FixedPosition.Pivot;
 				rt.anchoredPosition = item.Layout.FixedPosition.Position;
-				rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
-				rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
-			}
 
-			// position take priority
-			if (item.Layout.Position != FourSides.Zero) {
-				rt.anchorMin = new(item.Layout.Position.Left, item.Layout.Position.Up);
-				rt.anchorMax = new(1 - item.Layout.Position.Right, 1 - item.Layout.Position.Down);
+				if (item.Layout.FixedPosition.AnchorsAreCustom) {
+					rt.anchorMin = item.Layout.FixedPosition.AnchorMin;
+					rt.anchorMax = item.Layout.FixedPosition.AnchorMax;
+				}
 			}
 
 			if (item.Layout.SizeDelta != Vector2.zero)

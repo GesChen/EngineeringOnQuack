@@ -106,7 +106,7 @@ public static class Transceiver_UI {
 						horizontalScrolling: false
 					),
 					WindowItem.LayoutConfig.Custom(
-							margins: new(30, 0, 30, 0)
+						margins: new(30, 0, 30, 0)
 					),
 					new() {
 						WindowItem.NewLayout(

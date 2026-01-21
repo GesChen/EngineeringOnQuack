@@ -24,7 +24,7 @@ public static partial class Config {
 			public static readonly float DefaultLayoutSpacing	= 5; // might delete
 
 			// idk where to put these
-			public static readonly Color PauseTint				= new(.2f, .2f, .2f, .3f);
+			public static readonly Color PauseTint				= new(.2f, .2f, .2f, .4f);
 
 			public static class MainMenu {
 				public static readonly float ItemSpacing		= 10;
@@ -45,7 +45,7 @@ public static partial class Config {
 			public static readonly int		DescriptionHoverMs		= 500;
 			public static readonly float	MaxMouseMovementForClick	= 5;
 			public static readonly int		TimeForDescriptionChangeMs	= 100;
-			public static readonly FourSides CanvasInnerWindowsPadding	= new(10, 10, 50, 10);
+			public static readonly FourSides CanvasInnerWindowsPadding	= new(20, 20, 20, 20);
 
 			public static readonly Vector2  WindowUniversalMinSize = new(50, 50);
 		}

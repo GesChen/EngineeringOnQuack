@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public static partial class Config {
-	public static class Building {
+	public static class Editing {
 		public static readonly int ClipboardHistorySize = 10; // might consolidate all clipboard sizes into one
 		public static readonly float CCConnectionDistance = .001f;
 

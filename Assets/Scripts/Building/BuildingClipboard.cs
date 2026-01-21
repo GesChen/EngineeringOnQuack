@@ -74,7 +74,7 @@ public class BuildingClipboard {
 			.Select(g => (Construct.Group)g).ToArray();
 
 		History.Add(Clipboard);
-		if (History.Count >= Config.Building.ClipboardHistorySize)
+		if (History.Count >= Config.Editing.ClipboardHistorySize)
 			History.RemoveAt(0);
 
 		Clipboard = clip;

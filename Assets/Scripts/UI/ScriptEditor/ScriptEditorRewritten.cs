@@ -690,12 +690,13 @@ public class ScriptEditorRewritten : MonoBehaviour {
 		}
 
 		CodeText.text = $"<mspace=.5em>{content}</mspace>";
-		if (forceRecalculate)
-			CodeText.ForceMeshUpdate();
+		//if (forceRecalculate)
+		//	CodeText.ForceMeshUpdate();
 
 		// .5em is 150 tab width
 
 		UpdateLineNumbers();
+
 	}
 
 	void UpdateLineNumbers() {
@@ -765,6 +766,9 @@ public class ScriptEditorRewritten : MonoBehaviour {
 	// weird ass shit fixed now tho and im just gonna stick with this one
 	// next commit its replacing the old method and getting optimized
 	void KeepMainCaretOnScreen() {
+		return; // ITS FUCKING BROKEN AND I DIDNT CHANGE ANYTHING AND I
+		// CANNOT BE FUCKED TO FIX IT FUCK
+
 		if (Carets.Carets.Count == 0) return;
 
 		var head = Carets.Carets[0];
@@ -1682,7 +1686,7 @@ new() {
 			"Code",
 			new PComponents.Text(
 				"",
-				TextAlignmentOptions.Left,
+				TextAlignmentOptions.TopLeft,
 				cfg.Font,
 				fontSize: cfg.FontSize
 			)

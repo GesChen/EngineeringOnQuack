@@ -6,7 +6,6 @@ using UnityEngine;
 public class Interpreter {
 	public int ID;
 	public Evaluator Evaluator;
-	public Memory Memory;
 
 	public int CreationID;
 
@@ -36,23 +35,24 @@ public class Interpreter {
 			case Primitive.Function.FunctionTypeEnum.Constructor:
 				if (Config.Language.DEBUG) HF.WarnColor($"Constructing {function.TypeFor.Name}", Color.yellow);
 
-				T_Data newObject = new(function.TypeFor) {
+				T_Data newObject = new(function.TypeFor);/* {
 					Memory = new(memory.Interpreter, "object memory")
-				};
-				Memory originalUse = T_Data.currentUseMemory;
-				T_Data.currentUseMemory = newObject.Memory;
+				};*/
+				//Memory originalUse = T_Data.currentUseMemory;
+				//T_Data.currentUseMemory = newObject.Memory;
 
 				// DONT INFINITE RECURSE!!!
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.UserDefined;
 
 				T_Data runConstructor = RunFunction(
-					newObject.Memory,
+					memory,
 					function,
 					newObject,
 					args,
-					depth + 1);
+					depth + 1
+				);
 				function.FunctionType = Primitive.Function.FunctionTypeEnum.Constructor;
-				T_Data.currentUseMemory = originalUse;
+				//T_Data.currentUseMemory = originalUse;
 
 				if (runConstructor is Error)
 					return runConstructor;
@@ -66,7 +66,8 @@ public class Interpreter {
 			return Errors.InvalidArgumentCount(function.Name, function.Parameters.Length, args.Count);
 
 		// set args in a copy of memory
-		if (memory == null) return Errors.MissingOrInvalidConnection("Memory", "Interpreter");
+		if (memory == null)
+			return Errors.BadCode();
 
 		T_Data trySet;
 		Memory memoryCopy = memory.Copy();
@@ -77,20 +78,14 @@ public class Interpreter {
 		}
 
 		// set this
-		trySet = memoryCopy.Set("this", thisReference);
-		if (trySet is Error) return trySet;
-
-		// handle modified global variables
-		string[] globalVars = memory.Data.Keys.ToArray();
-		var snapshotVars =
-			thisReference != null
-			? new Dictionary<string, T_Data>(
-				thisReference.Type.Snapshot.Data)
-			: null;
-
-		// give reference to this snapshot data 
-		// later only save modified values into this memory
 		if (thisReference != null) {
+			trySet = memoryCopy.Set("this", thisReference);
+			if (trySet is Error) return trySet;
+
+			// undecided if i want to keep this
+			// give reference to this snapshot data 
+			// later only save modified values into this memory
+
 			foreach (var dataKVP in thisReference.Type.Snapshot.Data) {
 				// some snapshot vars might be already turned into instance vars
 				if (thisReference.Memory.Get(dataKVP.Key) is not Error) continue;
@@ -103,26 +98,29 @@ public class Interpreter {
 		}
 
 		// run the script with the memory copy
-		T_Data output = RunSection(memoryCopy, function.Script, depth + 1, false); // increase depth on function call
+		T_Data output;
+		if (function.FunctionType == Primitive.Function.FunctionTypeEnum.UserDefined)
+			output = RunSection(memoryCopy, function.Script, depth + 1, false); // increase depth on function call
+		else // inline
+			output = Evaluator.Evaluate(function.InlineDefinition, memoryCopy, depth: depth + 1);
 
 		// save modified global values
 		foreach (var dataKVP in memoryCopy.Data) {
 			// only modified not new
 			// or any of the snapshot vars
-			if (!globalVars.Contains(dataKVP.Key)) continue;
+			if (!memory.Data.Keys.Contains(dataKVP.Key)) continue;
 
 			memory.Set(dataKVP.Key, dataKVP.Value);
 		}
-		
-		// new and modified members save as instance variable 
-		// only for members
+
+		// modified snapshot values save as instance variable 
 		if (thisReference != null) {
-			var newAndModifiedMembers =
-				memoryCopy.Data.Where(dkvp =>
-					!snapshotVars.Keys.Contains(dkvp.Key)
-					|| snapshotVars[dkvp.Key] != dkvp.Value);
+			var modifiedMembers =
+				memoryCopy.Data.Where(dkvp => 
+					thisReference.Type.Snapshot.Data.TryGetValue(dkvp.Key, out var oldValue)
+					&& oldValue != dkvp.Value);
 			
-			foreach (var newMember in newAndModifiedMembers) {
+			foreach (var newMember in modifiedMembers) {
 				thisReference.SetThisMember(newMember.Key, newMember.Value);
 			}
 		}
@@ -330,17 +328,16 @@ public class Interpreter {
 					int functionDefStartIndex = (int)(formattedOutput[2] as Primitive.Number).Value;
 					Token[] functionDef = line.Tokens.Skip(functionDefStartIndex).ToArray();
 
-					memory.Set(name, new Primitive.Function(name, newparams, functionDef));
-				}
-				else if (CheckFlag(nFlags, Flags.MakeClass)) {
+					memory.Set(name, new Primitive.Function(name, newparams, functionDef, line));
+				} else 
+				if (CheckFlag(nFlags, Flags.MakeClass)) {
 					string name = (output as Primitive.String).Value;
 
 					state.ExpectingSection = true;
 					state.MakeClass = true;
 					state.NewName = name;
 				}
-			}
-			else { // run section contents
+			} else { // run section contents
 				state.ExpectingSection = false;
 
 				if (state.ForLoopNext) {// run as for loop

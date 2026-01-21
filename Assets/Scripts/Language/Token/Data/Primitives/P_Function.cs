@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -19,7 +20,8 @@ public abstract partial class Primitive : T_Data {
 		#region user defined
 		public string[] Parameters;
 		public Section Script ; // normal
-		public Token[] InlineDefinition;
+		
+		public Line InlineDefinition;
 
 		// normal function
 		public Function(string name, string[] parameters, Section script) : base(InternalType) {
@@ -30,11 +32,11 @@ public abstract partial class Primitive : T_Data {
 		}
 
 		// inline function
-		public Function(string name, string[] parameters, Token[] definition) : base(InternalType) {
+		public Function(string name, string[] parameters, Token[] definition, Line originLine) : base(InternalType) {
 			Name = name;
 			FunctionType = FunctionTypeEnum.UserDefinedInline;
 			Parameters = parameters;
-			InlineDefinition = definition;
+			InlineDefinition = originLine.CopyWithNewTokens(definition.ToList());
 		}
 		#endregion
 

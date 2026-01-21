@@ -116,7 +116,7 @@ public class RightClickMenus : MonoBehaviour {
 		new W.Button(
 			() => Material(source, index), 
 			"material",
-			iconSprite: Config.Building.MaterialIcon);
+			iconSprite: Config.Editing.MaterialIcon);
 
 	static readonly float mainwidth = 0; // controlled by the rightclick customization
 

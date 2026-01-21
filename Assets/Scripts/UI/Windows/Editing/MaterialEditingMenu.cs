@@ -36,7 +36,7 @@ public class MaterialEditingMenu {
 				WindowItem.NewLayout(
 					PComponents.Layout.Horizontal.Dynamic(),
 					WindowItem.LayoutConfig.FillLayout,
-					Config.Building.Colors.Select(c => 
+					Config.Editing.Colors.Select(c => 
 
 						// make the color button for each one
 						WindowItem.NewButtonCustomImageComponent(
@@ -46,7 +46,7 @@ public class MaterialEditingMenu {
 								Config.UI.ColorBlock.WhiteBlock),
 							new (c), // might make the color part an inner element
 							WindowItem.LayoutConfig.LayoutElement(
-								Config.Building.ColorPickerItemSize,
+								Config.Editing.ColorPickerItemSize,
 								new(0)
 								)
 							)

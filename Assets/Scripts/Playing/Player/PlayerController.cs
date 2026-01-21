@@ -34,11 +34,13 @@ public class PlayerController : MonoBehaviour{
 	void Update() {
 		if (ContextManager.CurrentlyInContext<Contexts.Playing>(out var playing)
 			&& !ContextManager.CurrentlyInContext<Contexts.Editing>()
-			&& !playing.Sitting)
+			&& !playing.Sitting
+			&& !GameManager.Instance.Paused)
 			HandleMovement();
 
 		if (ContextManager.CurrentlyInContext<Contexts.Playing>()
-			&& !ContextManager.CurrentlyInContext<Contexts.Editing>())
+			&& !ContextManager.CurrentlyInContext<Contexts.Editing>()
+			&& !GameManager.Instance.Paused)
 			HandleCamera();
 	}
 

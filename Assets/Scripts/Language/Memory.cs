@@ -75,8 +75,8 @@ public class Memory {
 	
 	// potential to be really fucking slow by the way
 	public Memory(Memory original) {
-		Data = new Dictionary<string, T_Data>(original.Data);
-		Types = new Dictionary<string, Type>(original.Types);
+		Data = original.Data.ToDictionaryCopy();
+		Types = original.Types.ToDictionaryCopy();
 		Interpreter = original.Interpreter;
 		Nick = $"Copy of {original.Nick}";
 	}
@@ -151,7 +151,7 @@ public class Memory {
 	public T_Data Set(T_Reference reference, T_Data data) {
 		if (Config.Language.DEBUG) HF.WarnColor($"{Nick}: ref setting {reference.Name} {data}\n{MemoryDump()}", Color.yellow);
 
-		if (reference.Name == "")
+		if (reference.IsLiteral)
 			return Errors.CannotSetLiteral();
 		if (StaticTypes.ContainsKey(reference.Name))
 			return Errors.CannotOverwriteBuiltin(reference.Name);
@@ -176,7 +176,10 @@ public class Memory {
 		evaluator = null;
 		Memory memory = thisRef.Memory;
 		Interpreter interpreter = memory.Interpreter;
-		if (interpreter == null) return Errors.MissingOrInvalidConnection("Interpreter", "Memory"); // TODO: FIGURE THIS OUT???
+
+		if (interpreter == null)
+			return Errors.BadCode();
+
 		evaluator = interpreter.Evaluator;
 		return T_Data.Success;
 	}

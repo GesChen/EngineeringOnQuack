@@ -151,6 +151,7 @@ public class CWindow {
 public class UIPosition {
 	public Vector2 AnchorMin;
 	public Vector2 AnchorMax;
+	public bool AnchorsAreCustom;
 	public Vector2 Pivot;
 	public Vector2 Position;
 

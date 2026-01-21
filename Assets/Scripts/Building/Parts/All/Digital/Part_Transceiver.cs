@@ -91,14 +91,10 @@ public class Part_Transceiver : NonStaticPart {
 	#region language
 	public static Type Type_Transceiver = new(
 		"Transceiver",
-		new Memory(
-			new Dictionary<string, T_Data>(){
+		new Dictionary<string, T_Data>(){
 				{ "print", new Primitive.Function("print", PartInternalFunctions.Transceiver.print) }
-			},
-			new Dictionary<string, Type>(),
-			"Transceiver Type Snapshot"
-			)
-		);
+			}
+	);
 	private T_Data m_IDO;
 	public override T_Data GetInternalLanguageDataObject() => 
 		HF.LoadCached(

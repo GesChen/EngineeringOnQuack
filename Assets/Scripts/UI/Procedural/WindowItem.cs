@@ -73,7 +73,7 @@ public class WindowItem {
 			Padding = padding ?? FourSides.Zero,
 
 			SizeDelta = size,
-			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
+			FixedPosition = UIPosition.LayoutItem // should be overriden by the layout
 		};
 
 		public static LayoutConfig LayoutElementDynamic(FourSides? padding = null) => new() {
@@ -81,7 +81,7 @@ public class WindowItem {
 			Padding = padding ?? FourSides.Zero,
 
 			SizeDelta = new(0, 0),
-			FixedPosition = UIPosition.AnchoredAt(UIPosition.TopLeft) // should be overriden by the layout
+			FixedPosition = UIPosition.LayoutItem // should be overriden by the layout
 		};
 
 		public static LayoutConfig LayoutToWidth(

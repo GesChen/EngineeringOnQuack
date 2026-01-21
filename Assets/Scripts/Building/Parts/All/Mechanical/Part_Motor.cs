@@ -71,16 +71,12 @@ public class Part_Motor : NonStaticPart {
 
 	public static Type Type_Motor = new(
 		"Motor",
-		new Memory(
-			new Dictionary<string, T_Data>() {
-				{ "strength",			new Primitive.Number(0) },
-				{ "currentvelocity",	new Primitive.Number(0) },
-				{ "targetvelocity",		new Primitive.Number(0) },
-			},
-			new Dictionary<string, Type>(),
-			"Motor Type Snapshot"
-			)
-		);
+		new Dictionary<string, T_Data>() {
+			{ "strength",			new Primitive.Number(0) },
+			{ "currentvelocity",	new Primitive.Number(0) },
+			{ "targetvelocity",		new Primitive.Number(0) },
+		}
+	);
 
 	readonly T_Data m_IDO = new(Type_Motor);
 

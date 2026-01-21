@@ -35,14 +35,10 @@ public class Part_CPU : NonStaticPart {
 	#region Language
 	public static Type Type_CPU = new(
 		"CPU",
-		new Memory(
-			new Dictionary<string, T_Data>() {
-				{ "port", new Primitive.Function("port", PartInternalFunctions.CPU.port) }
-			},
-			new Dictionary<string, Type>(),
-			"CPU Type Snapshot"
-			)
-		);
+		new Dictionary<string, T_Data>() {
+			{ "port", new Primitive.Function("port", PartInternalFunctions.CPU.port) }
+		}
+	);
 
 	readonly T_Data InternalDataObject = new(Type_CPU);
 
@@ -308,7 +304,6 @@ public class Part_CPU : NonStaticPart {
 		Memory = new(Interpreter, "main");
 
 		Interpreter.Evaluator = Evaluator;
-		Interpreter.Memory = Memory;
 		Evaluator.Interpreter = Interpreter;
 
 		if (Script == null) yield break;

@@ -171,6 +171,8 @@ public class GameManager : Singleton<GameManager> {
 	public void BeginPlaying() {
 		DisableCursor();
 
+		Paused = false;
+
 		WM_LoadCollection("playing");
 		ContextManager.EnterContext<Contexts.Playing>();
 	}

@@ -8,6 +8,7 @@ using static Token;
 public class Evaluator {
 	public Interpreter Interpreter;
 
+	// guaranteed to return a primitive boool or an error no extra bool check needed
 	public T_Data Compare(T_Data a, T_Data b, T_Operator op, Memory memory) {
 		// not gona add comparison operator check bc whatever's calling this should already have done it
 
@@ -219,7 +220,7 @@ public class Evaluator {
 				// D -> R
 				case Actions.Data:
 					T_Data data = highestToken as T_Data;
-					remaining[highestIndex] = T_Reference.ExistingGlobalReference("", data);
+					remaining[highestIndex] = T_Reference.ExistingGlobalReference(data);
 					break;
 
 				// N -> R 
@@ -231,8 +232,18 @@ public class Evaluator {
 
 					// replace name token with reference token
 					remaining[highestIndex] = (get is not Error) ?
-						T_Reference.ExistingGlobalReference(name, get) :   // make existing if data exists
-						T_Reference.NewGlobalReference(name);             // or make new
+						new T_Reference() {		// make existing if data exists
+							Exists = true,
+							Type = T_Reference.ReferenceType.Global,
+							Name = name,
+							ThisReference = get
+						}
+						: new T_Reference() {	// or make new
+							Exists = false,
+							Type = T_Reference.ReferenceType.Global,
+							Name = name,
+						};
+
 					break;
 
 				// decimal / member handling
@@ -302,18 +313,29 @@ public class Evaluator {
 		// check for function, inline function, or class
 
 		(int colonIndex, _) = FindAndCountOperator(tokens, T_Operator.Ops.Colon);
-		if (tokens[0] is T_Name N && colonIndex != -1) { // some kind of declaration
+		(int eqIndex, int eqCount) = FindAndCountOperator(tokens, T_Operator.Ops.Equals);
+
+		if (tokens[0] is T_Name N && (colonIndex != -1 || eqIndex != -1)) { // some kind of declaration
 
 			// determine if this is some kind of function
 			(int oPIndex, int oPCount) = FindAndCountOperator(tokens, T_Operator.Ops.OpenParentheses);
 			(int cPIndex, int cPCount) = FindAndCountOperator(tokens, T_Operator.Ops.CloseParentheses);
 
-			bool maybeFunction = (oPIndex != -1) || (cPIndex != -1);
+			bool maybeFunction = (oPIndex != -1) || (cPIndex != -1) || (eqIndex != -1);
 
 			if (maybeFunction) {
-				if (oPIndex == -1 || cPIndex == -1 ||
-					oPCount > 1 || cPCount > 1)
+
+				bool normalFail = oPIndex == -1 || cPIndex == -1 || oPCount > 1 || cPCount > 1;
+				bool eqFail = eqIndex != -1 && (oPIndex > eqIndex || cPIndex > eqIndex);
+
+				if (normalFail || eqFail) {
+					if (eqCount >= 1)
+						return T_Data.Fail;
+
 					return Errors.BadSyntaxFor("function declaration", "mismatched parentheses");
+				}
+				if (eqCount > 1)
+					return Errors.BadSyntaxFor("inline function declaration", "more than one equals");
 
 				// find all param names and store as string list
 				List<string> paramNames = new();
@@ -340,21 +362,24 @@ public class Evaluator {
 					paramNames.Add(thisName.Value);
 				}
 
-				(int eqIndex, int eqCount) = FindAndCountOperator(tokens, T_Operator.Ops.Equals);
-				
+				// turn arg names into list of strings
+				var paramsAsList =
+					new Primitive.List(paramNames
+					.Select(n => new Primitive.String(n) as T_Data)
+					.ToList());
+
 				if (eqIndex != -1) { // inline function 
-					return new Primitive.List(new List<T_Data>() {	   // return list with function info
-						new Primitive.String(N.Value),				  // name
-						new Primitive.Number(cPIndex)				 // c paren index (rest is definition)
+					return new Primitive.List(new List<T_Data>() {	    // return list with function info
+						new Primitive.String(N.Value),				   // name
+						paramsAsList,
+						new Primitive.Number(eqIndex + 1)			 // = index (rest is definition)
 					}).SetFlags(Flags.MakeInline);					// tell interpreter to make inline func
 				}
 
 				// normal function
-				return new Primitive.List(new List<T_Data>() {		  // return list with function info
-					new Primitive.String(N.Value),					 // name
-					new Primitive.List(paramNames					// turn arg names into list of strings
-						.Select(n => new Primitive.String(n) as T_Data)
-						.ToList())								  //
+				return new Primitive.List(new List<T_Data>() {	    // return list with function info
+					new Primitive.String(N.Value),				   // name
+					paramsAsList
 				}).SetFlags(Flags.MakeFunction);				 // tell interpreter to make function
 
 			}
@@ -450,6 +475,7 @@ public class Evaluator {
 			// assignment
 			else if (isOp && T_Operator.AssignmentOperatorsHashSet.Contains(op.Value)) {
 				// 4 (1 below highest of normal) + inverse 0-1 of position in the thing
+				// force backwards evaluation
 				precedence = 4 + Mathf.InverseLerp(0, remaining.Count + 1, i);
 				action = Actions.Assignment;
 			}
@@ -489,6 +515,8 @@ public class Evaluator {
 						if (depth == 0) break;
 						i++;
 					}
+
+					depth--; // exiting out
 
 					string expression = s[(startIndex + 1)..i];
 					Tokenizer tokenizer = new();
@@ -552,16 +580,27 @@ public class Evaluator {
 				return Errors.UnknownName(leftRef);
 				
 			if (right is T_Name rightname) {
-				T_Data tryget = leftRef.GetData();
+				T_Data tryget = leftRef.ThisReference;
 				if (tryget is Error) return tryget;
 
 				tryget = tryget.GetMember(rightname.Value);
 
 				T_Reference dataRef;
 				if (tryget is Error)
-					dataRef = T_Reference.NewMemberReference(leftRef, rightname.Value);
+					dataRef = new T_Reference() {
+						Exists = false,
+						Type = T_Reference.ReferenceType.Instance,
+						Name = rightname.Value,
+						ParentReference = leftRef.ThisReference
+					};
 				else
-					dataRef = T_Reference.ExistingMemberReference(leftRef, tryget, rightname.Value);
+					dataRef = new T_Reference() {
+						Exists = true,
+						Type = T_Reference.ReferenceType.Instance,
+						Name = rightname.Value,
+						ThisReference = tryget,
+						ParentReference = leftRef.ThisReference
+					};
 
 				HF.ReplaceRange( // replace l . r with R
 					remaining,
@@ -575,7 +614,7 @@ public class Evaluator {
 				return Errors.InvalidUseOfOperator(".");
 		}
 		else { // left is null or anything else
-			if (right is Primitive.Number) // handle as number if right is number
+			if (rightRef != null && rightRef.ThisReference is Primitive.Number) // handle as number if right is number
 				handleAsNumber();
 			else
 				return Errors.InvalidUseOfOperator(".");
@@ -675,13 +714,19 @@ public class Evaluator {
 						line.CopyWithNewTokens(regionTokens),
 						memory,
 						baseList
-						);
+					);
+
 					if (evalList is Error) return evalList;
+					var itemList = (evalList as Primitive.List).Value;
+
+					if (itemList.Count == 0)
+						return Errors.BadSyntaxFor("indexing", "brackets must contain either indices or keys");
 
 					if (leftAsList != null || leftAsString != null) { // indexing
-																	  // check indices
+						
+						// check indices
 						List<int> indices = new();
-						foreach (T_Data d in (evalList as Primitive.List).Value) {
+						foreach (T_Data d in itemList) {
 							if (d is not Primitive.Number num)
 								return Errors.CannotIndexWithType(d.Type.Name);
 
@@ -690,11 +735,10 @@ public class Evaluator {
 							if (num.Value != val)
 								return Errors.CannotIndexWithType("non whole number");
 
-							if (val >= baseList.Count ||
-								val < -baseList.Count)
+							if (val >= baseList.Count || val < 0)
 								return Errors.IndexOutOfRange(val);
 
-							indices.Add((int)num.Value);
+							indices.Add(val);
 						}
 
 						if (leftAsList != null) { // left is list
@@ -703,11 +747,15 @@ public class Evaluator {
 								indexed.Add(leftAsList.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
 
 							HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-								new() { T_Reference.ExistingGlobalReference(new Primitive.List(
-									indexed
-							)) });
-						}
-						else { // left is string
+								new() { new T_Reference() {
+									Exists = true,
+									Type = T_Reference.ReferenceType.ListItems,
+									ThisReference = new Primitive.List(indexed),
+									ParentReference = leftAsList,
+									KeyIndices = indices.Select(i => new Primitive.Number(i)).ToArray()
+								}
+							});
+						} else { // left is string
 							StringBuilder sb = new();
 							foreach (int val in indices)
 								sb.Append(leftAsString.Value[val >= 0 ? val : leftAsList.Value.Count - val]);
@@ -717,28 +765,27 @@ public class Evaluator {
 									sb.ToString()
 							)) });
 						}
-					}
-					else { // dict key get
-						List<T_Data> values = new();
-						foreach (T_Data key in (evalList as Primitive.List).Value) {
-							T_Data trygetvalue = Interpreter.RunFunction(
-								memory,
-								new Primitive.Function("get", Primitive.Dict.get),
-								leftAsDict,
-								new() { key });
-							if (trygetvalue is Error) return trygetvalue;
+					} else { // dict key get
 
+						List<T_Data> values = new();
+						foreach (T_Data key in itemList) {
+							// dont error check because we want to be able to represent
+							// missing key values
+							// reference handles it properly
+
+							T_Data trygetvalue = Primitive.Dict.get(leftAsDict, new(){ key });
 							values.Add(trygetvalue);
 						}
 
-						T_Data res =
-							values.Count > 1 ? new Primitive.List(values) :
-							values[0];
-
 						HF.ReplaceRange(remaining, highestIndex - 1, pairIndex,
-							new() { T_Reference.ExistingGlobalReference(
-								res
-						) });
+							new() { new T_Reference() {
+								Exists = true,
+								Type = T_Reference.ReferenceType.DictItems,
+								ThisReference = new Primitive.List(values),
+								ParentReference = leftAsDict,
+								KeyIndices = itemList.ToArray()
+							}
+						});
 					}
 				}
 				else { // normal list
@@ -782,7 +829,8 @@ public class Evaluator {
 
 		T_Data evalArgs = EvaluateList(
 			line.CopyWithNewTokens(regionTokens),
-			memory);
+			memory
+		);
 		if (evalArgs is Error) return evalArgs;
 
 		List<T_Data> args = (evalArgs as Primitive.List).Value;
@@ -819,8 +867,8 @@ public class Evaluator {
 			// use a copy of the number i guess
 			HF.ReplaceRange(remaining, highestIndex, highestIndex + 1,
 				new() { T_Reference.ExistingGlobalReference(new Primitive.Number(
-					value * (thisOp.Value == T_Operator.Ops.Minus ? -1 : 1
-				))) });
+					value * (thisOp.Value == T_Operator.Ops.Minus ? -1 : 1)
+					)) });
 		}
 		else { // !
 			T_Data castToBool = rightRef.ThisReference.Cast(Primitive.Bool.InternalType);
@@ -876,6 +924,7 @@ public class Evaluator {
 		int highestIndex = AC.highestIndex;
 		T_Reference leftRef = AC.leftRef;
 		T_Reference rightRef = AC.rightRef;
+		int depth = AC.curRecursionDepth;
 		#endregion
 
 		// assume precedence is sorted out already
@@ -885,7 +934,7 @@ public class Evaluator {
 		T_Data check = OperatorCheck(AC, op, out T_Data leftData, out T_Data rightData);
 		if (check is Error) return check;
 
-		T_Data perform = PerformOperation(op, leftData, rightData, leftRef, rightRef, memory);
+		T_Data perform = PerformOperation(op, leftData, rightData, leftRef, rightRef, memory, depth);
 		if (perform is Error) return perform;
 
 		HF.ReplaceRange(remaining, highestIndex - 1, highestIndex + 1, 
@@ -897,16 +946,12 @@ public class Evaluator {
 	}
 
 	private T_Data PerformOperation(
-		in T_Operator op,
-		in T_Data leftData, in T_Data rightData,
-		in T_Reference leftRef, in T_Reference rightRef,
-		in Memory memory) {
-		
-		// cast left to right
-		T_Data left = leftData.Cast(rightRef.ThisReference.Type);
-		if (left is Error) return left;
-		T_Data right = rightData;
+		T_Operator op,
+		T_Data leftData, T_Data rightData,
+		T_Reference leftRef, T_Reference rightRef,
+		Memory memory, int depth) {
 
+		// gotta put this into like ops or something bruh
 		Dictionary<T_Operator.Ops, string> opNames = new() {
 			{ T_Operator.Ops.Plus,		"ad" },
 			{ T_Operator.Ops.Minus,		"su" },
@@ -915,6 +960,14 @@ public class Evaluator {
 			{ T_Operator.Ops.Mod,		"mo" },
 			{ T_Operator.Ops.Power,		"po" } 
 		};
+
+#if false
+		// cast left to right
+		T_Data left = leftData.Cast(rightRef.ThisReference.Type);
+		if (left is Error) return left;
+		T_Data right = rightData;
+
+		
 
 		string operationName = opNames[op.Value];
 		T_Data tryGetOperator = rightData.GetMember(operationName);
@@ -925,12 +978,29 @@ public class Evaluator {
 				rightRef.ThisReference.Type.Name);
 		if (tryGetOperator is not Primitive.Function F)
 			return Errors.MemberIsNotMethod(operationName, leftData.Type.Name);
+#else
+		// cast right to left
+		T_Data right = rightData.Cast(leftData.Type);
+		if (right is Error) return right;
+		T_Data left = leftData;
 
+		string operationName = opNames[op.Value];
+		T_Data tryGetOperator = leftData.GetMember(operationName);
+		if (tryGetOperator is Error)
+			return Errors.UnsupportedOperation(
+				op.StringValue,
+				leftRef.ThisReference.Type.Name,
+				rightRef.ThisReference.Type.Name);
+		if (tryGetOperator is not Primitive.Function F)
+			return Errors.MemberIsNotMethod(operationName, leftData.Type.Name);
+
+#endif
 		T_Data runFunction = Interpreter.RunFunction(
 			memory, 
 			F, 
 			left, 
-			new() { right }
+			new() { right },
+			depth
 		);
 		return runFunction;
 	}
@@ -1009,8 +1079,9 @@ public class Evaluator {
 		int highestIndex			= AC.highestIndex;
 		T_Reference leftRef			= AC.leftRef;
 		bool leftIsRefAndExists		= AC.leftIsRefAndExists;
-		T_Reference rightRef			= AC.rightRef;
+		T_Reference rightRef		= AC.rightRef;
 		bool rightIsRefAndExists	= AC.rightIsRefAndExists;
+		int depth					= AC.curRecursionDepth;
 		#endregion
 
 		// assume precedence is sorted out already
@@ -1048,7 +1119,7 @@ public class Evaluator {
 			T_Operator inlineOp = new(opToPerform); // sets it up so i dont have to
 
 			T_Data performOp = PerformOperation(
-				inlineOp, leftRef.ThisReference, rightData, leftRef, rightRef, memory);
+				inlineOp, leftRef.ThisReference, rightData, leftRef, rightRef, memory, depth);
 			if (performOp is Error) return performOp;
 
 			newValue = performOp;
@@ -1146,11 +1217,14 @@ public class Evaluator {
 		// syntax check
 		if (tokens.Count != 3 ||
 			!(tokens[1] is T_Reference R &&
-			(tokens[2] is T_Operator o && o.Value == T_Operator.Ops.Colon)))
+			tokens[2] is T_Operator o && o.Value == T_Operator.Ops.Colon))
 			return Errors.BadSyntaxFor("for loop");
 
 		if (!R.Exists)
 			return Errors.UnknownName(R);
+
+		if (R.Name == "")
+			return Errors.CannotUseLiteralAsIterator();
 
 		T_Data dataAsList = R.ThisReference.Cast(Primitive.List.InternalType);
 		if (dataAsList is Error) return dataAsList;
@@ -1191,7 +1265,7 @@ public class Evaluator {
 		if (tokens.Count != 1)
 			return Errors.BadSyntaxFor("pass statement");
 
-		return T_Data.Success;
+		return T_Data.Success.CopyWithFlags(Flags.Pass);
 	}
 	private T_Data HandleReturn		(ref List<Token> tokens) {
 		// syntax check
@@ -1240,9 +1314,11 @@ public class Evaluator {
 		T_Data castToString = R.ThisReference.Cast(Primitive.String.InternalType);
 		if (castToString is Error) return castToString;
 
-		return castToString.CopyWithFlags(Flags.Finally);
+		return castToString.CopyWithFlags(Flags.Raise);
 	}
 
+	// baselist used for ..s so that it can know the beginning or end for 
+	// ex. x[3..] or x[..2] ts
 	private T_Data EvaluateList(Line line, Memory memory, List<T_Data> baseList = null) {
 		// expects unsurrounded list, just tokens and commas
 		List<Token> tokens = line.Tokens;
@@ -1258,7 +1334,6 @@ public class Evaluator {
 			return Errors.InvalidUseOfOperator("..");
 		else if (eCount > 0) // this is range
 			rangeList = true;
-
 
 		if (rangeList) {
 			Token[] leftOfEllipsis = tokens.ToArray()[..ellipsisIndex]; // exclusive
@@ -1414,14 +1489,7 @@ public class Evaluator {
 		List<Token[][]> kvpGroups = new();
 		foreach (List<Token> group in tokenChunks) {
 			// split by the : operator
-			int colonCount = 0;
-			int colonIndex = -1;
-			for (int ci = 0; ci < group.Count; ci++) {
-				if (group[ci] is T_Operator co && co.Value == T_Operator.Ops.Colon) {
-					colonCount++;
-					colonIndex = ci;
-				}
-			}
+			(int colonIndex, int colonCount) = FindAndCountOperator(tokens, T_Operator.Ops.Colon);
 			if (colonCount == 0) return Errors.BadSyntaxFor("dictionary", "missing colon");
 			if (colonCount > 1)  return Errors.BadSyntaxFor("dictionary", "too many colons");
 
@@ -1434,7 +1502,8 @@ public class Evaluator {
 			kvpGroups.Add(new[] { key, value });
 		}
 
-		Dictionary<T_Data, T_Data> newDict = new();
+		var newDict = new Primitive.Dict();
+
 		foreach (Token[][] kvpTokenGroup in kvpGroups) {
 			T_Data evalKey = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[0].ToList()), memory);
 			if (evalKey is Error) return evalKey;
@@ -1442,12 +1511,13 @@ public class Evaluator {
 			T_Data evalValue = Evaluate(line.CopyWithNewTokens(kvpTokenGroup[1].ToList()), memory);
 			if (evalValue is Error) return evalValue;
 
-			newDict[evalKey] = evalValue;
+			Primitive.Dict.set(newDict, new() { evalKey, evalValue });
 		}
 
-		return new Primitive.Dict(newDict);
+		return newDict;
 	}
 
+	// operates at depth 0, ignores the operator if its in a region	
 	private (int, int) FindAndCountOperator(List<Token> tokens, T_Operator.Ops lookFor) {
 		int count = 0;
 		int index = -1;

@@ -39,6 +39,8 @@ public static class Errors {
 		new($"Cannot overwrite builtin type {name}");
 	public static Error CannotSetLiteral() => 
 		new($"Cannot set a literal to another value");
+	public static Error CannotUseLiteralAsIterator() => 
+		new($"Cannot use a literal as an iterator");
 	public static Error CannotSetBuiltin(string thing, string name) => 
 		new($"Cannot set a builtin {thing} ({name}) to a value");
 	public static Error CannotSetType(string name) => 

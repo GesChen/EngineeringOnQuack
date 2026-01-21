@@ -19,10 +19,12 @@ public abstract partial class Primitive : T_Data {
 			{ "bool"		, new Function("bool"		, @bool)		},
 			{ "list"		, new Function("list"		, list)			},
 
+			{ "set"			, new Function("set"		, set)			},
 			{ "get"			, new Function("get"		, get)			},
 			{ "clear"		, new Function("clear"		, clear)		},
 			{ "values"		, new Function("values"		, values)		},
 			{ "keys"		, new Function("keys"		, keys)			},
+			{ "haskey"		, new Function("haskey"		, haskey)		},
 			{ "removekey"	, new Function("removekey"	, removekey)	},
 		});
 
@@ -32,7 +34,7 @@ public abstract partial class Primitive : T_Data {
 			Value = value;
 		}
 		public Dict(Dict original) : base(original) {
-			Value = original.Value;
+			Value = original.Value.ToDictionaryCopy();
 		}
 		public Dict() : base(InternalType) { // empty constructor
 			Value = new();
@@ -139,8 +141,32 @@ public abstract partial class Primitive : T_Data {
 			return new List(newList);
 		}
 
+		public static T_Data set(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 2) return Errors.InvalidArgumentCount("set", 2, args.Count);
+			var thisDict = (thisRef as Dict).Value;
+
+			// override old key
+			T_Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
+			if (get is Error) return get;
+			T_Operator equals = new("==");
+
+			foreach (KeyValuePair<T_Data, T_Data> kvp in thisDict) {
+				T_Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
+				if (compare is Error) return compare;
+
+				if ((compare as Bool).Value) {
+					thisDict.Remove(kvp.Key);
+					break;
+				}
+			}
+
+			// set new data
+			thisDict[args[0]] = args[1];
+			return thisRef;
+		}
+
 		public static T_Data get(T_Data thisRef, List<T_Data> args) {
-			if (args.Count != 1) return Errors.InvalidArgumentCount("getkey", 1, args.Count);
+			if (args.Count != 1) return Errors.InvalidArgumentCount("get", 1, args.Count);
 
 			T_Data key = args[0];
 			T_Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
@@ -159,6 +185,7 @@ public abstract partial class Primitive : T_Data {
 			if (keyAsString is Error) return Errors.UnknownKey();
 			return Errors.UnknownKey((keyAsString as String).Value);
 		}
+
 		public static T_Data clear(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("clear", 0, args.Count);
 			(thisRef as Dict).Value.Clear();
@@ -172,6 +199,24 @@ public abstract partial class Primitive : T_Data {
 			if (args.Count != 0) return Errors.InvalidArgumentCount("keys", 0, args.Count);
 			return new List((thisRef as Dict).Value.Keys.ToList());
 		}
+		public static T_Data haskey(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 1) return Errors.InvalidArgumentCount("haskey", 1, args.Count);
+
+			T_Data get = Memory.GetEvaluator(thisRef, out Evaluator evaluator);
+			if (get is Error) return get;
+			T_Operator equals = new("==");
+
+			foreach (KeyValuePair<T_Data, T_Data> kvp in (thisRef as Dict).Value) {
+				T_Data compare = evaluator.Compare(kvp.Key, args[0], equals, thisRef.Memory);
+				if (compare is Error) return compare;
+
+				if (!(compare as Bool).Value)
+					return new Bool(true);
+			}
+
+			return new Bool(false);
+		}
+		
 		public static T_Data removekey(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("removekey", 1, args.Count);
 
@@ -191,6 +236,7 @@ public abstract partial class Primitive : T_Data {
 			(thisRef as Dict).Value = copy;
 			return thisRef;
 		}
+		
 		#endregion
 	}
 }

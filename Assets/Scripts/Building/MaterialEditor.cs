@@ -135,12 +135,12 @@ public class MaterialEditor : MonoBehaviour {
 			ColorPreview.sprite = null;
 		} else {
 			ColorPreview.color = Config.UI.Visual.TextColor;
-			ColorPreview.sprite = Config.Building.ColorIcon;
+			ColorPreview.sprite = Config.Editing.ColorIcon;
 		}
 
 		MaterialPreview.sprite =
 			currentComposition != null
 			? currentComposition.Icon 
-			: Config.Building.MaterialIcon;
+			: Config.Editing.MaterialIcon;
 	}
 }

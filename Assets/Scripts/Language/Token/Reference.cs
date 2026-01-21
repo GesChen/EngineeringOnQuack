@@ -4,108 +4,136 @@ using UnityEngine;
 
 public partial class Token {
 	public partial class T_Reference : Token {
-		public bool Exists;
-		public bool IsInstanceVariable;
-		public bool IsListItem;
-		public string Name;
-		public T_Data ThisReference;
-		public T_Data ParentReference;
-		public int ListIndex;
+		public bool Exists = true;
+		public string Name = "";
 
-		// most normal case, x.y where x is parent and y is data
-		public T_Reference(
-			bool exists, 
-			bool isInstanceVariable, 
-			bool isListItem, 
-			string name,
-			T_Data thisReference, 
-			T_Data parentReference, 
-			int listIndex) {
-
-			Exists = exists;
-			IsInstanceVariable = isInstanceVariable;
-			IsListItem = isListItem;
-			
-			Name = name;
-
-			ThisReference = thisReference;
-			ParentReference = parentReference;
-			ListIndex = listIndex;
+		public enum ReferenceType {
+			Global,
+			Instance,
+			ListItems, // a[0,2,3] -> listitems ref
+			DictItems // same as list but for a dict
 		}
+		public ReferenceType Type = ReferenceType.Global;
 
-		public T_Reference Copy() {
-			return new(
-				Exists,
-				IsInstanceVariable,
-				IsListItem,
-				Name,
-				ThisReference,
-				ParentReference,
-				ListIndex);
+		// p_list when type is listitems or dictitems
+		T_Data m_thisReference = null;
+		public T_Data ThisReference {
+			get {
+				if (!Exists)
+					return Errors.UnknownName(Name);
+
+				if (Type == ReferenceType.DictItems) {
+					// check for errors this is a terrible system 
+					// im ngl
+					// when getting the data all values must exist
+					// fine when setting
+					if (m_thisReference is not Primitive.List list)
+						return Errors.BadCode();
+
+					foreach (var item in list.Value) {
+						if (item is Error)
+							return item; // its the error right? so we can just return it
+					}
+
+					if (list.Value.Count == 1)
+						return list.Value[0];
+				}else 
+				if (Type == ReferenceType.ListItems) {
+					if (m_thisReference is not Primitive.List list)
+						return Errors.BadCode();
+
+					if (list.Value.Count == 1)
+						return list.Value[0];
+				}
+
+				return m_thisReference;
+			}
+			set {
+				m_thisReference = value;
+			}
 		}
+		
+		public T_Data ParentReference = null;
 
-		public static T_Reference ExistingGlobalReference(string name, T_Data data) => 
-			new(true, false, false, name, data, null, -1);
+		// used for both list and dict, save some memory
+		public T_Data[] KeyIndices = null;
 
-		public static T_Reference ExistingGlobalReference(T_Data data) => 
-			new(true, false, false, "", data, null, -1);
+		public T_Reference() { }
 
-		public static T_Reference NewGlobalReference(string name) => 
-			new(false, false, false, name, null, null, -1);
+		public T_Reference Copy() => new() {
+			Exists = Exists,
+			Name = Name,
+			Type = Type,
+			m_thisReference = m_thisReference,
+			ParentReference = ParentReference,
+			KeyIndices = KeyIndices
+		};
 
-		public static T_Reference ExistingMemberReference(T_Reference parent, T_Data data, string name) => 
-			new(true, true, false, name, data, parent.ThisReference, -1);
+		public static T_Reference ExistingGlobalReference(T_Data data) => new() {
+			Exists = true,
+			Type = ReferenceType.Global,
+			m_thisReference = data
+		};
 
-		public static T_Reference NewMemberReference(T_Reference parent, string name) => 
-			new(false, true, false, name, null, parent.ThisReference, -1);
+		public bool IsLiteral =>
+			Name == ""
+			&& (Type == ReferenceType.Global || Type == ReferenceType.Instance);
 
-		public static T_Reference ExistingListItemReference(T_Reference container, T_Data data, int index) => 
-			new(true, false, true, "", data, container.ThisReference, index);
+		public T_Data SetData(Memory globalMemory, T_Data data) {
+			switch (Type) {
+				case ReferenceType.Global: { // global variable
+					T_Data trySet = globalMemory.Set(Name, data); // set the name in the memory where the data is from, might help?
+					if (trySet is Error) return trySet;
+					break;
+				}
 
-		public T_Data GetData() {
-			if (!Exists)
-				return Errors.UnknownName(Name);
+				case ReferenceType.Instance: {
+					T_Data trySet = ParentReference.SetThisMember(Name, data);
+					if (trySet is Error) return trySet;
+					break;
+				}
 
-			if (IsListItem) {
-				if (ParentReference is not Primitive.List parentList)
-					return Errors.CannotIndex(ParentReference.Type.Name);
+				case ReferenceType.ListItems: {
+					if (ParentReference is not Primitive.List parentList)
+						return Errors.CannotIndex(ParentReference.Type.Name);
 
-				if (ListIndex < 0 || ListIndex >= parentList.Value.Count)
-					return Errors.IndexOutOfRange(ListIndex);
+					foreach (var idxData in KeyIndices) {
+						if (idxData is not Primitive.Number num) 
+							return Errors.BadCode();
 
-				return parentList.Value[ListIndex];
-			}
-			return ThisReference;
-		}
+						int index = (int)num.Value;
 
-		public T_Data SetData(Memory memory, T_Data data) {
-			if (IsListItem) {
-				if (ParentReference is not Primitive.List parentList)
-					return Errors.CannotIndex(ParentReference.Type.Name);
+						// double check
+						if (index < 0 || index >= parentList.Value.Count)
+							return Errors.IndexOutOfRange(index);
 
-				if (ListIndex < 0 || ListIndex >= parentList.Value.Count)
-					return Errors.IndexOutOfRange(ListIndex);
+						parentList.Value[index] = data;
+					}
 
-				parentList.Value[ListIndex] = data;
-			}
+					break;
+				}
 
-			else if (IsInstanceVariable) {
-				T_Data trySet = ParentReference.SetThisMember(Name, data);
-				if (trySet is Error) return trySet;
-			}
+				case ReferenceType.DictItems: {
+					if (ParentReference is not Primitive.Dict parentDict)
+						return Errors.CannotIndex(ParentReference.Type.Name);
 
-			else { // global variable
-				T_Data trySet = memory.Set(Name, data); // set the name in the memory where the data is from, might help?
-				if (trySet is Error) return trySet;
+					foreach (var key in KeyIndices) {
+						Primitive.Dict.set(parentDict, new() {
+							key,
+							data
+						});
+					}
+					break;
+				}
 			}
 
 			Exists = true;
-			ThisReference = data; // re reference the new data object
-			return ThisReference;
+			m_thisReference = data; // re reference the new data object
+			return m_thisReference;
 		}
 
 		public override string ToString() {
-			return $"#R to {ThisReference.Type.Name} {ThisReference}";
+			return $"#R to {m_thisReference.Type.Name} {m_thisReference}";
 		}
 	}
 }

@@ -18,8 +18,9 @@ public abstract partial class Primitive : T_Data {
 			{ "num"			, new Function("num"			, num)			},
 			{ "str"			, new Function("str"			, str)			},
 			{ "bool"		, new Function("bool"			, @bool)		},
-
 			{ "dict"		, new Function("dict"			, dict)			},
+
+			{ "length"		, new Function("length"			, length)		},
 			{ "add"			, new Function("add"			, add)			},
 			{ "clear"		, new Function("clear"			, clear)		},
 			{ "contains"	, new Function("contains"		, contains)		},
@@ -40,7 +41,7 @@ public abstract partial class Primitive : T_Data {
 			Value = value;
 		}
 		public List(List original) : base(original) {
-			Value = original.Value;
+			Value = original.Value.ToList();
 		}
 		public List() : base(InternalType) { // default constructor
 			Value = new();
@@ -62,7 +63,21 @@ public abstract partial class Primitive : T_Data {
 		public static T_Data eq(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("eq", 1, args.Count);
 			if (args[0] is not List) return new Bool(false);
-			return new Bool((thisRef as List).Value.SequenceEqual((args[0] as List).Value));
+
+			var self = (thisRef as List).Value;
+			var other = (args[0] as List).Value;
+			if (self.Count != other.Count) return new Bool(false);
+
+			Memory.GetEvaluator(thisRef, out var eval);
+			var eq = new T_Operator("==");
+
+			for (int i = 0; i < self.Count; i++) {
+				var tryCompare = eval.Compare(self[i], other[i], eq, thisRef.Memory);
+				if (tryCompare is Error) return tryCompare;
+				if (!(tryCompare as Bool).Value) return new Bool(false);
+			}
+
+			return new Bool(true);
 		}
 		public static T_Data lt(T_Data thisRef, List<T_Data> args) {
 			if (args.Count != 1) return Errors.InvalidArgumentCount("lt", 1, args.Count);
@@ -181,6 +196,11 @@ public abstract partial class Primitive : T_Data {
 			}
 
 			return new Dict(newDict);
+		}
+
+		public static T_Data length(T_Data thisRef, List<T_Data> args) {
+			if (args.Count != 0) return Errors.InvalidArgumentCount("length", 0, args.Count);
+			return new Primitive.Number((thisRef as List).Value.Count);
 		}
 
 		public static T_Data add(T_Data thisRef, List<T_Data> args) {

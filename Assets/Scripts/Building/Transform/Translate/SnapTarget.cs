@@ -13,6 +13,6 @@ public class SnapTarget : MonoBehaviour {
 
 	public bool CheckSnap(Vector3 otherPos) {
 		float dist = (transform.position - otherPos).sqrMagnitude;
-		return dist < Config.Building.CCConnectionDistance * Config.Building.CCConnectionDistance;
+		return dist < Config.Editing.CCConnectionDistance * Config.Editing.CCConnectionDistance;
 	}
 }

@@ -44,8 +44,8 @@ public class Part : MonoBehaviour {
 		renderers = GetComponentsInChildren<MeshRenderer>(); // includes self
 		colliders = GetComponentsInChildren<Collider>();
 
-		color = Config.Building.Colors[Config.Building.PartDefaultColorIndex];
-		composition = Compositions.All[Config.Building.PartDefaultCompositionIndex];
+		color = Config.Editing.Colors[Config.Editing.PartDefaultColorIndex];
+		composition = Compositions.All[Config.Editing.PartDefaultCompositionIndex];
 		UpdateMaterial();
 	}
 
